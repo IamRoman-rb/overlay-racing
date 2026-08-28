@@ -1,0 +1,339 @@
+[
+  {
+    "nombre": "Autódromo Oscar y Juan Gálvez",
+    "lat": -34.6943,
+    "lon": -58.4593
+  },
+  {
+    "nombre": "Autódromo Roberto Mouras",
+    "lat": -34.9722,
+    "lon": -58.1691
+  },
+  {
+    "nombre": "Autódromo Hermanos Emiliozzi - Olavarría",
+    "lat": -36.8847,
+    "lon": -60.3266
+  },
+  {
+    "nombre": "Autódromo Juan Manuel Fangio - Balcarce",
+    "lat": -37.8515,
+    "lon": -58.2550
+  },
+  {
+    "nombre": "Autódromo Eusebio Marcilla - Junín",
+    "lat": -34.6022,
+    "lon": -61.0019
+  },
+  {
+    "nombre": "Autódromo Aldea Romana - Bahía Blanca",
+    "lat": -38.6970,
+    "lon": -62.2930
+  },
+  {
+    "nombre": "Autódromo de 9 de Julio",
+    "lat": -35.4278,
+    "lon": -60.8830
+  },
+  {
+    "nombre": "Autódromo Ciudad de San Nicolás",
+    "lat": -33.3308,
+    "lon": -60.2265
+  },
+  {
+    "nombre": "Autódromo Ciudad de Dolores",
+    "lat": -36.3272,
+    "lon": -57.6950
+  },
+  {
+    "nombre": "Autódromo Ciudad de Pigüé",
+    "lat": -37.5940,
+    "lon": -62.4080
+  },
+  {
+    "nombre": "Autódromo Mar de Ajó - Rubén Luis Di Palma",
+    "lat": -36.7600,
+    "lon": -56.6800
+  },
+  {
+    "nombre": "Autódromo Ciudad de Mar del Plata",
+    "lat": -37.9570,
+    "lon": -57.6970
+  },
+  {
+    "nombre": "Autódromo Segundo Taraborelli - Tres Arroyos",
+    "lat": -38.3930,
+    "lon": -60.2810
+  },
+  {
+    "nombre": "Autódromo Parque de la Velocidad - San Jorge",
+    "lat": -31.8960,
+    "lon": -61.8590
+  },
+  {
+    "nombre": "Autódromo Ciudad de Rafaela",
+    "lat": -31.3000,
+    "lon": -61.5000
+  },
+  {
+    "nombre": "Autódromo Municipal Juan Manuel Fangio - Rosario",
+    "lat": -32.9270,
+    "lon": -60.7000
+  },
+  {
+    "nombre": "Autódromo Ciudad de Paraná",
+    "lat": -31.7631,
+    "lon": -60.3770
+  },
+  {
+    "nombre": "Autódromo Ciudad de Concordia",
+    "lat": -31.3081,
+    "lon": -58.0050
+  },
+  {
+    "nombre": "Autódromo de Concepción del Uruguay",
+    "lat": -32.4710,
+    "lon": -58.2600
+  },
+  {
+    "nombre": "Autódromo Ciudad de Gualeguaychú",
+    "lat": -33.0250,
+    "lon": -58.5170
+  },
+  {
+    "nombre": "Autódromo Ciudad de Gualeguay",
+    "lat": -33.1410,
+    "lon": -59.3100
+  },
+  {
+    "nombre": "Autódromo Oscar Cabalén",
+    "lat": -31.7060,
+    "lon": -64.3700
+  },
+  {
+    "nombre": "Autódromo Parque Ciudad de Río Cuarto",
+    "lat": -33.1792,
+    "lon": -64.3659
+  },
+  {
+    "nombre": "Autódromo Valentín Lauret - Colonia Caroya",
+    "lat": -30.9850,
+    "lon": -64.0600
+  },
+  {
+    "nombre": "Autódromo de Marcos Juárez",
+    "lat": -32.6900,
+    "lon": -62.1100
+  },
+  {
+    "nombre": "Autódromo Rosendo Hernández - San Luis",
+    "lat": -33.2820,
+    "lon": -66.3600
+  },
+  {
+    "nombre": "La Pedrera - José Carlos Bassi",
+    "lat": -33.7400,
+    "lon": -65.4900
+  },
+  {
+    "nombre": "Autódromo Jorge Ángel Pena - San Martín",
+    "lat": -33.0800,
+    "lon": -68.4700
+  },
+  {
+    "nombre": "Autódromo Las Paredes - San Rafael",
+    "lat": -34.6030,
+    "lon": -68.4050
+  },
+  {
+    "nombre": "Circuito San Juan Villicum",
+    "lat": -31.3167,
+    "lon": -68.5667
+  },
+  {
+    "nombre": "Autódromo El Zonda - Eduardo Copello",
+    "lat": -31.5350,
+    "lon": -68.7000
+  },
+  {
+    "nombre": "Autódromo Termas de Río Hondo",
+    "lat": -27.5022,
+    "lon": -64.8777
+  },
+  {
+    "nombre": "Autódromo Martín Miguel de Güemes - Salta",
+    "lat": -24.7530,
+    "lon": -65.4100
+  },
+  {
+    "nombre": "Autódromo Ciudad de Oberá",
+    "lat": -27.4980,
+    "lon": -55.1210
+  },
+  {
+    "nombre": "Autódromo Rosamonte - Posadas",
+    "lat": -27.4020,
+    "lon": -55.9100
+  },
+  {
+    "nombre": "Autódromo Santiago Yaco Guarnieri - Resistencia",
+    "lat": -27.4510,
+    "lon": -59.0140
+  },
+  {
+    "nombre": "Autódromo de Toay",
+    "lat": -36.6700,
+    "lon": -64.3700
+  },
+  {
+    "nombre": "Autódromo Parque General Roca",
+    "lat": -39.0300,
+    "lon": -67.6000
+  },
+  {
+    "nombre": "Autódromo Ciudad de Viedma",
+    "lat": -40.8250,
+    "lon": -63.0200
+  },
+  {
+    "nombre": "Autódromo Centenario - Neuquén",
+    "lat": -38.8300,
+    "lon": -68.1300
+  },
+  {
+    "nombre": "Autódromo General San Martín - Comodoro Rivadavia",
+    "lat": -45.8200,
+    "lon": -67.4900
+  },
+  {
+    "nombre": "Autódromo Mar y Valle - Trelew",
+    "lat": -43.2600,
+    "lon": -65.3300
+  },
+  {
+    "nombre": "Autódromo José Muñiz - Río Gallegos",
+    "lat": -51.6300,
+    "lon": -69.2500
+  },
+
+  {
+    "nombre": "Kartódromo Ciudad de Buenos Aires - Circuito 1",
+    "lat": -34.6940,
+    "lon": -58.4590
+  },
+  {
+    "nombre": "Kartódromo Ciudad de Buenos Aires - Circuito 2",
+    "lat": -34.6940,
+    "lon": -58.4590
+  },
+  {
+    "nombre": "Kartódromo Ciudad de Zárate",
+    "lat": -34.0830,
+    "lon": -59.0200
+  },
+  {
+    "nombre": "Kartódromo Ramiro Tot - Baradero",
+    "lat": -33.8120,
+    "lon": -59.5080
+  },
+  {
+    "nombre": "Kartódromo de Ciudad Evita",
+    "lat": -34.7180,
+    "lon": -58.5400
+  },
+  {
+    "nombre": "Kartódromo de Mar del Plata",
+    "lat": -37.9500,
+    "lon": -57.6900
+  },
+  {
+    "nombre": "Kartódromo Ciudad de Trenque Lauquen",
+    "lat": -35.9700,
+    "lon": -62.7300
+  },
+  {
+    "nombre": "Kartódromo de Colonia Caroya",
+    "lat": -30.9800,
+    "lon": -64.0800
+  },
+  {
+    "nombre": "Kartódromo Parque Ciudad de Río Cuarto",
+    "lat": -33.1800,
+    "lon": -64.3660
+  },
+  {
+    "nombre": "Kartódromo de Mendoza",
+    "lat": -33.0700,
+    "lon": -68.4700
+  },
+  {
+    "nombre": "Kartódromo de Santiago del Estero",
+    "lat": -27.7900,
+    "lon": -64.2600
+  },
+  {
+    "nombre": "Kartódromo de Formosa",
+    "lat": -26.1800,
+    "lon": -58.1800
+  },
+  {
+    "nombre": "Kartódromo de Comodoro Rivadavia",
+    "lat": -45.8500,
+    "lon": -67.5000
+  },
+  {
+    "nombre": "Kartódromo de Villaguay",
+    "lat": -31.8500,
+    "lon": -59.0300
+  },
+  {
+    "nombre": "Kartódromo Jorge Frare - Gualeguay",
+    "lat": -33.1400,
+    "lon": -59.3100
+  },
+  {
+    "nombre": "Kartódromo Sudamericano - Sunchales",
+    "lat": -30.9500,
+    "lon": -61.5600
+  },
+  {
+    "nombre": "Kartódromo Internacional AKPS",
+    "lat": -45.8500,
+    "lon": -67.4700
+  },
+  {
+    "nombre": "Kartódromo Néstor Cardinale - Alcorta",
+    "lat": -33.5400,
+    "lon": -61.1200
+  },
+  {
+    "nombre": "Kartódromo Ricardo Balbín - Leandro N. Alem",
+    "lat": -27.6100,
+    "lon": -55.3300
+  },
+  {
+    "nombre": "Kartódromo Juan Peralta - Amenábar",
+    "lat": -34.0200,
+    "lon": -62.6800
+  },
+  {
+    "nombre": "Kartódromo de Jesús María",
+    "lat": -30.9800,
+    "lon": -64.1000
+  },
+
+  {
+    "nombre": "Silverstone Circuit",
+    "lat": 52.0786,
+    "lon": -1.0169
+  },
+  {
+    "nombre": "Monza",
+    "lat": 45.6156,
+    "lon": 9.2811
+  },
+  {
+    "nombre": "Interlagos",
+    "lat": -23.7011,
+    "lon": -46.6972
+  }
+]

@@ -1,0 +1,92 @@
+{
+  "relator": {
+    "x": 21,
+    "y": 568,
+    "scale": 1
+  },
+  "comentarista": {
+    "x": 20,
+    "y": 568,
+    "scale": 1
+  },
+  "notero1": {
+    "x": 16,
+    "y": 570,
+    "scale": 1
+  },
+  "notero2": {
+    "x": 18,
+    "y": 571,
+    "scale": 1
+  },
+  "circuito": {
+    "x": 20,
+    "y": 240,
+    "scale": 1
+  },
+  "clima": {
+    "x": 20,
+    "y": 160,
+    "scale": 1
+  },
+  "ticker": {
+    "x": -1,
+    "y": 665,
+    "scale": 1
+  },
+  "grid": {
+    "x": 0,
+    "y": 0,
+    "scale": 1
+  },
+  "finalResults": {
+    "x": 162,
+    "y": 86,
+    "scale": 0.8
+  },
+  "tower": {
+    "x": 10,
+    "y": 10,
+    "scale": 0.5
+  },
+  "winner": {
+    "x": 381,
+    "y": 603,
+    "scale": 0.7
+  },
+  "flags": {
+    "x": 420,
+    "y": -2,
+    "scale": 0.6
+  },
+  "fastestLap": {
+    "x": 954,
+    "y": 561,
+    "scale": 0.7
+  },
+  "battle": {
+    "x": 19,
+    "y": 326,
+    "scale": 1
+  },
+  "customZocalo": {
+    "x": 20,
+    "y": 580,
+    "scale": 0.8
+  },
+  "driverInfo": {
+    "x": 481,
+    "y": 584,
+    "scale": 0.7
+  },
+  "votingQR": {
+    "x": 1079,
+    "y": 429,
+    "scale": 0.8
+  },
+  "votingResults": {
+    "x": 1036,
+    "y": 534,
+    "scale": 0.7
+  }
+}
