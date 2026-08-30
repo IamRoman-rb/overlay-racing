@@ -3,7 +3,6 @@ import { useMemo } from 'react';
 export default function FastestLap({ drivers, config, isVisible, id = 'fastestLap' }) {
   const pos = config?.positions?.[id] || { x: 440, y: 150, scale: 1 };
 
-  // EXTRAEMOS LA PALETA COMPLETA
   const themeBg = config?.themeBg || 'rgba(0,0,0,0.9)';
   const themeHeaderBg = config?.themeHeaderBg || '#000000';
   const themeMain = config?.themeMain || '#e74c3c';
@@ -11,6 +10,10 @@ export default function FastestLap({ drivers, config, isVisible, id = 'fastestLa
   const themeAccent = config?.themeAccent || '#f39c12';
   const themeTitleText = config?.themeTitleText || '#ffcc00';
   const themeNormalText = config?.themeNormalText || '#ffffff';
+
+  // MAGIA DE DISEÑO PERSONALIZADO
+  const customBg = config[`design_${id}`];
+  const hasCustomBg = !!customBg;
 
   const fastestDriver = useMemo(() => {
     if (!drivers || drivers.length === 0) return null;
@@ -42,20 +45,29 @@ export default function FastestLap({ drivers, config, isVisible, id = 'fastestLa
     }}>
        <div style={{
          display: 'flex', flexDirection: 'column', width: '450px',
-         boxShadow: '0 10px 30px rgba(0,0,0,0.6)', borderRadius: '8px', overflow: 'hidden',
+         backgroundColor: hasCustomBg ? 'transparent' : themeBg, // Fondo transparente si hay imagen
+         backgroundImage: hasCustomBg ? `url(${customBg})` : 'none',
+         backgroundSize: '100% 100%', backgroundRepeat: 'no-repeat', backgroundPosition: 'center',
+         boxShadow: hasCustomBg ? 'none' : '0 10px 30px rgba(0,0,0,0.6)', 
+         borderRadius: '8px', overflow: 'hidden',
          transform: isVisible ? 'translateY(0)' : 'translateY(-20px)',
-         transition: 'transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
+         transition: 'transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+         padding: hasCustomBg ? '10px' : '0' // Padding extra si usa imagen
        }}>
          {/* ENCABEZADO */}
-         <div style={{ backgroundColor: themeHeaderBg, borderBottom: `3px solid ${themeMain}`, display: 'flex', alignItems: 'center', padding: '8px 15px' }}>
+         <div style={{ 
+           backgroundColor: hasCustomBg ? 'transparent' : themeHeaderBg, 
+           borderBottom: hasCustomBg ? 'none' : `3px solid ${themeMain}`, 
+           display: 'flex', alignItems: 'center', padding: '8px 15px' 
+         }}>
             <span style={{ color: themeTitleText, fontWeight: '900', fontSize: '16px', fontStyle: 'italic', letterSpacing: '1px' }}>
               RECORD DE VUELTA
             </span>
          </div>
          
          {/* DATOS DEL PILOTO */}
-         <div style={{ backgroundColor: themeBg, display: 'flex', alignItems: 'center', padding: '15px' }}>
-            <div style={{ backgroundColor: themeSecondary, color: themeBg, fontWeight: '900', fontSize: '20px', width: '45px', height: '35px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '4px', marginRight: '15px' }}>
+         <div style={{ backgroundColor: 'transparent', display: 'flex', alignItems: 'center', padding: '15px' }}>
+            <div style={{ backgroundColor: themeSecondary, color: '#000', fontWeight: '900', fontSize: '20px', width: '45px', height: '35px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '4px', marginRight: '15px' }}>
               {fastestDriver?.number || '-'}
             </div>
             

@@ -123,9 +123,7 @@ ipcMain.on('reset-votes', () => {
 ipcMain.on('toggle-voting-qr', (event, data) => { if (overlayWindow) overlayWindow.webContents.send('set-voting-qr', data); });
 ipcMain.on('toggle-voting-results', (event, data) => { if (overlayWindow) overlayWindow.webContents.send('set-voting-results', data); });
 
-// =========================================================================
 
-// --- MANEJADORES: LOGOS ---
 ipcMain.handle('select-logo', async () => {
   const result = await dialog.showOpenDialog(controlWindow, {
     title: 'Seleccionar Logo de Productora',
@@ -136,6 +134,22 @@ ipcMain.handle('select-logo', async () => {
     const filePath = result.filePaths[0];
     const fileExt = path.extname(filePath).toLowerCase();
     const mimeType = fileExt === '.png' ? 'image/png' : 'image/jpeg';
+    const base64 = fs.readFileSync(filePath, { encoding: 'base64' });
+    return `data:${mimeType};base64,${base64}`;
+  }
+  return null;
+});
+
+ipcMain.handle('select-design-image', async (event, title) => {
+  const result = await dialog.showOpenDialog(controlWindow, {
+    title: `Seleccionar Diseño PNG/SVG para: ${title}`,
+    properties: ['openFile'],
+    filters: [{ name: 'Imágenes', extensions: ['png', 'svg'] }]
+  });
+  if (!result.canceled && result.filePaths.length > 0) {
+    const filePath = result.filePaths[0];
+    const ext = path.extname(filePath).toLowerCase();
+    const mimeType = ext === '.svg' ? 'image/svg+xml' : 'image/png';
     const base64 = fs.readFileSync(filePath, { encoding: 'base64' });
     return `data:${mimeType};base64,${base64}`;
   }

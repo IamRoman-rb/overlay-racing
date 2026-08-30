@@ -5,6 +5,10 @@ export default function VotingResults({ isVisible, drivers, votes, config, id = 
   const themeMain = config?.themeMain || '#e74c3c';
   const themeAccent = config?.themeAccent || '#f39c12';
 
+  // MAGIA DE DISEÑO PERSONALIZADO
+  const customBg = config[`design_${id}`];
+  const hasCustomBg = !!customBg;
+
   // Ordenamos a los pilotos según sus votos y sacamos el Top 5
   const topDrivers = [...drivers]
     .filter(d => votes[d.number] > 0)
@@ -17,10 +21,23 @@ export default function VotingResults({ isVisible, drivers, votes, config, id = 
     <div style={{
       position: 'absolute', left: `${pos.x}px`, top: `${pos.y}px`, transform: `scale(${pos.scale})`, transformOrigin: 'top left',
       zIndex: 40, transition: 'opacity 0.4s ease-in-out', opacity: isVisible ? 1 : 0, pointerEvents: 'none',
-      width: '320px', backgroundColor: themeBg, borderRadius: '8px', boxShadow: '0 10px 30px rgba(0,0,0,0.8)', 
-      overflow: 'hidden', borderLeft: `4px solid ${themeMain}`
+      width: '320px', 
+      
+      backgroundColor: hasCustomBg ? 'transparent' : themeBg, 
+      backgroundImage: hasCustomBg ? `url(${customBg})` : 'none',
+      backgroundSize: '100% 100%', backgroundRepeat: 'no-repeat', backgroundPosition: 'center',
+      
+      borderRadius: '8px', 
+      boxShadow: hasCustomBg ? 'none' : '0 10px 30px rgba(0,0,0,0.8)', 
+      overflow: 'hidden', 
+      borderLeft: hasCustomBg ? 'none' : `4px solid ${themeMain}`,
+      padding: hasCustomBg ? '10px' : '0' // Padding extra por si el PNG tiene bordes decorativos
     }}>
-      <div style={{ backgroundColor: themeHeaderBg, padding: '15px', textAlign: 'center', borderBottom: `2px solid ${themeMain}` }}>
+      <div style={{ 
+        backgroundColor: hasCustomBg ? 'transparent' : themeHeaderBg, 
+        padding: '15px', textAlign: 'center', 
+        borderBottom: hasCustomBg ? 'none' : `2px solid ${themeMain}` 
+      }}>
         <span style={{ color: themeAccent, fontSize: '15px', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '1px' }}>
           RESULTADOS DE VOTACIÓN
         </span>
@@ -37,7 +54,7 @@ export default function VotingResults({ isVisible, drivers, votes, config, id = 
                   <span className="text-truncate" style={{ maxWidth: '200px' }}>#{driver.number} {driver.name}</span>
                   <span style={{ color: themeAccent }}>{percentage}%</span>
                 </div>
-                <div style={{ width: '100%', height: '8px', backgroundColor: '#333', borderRadius: '4px', overflow: 'hidden' }}>
+                <div style={{ width: '100%', height: '8px', backgroundColor: 'rgba(255,255,255,0.15)', borderRadius: '4px', overflow: 'hidden' }}>
                   <div style={{ width: `${percentage}%`, height: '100%', backgroundColor: themeMain, transition: 'width 0.5s ease' }} />
                 </div>
               </div>
@@ -45,7 +62,11 @@ export default function VotingResults({ isVisible, drivers, votes, config, id = 
           })
         )}
       </div>
-      <div style={{ padding: '10px', textAlign: 'center', borderTop: `1px solid ${themeHeaderBg}`, fontSize: '10px', color: '#888' }}>
+      <div style={{ 
+        padding: '10px', textAlign: 'center', 
+        borderTop: hasCustomBg ? 'none' : `1px solid ${themeHeaderBg}`, 
+        fontSize: '10px', color: '#888' 
+      }}>
         Total votos: {totalVotes}
       </div>
     </div>

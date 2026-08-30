@@ -34,7 +34,6 @@ export default function Overlay() {
   const [driverInfoData, setDriverInfoData] = useState(null);
   const [customZocaloData, setCustomZocaloData] = useState({ isVisible: false, title: '', text: '' });
   
-  // ESTADOS DE VOTACIÓN
   const [isVotingQRVisible, setIsVotingQRVisible] = useState(false);
   const [isVotingResultsVisible, setIsVotingResultsVisible] = useState(false);
   const [votes, setVotes] = useState({});
@@ -70,8 +69,6 @@ export default function Overlay() {
     const handleWinnerVisibility = (event, { isVisible, driver }) => { setIsWinnerVisible(isVisible); if (driver) setWinnerData(driver); };
     const handleFlagVisibility = (event, data) => setActiveFlags(data);
     const handleFastestLapVisibility = (event, isVisible) => setIsFastestLapVisible(isVisible);
-    
-    // HANDLERS DE VOTACIÓN
     const handleVotingQR = (event, isVisible) => setIsVotingQRVisible(isVisible);
     const handleVotingResults = (event, isVisible) => setIsVotingResultsVisible(isVisible);
     const handleUpdateVotes = (event, newVotes) => setVotes(newVotes);
@@ -135,8 +132,7 @@ export default function Overlay() {
         position: 'absolute', top: 0, left: 0, right: 0, height: '30px',
         WebkitAppRegion: 'drag', zIndex: 9999,
         display: 'flex', justifyContent: 'flex-end',
-        opacity: isHovered ? 1 : 0,
-        transition: 'opacity 0.3s ease'
+        opacity: isHovered ? 1 : 0, transition: 'opacity 0.3s ease'
       }}>
         <button onClick={() => ipcRenderer.send('overlay-control', 'minimize')} style={controlBtnStyle}>—</button>
         <button onClick={() => ipcRenderer.send('overlay-control', 'maximize')} style={controlBtnStyle}>🗖</button>
@@ -146,26 +142,24 @@ export default function Overlay() {
       <CustomZocalo isVisible={customZocaloData.isVisible} title={customZocaloData.title} text={customZocaloData.text} config={combinedConfig} />
       <Ticker drivers={drivers} config={combinedConfig} isVisible={isTickerVisible} sessionInfo={sessionInfo} />
       <TimingTower drivers={drivers} config={combinedConfig} isVisible={isTowerVisible} sessionInfo={sessionInfo} />
-      <Battle drivers={drivers} config={config} isVisible={battleData.isVisible} battleFocusPos={battleData.pos} />
+      
+      {/* CORRECCIÓN: Aquí enviamos combinedConfig a Battle */}
+      <Battle drivers={drivers} config={combinedConfig} isVisible={battleData.isVisible} battleFocusPos={battleData.pos} />
+      
       <StartingGrid drivers={drivers} config={combinedConfig} isVisible={isGridVisible} />
       <FinalResults drivers={drivers} config={combinedConfig} isVisible={isFinalResultsVisible} />
       <WinnerGraphic driver={winnerData} config={combinedConfig} isVisible={isWinnerVisible} />
       <Flags activeFlags={activeFlags} config={combinedConfig} />
-      
       <LowerThird id="relator" role="Relator" name={config.relator} isVisible={graphics.relator} config={combinedConfig} />
       <LowerThird id="comentarista" role="Comentarista" name={config.comentarista} isVisible={graphics.comentarista} config={combinedConfig} />
       <LowerThird id="notero1" role="Notero" name={config.notero1} isVisible={graphics.notero1} config={combinedConfig} />
       <LowerThird id="notero2" role="Notero" name={config.notero2} isVisible={graphics.notero2} config={combinedConfig} />
       <LowerThird id="circuito" role="Circuito" name={config.circuito} isVisible={graphics.circuito} config={combinedConfig} />
       <LowerThird id="clima" role="Clima" name={config.clima} isVisible={graphics.clima} config={combinedConfig} />
-      
       <FastestLap drivers={drivers} config={combinedConfig} isVisible={isFastestLapVisible} />
       <DriverInfo driver={driverInfoData} config={combinedConfig} isVisible={isDriverInfoVisible} />
-
-      {/* COMPONENTES DE VOTACIÓN */}
       <VotingQR isVisible={isVotingQRVisible} config={combinedConfig} localIp={localIp} />
       <VotingResults isVisible={isVotingResultsVisible} drivers={drivers} votes={votes} config={combinedConfig} />
-      
     </div>
   );
 }

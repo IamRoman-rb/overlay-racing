@@ -31,6 +31,16 @@ export const defaultPositions = {
   fastestLap: { x: 440, y: 150, scale: 1 }, battle: { x: 50, y: 50, scale: 1 }, customZocalo: { x: 20, y: 580, scale: 1 }
 };
 
+// LISTA DE GRÁFICAS (Segura fuera del componente)
+const allGraphicsList = [
+  { id: 'relator', label: 'RELATOR' }, { id: 'comentarista', label: 'COMENTARISTA' }, { id: 'notero1', label: 'NOTERO 1' }, { id: 'notero2', label: 'NOTERO 2' },
+  { id: 'circuito', label: 'CIRCUITO' }, { id: 'clima', label: 'CLIMA' }, { id: 'ticker', label: 'TIRA INFERIOR' }, { id: 'tower', label: 'TORRE POSICIONES' },
+  { id: 'grid', label: 'GRILLA PARTIDA' }, { id: 'finalResults', label: 'RESULTADOS FINALES' }, { id: 'winner', label: 'GANADOR' },
+  { id: 'flags', label: 'BANDERAS DE ALERTA' }, { id: 'fastestLap', label: 'RECORD DE VUELTA' },
+  { id: 'driverInfo', label: 'INFO DEL PILOTO' }, { id: 'battle', label: 'BATALLA (F1)' }, { id: 'customZocalo', label: 'ZÓCALO LIBRE' },
+  { id: 'votingQR', label: 'QR DE VOTACIÓN' }, { id: 'votingResults', label: 'RESULTADOS DE VOTACIÓN' }
+];
+
 export default function ControlPanel() {
   const [config, setConfig] = useState({
     relator: '', comentarista: '', notero1: '', notero2: '', circuito: '', clima: '', speedhiveCode: '', chromaColor: '#00FF00', logo: null, blackFlagNumber: '', categoryLogo: null,
@@ -65,7 +75,6 @@ export default function ControlPanel() {
   const bestLapRef = useRef(Infinity);
   const recordTimeoutRef = useRef(null);
 
-  // ESTADOS DE VOTACIÓN
   const [showVotingQR, setShowVotingQR] = useState(false);
   const [showVotingResults, setShowVotingResults] = useState(false);
   const [localIp, setLocalIp] = useState('');
@@ -81,8 +90,6 @@ export default function ControlPanel() {
         setPositions(mergedPositions);
       });
     });
-
-    // Pide la IP al inicio
     ipcRenderer.invoke('get-local-ip').then(setLocalIp);
   }, []);
 
@@ -111,69 +118,37 @@ export default function ControlPanel() {
     }
   }, [drivers]);
 
-  // FUNCIONES DE VOTACIÓN
-  const handleToggleVotingQR = () => {
-    const newState = !showVotingQR;
-    setShowVotingQR(newState);
-    ipcRenderer.send('toggle-voting-qr', newState);
-  };
-
-  const handleToggleVotingResults = () => {
-    const newState = !showVotingResults;
-    setShowVotingResults(newState);
-    ipcRenderer.send('toggle-voting-results', newState);
-  };
-
-  const handleResetVotes = () => {
-    if(window.confirm('⚠️ ¿Estás seguro de que quieres borrar todos los votos actuales?')) {
-      ipcRenderer.send('reset-votes');
-    }
-  };
+  const handleToggleVotingQR = () => { const newState = !showVotingQR; setShowVotingQR(newState); ipcRenderer.send('toggle-voting-qr', newState); };
+  const handleToggleVotingResults = () => { const newState = !showVotingResults; setShowVotingResults(newState); ipcRenderer.send('toggle-voting-results', newState); };
+  const handleResetVotes = () => { if(window.confirm('⚠️ ¿Estás seguro de que quieres borrar todos los votos actuales?')) ipcRenderer.send('reset-votes'); };
 
   const handleSaveBackup = async () => {
-    if (drivers.length === 0) {
-      alert("⚠️ No hay datos en pantalla para guardar.");
-      return;
-    }
+    if (drivers.length === 0) return alert("⚠️ No hay datos en pantalla para guardar.");
     const success = await ipcRenderer.invoke('save-backup', { drivers, session: sessionInfo });
-    if (success) {
-      alert("✅ Datos de la carrera guardados correctamente en memoria.");
-    } else {
-      alert("❌ Error al guardar los datos.");
-    }
+    if (success) alert("✅ Datos de la carrera guardados correctamente en memoria.");
+    else alert("❌ Error al guardar los datos.");
   };
 
   const handleLoadBackup = async () => {
     const data = await ipcRenderer.invoke('load-backup');
     if (data && data.drivers) {
-      setAutoScrape(false);
-      setDrivers(data.drivers);
-      setSessionInfo(data.session);
+      setAutoScrape(false); setDrivers(data.drivers); setSessionInfo(data.session);
       ipcRenderer.send('force-update-leaderboard', data);
       alert("📂 Datos en memoria cargados. La actualización 'EN VIVO' ha sido pausada.");
-    } else {
-      alert("⚠️ No hay datos guardados previamente.");
-    }
+    } else alert("⚠️ No hay datos guardados previamente.");
   };
 
   const handleToggleFinalResults = () => { setShowFinalResults(!showFinalResults); ipcRenderer.send('toggle-final-results', !showFinalResults); };
   const handleToggleWinner = () => { const newState = !showWinner; setShowWinner(newState); const winnerDriver = drivers.find(d => String(d.pos) === '1') || drivers[0]; ipcRenderer.send('toggle-winner', { isVisible: newState, driver: winnerDriver }); };
   const handleChange = (e) => setConfig({ ...config, [e.target.name]: e.target.value });
   const handleSave = async () => await ipcRenderer.invoke('save-config', config);
-  
-  const handleToggleBattle = () => {
-    const newState = !showBattle;
-    setShowBattle(newState);
-    ipcRenderer.send('toggle-battle', { isVisible: newState, pos: battleTarget });
-  };
+  const handleToggleBattle = () => { const newState = !showBattle; setShowBattle(newState); ipcRenderer.send('toggle-battle', { isVisible: newState, pos: battleTarget }); };
 
   const handleToggleDriverInfo = (driver) => {
     if (activeDriverInfo && activeDriverInfo.number === driver.number) {
-      setActiveDriverInfo(null);
-      ipcRenderer.send('toggle-driver-info', { isVisible: false, driver: null });
+      setActiveDriverInfo(null); ipcRenderer.send('toggle-driver-info', { isVisible: false, driver: null });
     } else {
-      setActiveDriverInfo(driver);
-      ipcRenderer.send('toggle-driver-info', { isVisible: true, driver });
+      setActiveDriverInfo(driver); ipcRenderer.send('toggle-driver-info', { isVisible: true, driver });
     }
   };
   
@@ -191,46 +166,31 @@ export default function ControlPanel() {
 
   const handleScrape = async () => {
     if (isScrapingRef.current) return;
-    
     let rawCode = configRef.current.speedhiveCode || '';
     rawCode = rawCode.trim();
     const provider = configRef.current.timingProvider || 'speedhive';
     
-    if (!rawCode) {
-      alert("⚠️ Ingresa el código de la carrera en la pestaña AJUSTES primero.");
-      setAutoScrape(false);
-      return;
-    }
+    if (!rawCode) { alert("⚠️ Ingresa el código de la carrera en la pestaña AJUSTES primero."); setAutoScrape(false); return; }
 
-    // === EL ESCUDO: SANITIZACIÓN AUTOMÁTICA ===
     let finalCode = rawCode;
-    
     if (provider === 'speedhive') {
       if (rawCode.includes('speedhive.mylaps.com')) {
         const match = rawCode.match(/livetiming\/([a-zA-Z0-9\-]+)/);
         if (match) finalCode = match[1];
       }
       finalCode = finalCode.replace(/\/active\/?$/i, '').replace(/^\/+|\/+$/g, '');
-    } 
-    else if (provider === 'racemonitor') {
+    } else if (provider === 'racemonitor') {
       if (rawCode.includes('race-monitor.com')) {
         const match = rawCode.match(/Race\/(\d+)/);
         if (match) finalCode = match[1];
       }
     }
-    // ==========================================
     
     isScrapingRef.current = true;
     try {
       const data = await ipcRenderer.invoke('scrape-timing', { provider, code: finalCode });
-      
-      if (data && data.drivers) {
-        setDrivers(data.drivers);
-        if (data.session) setSessionInfo(data.session);
-      }
-    } catch (e) {
-      console.error("Error scrapeando:", e);
-    }
+      if (data && data.drivers) { setDrivers(data.drivers); if (data.session) setSessionInfo(data.session); }
+    } catch (e) { console.error("Error scrapeando:", e); }
     isScrapingRef.current = false;
   };
 
@@ -252,8 +212,7 @@ export default function ControlPanel() {
 
   const handleToggleZocalo = (index) => {
     if (activeZocaloIndex === index) {
-      setActiveZocaloIndex(null);
-      ipcRenderer.send('toggle-custom-zocalo', { isVisible: false, title: '', text: '' });
+      setActiveZocaloIndex(null); ipcRenderer.send('toggle-custom-zocalo', { isVisible: false, title: '', text: '' });
     } else {
       setActiveZocaloIndex(index);
       const z = currentZocalos[index];
@@ -267,13 +226,8 @@ export default function ControlPanel() {
     if (autoScrape) {
       handleScrape();
       setScrapeProgress(0);
-      progressInterval = setInterval(() => {
-        setScrapeProgress(prev => (prev >= 100 ? 0 : prev + 1));
-      }, 10);
-      scrapeInterval = setInterval(() => {
-        handleScrape();
-        setScrapeProgress(0);
-      }, 1000);
+      progressInterval = setInterval(() => { setScrapeProgress(prev => (prev >= 100 ? 0 : prev + 1)); }, 10);
+      scrapeInterval = setInterval(() => { handleScrape(); setScrapeProgress(0); }, 1000);
     } else {
       setScrapeProgress(0);
     }
@@ -285,13 +239,7 @@ export default function ControlPanel() {
   const handleToggleGrid = () => { setShowGrid(!showGrid); ipcRenderer.send('toggle-grid', !showGrid); };
   const handleToggleGraphic = (id) => { const newState = !graphics[id]; setGraphics({ ...graphics, [id]: newState }); ipcRenderer.send('toggle-graphic', { id, visible: newState }); };
   const handleSelectLogo = async () => { const logoData = await ipcRenderer.invoke('select-logo'); if (logoData) handleDirectSave('logo', logoData); };
-
-  const handleToggleFastestLap = () => {
-    setShowFastestLap(!showFastestLap);
-    setNewRecordAlert(false);
-    if (recordTimeoutRef.current) clearTimeout(recordTimeoutRef.current);
-    ipcRenderer.send('toggle-fastest-lap', !showFastestLap);
-  };
+  const handleToggleFastestLap = () => { setShowFastestLap(!showFastestLap); setNewRecordAlert(false); if (recordTimeoutRef.current) clearTimeout(recordTimeoutRef.current); ipcRenderer.send('toggle-fastest-lap', !showFastestLap); };
 
   const handleToggleFlag = (type) => {
     const newFlags = { red: false, tricolor: false, black: false, blue: false };
@@ -303,17 +251,12 @@ export default function ControlPanel() {
   const handleSelectPhotosFolder = async () => {
     try {
       const folderPath = await ipcRenderer.invoke('select-photos-folder');
-      if (folderPath) {
-        handleDirectSave('photosPath', folderPath);
-      }
-    } catch (error) {
-      console.error("Error al seleccionar carpeta:", error);
-    }
+      if (folderPath) handleDirectSave('photosPath', folderPath);
+    } catch (error) { console.error("Error al seleccionar carpeta:", error); }
   };  
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', backgroundColor: colors.bgApp, color: colors.textMain, fontFamily: 'Arial, sans-serif' }}>
-
       <style>{`
         @keyframes pulseRecordAlert {
           0% { background-color: #8e44ad !important; border-color: #9b59b6 !important; box-shadow: 0 0 15px #8e44ad !important; color: white !important; }
@@ -327,7 +270,6 @@ export default function ControlPanel() {
           <div style={{ width: '15px', height: '15px', backgroundColor: colors.yellow }}></div>
           <h1 style={{ fontSize: '16px', margin: 0, letterSpacing: '1px' }}>RACE DYNAMICS DASHBOARD</h1>
         </div>
-
         <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
           {sessionInfo?.laps && (
             <div style={{ textAlign: 'right' }}>
@@ -348,7 +290,7 @@ export default function ControlPanel() {
       </div>
 
       <div style={{ display: 'flex', borderBottom: `1px solid ${colors.border}` }}>
-        {['PANEL', 'ZÓCALOS', 'AJUSTES', 'PERSONALIZAR'].map(tab => (
+        {['PANEL', 'ZÓCALOS', 'DISEÑOS', 'AJUSTES', 'PERSONALIZAR'].map(tab => (
           <div key={tab} onClick={() => setActiveTab(tab)} style={{ padding: '12px 25px', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer', borderBottom: activeTab === tab ? `3px solid ${colors.textMain}` : '3px solid transparent', color: activeTab === tab ? colors.textMain : colors.textMuted }}>
             {tab}
           </div>
@@ -406,9 +348,7 @@ export default function ControlPanel() {
               <div style={{ display: 'flex', alignItems: 'center', backgroundColor: colors.bgInput, border: `1px solid ${colors.border}`, padding: '0 10px', borderRadius: '4px' }}>
                 <span style={{ color: colors.textMuted, fontSize: '12px', marginRight: '5px' }}>POS:</span>
                 <input
-                  type="number"
-                  min="1"
-                  value={battleTarget}
+                  type="number" min="1" value={battleTarget}
                   onChange={(e) => setBattleTarget(e.target.value)}
                   style={{ ...inputStyle, width: '40px', border: 'none', padding: 0 }}
                 />
@@ -418,7 +358,6 @@ export default function ControlPanel() {
               </button>
             </div>
 
-            {/* SECCIÓN NUEVA DE VOTACIÓN */}
             <div style={sectionTitleStyle}>INTERACTIVIDAD (VOTOS)</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', marginBottom: '20px' }}>
               <button onClick={handleToggleVotingQR} style={btnStyle(showVotingQR)}>QR DE VOTACIÓN</button>
@@ -448,17 +387,10 @@ export default function ControlPanel() {
               <div style={{
                 position: 'absolute', top: 0, left: 0, height: '3px',
                 backgroundColor: colors.green, width: `${scrapeProgress}%`,
-                boxShadow: `0 0 10px ${colors.green}`,
-                transition: scrapeProgress === 0 ? 'none' : 'width 10ms linear',
-                zIndex: 10
+                boxShadow: `0 0 10px ${colors.green}`, transition: scrapeProgress === 0 ? 'none' : 'width 10ms linear', zIndex: 10
               }} />
             )}
-            <DriversTable
-              drivers={drivers}
-              colors={colors}
-              activeDriverNumber={activeDriverInfo?.number}
-              onToggleInfo={handleToggleDriverInfo}
-            />
+            <DriversTable drivers={drivers} colors={colors} activeDriverNumber={activeDriverInfo?.number} onToggleInfo={handleToggleDriverInfo} />
           </div>
         </div>
       )}
@@ -468,75 +400,54 @@ export default function ControlPanel() {
       )}
 
       {activeTab === 'PERSONALIZAR' && (
-        <CustomizePanel
-          config={config}
-          positions={positions}
-          defaultPositions={defaultPositions}
-          onUpdatePositions={handleUpdatePositions}
-          onSelectLogo={handleSelectLogo}
-          onSelectCategoryLogo={handleSelectCategoryLogo}
-          onSelectPhotosFolder={handleSelectPhotosFolder}
-          onClearLogo={() => handleDirectSave('logo', null)}
-          onClearCategoryLogo={() => handleDirectSave('categoryLogo', null)}
-          onClearPhotosFolder={() => handleDirectSave('photosPath', null)}
-          onConfigChange={handleDirectSave}
-          colors={colors}
-          inputStyle={inputStyle}
-          btnStyle={btnStyle}
-        />
+        <CustomizePanel config={config} positions={positions} defaultPositions={defaultPositions} onUpdatePositions={handleUpdatePositions} onSelectLogo={handleSelectLogo} onSelectCategoryLogo={handleSelectCategoryLogo} onSelectPhotosFolder={handleSelectPhotosFolder} onClearLogo={() => handleDirectSave('logo', null)} onClearCategoryLogo={() => handleDirectSave('categoryLogo', null)} onClearPhotosFolder={() => handleDirectSave('photosPath', null)} onConfigChange={handleDirectSave} colors={colors} inputStyle={inputStyle} btnStyle={btnStyle} />
       )}
 
       {activeTab === 'ZÓCALOS' && (
         <div style={{ padding: '30px', display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '20px', overflowY: 'auto', flex: 1 }}>
           {currentZocalos.map((zocalo, index) => (
-            <div key={index} style={{ 
-              backgroundColor: colors.bgPanel, padding: '20px', borderRadius: '8px', 
-              border: `1px solid ${activeZocaloIndex === index ? colors.red : colors.border}`, 
-              display: 'flex', flexDirection: 'column', gap: '15px',
-              boxShadow: activeZocaloIndex === index ? `0 0 15px rgba(231, 76, 60, 0.2)` : 'none'
-            }}>
-              
-              <h3 style={{ margin: 0, color: colors.yellow, fontSize: '13px', borderBottom: `1px solid ${colors.border}`, paddingBottom: '10px' }}>
-                ZÓCALO PRESETEADO {index + 1}
-              </h3>
-              
+            <div key={index} style={{ backgroundColor: colors.bgPanel, padding: '20px', borderRadius: '8px', border: `1px solid ${activeZocaloIndex === index ? colors.red : colors.border}`, display: 'flex', flexDirection: 'column', gap: '15px', boxShadow: activeZocaloIndex === index ? `0 0 15px rgba(231, 76, 60, 0.2)` : 'none' }}>
+              <h3 style={{ margin: 0, color: colors.yellow, fontSize: '13px', borderBottom: `1px solid ${colors.border}`, paddingBottom: '10px' }}> ZÓCALO PRESETEADO {index + 1} </h3>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
                 <label style={{ fontSize: '10px', color: colors.textMuted, fontWeight: 'bold' }}>TÍTULO (Ej: NOTICIA, ENTREVISTA)</label>
-                <input 
-                  type="text" 
-                  value={zocalo.title} 
-                  onChange={(e) => handleZocaloChange(index, 'title', e.target.value)} 
-                  onBlur={handleSave} 
-                  style={{ ...inputStyle, fontSize: '12px', padding: '10px' }} 
-                  placeholder="Escribe un título..." 
-                />
+                <input type="text" value={zocalo.title} onChange={(e) => handleZocaloChange(index, 'title', e.target.value)} onBlur={handleSave} style={{ ...inputStyle, fontSize: '12px', padding: '10px' }} placeholder="Escribe un título..." />
               </div>
-
               <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', flex: 1 }}>
                 <label style={{ fontSize: '10px', color: colors.textMuted, fontWeight: 'bold' }}>TEXTO PRINCIPAL</label>
-                <textarea 
-                  value={zocalo.text} 
-                  onChange={(e) => handleZocaloChange(index, 'text', e.target.value)} 
-                  onBlur={handleSave} 
-                  style={{ ...inputStyle, fontSize: '14px', padding: '10px', flex: 1, minHeight: '80px', resize: 'vertical' }} 
-                  placeholder="Escribe la información..." 
-                />
+                <textarea value={zocalo.text} onChange={(e) => handleZocaloChange(index, 'text', e.target.value)} onBlur={handleSave} style={{ ...inputStyle, fontSize: '14px', padding: '10px', flex: 1, minHeight: '80px', resize: 'vertical' }} placeholder="Escribe la información..." />
               </div>
-
-              <button 
-                onClick={() => handleToggleZocalo(index)} 
-                style={{ 
-                  ...btnStyle(activeZocaloIndex === index), 
-                  padding: '12px', fontSize: '13px', marginTop: '5px', 
-                  backgroundColor: activeZocaloIndex === index ? colors.red : colors.bgInput, 
-                  color: activeZocaloIndex === index ? '#fff' : colors.textMain, 
-                  borderColor: activeZocaloIndex === index ? colors.red : colors.border 
-                }}
-              >
+              <button onClick={() => handleToggleZocalo(index)} style={{ ...btnStyle(activeZocaloIndex === index), padding: '12px', fontSize: '13px', marginTop: '5px', backgroundColor: activeZocaloIndex === index ? colors.red : colors.bgInput, color: activeZocaloIndex === index ? '#fff' : colors.textMain, borderColor: activeZocaloIndex === index ? colors.red : colors.border }}>
                 {activeZocaloIndex === index ? '🔴 QUITAR DEL AIRE' : '▶ PONER EN EL AIRE'}
               </button>
             </div>
           ))}
+        </div>
+      )}
+
+      {activeTab === 'DISEÑOS' && (
+        <div style={{ padding: '30px', overflowY: 'auto', flex: 1, backgroundColor: colors.bgApp, display: 'block' }}>
+          <h2 style={{ color: colors.yellow, marginTop: 0, borderBottom: `1px solid ${colors.border}`, paddingBottom: '10px' }}>DISEÑOS DE GRÁFICAS (PNG/SVG)</h2>
+          <p style={{ color: colors.textMuted, fontSize: '13px', marginBottom: '25px' }}>
+            Carga imágenes con transparencia para reemplazar la caja clásica de colores por tu propio diseño.
+          </p>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '20px' }}>
+            {allGraphicsList.map(graphic => {
+              const configKey = `design_${graphic.id}`;
+              const hasDesign = !!config[configKey];
+              return (
+                <div key={graphic.id} style={{ backgroundColor: colors.bgPanel, padding: '15px', borderRadius: '8px', border: `1px solid ${colors.border}`, display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  <span style={{ fontSize: '12px', color: colors.textMain, fontWeight: 'bold', textAlign: 'center' }}>{graphic.label}</span>
+                  <div style={{ backgroundColor: '#000', height: '80px', borderRadius: '4px', border: `1px dashed ${hasDesign ? colors.green : colors.border}`, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+                    {hasDesign ? <img src={config[configKey]} alt={graphic.label} style={{ maxHeight: '70px', maxWidth: '90%', objectFit: 'contain' }} /> : <span style={{fontSize: '10px', color: '#444'}}>DISEÑO ESTÁNDAR</span>}
+                  </div>
+                  <div style={{ display: 'flex', gap: '5px' }}>
+                    <button onClick={async () => { const imgData = await ipcRenderer.invoke('select-design-image', graphic.label); if (imgData) handleDirectSave(configKey, imgData); }} style={{...btnStyle(false), flex: 1, padding: '8px', fontSize: '10px'}}>📷 CARGAR PNG/SVG</button>
+                    {hasDesign && <button onClick={() => handleDirectSave(configKey, null)} style={{...btnStyle(false), flex: 1, backgroundColor: '#c0392b', color: 'white', border: 'none', padding: '8px', fontSize: '10px'}}>🗑️ QUITAR</button>}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </div>
       )}
       

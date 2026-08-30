@@ -3,11 +3,9 @@ import { useState, useRef } from 'react';
 export default function CustomizePanel({ config, positions, defaultPositions, onUpdatePositions, onSelectLogo, onSelectCategoryLogo, onSelectPhotosFolder, onClearLogo, onClearCategoryLogo, onClearPhotosFolder, onConfigChange, colors, inputStyle, btnStyle }) {
   const [selectedGraphic, setSelectedGraphic] = useState('relator');
   
-  // Guardamos info del arrastre
   const dragInfo = useRef({ isDragging: false, id: null, startX: 0, startY: 0, initialX: 0, initialY: 0 });
   const previewRef = useRef(null); 
 
-  // Ajusta este valor si lo quieres ver más grande o más chico en tu pantalla
   const PREVIEW_SCALE = 0.42;
 
   const handlePreviewMouseDown = (e, id) => {
@@ -22,7 +20,6 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
     if (!dragInfo.current.isDragging || !previewRef.current) return;
     const { id, startX, startY, initialX, initialY } = dragInfo.current;
     
-    // Matemática exacta basada en el zoom actual
     const rect = previewRef.current.getBoundingClientRect();
     const actualScale = rect.width / 1920; 
 
@@ -71,7 +68,7 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
           padding: '10px 20px', minWidth: '250px', 
           borderLeft: `4px solid ${config.themeMain || '#e74c3c'}`, 
           userSelect: 'none', boxShadow: '0 5px 15px rgba(0,0,0,0.5)',
-          zIndex: isSelected ? 50 : 10 // Pasa al frente al seleccionarlo
+          zIndex: isSelected ? 50 : 10 
         }}
       >
         <span style={{ color: config.themeTitleText || '#888888', fontSize: '11px', fontWeight: 'bold' }}>{label}</span><br/>
@@ -134,23 +131,25 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
 
         <h3 style={{ color: colors.yellow, marginBottom: '15px' }}>RECURSOS MULTIMEDIA</h3>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '15px' }}>
+          
           <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
-            <span style={{ fontSize: '10px', color: colors.textMuted, fontWeight: 'bold' }}>LOGO PRODUCTORA</span>
-            <div style={{ backgroundColor: '#000', height: '60px', borderRadius: '4px', border: `1px solid ${colors.border}`, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
-              {config.logo ? <img src={config.logo} alt="Logo" style={{ maxHeight: '50px', maxWidth: '90%', objectFit: 'contain' }} /> : <span style={{fontSize: '10px', color: '#444'}}>VACÍO</span>}
+            <span style={{ fontSize: '9px', color: colors.textMuted, fontWeight: 'bold', textAlign: 'center' }}>LOGO PRODUCT.</span>
+            <div style={{ backgroundColor: '#000', height: '50px', borderRadius: '4px', border: `1px solid ${colors.border}`, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+              {config.logo ? <img src={config.logo} alt="Logo" style={{ maxHeight: '40px', maxWidth: '90%', objectFit: 'contain' }} /> : <span style={{fontSize: '9px', color: '#444'}}>VACÍO</span>}
             </div>
-            <button onClick={onSelectLogo} style={{...btnStyle(false), padding: '6px', fontSize: '9px'}}>📷 CARGAR</button>
-            {config.logo && <button onClick={onClearLogo} style={{...btnStyle(false), backgroundColor: '#c0392b', color: 'white', border: 'none', padding: '6px', fontSize: '9px'}}>🗑️ QUITAR</button>}
+            <button onClick={onSelectLogo} style={{...btnStyle(false), padding: '6px', fontSize: '8px'}}>📷 CARGAR</button>
+            {config.logo && <button onClick={onClearLogo} style={{...btnStyle(false), backgroundColor: '#c0392b', color: 'white', border: 'none', padding: '6px', fontSize: '8px'}}>🗑️ QUITAR</button>}
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
-            <span style={{ fontSize: '10px', color: colors.textMuted, fontWeight: 'bold' }}>LOGO CATEGORÍA</span>
-            <div style={{ backgroundColor: '#000', height: '60px', borderRadius: '4px', border: `1px solid ${colors.border}`, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
-              {config.categoryLogo ? <img src={config.categoryLogo} alt="Logo" style={{ maxHeight: '50px', maxWidth: '90%', objectFit: 'contain' }} /> : <span style={{fontSize: '10px', color: '#444'}}>VACÍO</span>}
+            <span style={{ fontSize: '9px', color: colors.textMuted, fontWeight: 'bold', textAlign: 'center' }}>LOGO CATEGORÍA</span>
+            <div style={{ backgroundColor: '#000', height: '50px', borderRadius: '4px', border: `1px solid ${colors.border}`, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+              {config.categoryLogo ? <img src={config.categoryLogo} alt="Logo" style={{ maxHeight: '40px', maxWidth: '90%', objectFit: 'contain' }} /> : <span style={{fontSize: '9px', color: '#444'}}>VACÍO</span>}
             </div>
-            <button onClick={onSelectCategoryLogo} style={{...btnStyle(false), padding: '6px', fontSize: '9px'}}>📷 CARGAR</button>
-            {config.categoryLogo && <button onClick={onClearCategoryLogo} style={{...btnStyle(false), backgroundColor: '#c0392b', color: 'white', border: 'none', padding: '6px', fontSize: '9px'}}>🗑️ QUITAR</button>}
+            <button onClick={onSelectCategoryLogo} style={{...btnStyle(false), padding: '6px', fontSize: '8px'}}>📷 CARGAR</button>
+            {config.categoryLogo && <button onClick={onClearCategoryLogo} style={{...btnStyle(false), backgroundColor: '#c0392b', color: 'white', border: 'none', padding: '6px', fontSize: '8px'}}>🗑️ QUITAR</button>}
           </div>
+
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', marginBottom: '25px', backgroundColor: '#111', padding: '10px', borderRadius: '4px', border: `1px solid ${colors.border}` }}>
@@ -164,33 +163,20 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
 
       </div> 
 
-      {/* ÁREA DEL MONITOR */}
       <div style={{ flex: 1, backgroundColor: colors.bgApp, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
-        
         <div style={{ 
-            width: 1920 * PREVIEW_SCALE, 
-            height: 1080 * PREVIEW_SCALE, 
-            minWidth: 1920 * PREVIEW_SCALE,
-            minHeight: 1080 * PREVIEW_SCALE,
-            flexShrink: 0,
-            position: 'relative', 
-            boxShadow: '0 0 30px rgba(0,0,0,1)' 
+            width: 1920 * PREVIEW_SCALE, height: 1080 * PREVIEW_SCALE, 
+            minWidth: 1920 * PREVIEW_SCALE, minHeight: 1080 * PREVIEW_SCALE,
+            flexShrink: 0, position: 'relative', boxShadow: '0 0 30px rgba(0,0,0,1)' 
         }}>
-            {/* EL LIENZO REAL EXACTO DE 1920x1080 */}
             <div 
               ref={previewRef}
               style={{ 
-                width: '1920px', 
-                height: '1080px', 
+                width: '1920px', height: '1080px', 
                 backgroundColor: config.chromaColor || '#00FF00', 
-                position: 'absolute', 
-                top: 0,
-                left: 0,
-                transform: `scale(${PREVIEW_SCALE})`, 
-                transformOrigin: 'top left', // Obligatorio para que escale desde la esquina
-                border: '4px solid #555', 
-                boxSizing: 'border-box',
-                overflow: 'hidden'
+                position: 'absolute', top: 0, left: 0,
+                transform: `scale(${PREVIEW_SCALE})`, transformOrigin: 'top left',
+                border: '4px solid #555', boxSizing: 'border-box', overflow: 'hidden'
               }}
             >
                 <div style={{ position: 'absolute', top: 0, left: 0, backgroundColor: 'rgba(0,0,0,0.7)', color: 'white', padding: '10px 20px', fontSize: '26px', fontWeight: 'bold', zIndex: 999 }}>
@@ -199,7 +185,6 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
                 {allGraphics.map(graphic => renderPreviewGraphic(graphic.id, graphic.label))}
             </div>
         </div>
-
       </div>
     </div>
   );

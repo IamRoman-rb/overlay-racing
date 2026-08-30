@@ -2,7 +2,7 @@
   "relator": {
     "x": 21,
     "y": 568,
-    "scale": 1
+    "scale": 0.8
   },
   "comentarista": {
     "x": 20,
@@ -30,9 +30,9 @@
     "scale": 1
   },
   "ticker": {
-    "x": -1,
-    "y": 665,
-    "scale": 1
+    "x": 0,
+    "y": 673,
+    "scale": 0.667
   },
   "grid": {
     "x": 0,
@@ -40,8 +40,8 @@
     "scale": 1
   },
   "finalResults": {
-    "x": 162,
-    "y": 86,
+    "x": 172,
+    "y": 65,
     "scale": 0.8
   },
   "tower": {
@@ -50,8 +50,8 @@
     "scale": 0.5
   },
   "winner": {
-    "x": 381,
-    "y": 603,
+    "x": 536,
+    "y": 604,
     "scale": 0.7
   },
   "flags": {
@@ -65,9 +65,9 @@
     "scale": 0.7
   },
   "battle": {
-    "x": 19,
-    "y": 326,
-    "scale": 1
+    "x": 20,
+    "y": 325,
+    "scale": 0.8
   },
   "customZocalo": {
     "x": 20,
@@ -75,18 +75,18 @@
     "scale": 0.8
   },
   "driverInfo": {
-    "x": 481,
-    "y": 584,
+    "x": 929,
+    "y": 503,
     "scale": 0.7
   },
   "votingQR": {
-    "x": 1079,
-    "y": 429,
-    "scale": 0.8
+    "x": 1092,
+    "y": 365,
+    "scale": 0.7
   },
   "votingResults": {
-    "x": 1036,
-    "y": 534,
+    "x": 11,
+    "y": 42,
     "scale": 0.7
   }
 }

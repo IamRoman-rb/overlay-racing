@@ -7,7 +7,6 @@ export default function TimingTower({ drivers, config, isVisible, id = 'tower', 
   const prevDriversRef = useRef({});
   const [trends, setTrends] = useState({});
 
-  // EXTRAEMOS LA PALETA COMPLETA
   const themeBg = config?.themeBg || 'rgba(0, 0, 0, 0.85)';
   const themeHeaderBg = config?.themeHeaderBg || '#000000';
   const themeMain = config?.themeMain || '#e74c3c';
@@ -17,7 +16,11 @@ export default function TimingTower({ drivers, config, isVisible, id = 'tower', 
   const themeNormalText = config?.themeNormalText || '#ffffff';
   const themeNumberText = config?.themeNumberText || '#3498db';
 
-  useEffect(() => { /* Lógica de tendencias omitida por brevedad, no se toca */ 
+  // EXTRAEMOS DISEÑO
+  const customBg = config[`design_${id}`];
+  const hasCustomBg = !!customBg;
+
+  useEffect(() => { 
     setTrends(prevTrends => {
       const newTrends = { ...prevTrends };
       drivers.forEach(driver => {
@@ -49,22 +52,25 @@ export default function TimingTower({ drivers, config, isVisible, id = 'tower', 
     <div style={{
       position: 'absolute', left: `${pos.x}px`, top: `${pos.y}px`, transform: `scale(${pos.scale})`, transformOrigin: 'top left',
       width: '320px', height: '650px', 
-      backgroundColor: themeBg, /* <-- APLICADO FONDO GENERAL */
-      borderTop: `4px solid ${themeMain}`, 
+      
+      backgroundColor: hasCustomBg ? 'transparent' : themeBg, 
+      borderTop: hasCustomBg ? 'none' : `4px solid ${themeMain}`, 
+      backgroundImage: hasCustomBg ? `url(${customBg})` : 'none',
+      backgroundSize: '100% 100%', backgroundRepeat: 'no-repeat', backgroundPosition: 'center',
+      boxShadow: hasCustomBg ? 'none' : '0 10px 30px rgba(0,0,0,0.5)',
+
       borderRadius: '8px', display: 'flex', flexDirection: 'column', zIndex: 10,
       transition: 'opacity 0.5s ease-in-out', opacity: isVisible ? 1 : 0, pointerEvents: isVisible ? 'auto' : 'none'
     }}>
       
-      {/* CABECERA CON LOGOS */}
       <div style={{ 
         padding: '10px 15px', 
-        backgroundColor: themeHeaderBg, /* <-- APLICADO FONDO ENCABEZADO */
-        borderBottom: `2px solid ${themeMain}`,
+        backgroundColor: hasCustomBg ? 'transparent' : themeHeaderBg, 
+        borderBottom: hasCustomBg ? 'none' : `2px solid ${themeMain}`,
         display: 'flex', alignItems: 'center', 
-        justifyContent: (config?.logo || config?.categoryLogo) ? 'flex-start' : 'center', gap: '10px', borderRadius: '8px 8px 0 0' 
+        justifyContent: (!hasCustomBg && (config?.logo || config?.categoryLogo)) ? 'flex-start' : 'center', gap: '10px', borderRadius: '8px 8px 0 0' 
       }}>
-        {/* LOGOS... */}
-        {(config?.logo || config?.categoryLogo) && (
+        {!hasCustomBg && (config?.logo || config?.categoryLogo) && (
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             {config?.logo && <img src={config.logo} alt="Productora" style={{ height: '30px', maxWidth: '60px', objectFit: 'contain' }} />}
             {config?.logo && config?.categoryLogo && <div style={{ height: '25px', width: '2px', backgroundColor: 'rgba(255, 255, 255, 0.3)' }} />}
@@ -76,8 +82,7 @@ export default function TimingTower({ drivers, config, isVisible, id = 'tower', 
         </span>
       </div>
       
-      {/* INFO SESIÓN */}
-      <div style={{ backgroundColor: 'rgba(0,0,0,0.4)', padding: '8px 15px', display: 'flex', justifyContent: 'space-evenly', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
+      <div style={{ backgroundColor: hasCustomBg ? 'transparent' : 'rgba(0,0,0,0.4)', padding: '8px 15px', display: 'flex', justifyContent: 'space-evenly', borderBottom: hasCustomBg ? 'none' : '1px solid rgba(255,255,255,0.1)' }}>
          <span style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
           <span style={{ fontSize: '10px', color: themeTitleText, fontWeight: 'bold', letterSpacing: '1px' }}>VUELTAS</span>
           <span style={{ color: themeNumberText, fontSize: '16px', fontWeight: 'bold' }}>{sessionInfo?.laps || '-'}</span>
@@ -90,7 +95,7 @@ export default function TimingTower({ drivers, config, isVisible, id = 'tower', 
       
       <div style={{ position: 'relative', flex: 1, overflow: 'hidden' }}>
         {drivers.map((driver, index) => (
-          <div key={driver.number || driver.name} style={{ position: 'absolute', top: `${index * TOWER_ROW_HEIGHT}px`, left: 0, width: '100%', height: `${TOWER_ROW_HEIGHT}px`, display: 'flex', alignItems: 'center', padding: '0 15px', boxSizing: 'border-box', borderBottom: '1px solid rgba(255,255,255,0.05)', transition: 'top 0.6s ease-in-out', fontSize: '16px' }}>
+          <div key={driver.number || driver.name} style={{ position: 'absolute', top: `${index * TOWER_ROW_HEIGHT}px`, left: 0, width: '100%', height: `${TOWER_ROW_HEIGHT}px`, display: 'flex', alignItems: 'center', padding: '0 15px', boxSizing: 'border-box', borderBottom: hasCustomBg ? 'none' : '1px solid rgba(255,255,255,0.05)', transition: 'top 0.6s ease-in-out', fontSize: '16px' }}>
             <span style={{ width: '25px', color: themeAccent, fontWeight: 'bold' }}>{driver.pos}</span> 
             <span style={{ width: '15px', display: 'flex', justifyContent: 'center' }}>{renderTrend(trends[driver.name])}</span>
             <div style={{ backgroundColor: themeSecondary, color: '#000', fontWeight: '900', fontSize: '12px', width: '26px', height: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '2px', marginRight: '8px', marginLeft: '6px' }}>{driver.number}</div>
