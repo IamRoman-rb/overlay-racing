@@ -77,6 +77,9 @@ export default function ControlPanel() {
   const [showVotingQR, setShowVotingQR] = useState(false);
   const [showVotingResults, setShowVotingResults] = useState(false);
   const [localIp, setLocalIp] = useState('');
+  
+  // ESTADO NUEVO PARA LOS VOTOS
+  const [votes, setVotes] = useState({});
 
   useEffect(() => { configRef.current = config; }, [config]);
 
@@ -90,6 +93,17 @@ export default function ControlPanel() {
       });
     });
     ipcRenderer.invoke('get-local-ip').then(setLocalIp);
+    
+    // PEDIMOS LOS VOTOS AL INICIO
+    ipcRenderer.invoke('get-votes').then(v => { if(v) setVotes(v) }).catch(() => {});
+
+    // ESCUCHAMOS NUEVOS VOTOS
+    const handleUpdateVotes = (event, newVotes) => setVotes(newVotes);
+    ipcRenderer.on('update-votes', handleUpdateVotes);
+
+    return () => {
+      ipcRenderer.removeListener('update-votes', handleUpdateVotes);
+    }
   }, []);
 
   useEffect(() => {
@@ -98,7 +112,6 @@ export default function ControlPanel() {
       if (!str || str === '-') return Infinity;
       const parts = str.split(':');
       let val = parts.length === 2 ? parseInt(parts[0], 10) * 60 + parseFloat(parts[1]) : parseFloat(str);
-      // IGNORAR LOS 00:00.000 Y SIMILARES
       if (isNaN(val) || val <= 0) return Infinity; 
       return val;
     };
@@ -119,7 +132,6 @@ export default function ControlPanel() {
     }
   }, [drivers]);
 
-  // CÁLCULO DEL PILOTO MÁS RÁPIDO EN TIEMPO REAL PARA EL PANEL
   const fastestDriver = useMemo(() => {
     if (!drivers || drivers.length === 0) return null;
     let best = null;
@@ -129,7 +141,6 @@ export default function ControlPanel() {
       if (!str || str === '-') return Infinity;
       const parts = str.split(':');
       let val = parts.length === 2 ? parseInt(parts[0], 10) * 60 + parseFloat(parts[1]) : parseFloat(str);
-      // IGNORAR LOS 00:00.000 Y SIMILARES
       if (isNaN(val) || val <= 0) return Infinity; 
       return val;
     };
@@ -282,7 +293,6 @@ export default function ControlPanel() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', backgroundColor: colors.bgApp, color: colors.textMain, fontFamily: 'Arial, sans-serif' }}>
       <style>{`
-        /* ANIMACIÓN MODIFICADA: Ahora pulsa en color rojo oscuro brillante */
         @keyframes pulseRecordAlert {
           0% { background-color: #e74c3c !important; border-color: #c0392b !important; box-shadow: 0 0 15px rgba(231, 76, 60, 0.8) !important; color: white !important; }
           50% { background-color: #c0392b !important; border-color: #922b21 !important; box-shadow: none !important; color: white !important; }
@@ -297,7 +307,6 @@ export default function ControlPanel() {
         </div>
         <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
           
-          {/* NUEVA SECCIÓN DE RÉCORD DE VUELTA EN EL ENCABEZADO */}
           {fastestDriver && fastestDriver.bestLap !== '-' && (
             <div style={{ textAlign: 'right', borderRight: `1px solid ${colors.border}`, paddingRight: '20px' }}>
               <div style={{ fontSize: '9px', color: colors.textMuted, fontWeight: 'bold', letterSpacing: '1px' }}>
@@ -327,8 +336,9 @@ export default function ControlPanel() {
         </div>
       </div>
 
+      {/* AGREGAMOS LA PESTAÑA VOTACIONES AL MENÚ */}
       <div style={{ display: 'flex', borderBottom: `1px solid ${colors.border}` }}>
-        {['PANEL', 'ZÓCALOS', 'DISEÑOS', 'AJUSTES', 'PERSONALIZAR'].map(tab => (
+        {['PANEL', 'VOTACIONES', 'ZÓCALOS', 'DISEÑOS', 'AJUSTES', 'PERSONALIZAR'].map(tab => (
           <div key={tab} onClick={() => setActiveTab(tab)} style={{ padding: '12px 25px', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer', borderBottom: activeTab === tab ? `3px solid ${colors.textMain}` : '3px solid transparent', color: activeTab === tab ? colors.textMain : colors.textMuted }}>
             {tab}
           </div>
@@ -407,7 +417,6 @@ export default function ControlPanel() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', marginBottom: '20px' }}>
               <button onClick={handleToggleVotingQR} style={btnStyle(showVotingQR)}>QR DE VOTACIÓN</button>
               <button onClick={handleToggleVotingResults} style={btnStyle(showVotingResults)}>RESULTADOS EN VIVO</button>
-              <button onClick={handleResetVotes} style={{ ...btnStyle(), backgroundColor: '#c0392b', color: '#fff', borderColor: '#e74c3c' }}>🗑️ REINICIAR VOTOS</button>
             </div>
 
             <div style={sectionTitleStyle}>MEMORIA DE CARRERA (BACKUP)</div>
@@ -436,6 +445,73 @@ export default function ControlPanel() {
               }} />
             )}
             <DriversTable drivers={drivers} colors={colors} activeDriverNumber={activeDriverInfo?.number} onToggleInfo={handleToggleDriverInfo} />
+          </div>
+        </div>
+      )}
+
+      {/* --- NUEVA PESTAÑA DE VOTACIONES EN VIVO --- */}
+      {activeTab === 'VOTACIONES' && (
+        <div style={{ padding: '30px', flex: 1, backgroundColor: colors.bgApp, overflowY: 'auto' }}>
+          
+          <h2 style={{ color: colors.yellow, marginTop: 0, borderBottom: `1px solid ${colors.border}`, paddingBottom: '10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span>📊 PANEL DE VOTACIONES EN VIVO</span>
+            <span style={{ fontSize: '14px', color: colors.textMuted, fontWeight: 'normal' }}>
+              TOTAL VOTOS: <span style={{ color: colors.textMain, fontWeight: 'bold' }}>{Object.values(votes).reduce((a,b)=>a+b, 0)}</span>
+            </span>
+          </h2>
+          
+          <div style={{ display: 'flex', gap: '10px', marginBottom: '30px' }}>
+            <button onClick={handleToggleVotingQR} style={{ ...btnStyle(showVotingQR), flex: 1 }}>{showVotingQR ? 'OCULTAR QR' : 'MOSTRAR QR EN PANTALLA'}</button>
+            <button onClick={handleToggleVotingResults} style={{ ...btnStyle(showVotingResults), flex: 1 }}>{showVotingResults ? 'OCULTAR RESULTADOS' : 'MOSTRAR RESULTADOS EN PANTALLA'}</button>
+            <button onClick={handleResetVotes} style={{ ...btnStyle(), backgroundColor: '#c0392b', color: '#fff', borderColor: '#e74c3c', flex: 1 }}>🗑️ REINICIAR VOTOS</button>
+          </div>
+          
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            {(() => {
+              const totalVotes = Object.values(votes).reduce((a,b) => a+b, 0);
+              const topDrivers = [...drivers]
+                .filter(d => votes[d.number] > 0)
+                .sort((a,b) => (votes[b.number] || 0) - (votes[a.number] || 0));
+
+              if (topDrivers.length === 0) {
+                return <div style={{ textAlign: 'center', padding: '40px', color: colors.textMuted, fontStyle: 'italic' }}>No hay votos registrados en esta sesión aún. Activa el QR para comenzar.</div>;
+              }
+
+              return topDrivers.map((driver, index) => {
+                const percentage = Math.round((votes[driver.number] / totalVotes) * 100);
+                const voteCount = votes[driver.number];
+                const isWinner = index === 0;
+
+                return (
+                  <div key={driver.number} style={{ backgroundColor: colors.bgPanel, padding: '15px 20px', borderRadius: '8px', border: `1px solid ${isWinner ? colors.yellow : colors.border}`, display: 'flex', alignItems: 'center', gap: '20px', boxShadow: isWinner ? `0 0 15px rgba(255, 204, 0, 0.15)` : 'none' }}>
+                    
+                    <div style={{ fontSize: '24px', fontWeight: '900', color: isWinner ? colors.yellow : colors.textMuted, width: '30px', textAlign: 'center' }}>
+                      {index + 1}
+                    </div>
+                    
+                    <div style={{ backgroundColor: colors.bgInput, color: colors.textMain, padding: '8px 15px', borderRadius: '6px', fontSize: '18px', fontWeight: '900', border: `1px solid ${colors.border}` }}>
+                      #{driver.number}
+                    </div>
+                    
+                    <div style={{ fontSize: '20px', fontWeight: 'bold', width: '250px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      {driver.name}
+                    </div>
+                    
+                    <div style={{ flex: 1, backgroundColor: colors.bgInput, height: '24px', borderRadius: '12px', overflow: 'hidden', position: 'relative', border: `1px solid ${colors.border}` }}>
+                      <div style={{ width: `${percentage}%`, height: '100%', backgroundColor: isWinner ? colors.yellow : colors.red, transition: 'width 0.5s ease' }} />
+                      <span style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', fontSize: '11px', fontWeight: 'bold', color: percentage > 50 ? '#000' : '#fff', textShadow: percentage <= 50 ? '1px 1px 2px rgba(0,0,0,0.8)' : 'none' }}>
+                        {percentage}%
+                      </span>
+                    </div>
+
+                    <div style={{ width: '100px', textAlign: 'right', fontSize: '14px', color: colors.textMuted, fontWeight: 'bold' }}>
+                      {voteCount} VOTOS
+                    </div>
+
+                  </div>
+                );
+              });
+            })()}
           </div>
         </div>
       )}

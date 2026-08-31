@@ -103,6 +103,7 @@ const voteServer = http.createServer((req, res) => {
     const num = decodeURIComponent(req.url.split('=')[1]);
     votesData[num] = (votesData[num] || 0) + 1;
     if (overlayWindow) overlayWindow.webContents.send('update-votes', votesData);
+    if (controlWindow) controlWindow.webContents.send('update-votes', votesData); // <-- AÑADIDO (Panel)
     res.writeHead(200); 
     res.end('OK');
   } else {
@@ -116,13 +117,17 @@ voteServer.listen(8080, '0.0.0.0', () => {
 });
 
 ipcMain.handle('get-local-ip', () => localIP);
+ipcMain.handle('get-votes', () => votesData); // <-- AÑADIDO (Para cargar iniciales en el panel)
+
 ipcMain.on('reset-votes', () => { 
   votesData = {}; 
   if (overlayWindow) overlayWindow.webContents.send('update-votes', votesData); 
+  if (controlWindow) controlWindow.webContents.send('update-votes', votesData); // <-- AÑADIDO (Limpiar en panel)
 });
 ipcMain.on('toggle-voting-qr', (event, data) => { if (overlayWindow) overlayWindow.webContents.send('set-voting-qr', data); });
 ipcMain.on('toggle-voting-results', (event, data) => { if (overlayWindow) overlayWindow.webContents.send('set-voting-results', data); });
 
+// =========================================================================
 
 ipcMain.handle('select-logo', async () => {
   const result = await dialog.showOpenDialog(controlWindow, {
@@ -277,14 +282,13 @@ function createWindows() {
     webPreferences: { nodeIntegration: true, contextIsolation: false } 
   });
 
-  // RUTEO INTELIGENTE PARA PRODUCCIÓN
   if (isDev) {
     controlWindow.loadURL('http://localhost:5173/#/');
     overlayWindow.loadURL('http://localhost:5173/#/overlay');
   } else {
-    // Cuando lo exportes como .exe leerá la carpeta 'dist'
-    controlWindow.loadURL(`file://${path.join(__dirname, 'dist', 'index.html')}#/`);
-    overlayWindow.loadURL(`file://${path.join(__dirname, 'dist', 'index.html')}#/overlay`);
+    const indexPath = path.join(__dirname, 'dist', 'index.html');
+    controlWindow.loadURL(`file://${indexPath}#/`);
+    overlayWindow.loadURL(`file://${indexPath}#/overlay`);
   }
 
   controlWindow.on('closed', () => app.quit());
