@@ -20,10 +20,11 @@ export default function FinalResults({ drivers, config, isVisible, id = 'finalRe
   const [page, setPage] = useState(0);
   const itemsPerPage = 10;
   
+  // CORRECCIÓN 1: Incluimos pos.scale para que la animación no dé un salto de tamaño
+  let transformHidden = `scale(${pos.scale}) translateY(-60px)`; 
+  if (animStyle === 'fade') transformHidden = `scale(${pos.scale})`; 
+  if (animStyle === 'zoom') transformHidden = `scale(${pos.scale * 0.9})`;
 
-  let transformHidden = 'translateY(-150%) scale(1)'; 
-  if (animStyle === 'fade') transformHidden = 'translateY(0) scale(1)'; 
-  if (animStyle === 'zoom') transformHidden = 'translateY(0) scale(0.8)';
   useEffect(() => {
     if (!isVisible || drivers.length <= itemsPerPage) {
       setPage(0);
@@ -42,9 +43,14 @@ export default function FinalResults({ drivers, config, isVisible, id = 'finalRe
   return (
      <div style={{
         position: 'absolute', left: `${pos.x}px`, top: `${pos.y}px`,
-        transform: `scale(${pos.scale})`, transformOrigin: 'top left',
-        zIndex: 35, transition: 'opacity 0.5s ease-in-out', 
-        opacity: isVisible ? 1 : 0, pointerEvents: isVisible ? 'auto' : 'none'
+        transformOrigin: 'top left', zIndex: 35, 
+        
+        // CORRECCIÓN 2: Le decimos que anime "all" y le aplicamos el transformHidden
+        transition: 'all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275)', 
+        opacity: isVisible ? 1 : 0, 
+        transform: isVisible ? `scale(${pos.scale}) translateY(0)` : transformHidden,
+        
+        pointerEvents: isVisible ? 'auto' : 'none'
      }}>
          <style>{`
            @keyframes fadePage { 0% { opacity: 0; transform: translateY(10px); } 100% { opacity: 1; transform: translateY(0); } }
@@ -57,7 +63,7 @@ export default function FinalResults({ drivers, config, isVisible, id = 'finalRe
              padding: '40px', display: 'flex', flexDirection: 'column', 
              alignItems: 'center', boxShadow: hasCustomBg ? 'none' : '0 15px 50px rgba(0,0,0,0.8)',
              border: hasCustomBg ? 'none' : `2px solid ${themeMain}`,
-             borderRadius: bRad // <-- APLICAMOS BORDE REDONDEADO
+             borderRadius: bRad 
          }}>
              
              {/* ENCABEZADO CON LOGO Y TÍTULO */}
@@ -76,7 +82,7 @@ export default function FinalResults({ drivers, config, isVisible, id = 'finalRe
              {/* CONTENEDOR DE LA TABLA */}
              <div style={{ 
                width: '1050px', backgroundColor: hasCustomBg ? 'transparent' : themeHeaderBg, 
-               borderRadius: bRad, // <-- APLICAMOS BORDE REDONDEADO INTERNO
+               borderRadius: bRad, 
                padding: '10px 20px 20px 20px', border: hasCustomBg ? 'none' : '1px solid rgba(255,255,255,0.1)', position: 'relative' 
              }}>
                 
