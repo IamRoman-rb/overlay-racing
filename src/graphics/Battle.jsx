@@ -7,8 +7,15 @@ export default function Battle({ drivers, config, isVisible, battleFocusPos = 1,
   const themeNormalText = config?.themeNormalText || '#ffffff';
   const themeNumberText = config?.themeNumberText || '#3498db';
 
-  // MAGIA: EXTRAEMOS EL DISEÑO
+  // DISEÑO, BORDES Y ANIMACIÓN
   const customBg = config[`design_${id}`];
+  const bRad = config[`borderRadius_${id}`] || '8px';
+  const animStyle = config[`animationStyle_${id}`] || 'slide'
+
+  // Animación de entrada
+  let transformHidden = `scale(${pos.scale}) translateX(-40px)`; 
+  if (animStyle === 'fade') transformHidden = `scale(${pos.scale})`; 
+  if (animStyle === 'zoom') transformHidden = `scale(${pos.scale * 0.9})`;
 
   const targetPos = parseInt(battleFocusPos) || 1;
   const startIndex = Math.max(0, drivers.findIndex(d => parseInt(d.pos) === targetPos));
@@ -22,18 +29,17 @@ export default function Battle({ drivers, config, isVisible, battleFocusPos = 1,
       transformOrigin: 'top left', zIndex: 45, 
       transition: 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
       opacity: isVisible ? 1 : 0, 
-      transform: isVisible ? `scale(${pos.scale}) translateX(0)` : `scale(${pos.scale}) translateX(-40px)`,
+      transform: isVisible ? `scale(${pos.scale}) translateX(0)` : transformHidden,
       pointerEvents: 'none', display: 'flex', flexDirection: 'column', width: '420px',
-      // FONDO A LA CAJA MADRE
       backgroundImage: customBg ? `url(${customBg})` : 'none',
       backgroundSize: '100% 100%', backgroundRepeat: 'no-repeat', backgroundPosition: 'center',
-      padding: customBg ? '20px' : '0' // Un poco de padding interior si el diseño PNG lo requiere
+      padding: customBg ? '20px' : '0' 
     }}>
       
-      {/* CABECERA (Se esconde el fondo si hay diseño personalizado) */}
       <div style={{
         backgroundColor: customBg ? 'transparent' : themeMain, 
-        padding: '6px 15px', borderTopLeftRadius: '8px', borderTopRightRadius: '8px',
+        padding: '6px 15px', 
+        borderTopLeftRadius: bRad, borderTopRightRadius: bRad, // APLICAMOS BORDE REDONDEADO
         display: 'flex', alignItems: 'center', boxShadow: customBg ? 'none' : '0 5px 15px rgba(0,0,0,0.5)', zIndex: 2
       }}>
         <span style={{ color: customBg ? themeNormalText : themeBg, fontWeight: '900', fontStyle: 'italic', fontSize: '15px', letterSpacing: '1px' }}>
@@ -44,7 +50,7 @@ export default function Battle({ drivers, config, isVisible, battleFocusPos = 1,
       <div style={{
         backgroundColor: customBg ? 'transparent' : themeBg,
         borderBottom: customBg ? 'none' : `4px solid ${themeMain}`,
-        borderBottomLeftRadius: '8px', borderBottomRightRadius: '8px',
+        borderBottomLeftRadius: bRad, borderBottomRightRadius: bRad, // APLICAMOS BORDE REDONDEADO
         boxShadow: customBg ? 'none' : '0 10px 20px rgba(0,0,0,0.5)', display: 'flex', flexDirection: 'column', overflow: 'hidden'
       }}>
         {battleDrivers.map((d, i) => (

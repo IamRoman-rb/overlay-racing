@@ -57,6 +57,9 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
     const pos = positions[id] || defaultPositions[id] || {x:0,y:0,scale:1};
     const isSelected = selectedGraphic === id;
     
+    // LA PREVISUALIZACIÓN AHORA LEE EL BORDE INDIVIDUAL DE CADA GRÁFICA
+    const currentRadius = config[`borderRadius_${id}`] || '8px';
+    
     return (
       <div 
         onMouseDown={(e) => handlePreviewMouseDown(e, id)}
@@ -67,6 +70,7 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
           backgroundColor: config.themeBg || 'rgba(0, 0, 0, 0.85)', 
           padding: '10px 20px', minWidth: '250px', 
           borderLeft: `4px solid ${config.themeMain || '#e74c3c'}`, 
+          borderRadius: currentRadius, 
           userSelect: 'none', boxShadow: '0 5px 15px rgba(0,0,0,0.5)',
           zIndex: isSelected ? 50 : 10 
         }}
@@ -95,12 +99,6 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
 
   return (
     <div style={{ display: 'flex', flex: 1, overflow: 'hidden', backgroundColor: colors.bgApp }} onMouseMove={handlePreviewMouseMove} onMouseUp={handlePreviewMouseUp} onMouseLeave={handlePreviewMouseUp} >
-      
-      {/* IMPORTAMOS LAS FUENTES DE GOOGLE */}
-      <style>
-        {`@import url('https://fonts.googleapis.com/css2?family=Exo+2:ital,wght@0,400;0,700;0,900;1,900&family=Montserrat:ital,wght@0,400;0,700;0,900;1,900&family=Oswald:wght@400;700&family=Teko:wght@400;600;700&display=swap');`}
-      </style>
-
       <div style={{ width: '380px', minWidth: '380px', backgroundColor: colors.bgPanel, padding: '20px', overflowY: 'auto', borderRight: `1px solid ${colors.border}`, zIndex: 100 }}>
         
         <h3 style={{ color: colors.yellow, marginTop: 0, marginBottom: '15px' }}>SELECCIONAR GRÁFICA</h3>
@@ -123,38 +121,58 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
           ))}
         </div>
 
-        {/* --- SECCIÓN DE TIPOGRAFÍA --- */}
-        <h3 style={{ color: colors.yellow, marginBottom: '15px' }}>TIPOGRAFÍA DE LA GRÁFICA</h3>
-        {/* --- SECCIÓN DE TEXTO Y FUENTE --- */}
         <h3 style={{ color: colors.yellow, marginBottom: '15px' }}>TEXTO Y TIPOGRAFÍA</h3>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '30px' }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
             <label style={{ fontSize: '9px', color: colors.textMuted, fontWeight: 'bold' }}>TIPOGRAFÍA GENERAL</label>
-            <select 
-              value={config.fontFamily || 'Arial, sans-serif'} 
-              onChange={(e) => onConfigChange('fontFamily', e.target.value)}
-              style={{ ...inputStyle, padding: '10px', fontSize: '11px', cursor: 'pointer', border: `1px solid ${colors.border}` }}
-            >
+            <select value={config.fontFamily || 'Arial, sans-serif'} onChange={(e) => onConfigChange('fontFamily', e.target.value)} style={{ ...inputStyle, padding: '10px', fontSize: '11px', cursor: 'pointer', border: `1px solid ${colors.border}` }}>
               <option value="Arial, sans-serif">Arial (Clásica)</option>
-              <option value="'Oswald', sans-serif">Oswald (Condensada TV)</option>
-              <option value="'Montserrat', sans-serif">Montserrat (Moderna Redonda)</option>
-              <option value="'Teko', sans-serif">Teko (Racing Compacta)</option>
-              <option value="'Exo 2', sans-serif">Exo 2 (Deportiva Futurista)</option>
+              <option value="'Oswald', sans-serif">Oswald (TV)</option>
+              <option value="'Montserrat', sans-serif">Montserrat (Moderna)</option>
+              <option value="'Teko', sans-serif">Teko (Racing)</option>
+              <option value="'Exo 2', sans-serif">Exo 2 (Futurista)</option>
+            </select>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+            <label style={{ fontSize: '9px', color: colors.textMuted, fontWeight: 'bold' }}>FORMATO NOMBRES</label>
+            <select value={config.nameFormat || 'original'} onChange={(e) => onConfigChange('nameFormat', e.target.value)} style={{ ...inputStyle, padding: '10px', fontSize: '11px', cursor: 'pointer', border: `1px solid ${colors.border}` }}>
+              <option value="original">Original</option>
+              <option value="uppercase">MAYÚSCULAS</option>
+              <option value="firstInitialLast">R. Borla</option>
+              <option value="firstLastInitial">Roman B.</option>
+              <option value="lastOnly">Borla (Solo Apellido)</option>
+            </select>
+          </div>
+        </div>
+
+        <h3 style={{ color: colors.yellow, marginBottom: '15px' }}>ESTILO: {allGraphics.find(g => g.id === selectedGraphic)?.label}</h3>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '30px', backgroundColor: '#111', padding: '15px', borderRadius: '8px', border: `1px solid ${colors.border}` }}>
+          
+          {/* AHORA GUARDAN LA INFO ESPECÍFICA DE LA GRÁFICA SELECCIONADA */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+            <label style={{ fontSize: '9px', color: colors.textMuted, fontWeight: 'bold' }}>BORDES (REDONDEO)</label>
+            <select 
+              value={config[`borderRadius_${selectedGraphic}`] || '8px'} 
+              onChange={(e) => onConfigChange(`borderRadius_${selectedGraphic}`, e.target.value)} 
+              style={{ ...inputStyle, padding: '10px', fontSize: '11px', cursor: 'pointer' }}
+            >
+              <option value="0px">0px (Cuadrados)</option>
+              <option value="8px">8px (Normal)</option>
+              <option value="16px">16px (Redondeados)</option>
+              <option value="30px">30px (Píldora)</option>
             </select>
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
-            <label style={{ fontSize: '9px', color: colors.textMuted, fontWeight: 'bold' }}>FORMATO DE NOMBRES</label>
+            <label style={{ fontSize: '9px', color: colors.textMuted, fontWeight: 'bold' }}>ANIMACIÓN (ENTRADA)</label>
             <select 
-              value={config.nameFormat || 'original'} 
-              onChange={(e) => onConfigChange('nameFormat', e.target.value)}
-              style={{ ...inputStyle, padding: '10px', fontSize: '11px', cursor: 'pointer', border: `1px solid ${colors.border}` }}
+              value={config[`animationStyle_${selectedGraphic}`] || 'slide'} 
+              onChange={(e) => onConfigChange(`animationStyle_${selectedGraphic}`, e.target.value)} 
+              style={{ ...inputStyle, padding: '10px', fontSize: '11px', cursor: 'pointer' }}
             >
-              <option value="original">Original (Como llega)</option>
-              <option value="uppercase">TODO MAYÚSCULAS</option>
-              <option value="firstInitialLast">Inicial y Apellido (R. Borla)</option>
-              <option value="firstLastInitial">Nombre e Inicial (Roman B.)</option>
-              <option value="lastOnly">Solo Apellido (Borla)</option>
+              <option value="slide">Deslizar (Slide)</option>
+              <option value="fade">Desvanecer (Fade)</option>
+              <option value="zoom">Aumentar (Zoom)</option>
             </select>
           </div>
         </div>
@@ -217,7 +235,6 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
                 position: 'absolute', top: 0, left: 0,
                 transform: `scale(${PREVIEW_SCALE})`, transformOrigin: 'top left',
                 border: '4px solid #555', boxSizing: 'border-box', overflow: 'hidden',
-                // APLICAMOS LA FUENTE A LA VENTANA DE PREVISUALIZACIÓN
                 fontFamily: config.fontFamily || 'Arial, sans-serif'
               }}
             >

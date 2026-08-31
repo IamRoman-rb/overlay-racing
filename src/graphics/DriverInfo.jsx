@@ -8,9 +8,17 @@ export default function DriverInfo({ driver, config, isVisible, id = 'driverInfo
   const themeNormalText = config?.themeNormalText || '#ffffff';
   const themeNumberText = config?.themeNumberText || '#bdc3c7';
 
-  // EXTRAEMOS DISEÑO
   const customBg = config[`design_${id}`];
   const hasCustomBg = !!customBg;
+
+  // LECTURA DE BORDES Y ANIMACIÓN
+  const bRad = config[`borderRadius_${id}`] || '8px';
+  const animStyle = config[`animationStyle_${id}`] || 'slide'
+
+  // CÁLCULO DE LA ANIMACIÓN DE ENTRADA
+  let transformHidden = `scale(${pos.scale}) translateX(-40px)`; // Slide
+  if (animStyle === 'fade') transformHidden = `scale(${pos.scale})`; // Solo opacidad
+  if (animStyle === 'zoom') transformHidden = `scale(${pos.scale * 0.9})`; // Pequeño al inicio
 
   return (
     <div style={{
@@ -18,7 +26,7 @@ export default function DriverInfo({ driver, config, isVisible, id = 'driverInfo
       transformOrigin: 'top left', zIndex: 45, pointerEvents: 'none',
       transition: 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
       opacity: isVisible ? 1 : 0,
-      transform: isVisible ? `scale(${pos.scale}) translateX(0)` : `scale(${pos.scale}) translateX(-40px)`
+      transform: isVisible ? `scale(${pos.scale}) translateX(0)` : transformHidden
     }}>
       {driver && (
         <div style={{
@@ -28,7 +36,8 @@ export default function DriverInfo({ driver, config, isVisible, id = 'driverInfo
           backgroundImage: hasCustomBg ? `url(${customBg})` : 'none',
           backgroundSize: '100% 100%', backgroundRepeat: 'no-repeat', backgroundPosition: 'center',
           boxShadow: hasCustomBg ? 'none' : '0 10px 30px rgba(0,0,0,0.6)',
-          borderRadius: '8px', overflow: 'hidden'
+          borderRadius: bRad, // <-- APLICAMOS EL BORDE REDONDEADO SELECCIONADO
+          overflow: 'hidden'
         }}>
           <div style={{
             backgroundColor: hasCustomBg ? 'transparent' : themeSecondary, 

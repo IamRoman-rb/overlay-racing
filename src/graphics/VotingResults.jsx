@@ -5,9 +5,16 @@ export default function VotingResults({ isVisible, drivers, votes, config, id = 
   const themeMain = config?.themeMain || '#e74c3c';
   const themeAccent = config?.themeAccent || '#f39c12';
 
-  // MAGIA DE DISEÑO PERSONALIZADO
+  // MAGIA DE DISEÑO, BORDES Y ANIMACIÓN
   const customBg = config[`design_${id}`];
   const hasCustomBg = !!customBg;
+  const bRad = config[`borderRadius_${id}`] || '8px';
+  const animStyle = config[`animationStyle_${id}`] || 'slide'
+
+  // Animación de entrada (Slide desde la derecha)
+  let transformHidden = `scale(${pos.scale}) translateX(40px)`; 
+  if (animStyle === 'fade') transformHidden = `scale(${pos.scale})`; 
+  if (animStyle === 'zoom') transformHidden = `scale(${pos.scale * 0.9})`;
 
   // Ordenamos a los pilotos según sus votos y sacamos el Top 5
   const topDrivers = [...drivers]
@@ -19,19 +26,22 @@ export default function VotingResults({ isVisible, drivers, votes, config, id = 
 
   return (
     <div style={{
-      position: 'absolute', left: `${pos.x}px`, top: `${pos.y}px`, transform: `scale(${pos.scale})`, transformOrigin: 'top left',
-      zIndex: 40, transition: 'opacity 0.4s ease-in-out', opacity: isVisible ? 1 : 0, pointerEvents: 'none',
+      position: 'absolute', left: `${pos.x}px`, top: `${pos.y}px`, transformOrigin: 'top left',
+      zIndex: 40, pointerEvents: 'none',
+      transition: 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)', 
+      opacity: isVisible ? 1 : 0, 
+      transform: isVisible ? `scale(${pos.scale}) translateX(0)` : transformHidden,
       width: '320px', 
       
       backgroundColor: hasCustomBg ? 'transparent' : themeBg, 
       backgroundImage: hasCustomBg ? `url(${customBg})` : 'none',
       backgroundSize: '100% 100%', backgroundRepeat: 'no-repeat', backgroundPosition: 'center',
       
-      borderRadius: '8px', 
+      borderRadius: bRad, // <-- APLICADO BORDE DINÁMICO
       boxShadow: hasCustomBg ? 'none' : '0 10px 30px rgba(0,0,0,0.8)', 
       overflow: 'hidden', 
       borderLeft: hasCustomBg ? 'none' : `4px solid ${themeMain}`,
-      padding: hasCustomBg ? '10px' : '0' // Padding extra por si el PNG tiene bordes decorativos
+      padding: hasCustomBg ? '10px' : '0' 
     }}>
       <div style={{ 
         backgroundColor: hasCustomBg ? 'transparent' : themeHeaderBg, 

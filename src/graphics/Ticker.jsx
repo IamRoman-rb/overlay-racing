@@ -12,25 +12,33 @@ export default function Ticker({ drivers, isVisible, config, id = 'ticker', sess
   const themeNormalText = config?.themeNormalText || '#ffffff';
   const themeNumberText = config?.themeNumberText || '#3498db';
 
-  // MAGIA: EXTRAEMOS DISEÑO DESDE LA PESTAÑA DISEÑOS
+  // MAGIA DE DISEÑO, BORDES Y ANIMACIÓN
   const customBg = config[`design_${id}`];
   const hasCustomBg = !!customBg;
+  const bRad = config[`borderRadius_${id}`] || '8px';
+  const animStyle = config[`animationStyle_${id}`] || 'slide'
+
+  // Animación de entrada (La tira inferior suele deslizar desde abajo hacia arriba)
+  let transformHidden = `scale(${pos.scale}) translateY(60px)`; 
+  if (animStyle === 'fade') transformHidden = `scale(${pos.scale})`; 
+  if (animStyle === 'zoom') transformHidden = `scale(${pos.scale * 0.9})`;
 
   return (
     <div style={{
       position: 'absolute', left: `${pos.x}px`, top: `${pos.y}px`,
-      transform: `scale(${pos.scale})`, transformOrigin: 'top left',
+      transformOrigin: 'top left',
       zIndex: 20, width: '1920px', 
-      height: hasCustomBg ? '80px' : '60px', // Si hay diseño, usamos 80px para que encaje el PNG
+      height: hasCustomBg ? '80px' : '60px', 
       backgroundImage: hasCustomBg ? `url(${customBg})` : 'none',
       backgroundSize: '100% 100%', backgroundRepeat: 'no-repeat', backgroundPosition: 'center',
-      transition: 'opacity 0.4s ease-in-out',
-      opacity: isVisible ? 1 : 0, pointerEvents: isVisible ? 'auto' : 'none'
+      transition: 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+      opacity: isVisible ? 1 : 0, 
+      transform: isVisible ? `scale(${pos.scale}) translateY(0)` : transformHidden,
+      pointerEvents: isVisible ? 'auto' : 'none'
     }}>
       <style>{`
         @keyframes scrollTicker { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
         .ticker-track { display: flex; width: max-content; animation: scrollTicker ${animationDuration}s linear infinite; }
-        /* Si hay diseño personalizado, quitamos el borde vertical entre pilotos para hacerlo más limpio */
         .driver-item { 
           width: 300px; display: flex; alignItems: center; 
           border-right: ${hasCustomBg ? 'none' : '2px solid rgba(255, 255, 255, 0.1)'}; 
@@ -42,15 +50,14 @@ export default function Ticker({ drivers, isVisible, config, id = 'ticker', sess
         width: '100%', height: '100%', 
         backgroundColor: hasCustomBg ? 'transparent' : themeBg, 
         borderTop: hasCustomBg ? 'none' : `4px solid ${themeMain}`, 
+        borderRadius: bRad, // <-- APLICADO BORDE REDONDEADO AL CONTENEDOR INTERNO
         display: 'flex', alignItems: 'center', boxSizing: 'border-box', overflow: 'hidden'
       }}>
         
-        {/* LA PARED INVISIBLE: Este bloque ocupa el mismo ancho que tu caja roja de "EN VIVO" */}
         {hasCustomBg && (
           <div style={{ width: '400px', height: '100%', flexShrink: 0 }}></div>
         )}
 
-        {/* ZONA DE LOGOS NORMAL (Se esconde si subes un PNG) */}
         {!hasCustomBg && (config?.logo || config?.categoryLogo) && (
           <div style={{ 
             height: '100%', padding: '0 15px', backgroundColor: themeHeaderBg, 
@@ -63,8 +70,6 @@ export default function Ticker({ drivers, isVisible, config, id = 'ticker', sess
           </div>
         )}
 
-        {/* TIRA DE PILOTOS */}
-        {/* Como la Pared Invisible empuja esto a la derecha, el texto desaparecerá mágicamente al llegar a ella */}
         <div style={{ flex: 1, overflow: 'hidden', display: 'flex', alignItems: 'center', height: '100%' }}>
           {drivers.length > 0 && (
             <div className="ticker-track" style={{ height: '100%' }}>
@@ -75,7 +80,6 @@ export default function Ticker({ drivers, isVisible, config, id = 'ticker', sess
                     {driver.pos}
                   </div>
 
-                  {/* DISEÑO DEL NÚMERO: Si hay PNG se vuelve sutil y translúcido, si no, es sólido */}
                   <div style={{ 
                     backgroundColor: hasCustomBg ? 'rgba(255,255,255,0.15)' : themeSecondary, 
                     color: hasCustomBg ? '#fff' : '#000', 
@@ -101,7 +105,6 @@ export default function Ticker({ drivers, isVisible, config, id = 'ticker', sess
           )}
         </div>
 
-        {/* INFO SESIÓN (Vueltas y Tiempo) */}
         <div style={{
           height: '100%', padding: '0 20px', 
           backgroundColor: hasCustomBg ? 'transparent' : themeHeaderBg, 

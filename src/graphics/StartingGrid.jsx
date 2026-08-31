@@ -16,8 +16,15 @@ export default function StartingGrid({ drivers, config, isVisible, id = 'grid' }
   const themeNormalText = config?.themeNormalText || '#ffffff';
   const themeNumberText = config?.themeNumberText || '#ffffff';
 
-  // MAGIA DE DISEÑO PERSONALIZADO (Se lo pasaremos a la tarjeta)
+  // MAGIA DE DISEÑO, BORDES Y ANIMACIÓN
   const customBg = config[`design_${id}`];
+  const bRad = config[`borderRadius_${id}`] || '8px';
+  const animStyle = config[`animationStyle_${id}`] || 'slide'
+
+  // Animación de entrada (Aparece desde abajo)
+  let transformHidden = `scale(${config?.positions?.[id]?.scale || 1}) translateY(40px)`; 
+  if (animStyle === 'fade') transformHidden = `scale(${config?.positions?.[id]?.scale || 1})`; 
+  if (animStyle === 'zoom') transformHidden = `scale(${(config?.positions?.[id]?.scale || 1) * 0.9})`;
 
   useEffect(() => {
     if (!isVisible || drivers.length === 0) { setPage(0); return; }
@@ -42,12 +49,14 @@ export default function StartingGrid({ drivers, config, isVisible, id = 'grid' }
   return (
     <div style={{
       position: 'absolute', left: `${pos.x}px`, top: `${pos.y}px`,
-      transform: `scale(${pos.scale})`, transformOrigin: 'top left',
+      transformOrigin: 'top left',
       width: '1920px', height: '1080px',
       display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
       backgroundColor: 'rgba(0, 0, 0, 0.7)', zIndex: 30,
-      transition: 'opacity 0.4s ease-in-out',
-      opacity: isVisible ? 1 : 0, pointerEvents: isVisible ? 'auto' : 'none'
+      transition: 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+      opacity: isVisible ? 1 : 0, 
+      transform: isVisible ? `scale(${pos.scale}) translateY(0)` : transformHidden,
+      pointerEvents: isVisible ? 'auto' : 'none'
     }}>
       <style>{`
         @keyframes zoomInForward { 0% { transform: scale(0.3) translateZ(-500px); opacity: 0; } 70% { transform: scale(1.05) translateZ(0); opacity: 1; } 100% { transform: scale(1) translateZ(0); opacity: 1; } }
@@ -60,7 +69,8 @@ export default function StartingGrid({ drivers, config, isVisible, id = 'grid' }
         backgroundColor: themeHeaderBg, color: themeTitleText, padding: '15px 50px',
         fontSize: '36px', fontWeight: '900', textTransform: 'uppercase',
         borderBottom: `6px solid ${themeMain}`, boxShadow: '0 10px 30px rgba(0,0,0,0.8)',
-        display: 'flex', alignItems: 'center', gap: '20px', borderRadius: '8px'
+        display: 'flex', alignItems: 'center', gap: '20px', 
+        borderRadius: bRad // <-- APLICADO BORDE REDONDEADO
       }}>
         {(config?.logo || config?.categoryLogo) && (
           <div style={{ display: 'flex', alignItems: 'center', gap: '20px', marginRight: '15px' }}>
@@ -75,7 +85,7 @@ export default function StartingGrid({ drivers, config, isVisible, id = 'grid' }
       <div key={page} className="grid-page">
         {currentDrivers.map((driver) => (
           <DriverCard 
-            key={driver.pos} driver={driver} config={config} customBg={customBg}
+            key={driver.pos} driver={driver} config={config} customBg={customBg} bRad={bRad}
             themeBg={themeBg} themeHeaderBg={themeHeaderBg} themeSecondary={themeSecondary} 
             themeAccent={themeAccent} themeNormalText={themeNormalText} themeNumberText={themeNumberText}
           />
@@ -86,7 +96,7 @@ export default function StartingGrid({ drivers, config, isVisible, id = 'grid' }
 }
 
 // TARJETA DE PILOTO
-function DriverCard({ driver, config, customBg, themeBg, themeHeaderBg, themeSecondary, themeAccent, themeNormalText, themeNumberText }) {
+function DriverCard({ driver, config, customBg, bRad, themeBg, themeHeaderBg, themeSecondary, themeAccent, themeNormalText, themeNumberText }) {
   const [imgSrc, setImgSrc] = useState(null);
   const hasCustomBg = !!customBg;
 
@@ -113,7 +123,8 @@ function DriverCard({ driver, config, customBg, themeBg, themeHeaderBg, themeSec
       backgroundColor: hasCustomBg ? 'transparent' : themeBg, 
       backgroundImage: hasCustomBg ? `url(${customBg})` : 'none',
       backgroundSize: '100% 100%', backgroundRepeat: 'no-repeat', backgroundPosition: 'center',
-      borderLeft: hasCustomBg ? 'none' : `8px solid ${themeSecondary}`, borderRadius: '8px', 
+      borderLeft: hasCustomBg ? 'none' : `8px solid ${themeSecondary}`, 
+      borderRadius: bRad, // <-- APLICADO BORDE REDONDEADO
       width: '700px', height: '100px', boxShadow: hasCustomBg ? 'none' : '10px 15px 30px rgba(0,0,0,0.8)', 
       position: 'relative', overflow: 'visible' 
     }}>
@@ -128,7 +139,7 @@ function DriverCard({ driver, config, customBg, themeBg, themeHeaderBg, themeSec
         width: '100px', backgroundColor: hasCustomBg ? 'transparent' : themeHeaderBg, height: '100%', 
         display: 'flex', alignItems: 'center', justifyContent: 'center', 
         fontSize: '48px', fontWeight: '900', color: themeNumberText,
-        borderTopLeftRadius: '8px', borderBottomLeftRadius: '8px', zIndex: 2 
+        borderTopLeftRadius: bRad, borderBottomLeftRadius: bRad, zIndex: 2 // <-- APLICADO BORDE REDONDEADO
       }}>
         {driver.pos}
       </div>

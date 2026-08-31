@@ -16,9 +16,16 @@ export default function TimingTower({ drivers, config, isVisible, id = 'tower', 
   const themeNormalText = config?.themeNormalText || '#ffffff';
   const themeNumberText = config?.themeNumberText || '#3498db';
 
-  // EXTRAEMOS DISEÑO
+  // MAGIA DE DISEÑO, BORDES Y ANIMACIÓN
   const customBg = config[`design_${id}`];
   const hasCustomBg = !!customBg;
+  const bRad = config[`borderRadius_${id}`] || '8px';
+  const animStyle = config[`animationStyle_${id}`] || 'slide'
+
+  // Animación de entrada (La torre suele deslizar desde el lado izquierdo)
+  let transformHidden = `scale(${pos.scale}) translateX(-40px)`; 
+  if (animStyle === 'fade') transformHidden = `scale(${pos.scale})`; 
+  if (animStyle === 'zoom') transformHidden = `scale(${pos.scale * 0.9})`;
 
   useEffect(() => { 
     setTrends(prevTrends => {
@@ -50,8 +57,8 @@ export default function TimingTower({ drivers, config, isVisible, id = 'tower', 
 
   return (
     <div style={{
-      position: 'absolute', left: `${pos.x}px`, top: `${pos.y}px`, transform: `scale(${pos.scale})`, transformOrigin: 'top left',
-      width: '320px', height: '650px', 
+      position: 'absolute', left: `${pos.x}px`, top: `${pos.y}px`, 
+      transformOrigin: 'top left', width: '320px', height: '650px', 
       
       backgroundColor: hasCustomBg ? 'transparent' : themeBg, 
       borderTop: hasCustomBg ? 'none' : `4px solid ${themeMain}`, 
@@ -59,8 +66,12 @@ export default function TimingTower({ drivers, config, isVisible, id = 'tower', 
       backgroundSize: '100% 100%', backgroundRepeat: 'no-repeat', backgroundPosition: 'center',
       boxShadow: hasCustomBg ? 'none' : '0 10px 30px rgba(0,0,0,0.5)',
 
-      borderRadius: '8px', display: 'flex', flexDirection: 'column', zIndex: 10,
-      transition: 'opacity 0.5s ease-in-out', opacity: isVisible ? 1 : 0, pointerEvents: isVisible ? 'auto' : 'none'
+      borderRadius: bRad, // <-- APLICADO BORDE REDONDEADO GENERAL
+      display: 'flex', flexDirection: 'column', zIndex: 10,
+      transition: 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)', 
+      opacity: isVisible ? 1 : 0, 
+      transform: isVisible ? `scale(${pos.scale}) translateX(0)` : transformHidden,
+      pointerEvents: isVisible ? 'auto' : 'none'
     }}>
       
       <div style={{ 
@@ -68,7 +79,8 @@ export default function TimingTower({ drivers, config, isVisible, id = 'tower', 
         backgroundColor: hasCustomBg ? 'transparent' : themeHeaderBg, 
         borderBottom: hasCustomBg ? 'none' : `2px solid ${themeMain}`,
         display: 'flex', alignItems: 'center', 
-        justifyContent: (!hasCustomBg && (config?.logo || config?.categoryLogo)) ? 'flex-start' : 'center', gap: '10px', borderRadius: '8px 8px 0 0' 
+        justifyContent: (!hasCustomBg && (config?.logo || config?.categoryLogo)) ? 'flex-start' : 'center', gap: '10px', 
+        borderRadius: `${bRad} ${bRad} 0 0` // <-- APLICADO BORDE REDONDEADO A LA CABECERA
       }}>
         {!hasCustomBg && (config?.logo || config?.categoryLogo) && (
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>

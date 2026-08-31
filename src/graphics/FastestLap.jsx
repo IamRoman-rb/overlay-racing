@@ -11,9 +11,16 @@ export default function FastestLap({ drivers, config, isVisible, id = 'fastestLa
   const themeTitleText = config?.themeTitleText || '#ffcc00';
   const themeNormalText = config?.themeNormalText || '#ffffff';
 
-  // MAGIA DE DISEÑO PERSONALIZADO
+  // DISEÑO, BORDES Y ANIMACIÓN
   const customBg = config[`design_${id}`];
   const hasCustomBg = !!customBg;
+  const bRad = config[`borderRadius_${id}`] || '8px';
+  const animStyle = config[`animationStyle_${id}`] || 'slide'
+
+  // Animación de entrada: Para "slide" el récord suele venir desde arriba, no de costado
+  let transformHidden = 'translateY(-20px)'; 
+  if (animStyle === 'fade') transformHidden = 'scale(1)'; 
+  if (animStyle === 'zoom') transformHidden = 'scale(0.9)';
 
   const fastestDriver = useMemo(() => {
     if (!drivers || drivers.length === 0) return null;
@@ -45,14 +52,15 @@ export default function FastestLap({ drivers, config, isVisible, id = 'fastestLa
     }}>
        <div style={{
          display: 'flex', flexDirection: 'column', width: '450px',
-         backgroundColor: hasCustomBg ? 'transparent' : themeBg, // Fondo transparente si hay imagen
+         backgroundColor: hasCustomBg ? 'transparent' : themeBg, 
          backgroundImage: hasCustomBg ? `url(${customBg})` : 'none',
          backgroundSize: '100% 100%', backgroundRepeat: 'no-repeat', backgroundPosition: 'center',
          boxShadow: hasCustomBg ? 'none' : '0 10px 30px rgba(0,0,0,0.6)', 
-         borderRadius: '8px', overflow: 'hidden',
-         transform: isVisible ? 'translateY(0)' : 'translateY(-20px)',
+         borderRadius: bRad, // <-- APLICAMOS BORDE REDONDEADO
+         overflow: 'hidden',
+         transform: isVisible ? 'translateY(0) scale(1)' : transformHidden,
          transition: 'transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
-         padding: hasCustomBg ? '10px' : '0' // Padding extra si usa imagen
+         padding: hasCustomBg ? '10px' : '0' 
        }}>
          {/* ENCABEZADO */}
          <div style={{ 

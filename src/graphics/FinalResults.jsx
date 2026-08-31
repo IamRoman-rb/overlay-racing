@@ -12,13 +12,18 @@ export default function FinalResults({ drivers, config, isVisible, id = 'finalRe
   const themeNormalText = config?.themeNormalText || '#ffffff';
   const themeNumberText = config?.themeNumberText || '#bdc3c7';
 
-  // MAGIA DE DISEÑO PERSONALIZADO
   const customBg = config[`design_${id}`];
   const hasCustomBg = !!customBg;
-
+  const bRad = config[`borderRadius_${id}`] || '8px';
+  const animStyle = config[`animationStyle_${id}`] || 'slide';
+  
   const [page, setPage] = useState(0);
   const itemsPerPage = 10;
   
+
+  let transformHidden = 'translateY(-150%) scale(1)'; 
+  if (animStyle === 'fade') transformHidden = 'translateY(0) scale(1)'; 
+  if (animStyle === 'zoom') transformHidden = 'translateY(0) scale(0.8)';
   useEffect(() => {
     if (!isVisible || drivers.length <= itemsPerPage) {
       setPage(0);
@@ -49,9 +54,10 @@ export default function FinalResults({ drivers, config, isVisible, id = 'finalRe
              backgroundColor: hasCustomBg ? 'transparent' : themeBg, 
              backgroundImage: hasCustomBg ? `url(${customBg})` : 'none',
              backgroundSize: '100% 100%', backgroundRepeat: 'no-repeat', backgroundPosition: 'center',
-             padding: '40px', borderRadius: '12px', display: 'flex', flexDirection: 'column', 
+             padding: '40px', display: 'flex', flexDirection: 'column', 
              alignItems: 'center', boxShadow: hasCustomBg ? 'none' : '0 15px 50px rgba(0,0,0,0.8)',
-             border: hasCustomBg ? 'none' : `2px solid ${themeMain}`
+             border: hasCustomBg ? 'none' : `2px solid ${themeMain}`,
+             borderRadius: bRad // <-- APLICAMOS BORDE REDONDEADO
          }}>
              
              {/* ENCABEZADO CON LOGO Y TÍTULO */}
@@ -68,7 +74,11 @@ export default function FinalResults({ drivers, config, isVisible, id = 'finalRe
              </div>
              
              {/* CONTENEDOR DE LA TABLA */}
-             <div style={{ width: '1050px', backgroundColor: hasCustomBg ? 'transparent' : themeHeaderBg, borderRadius: '8px', padding: '10px 20px 20px 20px', border: hasCustomBg ? 'none' : '1px solid rgba(255,255,255,0.1)', position: 'relative' }}>
+             <div style={{ 
+               width: '1050px', backgroundColor: hasCustomBg ? 'transparent' : themeHeaderBg, 
+               borderRadius: bRad, // <-- APLICAMOS BORDE REDONDEADO INTERNO
+               padding: '10px 20px 20px 20px', border: hasCustomBg ? 'none' : '1px solid rgba(255,255,255,0.1)', position: 'relative' 
+             }}>
                 
                 {/* ENCABEZADO DE LA TABLA */}
                 <div style={{ 
