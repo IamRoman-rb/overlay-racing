@@ -31,7 +31,6 @@ export const defaultPositions = {
   fastestLap: { x: 440, y: 150, scale: 1 }, battle: { x: 50, y: 50, scale: 1 }, customZocalo: { x: 20, y: 580, scale: 1 }
 };
 
-// LISTA DE GRÁFICAS (Segura fuera del componente)
 const allGraphicsList = [
   { id: 'relator', label: 'RELATOR' }, { id: 'comentarista', label: 'COMENTARISTA' }, { id: 'notero1', label: 'NOTERO 1' }, { id: 'notero2', label: 'NOTERO 2' },
   { id: 'circuito', label: 'CIRCUITO' }, { id: 'clima', label: 'CLIMA' }, { id: 'ticker', label: 'TIRA INFERIOR' }, { id: 'tower', label: 'TORRE POSICIONES' },
@@ -258,10 +257,11 @@ export default function ControlPanel() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', backgroundColor: colors.bgApp, color: colors.textMain, fontFamily: 'Arial, sans-serif' }}>
       <style>{`
+        /* ANIMACIÓN MODIFICADA: Ahora pulsa en color rojo oscuro brillante */
         @keyframes pulseRecordAlert {
-          0% { background-color: #8e44ad !important; border-color: #9b59b6 !important; box-shadow: 0 0 15px #8e44ad !important; color: white !important; }
-          50% { background-color: #242424 !important; border-color: #333333 !important; box-shadow: none !important; color: white !important; }
-          100% { background-color: #8e44ad !important; border-color: #9b59b6 !important; box-shadow: 0 0 15px #8e44ad !important; color: white !important; }
+          0% { background-color: #e74c3c !important; border-color: #c0392b !important; box-shadow: 0 0 15px rgba(231, 76, 60, 0.8) !important; color: white !important; }
+          50% { background-color: #c0392b !important; border-color: #922b21 !important; box-shadow: none !important; color: white !important; }
+          100% { background-color: #e74c3c !important; border-color: #c0392b !important; box-shadow: 0 0 15px rgba(231, 76, 60, 0.8) !important; color: white !important; }
         }
       `}</style>
 
@@ -338,8 +338,16 @@ export default function ControlPanel() {
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '5px' }}>
               <button onClick={handleToggleTicker} style={btnStyle(showTicker)}>TIRA INFERIOR</button>
               <button onClick={handleToggleTower} style={btnStyle(showTower)}>TORRE</button>
-              <button onClick={handleToggleFastestLap} style={{ ...btnStyle(showFastestLap), ...(newRecordAlert ? { animation: 'pulseRecordAlert 1s infinite', fontSize: '9px' } : {}) }}>
-                {newRecordAlert ? '⏱️ ¡NUEVO RÉCORD!' : 'RECORD VUELTA'}
+              
+              {/* AQUÍ SE APLICÓ EL CAMBIO PARA NO USAR ICONOS Y PULSAR EN ROJO */}
+              <button 
+                onClick={handleToggleFastestLap} 
+                style={{ 
+                  ...btnStyle(showFastestLap), 
+                  ...(newRecordAlert ? { animation: 'pulseRecordAlert 1s infinite' } : {}) 
+                }}
+              >
+                RECORD VUELTA
               </button>
             </div>
 
