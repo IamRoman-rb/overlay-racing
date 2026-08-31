@@ -20,9 +20,9 @@ export default function TimingTower({ drivers, config, isVisible, id = 'tower', 
   const customBg = config[`design_${id}`];
   const hasCustomBg = !!customBg;
   const bRad = config[`borderRadius_${id}`] || '8px';
-  const animStyle = config[`animationStyle_${id}`] || 'slide'
+  const animStyle = config[`animationStyle_${id}`] || 'slide';
 
-  // Animación de entrada (La torre suele deslizar desde el lado izquierdo)
+  // Animación de entrada
   let transformHidden = `scale(${pos.scale}) translateX(-40px)`; 
   if (animStyle === 'fade') transformHidden = `scale(${pos.scale})`; 
   if (animStyle === 'zoom') transformHidden = `scale(${pos.scale * 0.9})`;
@@ -57,8 +57,8 @@ export default function TimingTower({ drivers, config, isVisible, id = 'tower', 
 
   return (
     <div style={{
-      position: 'absolute', left: `${pos.x}px`, top: `${pos.y}px`, 
-      transformOrigin: 'top left', width: '320px', height: '650px', 
+      position: 'absolute', left: `${pos.x}px`, top: `${pos.y}px`, transform: `scale(${pos.scale})`, transformOrigin: 'top left',
+      width: '320px', height: '650px', 
       
       backgroundColor: hasCustomBg ? 'transparent' : themeBg, 
       borderTop: hasCustomBg ? 'none' : `4px solid ${themeMain}`, 
@@ -66,7 +66,7 @@ export default function TimingTower({ drivers, config, isVisible, id = 'tower', 
       backgroundSize: '100% 100%', backgroundRepeat: 'no-repeat', backgroundPosition: 'center',
       boxShadow: hasCustomBg ? 'none' : '0 10px 30px rgba(0,0,0,0.5)',
 
-      borderRadius: bRad, // <-- APLICADO BORDE REDONDEADO GENERAL
+      borderRadius: bRad,
       display: 'flex', flexDirection: 'column', zIndex: 10,
       transition: 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)', 
       opacity: isVisible ? 1 : 0, 
@@ -75,23 +75,35 @@ export default function TimingTower({ drivers, config, isVisible, id = 'tower', 
     }}>
       
       <div style={{ 
-        padding: '10px 15px', 
+        padding: '12px 15px', 
         backgroundColor: hasCustomBg ? 'transparent' : themeHeaderBg, 
         borderBottom: hasCustomBg ? 'none' : `2px solid ${themeMain}`,
-        display: 'flex', alignItems: 'center', 
-        justifyContent: (!hasCustomBg && (config?.logo || config?.categoryLogo)) ? 'flex-start' : 'center', gap: '10px', 
-        borderRadius: `${bRad} ${bRad} 0 0` // <-- APLICADO BORDE REDONDEADO A LA CABECERA
+        display: 'flex', 
+        flexDirection: 'column', // <-- Cambiado a columna para apilar los elementos
+        alignItems: 'center', 
+        justifyContent: 'center', gap: '10px', 
+        borderRadius: `${bRad} ${bRad} 0 0` 
       }}>
+        
+        {/* LOGOS ARRIBA */}
         {!hasCustomBg && (config?.logo || config?.categoryLogo) && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            {config?.logo && <img src={config.logo} alt="Productora" style={{ height: '30px', maxWidth: '60px', objectFit: 'contain' }} />}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+            {config?.logo && <img src={config.logo} alt="Productora" style={{ height: '35px', maxWidth: '80px', objectFit: 'contain' }} />}
             {config?.logo && config?.categoryLogo && <div style={{ height: '25px', width: '2px', backgroundColor: 'rgba(255, 255, 255, 0.3)' }} />}
-            {config?.categoryLogo && <img src={config.categoryLogo} alt="Categoría" style={{ height: '30px', maxWidth: '60px', objectFit: 'contain' }} />}
+            {config?.categoryLogo && <img src={config.categoryLogo} alt="Categoría" style={{ height: '35px', maxWidth: '80px', objectFit: 'contain' }} />}
           </div>
         )}
-        <span style={{ fontWeight: 'bold', fontSize: '18px', textAlign: 'center', flex: 1, color: themeTitleText, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-          {config.campeonato || 'CLASIFICACIÓN'}
-        </span>
+        
+        {/* TEXTOS ABAJO */}
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%' }}>
+          
+          {sessionInfo?.name && (
+            <span style={{ fontWeight: '900', fontSize: '15px', textAlign: 'center', width: '100%', color: themeTitleText, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', textTransform: 'uppercase' }}>
+              {sessionInfo.name}
+            </span>
+          )}
+        </div>
+
       </div>
       
       <div style={{ backgroundColor: hasCustomBg ? 'transparent' : 'rgba(0,0,0,0.4)', padding: '8px 15px', display: 'flex', justifyContent: 'space-evenly', borderBottom: hasCustomBg ? 'none' : '1px solid rgba(255,255,255,0.1)' }}>

@@ -11,13 +11,13 @@ export default function FastestLap({ drivers, config, isVisible, id = 'fastestLa
   const themeTitleText = config?.themeTitleText || '#ffcc00';
   const themeNormalText = config?.themeNormalText || '#ffffff';
 
-  // DISEÑO, BORDES Y ANIMACIÓN
+  // MAGIA DE DISEÑO PERSONALIZADO
   const customBg = config[`design_${id}`];
   const hasCustomBg = !!customBg;
-  const bRad = config[`borderRadius_${id}`] || '8px';
-  const animStyle = config[`animationStyle_${id}`] || 'slide'
+  const bRad = config.borderRadius !== undefined ? config.borderRadius : '8px';
+  const animStyle = config.animationStyle || 'slide';
 
-  // Animación de entrada: Para "slide" el récord suele venir desde arriba, no de costado
+  // Animación de entrada
   let transformHidden = 'translateY(-20px)'; 
   if (animStyle === 'fade') transformHidden = 'scale(1)'; 
   if (animStyle === 'zoom') transformHidden = 'scale(0.9)';
@@ -30,8 +30,12 @@ export default function FastestLap({ drivers, config, isVisible, id = 'fastestLa
     const parseTime = (str) => {
       if (!str || str === '-') return Infinity;
       const parts = str.split(':');
-      if (parts.length === 2) return parseInt(parts[0], 10) * 60 + parseFloat(parts[1]);
-      return parseFloat(str);
+      let val = parts.length === 2 ? parseInt(parts[0], 10) * 60 + parseFloat(parts[1]) : parseFloat(str);
+      
+      // EL FIX: Si el tiempo es 00:00.000 o menor/igual a cero, lo ignoramos por completo
+      if (isNaN(val) || val <= 0) return Infinity; 
+      
+      return val;
     };
 
     drivers.forEach(d => {
@@ -56,7 +60,7 @@ export default function FastestLap({ drivers, config, isVisible, id = 'fastestLa
          backgroundImage: hasCustomBg ? `url(${customBg})` : 'none',
          backgroundSize: '100% 100%', backgroundRepeat: 'no-repeat', backgroundPosition: 'center',
          boxShadow: hasCustomBg ? 'none' : '0 10px 30px rgba(0,0,0,0.6)', 
-         borderRadius: bRad, // <-- APLICAMOS BORDE REDONDEADO
+         borderRadius: bRad, 
          overflow: 'hidden',
          transform: isVisible ? 'translateY(0) scale(1)' : transformHidden,
          transition: 'transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)',

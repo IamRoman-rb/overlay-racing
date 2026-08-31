@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import circuitosData from '../data/circuitos.json';
 import SettingsPanel from '../windows/SettingsPanel';
 import CustomizePanel from '../windows/CustomizePanel';
@@ -97,8 +97,10 @@ export default function ControlPanel() {
     const parseTime = (str) => {
       if (!str || str === '-') return Infinity;
       const parts = str.split(':');
-      if (parts.length === 2) return parseInt(parts[0], 10) * 60 + parseFloat(parts[1]);
-      return parseFloat(str);
+      let val = parts.length === 2 ? parseInt(parts[0], 10) * 60 + parseFloat(parts[1]) : parseFloat(str);
+      // IGNORAR LOS 00:00.000 Y SIMILARES
+      if (isNaN(val) || val <= 0) return Infinity; 
+      return val;
     };
     
     let currentBest = Infinity;
@@ -115,6 +117,29 @@ export default function ControlPanel() {
       }
       bestLapRef.current = currentBest;
     }
+  }, [drivers]);
+
+  // CÁLCULO DEL PILOTO MÁS RÁPIDO EN TIEMPO REAL PARA EL PANEL
+  const fastestDriver = useMemo(() => {
+    if (!drivers || drivers.length === 0) return null;
+    let best = null;
+    let minTime = Infinity;
+
+    const parseTime = (str) => {
+      if (!str || str === '-') return Infinity;
+      const parts = str.split(':');
+      let val = parts.length === 2 ? parseInt(parts[0], 10) * 60 + parseFloat(parts[1]) : parseFloat(str);
+      // IGNORAR LOS 00:00.000 Y SIMILARES
+      if (isNaN(val) || val <= 0) return Infinity; 
+      return val;
+    };
+
+    drivers.forEach(d => {
+      const t = parseTime(d.bestLap);
+      if (t < minTime) { minTime = t; best = d; }
+    });
+
+    return best;
   }, [drivers]);
 
   const handleToggleVotingQR = () => { const newState = !showVotingQR; setShowVotingQR(newState); ipcRenderer.send('toggle-voting-qr', newState); };
@@ -271,6 +296,19 @@ export default function ControlPanel() {
           <h1 style={{ fontSize: '16px', margin: 0, letterSpacing: '1px' }}>RACE DYNAMICS DASHBOARD</h1>
         </div>
         <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
+          
+          {/* NUEVA SECCIÓN DE RÉCORD DE VUELTA EN EL ENCABEZADO */}
+          {fastestDriver && fastestDriver.bestLap !== '-' && (
+            <div style={{ textAlign: 'right', borderRight: `1px solid ${colors.border}`, paddingRight: '20px' }}>
+              <div style={{ fontSize: '9px', color: colors.textMuted, fontWeight: 'bold', letterSpacing: '1px' }}>
+                MEJOR VUELTA {newRecordAlert && '🔥'}
+              </div>
+              <div style={{ fontSize: '14px', color: newRecordAlert ? colors.red : colors.yellow, fontWeight: 'bold', transition: 'color 0.3s' }}>
+                #{fastestDriver.number} {fastestDriver.name.toUpperCase()} <span style={{ color: colors.textMain, marginLeft: '5px' }}>{fastestDriver.bestLap}</span>
+              </div>
+            </div>
+          )}
+
           {sessionInfo?.laps && (
             <div style={{ textAlign: 'right' }}>
               <div style={{ fontSize: '9px', color: colors.textMuted, fontWeight: 'bold', letterSpacing: '1px' }}>VUELTAS</div>
@@ -339,7 +377,6 @@ export default function ControlPanel() {
               <button onClick={handleToggleTicker} style={btnStyle(showTicker)}>TIRA INFERIOR</button>
               <button onClick={handleToggleTower} style={btnStyle(showTower)}>TORRE</button>
               
-              {/* AQUÍ SE APLICÓ EL CAMBIO PARA NO USAR ICONOS Y PULSAR EN ROJO */}
               <button 
                 onClick={handleToggleFastestLap} 
                 style={{ 
