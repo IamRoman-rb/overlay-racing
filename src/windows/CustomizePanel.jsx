@@ -95,6 +95,12 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
 
   return (
     <div style={{ display: 'flex', flex: 1, overflow: 'hidden', backgroundColor: colors.bgApp }} onMouseMove={handlePreviewMouseMove} onMouseUp={handlePreviewMouseUp} onMouseLeave={handlePreviewMouseUp} >
+      
+      {/* IMPORTAMOS LAS FUENTES DE GOOGLE */}
+      <style>
+        {`@import url('https://fonts.googleapis.com/css2?family=Exo+2:ital,wght@0,400;0,700;0,900;1,900&family=Montserrat:ital,wght@0,400;0,700;0,900;1,900&family=Oswald:wght@400;700&family=Teko:wght@400;600;700&display=swap');`}
+      </style>
+
       <div style={{ width: '380px', minWidth: '380px', backgroundColor: colors.bgPanel, padding: '20px', overflowY: 'auto', borderRight: `1px solid ${colors.border}`, zIndex: 100 }}>
         
         <h3 style={{ color: colors.yellow, marginTop: 0, marginBottom: '15px' }}>SELECCIONAR GRÁFICA</h3>
@@ -105,7 +111,7 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
         </div>
         
         <h3 style={{ color: colors.yellow, marginBottom: '15px' }}>CONFIGURACIÓN VISUAL (TEMA)</h3>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '30px', backgroundColor: '#111', padding: '15px', borderRadius: '8px', border: `1px solid ${colors.border}` }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '15px', backgroundColor: '#111', padding: '15px', borderRadius: '8px', border: `1px solid ${colors.border}` }}>
           {colorSettings.map(c => (
             <div key={c.id} style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
               <span style={{ fontSize: '9px', fontWeight: 'bold', color: '#ccc', textTransform: 'uppercase' }}>{c.label}</span>
@@ -115,6 +121,42 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
               </div>
             </div>
           ))}
+        </div>
+
+        {/* --- SECCIÓN DE TIPOGRAFÍA --- */}
+        <h3 style={{ color: colors.yellow, marginBottom: '15px' }}>TIPOGRAFÍA DE LA GRÁFICA</h3>
+        {/* --- SECCIÓN DE TEXTO Y FUENTE --- */}
+        <h3 style={{ color: colors.yellow, marginBottom: '15px' }}>TEXTO Y TIPOGRAFÍA</h3>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '30px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+            <label style={{ fontSize: '9px', color: colors.textMuted, fontWeight: 'bold' }}>TIPOGRAFÍA GENERAL</label>
+            <select 
+              value={config.fontFamily || 'Arial, sans-serif'} 
+              onChange={(e) => onConfigChange('fontFamily', e.target.value)}
+              style={{ ...inputStyle, padding: '10px', fontSize: '11px', cursor: 'pointer', border: `1px solid ${colors.border}` }}
+            >
+              <option value="Arial, sans-serif">Arial (Clásica)</option>
+              <option value="'Oswald', sans-serif">Oswald (Condensada TV)</option>
+              <option value="'Montserrat', sans-serif">Montserrat (Moderna Redonda)</option>
+              <option value="'Teko', sans-serif">Teko (Racing Compacta)</option>
+              <option value="'Exo 2', sans-serif">Exo 2 (Deportiva Futurista)</option>
+            </select>
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+            <label style={{ fontSize: '9px', color: colors.textMuted, fontWeight: 'bold' }}>FORMATO DE NOMBRES</label>
+            <select 
+              value={config.nameFormat || 'original'} 
+              onChange={(e) => onConfigChange('nameFormat', e.target.value)}
+              style={{ ...inputStyle, padding: '10px', fontSize: '11px', cursor: 'pointer', border: `1px solid ${colors.border}` }}
+            >
+              <option value="original">Original (Como llega)</option>
+              <option value="uppercase">TODO MAYÚSCULAS</option>
+              <option value="firstInitialLast">Inicial y Apellido (R. Borla)</option>
+              <option value="firstLastInitial">Nombre e Inicial (Roman B.)</option>
+              <option value="lastOnly">Solo Apellido (Borla)</option>
+            </select>
+          </div>
         </div>
 
         <h3 style={{ color: colors.yellow, marginBottom: '15px' }}>COORDENADAS Y TAMAÑO</h3>
@@ -131,25 +173,23 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
 
         <h3 style={{ color: colors.yellow, marginBottom: '15px' }}>RECURSOS MULTIMEDIA</h3>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '15px' }}>
-          
           <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
-            <span style={{ fontSize: '9px', color: colors.textMuted, fontWeight: 'bold', textAlign: 'center' }}>LOGO PRODUCT.</span>
-            <div style={{ backgroundColor: '#000', height: '50px', borderRadius: '4px', border: `1px solid ${colors.border}`, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
-              {config.logo ? <img src={config.logo} alt="Logo" style={{ maxHeight: '40px', maxWidth: '90%', objectFit: 'contain' }} /> : <span style={{fontSize: '9px', color: '#444'}}>VACÍO</span>}
+            <span style={{ fontSize: '10px', color: colors.textMuted, fontWeight: 'bold' }}>LOGO PRODUCTORA</span>
+            <div style={{ backgroundColor: '#000', height: '60px', borderRadius: '4px', border: `1px solid ${colors.border}`, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+              {config.logo ? <img src={config.logo} alt="Logo" style={{ maxHeight: '50px', maxWidth: '90%', objectFit: 'contain' }} /> : <span style={{fontSize: '10px', color: '#444'}}>VACÍO</span>}
             </div>
-            <button onClick={onSelectLogo} style={{...btnStyle(false), padding: '6px', fontSize: '8px'}}>📷 CARGAR</button>
-            {config.logo && <button onClick={onClearLogo} style={{...btnStyle(false), backgroundColor: '#c0392b', color: 'white', border: 'none', padding: '6px', fontSize: '8px'}}>🗑️ QUITAR</button>}
+            <button onClick={onSelectLogo} style={{...btnStyle(false), padding: '6px', fontSize: '9px'}}>📷 CARGAR</button>
+            {config.logo && <button onClick={onClearLogo} style={{...btnStyle(false), backgroundColor: '#c0392b', color: 'white', border: 'none', padding: '6px', fontSize: '9px'}}>🗑️ QUITAR</button>}
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
-            <span style={{ fontSize: '9px', color: colors.textMuted, fontWeight: 'bold', textAlign: 'center' }}>LOGO CATEGORÍA</span>
-            <div style={{ backgroundColor: '#000', height: '50px', borderRadius: '4px', border: `1px solid ${colors.border}`, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
-              {config.categoryLogo ? <img src={config.categoryLogo} alt="Logo" style={{ maxHeight: '40px', maxWidth: '90%', objectFit: 'contain' }} /> : <span style={{fontSize: '9px', color: '#444'}}>VACÍO</span>}
+            <span style={{ fontSize: '10px', color: colors.textMuted, fontWeight: 'bold' }}>LOGO CATEGORÍA</span>
+            <div style={{ backgroundColor: '#000', height: '60px', borderRadius: '4px', border: `1px solid ${colors.border}`, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+              {config.categoryLogo ? <img src={config.categoryLogo} alt="Logo" style={{ maxHeight: '50px', maxWidth: '90%', objectFit: 'contain' }} /> : <span style={{fontSize: '10px', color: '#444'}}>VACÍO</span>}
             </div>
-            <button onClick={onSelectCategoryLogo} style={{...btnStyle(false), padding: '6px', fontSize: '8px'}}>📷 CARGAR</button>
-            {config.categoryLogo && <button onClick={onClearCategoryLogo} style={{...btnStyle(false), backgroundColor: '#c0392b', color: 'white', border: 'none', padding: '6px', fontSize: '8px'}}>🗑️ QUITAR</button>}
+            <button onClick={onSelectCategoryLogo} style={{...btnStyle(false), padding: '6px', fontSize: '9px'}}>📷 CARGAR</button>
+            {config.categoryLogo && <button onClick={onClearCategoryLogo} style={{...btnStyle(false), backgroundColor: '#c0392b', color: 'white', border: 'none', padding: '6px', fontSize: '9px'}}>🗑️ QUITAR</button>}
           </div>
-
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', marginBottom: '25px', backgroundColor: '#111', padding: '10px', borderRadius: '4px', border: `1px solid ${colors.border}` }}>
@@ -176,7 +216,9 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
                 backgroundColor: config.chromaColor || '#00FF00', 
                 position: 'absolute', top: 0, left: 0,
                 transform: `scale(${PREVIEW_SCALE})`, transformOrigin: 'top left',
-                border: '4px solid #555', boxSizing: 'border-box', overflow: 'hidden'
+                border: '4px solid #555', boxSizing: 'border-box', overflow: 'hidden',
+                // APLICAMOS LA FUENTE A LA VENTANA DE PREVISUALIZACIÓN
+                fontFamily: config.fontFamily || 'Arial, sans-serif'
               }}
             >
                 <div style={{ position: 'absolute', top: 0, left: 0, backgroundColor: 'rgba(0,0,0,0.7)', color: 'white', padding: '10px 20px', fontSize: '26px', fontWeight: 'bold', zIndex: 999 }}>

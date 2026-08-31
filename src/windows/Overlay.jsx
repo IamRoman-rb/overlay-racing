@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import TimingTower from '../graphics/TimingTower';
 import Ticker from '../graphics/Ticker';
 import LowerThird from '../graphics/LowerThird';
@@ -14,6 +14,47 @@ import VotingQR from '../graphics/VotingQR';
 import VotingResults from '../graphics/VotingResults';
 
 const { ipcRenderer } = window.require('electron');
+
+// --- LA MAGIA: TRADUCTOR AUTOMÁTICO DE NOMBRES ---
+const formatDriverName = (name, format) => {
+  if (!name) return '';
+  if (!format || format === 'original') return name;
+  if (format === 'uppercase') return name.toUpperCase();
+  
+  let first = '', last = '';
+  
+  // Detectar si el nombre viene separado por coma (ej: "BORLA, ROMAN")
+  if (name.includes(',')) {
+    const parts = name.split(',');
+    last = parts[0].trim();
+    first = parts[1].trim();
+  } else {
+    // Si viene normal (ej: "Roman Borla")
+    const parts = name.trim().split(/\s+/);
+    if (parts.length === 1) return format === 'uppercase' ? name.toUpperCase() : name;
+    first = parts[0];
+    last = parts.slice(1).join(' '); // El resto de palabras asume que son apellido
+  }
+
+  // Evitamos errores si falta uno
+  if (!first) first = '';
+  if (!last) last = '';
+
+  // Estandarizar la primera letra en mayúscula
+  const cleanFirstInitial = first ? first.charAt(0).toUpperCase() : '';
+  const cleanLastInitial = last ? last.charAt(0).toUpperCase() : '';
+
+  switch (format) {
+    case 'firstInitialLast':
+      return first ? `${cleanFirstInitial}. ${last}` : last;
+    case 'firstLastInitial':
+      return last ? `${first} ${cleanLastInitial}.` : first;
+    case 'lastOnly':
+      return last || first;
+    default:
+      return name;
+  }
+};
 
 export default function Overlay() {
   const [drivers, setDrivers] = useState([]);
@@ -112,6 +153,25 @@ export default function Overlay() {
 
   const combinedConfig = { ...config, positions };
 
+  // --- APLICAR EL FORMATO ANTES DE DIBUJAR ---
+  const formattedDrivers = useMemo(() => {
+    return drivers.map(d => ({
+      ...d,
+      name: formatDriverName(d.name, config.nameFormat)
+    }));
+  }, [drivers, config.nameFormat]);
+
+  const formattedDriverInfoData = useMemo(() => {
+    if (!driverInfoData) return null;
+    return { ...driverInfoData, name: formatDriverName(driverInfoData.name, config.nameFormat) };
+  }, [driverInfoData, config.nameFormat]);
+
+  const formattedWinnerData = useMemo(() => {
+    if (!winnerData) return null;
+    return { ...winnerData, name: formatDriverName(winnerData.name, config.nameFormat) };
+  }, [winnerData, config.nameFormat]);
+  // -------------------------------------------
+
   const controlBtnStyle = {
     backgroundColor: 'rgba(0,0,0,0.5)', border: 'none', color: 'white',
     width: '40px', height: '30px', cursor: 'pointer', fontSize: '14px',
@@ -125,9 +185,15 @@ export default function Overlay() {
       style={{
         width: '100vw', height: '100vh',
         backgroundColor: config.chromaColor || '#00FF00',
-        color: 'white', fontFamily: 'Arial', overflow: 'hidden', position: 'relative'
+        color: 'white', 
+        fontFamily: config.fontFamily || 'Arial, sans-serif',
+        overflow: 'hidden', position: 'relative'
       }}
     >
+      <style>
+        {`@import url('https://fonts.googleapis.com/css2?family=Exo+2:ital,wght@0,400;0,700;0,900;1,900&family=Montserrat:ital,wght@0,400;0,700;0,900;1,900&family=Oswald:wght@400;700&family=Teko:wght@400;600;700&display=swap');`}
+      </style>
+
       <div style={{
         position: 'absolute', top: 0, left: 0, right: 0, height: '30px',
         WebkitAppRegion: 'drag', zIndex: 9999,
@@ -140,15 +206,15 @@ export default function Overlay() {
       </div>
 
       <CustomZocalo isVisible={customZocaloData.isVisible} title={customZocaloData.title} text={customZocaloData.text} config={combinedConfig} />
-      <Ticker drivers={drivers} config={combinedConfig} isVisible={isTickerVisible} sessionInfo={sessionInfo} />
-      <TimingTower drivers={drivers} config={combinedConfig} isVisible={isTowerVisible} sessionInfo={sessionInfo} />
       
-      {/* CORRECCIÓN: Aquí enviamos combinedConfig a Battle */}
-      <Battle drivers={drivers} config={combinedConfig} isVisible={battleData.isVisible} battleFocusPos={battleData.pos} />
+      {/* Pasamos los datos formateados a todas las gráficas */}
+      <Ticker drivers={formattedDrivers} config={combinedConfig} isVisible={isTickerVisible} sessionInfo={sessionInfo} />
+      <TimingTower drivers={formattedDrivers} config={combinedConfig} isVisible={isTowerVisible} sessionInfo={sessionInfo} />
+      <Battle drivers={formattedDrivers} config={combinedConfig} isVisible={battleData.isVisible} battleFocusPos={battleData.pos} />
+      <StartingGrid drivers={formattedDrivers} config={combinedConfig} isVisible={isGridVisible} />
+      <FinalResults drivers={formattedDrivers} config={combinedConfig} isVisible={isFinalResultsVisible} />
+      <WinnerGraphic driver={formattedWinnerData} config={combinedConfig} isVisible={isWinnerVisible} />
       
-      <StartingGrid drivers={drivers} config={combinedConfig} isVisible={isGridVisible} />
-      <FinalResults drivers={drivers} config={combinedConfig} isVisible={isFinalResultsVisible} />
-      <WinnerGraphic driver={winnerData} config={combinedConfig} isVisible={isWinnerVisible} />
       <Flags activeFlags={activeFlags} config={combinedConfig} />
       <LowerThird id="relator" role="Relator" name={config.relator} isVisible={graphics.relator} config={combinedConfig} />
       <LowerThird id="comentarista" role="Comentarista" name={config.comentarista} isVisible={graphics.comentarista} config={combinedConfig} />
@@ -156,10 +222,11 @@ export default function Overlay() {
       <LowerThird id="notero2" role="Notero" name={config.notero2} isVisible={graphics.notero2} config={combinedConfig} />
       <LowerThird id="circuito" role="Circuito" name={config.circuito} isVisible={graphics.circuito} config={combinedConfig} />
       <LowerThird id="clima" role="Clima" name={config.clima} isVisible={graphics.clima} config={combinedConfig} />
-      <FastestLap drivers={drivers} config={combinedConfig} isVisible={isFastestLapVisible} />
-      <DriverInfo driver={driverInfoData} config={combinedConfig} isVisible={isDriverInfoVisible} />
+      
+      <FastestLap drivers={formattedDrivers} config={combinedConfig} isVisible={isFastestLapVisible} />
+      <DriverInfo driver={formattedDriverInfoData} config={combinedConfig} isVisible={isDriverInfoVisible} />
       <VotingQR isVisible={isVotingQRVisible} config={combinedConfig} localIp={localIp} />
-      <VotingResults isVisible={isVotingResultsVisible} drivers={drivers} votes={votes} config={combinedConfig} />
+      <VotingResults isVisible={isVotingResultsVisible} drivers={formattedDrivers} votes={votes} config={combinedConfig} />
     </div>
   );
 }
