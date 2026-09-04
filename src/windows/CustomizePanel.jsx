@@ -146,17 +146,35 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
           </div>
         </div>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', marginBottom: '30px', backgroundColor: '#111', padding: '15px', borderRadius: '8px', border: `1px solid ${colors.border}` }}>
-          <label style={{ fontSize: '10px', color: colors.textMuted, fontWeight: 'bold' }}>FORMATO DE GRILLA DE PARTIDA</label>
-          <select 
-            value={config.gridFormat || 'standard'} 
-            onChange={(e) => onConfigChange('gridFormat', e.target.value)} 
-            style={{ ...inputStyle, padding: '10px', fontSize: '11px', cursor: 'pointer', border: `1px solid ${colors.border}` }}
-          >
-            <option value="standard">Clásica (Cajas Pequeñas)</option>
-            <option value="photos">Fila x Fila (Fotos Gigantes F1)</option>
-          </select>
-        </div>
+        {/* --- SELECTORES INTELIGENTES CONDICIONALES --- */}
+        {selectedGraphic === 'grid' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', marginBottom: '30px', backgroundColor: '#111', padding: '15px', borderRadius: '8px', border: `1px solid ${colors.border}` }}>
+            <label style={{ fontSize: '10px', color: colors.textMuted, fontWeight: 'bold' }}>FORMATO DE GRILLA DE PARTIDA</label>
+            <select 
+              value={config.gridFormat || 'standard'} 
+              onChange={(e) => onConfigChange('gridFormat', e.target.value)} 
+              style={{ ...inputStyle, padding: '10px', fontSize: '11px', cursor: 'pointer', border: `1px solid ${colors.border}` }}
+            >
+              <option value="standard">Clásica (Cajas Pequeñas)</option>
+              <option value="photos">Fila x Fila (Fotos Gigantes F1)</option>
+            </select>
+          </div>
+        )}
+
+        {selectedGraphic === 'battle' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', marginBottom: '30px', backgroundColor: '#111', padding: '15px', borderRadius: '8px', border: `1px solid ${colors.border}` }}>
+            <label style={{ fontSize: '10px', color: colors.textMuted, fontWeight: 'bold' }}>FORMATO DE BATALLA</label>
+            <select 
+              value={config.battleFormat || 'vertical'} 
+              onChange={(e) => onConfigChange('battleFormat', e.target.value)} 
+              style={{ ...inputStyle, padding: '10px', fontSize: '11px', cursor: 'pointer', border: `1px solid ${colors.border}` }}
+            >
+              <option value="vertical">Vertical (Clásica / Apilados)</option>
+              <option value="horizontal">Horizontal (Lado a Lado / WEC)</option>
+            </select>
+          </div>
+        )}
+        {/* --------------------------------------------- */}
 
         <h3 style={{ color: colors.yellow, marginBottom: '15px' }}>ESTILO: {allGraphics.find(g => g.id === selectedGraphic)?.label}</h3>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '30px', backgroundColor: '#111', padding: '15px', borderRadius: '8px', border: `1px solid ${colors.border}` }}>
@@ -254,11 +272,9 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
                   MONITOR PREVIO (1920x1080)
                 </div>
                 
-                {/* --- MAGIA APLICADA: Solo renderizamos la gráfica seleccionada --- */}
                 {allGraphics
                   .filter(graphic => graphic.id === selectedGraphic)
                   .map(graphic => renderPreviewGraphic(graphic.id, graphic.label))}
-
             </div>
         </div>
       </div>
