@@ -81,6 +81,7 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
     );
   };
 
+  // --- FIX: Añadimos el Campeonato Virtual a la lista maestra ---
   const allGraphics = [
     { id: 'relator', label: 'RELATOR' }, { id: 'comentarista', label: 'COMENTARISTA' }, { id: 'notero1', label: 'NOTERO 1' }, { id: 'notero2', label: 'NOTERO 2' },
     { id: 'circuito', label: 'CIRCUITO' }, { id: 'clima', label: 'CLIMA' }, { id: 'ticker', label: 'TIRA INFERIOR' }, { id: 'tower', label: 'TORRE POSICIONES' },
@@ -88,7 +89,8 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
     { id: 'flags', label: 'BANDERAS DE ALERTA' }, { id: 'fastestLap', label: 'RECORD DE VUELTA' },
     { id: 'driverInfo', label: 'INFO DEL PILOTO' }, { id: 'battle', label: 'BATALLA (F1)' }, { id: 'customZocalo', label: 'ZÓCALO LIBRE' },
     { id: 'votingQR', label: 'QR DE VOTACIÓN' }, { id: 'votingResults', label: 'RESULTADOS DE VOTACIÓN' },
-    { id: 'lapCounter', label: 'CONTADOR DE VUELTAS' }
+    { id: 'lapCounter', label: 'CONTADOR DE VUELTAS' },
+    { id: 'virtualChamp', label: 'CAMPEONATO VIRTUAL' } // <-- NUEVO
   ];
 
   const colorSettings = [

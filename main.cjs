@@ -7,6 +7,7 @@ const { networkInterfaces } = require('os');
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
+const xlsx = require('xlsx');
 
 let controlWindow;
 let overlayWindow;
@@ -41,6 +42,36 @@ const localIP = getLocalIP();
 let currentDriversForVote = [];
 let votesData = {};
 let lastLeaderboard = { session: {}, drivers: [] };
+
+let championshipData = { drivers: [], pointScale: {} };
+let liveChampionship = [];
+
+function calculateLiveChampionship() {
+  if (!championshipData.drivers.length) return;
+  
+  let tempStandings = championshipData.drivers.map(d => ({
+    number: d.Numero?.toString(), name: d.Nombre,
+    basePoints: parseFloat(d.Puntos) || 0, livePoints: parseFloat(d.Puntos) || 0, added: 0
+  }));
+
+  if (lastLeaderboard && lastLeaderboard.drivers) {
+    lastLeaderboard.drivers.forEach(raceDriver => {
+      let pos = parseInt(raceDriver.pos);
+      let pointsToAdd = championshipData.pointScale[pos] || 0;
+      let champDriver = tempStandings.find(d => d.number === raceDriver.number);
+      if (champDriver) {
+        champDriver.added = pointsToAdd;
+        champDriver.livePoints = champDriver.basePoints + pointsToAdd;
+      }
+    });
+  }
+
+  tempStandings.sort((a, b) => b.livePoints - a.livePoints);
+  tempStandings.forEach((d, index) => d.livePos = index + 1);
+  liveChampionship = tempStandings;
+  
+  broadcast('update-championship', liveChampionship);
+}
 
 let publicVotingUrl = null;
 let publicTunnel = null;
@@ -237,6 +268,31 @@ ipcMain.on('reset-votes', () => {
   if (controlWindow) controlWindow.webContents.send('update-votes', votesData); 
 });
 
+ipcMain.on('toggle-virtual-champ', (e, data) => { broadcastState.virtualChamp = data; broadcast('set-virtual-champ', data); });
+
+ipcMain.handle('load-excel', async () => {
+  const result = await dialog.showOpenDialog(controlWindow, {
+    title: 'Cargar Campeonato (Excel)', properties: ['openFile'], filters: [{ name: 'Excel', extensions: ['xlsx', 'xls'] }]
+  });
+  if (!result.canceled && result.filePaths.length > 0) {
+    try {
+      const workbook = xlsx.readFile(result.filePaths[0]);
+      const sheet = xlsx.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
+      let drivers = []; let pointScale = {};
+      
+      sheet.forEach(row => {
+        if (row.Numero !== undefined) drivers.push({ Numero: row.Numero, Nombre: row.Nombre || 'Piloto', Puntos: row.Puntos || 0 });
+        if (row.Posicion !== undefined && row.Puntos_Escala !== undefined) pointScale[row.Posicion] = parseFloat(row.Puntos_Escala);
+      });
+      
+      championshipData = { drivers, pointScale };
+      calculateLiveChampionship();
+      return true;
+    } catch (e) { return false; }
+  }
+  return false;
+});
+
 ipcMain.handle('get-local-ip', () => {
   return publicVotingUrl;
 });
@@ -276,8 +332,13 @@ ipcMain.handle('scrape-timing', async (event, { provider, code }) => {
   }
   lastLeaderboard = leaderboard; 
   broadcast('update-leaderboard', leaderboard);
+
+  calculateLiveChampionship();
+
   return leaderboard;
 });
+
+
 
 const handleFileSelect = async (title, extensions) => {
   const result = await dialog.showOpenDialog(controlWindow, { title, properties: ['openFile'], filters: [{ name: 'Imágenes', extensions }] });

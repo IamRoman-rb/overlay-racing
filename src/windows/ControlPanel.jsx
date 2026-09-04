@@ -34,7 +34,9 @@ export const defaultPositions = {
   notero2: { x: 20, y: 320, scale: 1 }, circuito: { x: 20, y: 240, scale: 1 }, clima: { x: 20, y: 160, scale: 1 },
   ticker: { x: 0, y: 660, scale: 1 }, grid: { x: 0, y: 0, scale: 1 }, finalResults: { x: 240, y: 40, scale: 1 },
   tower: { x: 20, y: 20, scale: 1 }, winner: { x: 440, y: 550, scale: 1 }, flags: { x: 320, y: 50, scale: 1 },
-  fastestLap: { x: 440, y: 150, scale: 1 }, battle: { x: 50, y: 50, scale: 1 }, customZocalo: { x: 20, y: 580, scale: 1 }
+  fastestLap: { x: 440, y: 150, scale: 1 }, battle: { x: 50, y: 50, scale: 1 }, customZocalo: { x: 20, y: 580, scale: 1 },
+  votingQR: { x: 20, y: 700, scale: 1 }, votingResults: { x: 1550, y: 50, scale: 1 }, lapCounter: { x: 1700, y: 40, scale: 1 },
+  virtualChamp: { x: 1400, y: 150, scale: 1 } // <-- NUEVO
 };
 
 const allGraphicsList = [
@@ -43,7 +45,9 @@ const allGraphicsList = [
   { id: 'grid', label: 'GRILLA PARTIDA' }, { id: 'finalResults', label: 'RESULTADOS FINALES' }, { id: 'winner', label: 'GANADOR' },
   { id: 'flags', label: 'BANDERAS DE ALERTA' }, { id: 'fastestLap', label: 'RECORD DE VUELTA' },
   { id: 'driverInfo', label: 'INFO DEL PILOTO' }, { id: 'battle', label: 'BATALLA (F1)' }, { id: 'customZocalo', label: 'ZÓCALO LIBRE' },
-  { id: 'votingQR', label: 'QR DE VOTACIÓN' }, { id: 'votingResults', label: 'RESULTADOS DE VOTACIÓN' }
+  { id: 'votingQR', label: 'QR DE VOTACIÓN' }, { id: 'votingResults', label: 'RESULTADOS DE VOTACIÓN' },
+  { id: 'lapCounter', label: 'CONTADOR DE VUELTAS' },
+  { id: 'virtualChamp', label: 'CAMPEONATO VIRTUAL' } // <-- NUEVO
 ];
 
 export default function ControlPanel() {
@@ -69,6 +73,7 @@ export default function ControlPanel() {
   const [activeFlags, setActiveFlags] = useState({ red: false, tricolor: false, black: false, blue: false });
   const [graphics, setGraphics] = useState({ relator: false, comentarista: false, notero1: false, notero2: false, circuito: false, clima: false });
   const [showLapCounter, setShowLapCounter] = useState(false);
+  const [showVirtualChamp, setShowVirtualChamp] = useState(false); // <-- NUEVO
   const [activeZocaloIndex, setActiveZocaloIndex] = useState(null);
 
   const [autoScrape, setAutoScrape] = useState(false);
@@ -104,9 +109,11 @@ export default function ControlPanel() {
 
       const handleUpdateVotes = (event, newVotes) => setVotes(newVotes);
       ipcRenderer.on('update-votes', handleUpdateVotes);
+      ipcRenderer.on('update-ip', handleUpdateIp);
 
       return () => {
         ipcRenderer.removeListener('update-votes', handleUpdateVotes);
+        ipcRenderer.removeListener('update-ip', handleUpdateIp);
       }
     }
   }, []);
@@ -187,6 +194,7 @@ export default function ControlPanel() {
   const handleChange = (e) => setConfig({ ...config, [e.target.name]: e.target.value });
   const handleSave = async () => { if(ipcRenderer) await ipcRenderer.invoke('save-config', config); };
   const handleToggleBattle = () => { const newState = !showBattle; setShowBattle(newState); if(ipcRenderer) ipcRenderer.send('toggle-battle', { isVisible: newState, pos: battleTarget }); };
+  const handleToggleVirtualChamp = () => { setShowVirtualChamp(!showVirtualChamp); if(ipcRenderer) ipcRenderer.send('toggle-virtual-champ', !showVirtualChamp); }; // <-- NUEVO
 
   const handleToggleDriverInfo = (driver) => {
     if (activeDriverInfo && activeDriverInfo.number === driver.number) {
@@ -427,6 +435,18 @@ export default function ControlPanel() {
                 {showBattle ? 'OCULTAR BATALLA' : 'MOSTRAR BATALLA'}
               </button>
             </div>
+
+            {/* --- SECCIÓN NUEVA: CAMPEONATO VIRTUAL --- */}
+            <div style={sectionTitleStyle}>CAMPEONATO VIRTUAL</div>
+            <div style={{ display: 'flex', gap: '5px', marginBottom: '15px' }}>
+              <button onClick={() => ipcRenderer && ipcRenderer.invoke('load-excel').then(res => alert(res ? "✅ Excel cargado con éxito. ¡Los puntos se calcularán automáticamente!" : "❌ Error al cargar Excel o acción cancelada."))} style={{ ...btnStyle(false), flex: 1, backgroundColor: '#2ecc71', color: 'white', borderColor: '#27ae60' }}>
+                📊 CARGAR EXCEL
+              </button>
+              <button onClick={handleToggleVirtualChamp} style={{ ...btnStyle(showVirtualChamp), flex: 1 }}>
+                {showVirtualChamp ? 'OCULTAR TABLA' : 'MOSTRAR TABLA'}
+              </button>
+            </div>
+            {/* ------------------------------------------- */}
 
             <div style={sectionTitleStyle}>INTERACTIVIDAD (VOTOS)</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', marginBottom: '20px' }}>

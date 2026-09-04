@@ -107,9 +107,11 @@
   "borderRadius_votingQR": "30px",
   "borderRadius_finalResults": "0px",
   "animationStyle_finalResults": "zoom",
-  "animationStyle_relator": "fade",
+  "animationStyle_relator": "zoom",
   "borderRadius_relator": "0px",
   "borderRadius_grid": "0px",
   "gridFormat": "photos",
-  "battleFormat": "horizontal"
+  "battleFormat": "horizontal",
+  "borderRadius_virtualChamp": "30px",
+  "animationStyle_virtualChamp": "zoom"
 }

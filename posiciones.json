@@ -73,5 +73,25 @@
     "x": 20,
     "y": 580,
     "scale": 0.8
+  },
+  "votingQR": {
+    "x": 1085,
+    "y": 470,
+    "scale": 0.7
+  },
+  "votingResults": {
+    "x": 1550,
+    "y": 50,
+    "scale": 1
+  },
+  "lapCounter": {
+    "x": 1700,
+    "y": 40,
+    "scale": 1
+  },
+  "virtualChamp": {
+    "x": 8,
+    "y": 440,
+    "scale": 0.7
   }
 }

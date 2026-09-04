@@ -14,6 +14,7 @@ import CustomZocalo from './CustomZocalo';
 import VotingQR from '../graphics/VotingQR';
 import VotingResults from '../graphics/VotingResults';
 import LapCounter from '../graphics/LapCounter'
+import VirtualChamp from '../graphics/VirtualChamp';
 
 // EL FIX: Protección absoluta para CasparCG / vMix
 let ipcRenderer = null;
@@ -69,6 +70,7 @@ export default function Overlay() {
   const [localIp, setLocalIp] = useState('localhost');
   const [isHovered, setIsHovered] = useState(false);
   const [isLapCounterVisible, setIsLapCounterVisible] = useState(false);
+  const [isVirtualChampVisible, setIsVirtualChampVisible] = useState(false);
 
   useEffect(() => {
     if (ipcRenderer) {
@@ -108,6 +110,7 @@ export default function Overlay() {
     socket.on('set-voting-results', setIsVotingResultsVisible);
     socket.on('update-votes', setVotes);
     socket.on('set-lap-counter-visibility', setIsLapCounterVisible);
+    socket.on('set-virtual-champ', setIsVirtualChampVisible);
 
     return () => socket.disconnect();
   }, []);
@@ -174,6 +177,7 @@ export default function Overlay() {
       <VotingQR isVisible={isVotingQRVisible} config={combinedConfig} localIp={localIp} />
       <VotingResults isVisible={isVotingResultsVisible} drivers={formattedDrivers} votes={votes} config={combinedConfig} />
       <LapCounter isVisible={isLapCounterVisible} config={combinedConfig} sessionInfo={sessionInfo} />
+      <VirtualChamp isVisible={isVirtualChampVisible} config={combinedConfig} />
     </div>
   );
 }
