@@ -4,7 +4,13 @@ import SettingsPanel from '../windows/SettingsPanel';
 import CustomizePanel from '../windows/CustomizePanel';
 import DriversTable from '../windows/DriversTable';
 
-const { ipcRenderer } = window.require('electron');
+// EL FIX: Protegemos ipcRenderer para que CasparCG no colapse al leer este archivo por culpa del Router de React
+let ipcRenderer = null;
+if (typeof window !== 'undefined' && typeof window.require === 'function') {
+  try {
+    ipcRenderer = window.require('electron').ipcRenderer;
+  } catch (e) {}
+}
 
 const colors = {
   bgApp: '#121212', bgPanel: '#1a1a1a', bgInput: '#242424', border: '#333333',
@@ -19,7 +25,7 @@ const GraphicControl = ({ id, label, value, isActive, onChange, onBlur, onToggle
 const SelectControl = ({ id, label, value, options, isActive, onChange, onBlur, onToggle }) => (<div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}> <button onClick={() => onToggle(id)} style={btnStyle(isActive)}>{label}</button> <select name={id} value={value || ''} onChange={onChange} onBlur={onBlur} style={inputStyle}> <option value="">SELECCIONAR...</option> {options.map((opt, i) => (<option key={i} value={opt.nombre}>{opt.nombre.toUpperCase()}</option>))} </select> </div>);
 const WeatherControl = ({ id, label, config, isActive, onChange, onBlur, onToggle, setConfig }) => {
   const [loading, setLoading] = useState(false);
-  const fetchWeather = async () => { const circuitoSeleccionado = circuitosData.find(c => c.nombre === config.circuito); if (!circuitoSeleccionado) { alert("⚠️ Selecciona un Circuito primero."); return; } setLoading(true); try { const { lat, lon } = circuitoSeleccionado; const weatherRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`); const weatherData = await weatherRes.json(); const temp = Math.round(weatherData.current_weather.temperature); const code = weatherData.current_weather.weathercode; let desc = "DESPEJADO"; if (code >= 1 && code <= 3) desc = "NUBLADO"; if (code >= 51 && code <= 67) desc = "LLUVIA"; if (code >= 95) desc = "TORMENTA"; const weatherString = `${temp}°C - ${desc}`; const newConfig = { ...config, [id]: weatherString }; setConfig(newConfig); await ipcRenderer.invoke('save-config', newConfig); } catch (error) { console.error(error); } setLoading(false); };
+  const fetchWeather = async () => { const circuitoSeleccionado = circuitosData.find(c => c.nombre === config.circuito); if (!circuitoSeleccionado) { alert("⚠️ Selecciona un Circuito primero."); return; } setLoading(true); try { const { lat, lon } = circuitoSeleccionado; const weatherRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`); const weatherData = await weatherRes.json(); const temp = Math.round(weatherData.current_weather.temperature); const code = weatherData.current_weather.weathercode; let desc = "DESPEJADO"; if (code >= 1 && code <= 3) desc = "NUBLADO"; if (code >= 51 && code <= 67) desc = "LLUVIA"; if (code >= 95) desc = "TORMENTA"; const weatherString = `${temp}°C - ${desc}`; const newConfig = { ...config, [id]: weatherString }; setConfig(newConfig); if(ipcRenderer) await ipcRenderer.invoke('save-config', newConfig); } catch (error) { console.error(error); } setLoading(false); };
   return (<div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}> <div style={{ display: 'flex', gap: '2px' }}> <button onClick={() => onToggle(id)} style={{ ...btnStyle(isActive), flex: 1 }}>{label}</button> <button onClick={fetchWeather} disabled={loading} style={{ backgroundColor: colors.bgInput, color: colors.yellow, border: `1px solid ${colors.border}`, cursor: 'pointer', padding: '0 10px' }}> {loading ? '⏳' : '☁️'} </button> </div> <input name={id} value={config[id] || ''} onChange={onChange} onBlur={onBlur} style={inputStyle} placeholder={`DATOS DEL CLIMA...`} /> </div>);
 };
 
@@ -78,31 +84,30 @@ export default function ControlPanel() {
   const [showVotingResults, setShowVotingResults] = useState(false);
   const [localIp, setLocalIp] = useState('');
   
-  // ESTADO NUEVO PARA LOS VOTOS
   const [votes, setVotes] = useState({});
 
   useEffect(() => { configRef.current = config; }, [config]);
 
   useEffect(() => {
-    ipcRenderer.invoke('get-config').then(configData => {
-      ipcRenderer.invoke('get-positions').then(savedPositions => {
-        const mergedPositions = { ...defaultPositions };
-        Object.keys(defaultPositions).forEach(key => { if (savedPositions[key]) mergedPositions[key] = savedPositions[key]; });
-        setConfig({ chromaColor: '#00FF00', zocalos: Array(6).fill({ title: '', text: '' }), ...configData });
-        setPositions(mergedPositions);
+    if (ipcRenderer) {
+      ipcRenderer.invoke('get-config').then(configData => {
+        ipcRenderer.invoke('get-positions').then(savedPositions => {
+          const mergedPositions = { ...defaultPositions };
+          Object.keys(defaultPositions).forEach(key => { if (savedPositions[key]) mergedPositions[key] = savedPositions[key]; });
+          setConfig({ chromaColor: '#00FF00', zocalos: Array(6).fill({ title: '', text: '' }), ...configData });
+          setPositions(mergedPositions);
+        });
       });
-    });
-    ipcRenderer.invoke('get-local-ip').then(setLocalIp);
-    
-    // PEDIMOS LOS VOTOS AL INICIO
-    ipcRenderer.invoke('get-votes').then(v => { if(v) setVotes(v) }).catch(() => {});
+      ipcRenderer.invoke('get-local-ip').then(setLocalIp);
+      ipcRenderer.invoke('get-votes').then(v => { if(v) setVotes(v) }).catch(() => {});
+      const handleUpdateIp = (event, newIp) => setLocalIp(newIp); 
 
-    // ESCUCHAMOS NUEVOS VOTOS
-    const handleUpdateVotes = (event, newVotes) => setVotes(newVotes);
-    ipcRenderer.on('update-votes', handleUpdateVotes);
+      const handleUpdateVotes = (event, newVotes) => setVotes(newVotes);
+      ipcRenderer.on('update-votes', handleUpdateVotes);
 
-    return () => {
-      ipcRenderer.removeListener('update-votes', handleUpdateVotes);
+      return () => {
+        ipcRenderer.removeListener('update-votes', handleUpdateVotes);
+      }
     }
   }, []);
 
@@ -153,50 +158,54 @@ export default function ControlPanel() {
     return best;
   }, [drivers]);
 
-  const handleToggleVotingQR = () => { const newState = !showVotingQR; setShowVotingQR(newState); ipcRenderer.send('toggle-voting-qr', newState); };
-  const handleToggleVotingResults = () => { const newState = !showVotingResults; setShowVotingResults(newState); ipcRenderer.send('toggle-voting-results', newState); };
-  const handleResetVotes = () => { if(window.confirm('⚠️ ¿Estás seguro de que quieres borrar todos los votos actuales?')) ipcRenderer.send('reset-votes'); };
+  const handleToggleVotingQR = () => { const newState = !showVotingQR; setShowVotingQR(newState); if(ipcRenderer) ipcRenderer.send('toggle-voting-qr', newState); };
+  const handleToggleVotingResults = () => { const newState = !showVotingResults; setShowVotingResults(newState); if(ipcRenderer) ipcRenderer.send('toggle-voting-results', newState); };
+  const handleResetVotes = () => { if(window.confirm('⚠️ ¿Estás seguro de que quieres borrar todos los votos actuales?')) { if(ipcRenderer) ipcRenderer.send('reset-votes'); } };
 
   const handleSaveBackup = async () => {
     if (drivers.length === 0) return alert("⚠️ No hay datos en pantalla para guardar.");
-    const success = await ipcRenderer.invoke('save-backup', { drivers, session: sessionInfo });
-    if (success) alert("✅ Datos de la carrera guardados correctamente en memoria.");
-    else alert("❌ Error al guardar los datos.");
+    if(ipcRenderer) {
+      const success = await ipcRenderer.invoke('save-backup', { drivers, session: sessionInfo });
+      if (success) alert("✅ Datos de la carrera guardados correctamente en memoria.");
+      else alert("❌ Error al guardar los datos.");
+    }
   };
 
   const handleLoadBackup = async () => {
-    const data = await ipcRenderer.invoke('load-backup');
-    if (data && data.drivers) {
-      setAutoScrape(false); setDrivers(data.drivers); setSessionInfo(data.session);
-      ipcRenderer.send('force-update-leaderboard', data);
-      alert("📂 Datos en memoria cargados. La actualización 'EN VIVO' ha sido pausada.");
-    } else alert("⚠️ No hay datos guardados previamente.");
+    if(ipcRenderer) {
+      const data = await ipcRenderer.invoke('load-backup');
+      if (data && data.drivers) {
+        setAutoScrape(false); setDrivers(data.drivers); setSessionInfo(data.session);
+        ipcRenderer.send('force-update-leaderboard', data);
+        alert("📂 Datos en memoria cargados. La actualización 'EN VIVO' ha sido pausada.");
+      } else alert("⚠️ No hay datos guardados previamente.");
+    }
   };
 
-  const handleToggleFinalResults = () => { setShowFinalResults(!showFinalResults); ipcRenderer.send('toggle-final-results', !showFinalResults); };
-  const handleToggleWinner = () => { const newState = !showWinner; setShowWinner(newState); const winnerDriver = drivers.find(d => String(d.pos) === '1') || drivers[0]; ipcRenderer.send('toggle-winner', { isVisible: newState, driver: winnerDriver }); };
+  const handleToggleFinalResults = () => { setShowFinalResults(!showFinalResults); if(ipcRenderer) ipcRenderer.send('toggle-final-results', !showFinalResults); };
+  const handleToggleWinner = () => { const newState = !showWinner; setShowWinner(newState); const winnerDriver = drivers.find(d => String(d.pos) === '1') || drivers[0]; if(ipcRenderer) ipcRenderer.send('toggle-winner', { isVisible: newState, driver: winnerDriver }); };
   const handleChange = (e) => setConfig({ ...config, [e.target.name]: e.target.value });
-  const handleSave = async () => await ipcRenderer.invoke('save-config', config);
-  const handleToggleBattle = () => { const newState = !showBattle; setShowBattle(newState); ipcRenderer.send('toggle-battle', { isVisible: newState, pos: battleTarget }); };
+  const handleSave = async () => { if(ipcRenderer) await ipcRenderer.invoke('save-config', config); };
+  const handleToggleBattle = () => { const newState = !showBattle; setShowBattle(newState); if(ipcRenderer) ipcRenderer.send('toggle-battle', { isVisible: newState, pos: battleTarget }); };
 
   const handleToggleDriverInfo = (driver) => {
     if (activeDriverInfo && activeDriverInfo.number === driver.number) {
-      setActiveDriverInfo(null); ipcRenderer.send('toggle-driver-info', { isVisible: false, driver: null });
+      setActiveDriverInfo(null); if(ipcRenderer) ipcRenderer.send('toggle-driver-info', { isVisible: false, driver: null });
     } else {
-      setActiveDriverInfo(driver); ipcRenderer.send('toggle-driver-info', { isVisible: true, driver });
+      setActiveDriverInfo(driver); if(ipcRenderer) ipcRenderer.send('toggle-driver-info', { isVisible: true, driver });
     }
   };
   
   const handleDirectSave = async (key, value) => {
     const newConfig = { ...config, [key]: value };
     setConfig(newConfig);
-    await ipcRenderer.invoke('save-config', newConfig);
+    if(ipcRenderer) await ipcRenderer.invoke('save-config', newConfig);
   };
 
   const handleUpdatePositions = async (newPositions, shouldSaveToDisk) => {
     setPositions(newPositions);
-    if (shouldSaveToDisk) await ipcRenderer.invoke('save-positions', newPositions);
-    else ipcRenderer.send('preview-positions', newPositions);
+    if (shouldSaveToDisk) { if(ipcRenderer) await ipcRenderer.invoke('save-positions', newPositions); }
+    else { if(ipcRenderer) ipcRenderer.send('preview-positions', newPositions); }
   };
 
   const handleScrape = async () => {
@@ -223,15 +232,19 @@ export default function ControlPanel() {
     
     isScrapingRef.current = true;
     try {
-      const data = await ipcRenderer.invoke('scrape-timing', { provider, code: finalCode });
-      if (data && data.drivers) { setDrivers(data.drivers); if (data.session) setSessionInfo(data.session); }
+      if(ipcRenderer) {
+        const data = await ipcRenderer.invoke('scrape-timing', { provider, code: finalCode });
+        if (data && data.drivers) { setDrivers(data.drivers); if (data.session) setSessionInfo(data.session); }
+      }
     } catch (e) { console.error("Error scrapeando:", e); }
     isScrapingRef.current = false;
   };
 
   const handleSelectCategoryLogo = async () => {
-    const logoData = await ipcRenderer.invoke('select-category-logo');
-    if (logoData) handleDirectSave('categoryLogo', logoData);
+    if(ipcRenderer) {
+      const logoData = await ipcRenderer.invoke('select-category-logo');
+      if (logoData) handleDirectSave('categoryLogo', logoData);
+    }
   };
 
   const currentZocalos = config.zocalos && config.zocalos.length === 6 ? config.zocalos : Array(6).fill({ title: '', text: '' });
@@ -241,17 +254,17 @@ export default function ControlPanel() {
     newZocalos[index] = { ...newZocalos[index], [field]: value };
     setConfig({ ...config, zocalos: newZocalos });
     if (activeZocaloIndex === index) {
-      ipcRenderer.send('toggle-custom-zocalo', { isVisible: true, title: newZocalos[index].title, text: newZocalos[index].text });
+      if(ipcRenderer) ipcRenderer.send('toggle-custom-zocalo', { isVisible: true, title: newZocalos[index].title, text: newZocalos[index].text });
     }
   };
 
   const handleToggleZocalo = (index) => {
     if (activeZocaloIndex === index) {
-      setActiveZocaloIndex(null); ipcRenderer.send('toggle-custom-zocalo', { isVisible: false, title: '', text: '' });
+      setActiveZocaloIndex(null); if(ipcRenderer) ipcRenderer.send('toggle-custom-zocalo', { isVisible: false, title: '', text: '' });
     } else {
       setActiveZocaloIndex(index);
       const z = currentZocalos[index];
-      ipcRenderer.send('toggle-custom-zocalo', { isVisible: true, title: z.title, text: z.text });
+      if(ipcRenderer) ipcRenderer.send('toggle-custom-zocalo', { isVisible: true, title: z.title, text: z.text });
     }
   };
 
@@ -269,24 +282,26 @@ export default function ControlPanel() {
     return () => { clearInterval(progressInterval); clearInterval(scrapeInterval); };
   }, [autoScrape]);
 
-  const handleToggleTicker = () => { setShowTicker(!showTicker); ipcRenderer.send('toggle-ticker', !showTicker); };
-  const handleToggleTower = () => { setShowTower(!showTower); ipcRenderer.send('toggle-tower', !showTower); };
-  const handleToggleGrid = () => { setShowGrid(!showGrid); ipcRenderer.send('toggle-grid', !showGrid); };
-  const handleToggleGraphic = (id) => { const newState = !graphics[id]; setGraphics({ ...graphics, [id]: newState }); ipcRenderer.send('toggle-graphic', { id, visible: newState }); };
-  const handleSelectLogo = async () => { const logoData = await ipcRenderer.invoke('select-logo'); if (logoData) handleDirectSave('logo', logoData); };
-  const handleToggleFastestLap = () => { setShowFastestLap(!showFastestLap); setNewRecordAlert(false); if (recordTimeoutRef.current) clearTimeout(recordTimeoutRef.current); ipcRenderer.send('toggle-fastest-lap', !showFastestLap); };
+  const handleToggleTicker = () => { setShowTicker(!showTicker); if(ipcRenderer) ipcRenderer.send('toggle-ticker', !showTicker); };
+  const handleToggleTower = () => { setShowTower(!showTower); if(ipcRenderer) ipcRenderer.send('toggle-tower', !showTower); };
+  const handleToggleGrid = () => { setShowGrid(!showGrid); if(ipcRenderer) ipcRenderer.send('toggle-grid', !showGrid); };
+  const handleToggleGraphic = (id) => { const newState = !graphics[id]; setGraphics({ ...graphics, [id]: newState }); if(ipcRenderer) ipcRenderer.send('toggle-graphic', { id, visible: newState }); };
+  const handleSelectLogo = async () => { if(ipcRenderer) { const logoData = await ipcRenderer.invoke('select-logo'); if (logoData) handleDirectSave('logo', logoData); } };
+  const handleToggleFastestLap = () => { setShowFastestLap(!showFastestLap); setNewRecordAlert(false); if (recordTimeoutRef.current) clearTimeout(recordTimeoutRef.current); if(ipcRenderer) ipcRenderer.send('toggle-fastest-lap', !showFastestLap); };
 
   const handleToggleFlag = (type) => {
     const newFlags = { red: false, tricolor: false, black: false, blue: false };
     if (!activeFlags[type]) newFlags[type] = true;
     setActiveFlags(newFlags);
-    ipcRenderer.send('toggle-flag', newFlags);
+    if(ipcRenderer) ipcRenderer.send('toggle-flag', newFlags);
   };
   
   const handleSelectPhotosFolder = async () => {
     try {
-      const folderPath = await ipcRenderer.invoke('select-photos-folder');
-      if (folderPath) handleDirectSave('photosPath', folderPath);
+      if(ipcRenderer) {
+        const folderPath = await ipcRenderer.invoke('select-photos-folder');
+        if (folderPath) handleDirectSave('photosPath', folderPath);
+      }
     } catch (error) { console.error("Error al seleccionar carpeta:", error); }
   };  
 
@@ -336,7 +351,6 @@ export default function ControlPanel() {
         </div>
       </div>
 
-      {/* AGREGAMOS LA PESTAÑA VOTACIONES AL MENÚ */}
       <div style={{ display: 'flex', borderBottom: `1px solid ${colors.border}` }}>
         {['PANEL', 'VOTACIONES', 'ZÓCALOS', 'DISEÑOS', 'AJUSTES', 'PERSONALIZAR'].map(tab => (
           <div key={tab} onClick={() => setActiveTab(tab)} style={{ padding: '12px 25px', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer', borderBottom: activeTab === tab ? `3px solid ${colors.textMain}` : '3px solid transparent', color: activeTab === tab ? colors.textMain : colors.textMuted }}>
@@ -449,7 +463,6 @@ export default function ControlPanel() {
         </div>
       )}
 
-      {/* --- NUEVA PESTAÑA DE VOTACIONES EN VIVO --- */}
       {activeTab === 'VOTACIONES' && (
         <div style={{ padding: '30px', flex: 1, backgroundColor: colors.bgApp, overflowY: 'auto' }}>
           
@@ -562,7 +575,7 @@ export default function ControlPanel() {
                     {hasDesign ? <img src={config[configKey]} alt={graphic.label} style={{ maxHeight: '70px', maxWidth: '90%', objectFit: 'contain' }} /> : <span style={{fontSize: '10px', color: '#444'}}>DISEÑO ESTÁNDAR</span>}
                   </div>
                   <div style={{ display: 'flex', gap: '5px' }}>
-                    <button onClick={async () => { const imgData = await ipcRenderer.invoke('select-design-image', graphic.label); if (imgData) handleDirectSave(configKey, imgData); }} style={{...btnStyle(false), flex: 1, padding: '8px', fontSize: '10px'}}>📷 CARGAR PNG/SVG</button>
+                    <button onClick={async () => { if(ipcRenderer) { const imgData = await ipcRenderer.invoke('select-design-image', graphic.label); if (imgData) handleDirectSave(configKey, imgData); } }} style={{...btnStyle(false), flex: 1, padding: '8px', fontSize: '10px'}}>📷 CARGAR PNG/SVG</button>
                     {hasDesign && <button onClick={() => handleDirectSave(configKey, null)} style={{...btnStyle(false), flex: 1, backgroundColor: '#c0392b', color: 'white', border: 'none', padding: '8px', fontSize: '10px'}}>🗑️ QUITAR</button>}
                   </div>
                 </div>

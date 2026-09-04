@@ -57,11 +57,11 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
     const pos = positions[id] || defaultPositions[id] || {x:0,y:0,scale:1};
     const isSelected = selectedGraphic === id;
     
-    // LA PREVISUALIZACIÓN AHORA LEE EL BORDE INDIVIDUAL DE CADA GRÁFICA
     const currentRadius = config[`borderRadius_${id}`] || '8px';
     
     return (
       <div 
+        key={id}
         onMouseDown={(e) => handlePreviewMouseDown(e, id)}
         style={{
           position: 'absolute', left: `${pos.x}px`, top: `${pos.y}px`, transform: `scale(${pos.scale})`, transformOrigin: 'top left',
@@ -122,7 +122,7 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
         </div>
 
         <h3 style={{ color: colors.yellow, marginBottom: '15px' }}>TEXTO Y TIPOGRAFÍA</h3>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '30px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '20px' }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
             <label style={{ fontSize: '9px', color: colors.textMuted, fontWeight: 'bold' }}>TIPOGRAFÍA GENERAL</label>
             <select value={config.fontFamily || 'Arial, sans-serif'} onChange={(e) => onConfigChange('fontFamily', e.target.value)} style={{ ...inputStyle, padding: '10px', fontSize: '11px', cursor: 'pointer', border: `1px solid ${colors.border}` }}>
@@ -145,10 +145,21 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
           </div>
         </div>
 
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', marginBottom: '30px', backgroundColor: '#111', padding: '15px', borderRadius: '8px', border: `1px solid ${colors.border}` }}>
+          <label style={{ fontSize: '10px', color: colors.textMuted, fontWeight: 'bold' }}>FORMATO DE GRILLA DE PARTIDA</label>
+          <select 
+            value={config.gridFormat || 'standard'} 
+            onChange={(e) => onConfigChange('gridFormat', e.target.value)} 
+            style={{ ...inputStyle, padding: '10px', fontSize: '11px', cursor: 'pointer', border: `1px solid ${colors.border}` }}
+          >
+            <option value="standard">Clásica (Cajas Pequeñas)</option>
+            <option value="photos">Fila x Fila (Fotos Gigantes F1)</option>
+          </select>
+        </div>
+
         <h3 style={{ color: colors.yellow, marginBottom: '15px' }}>ESTILO: {allGraphics.find(g => g.id === selectedGraphic)?.label}</h3>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '30px', backgroundColor: '#111', padding: '15px', borderRadius: '8px', border: `1px solid ${colors.border}` }}>
           
-          {/* AHORA GUARDAN LA INFO ESPECÍFICA DE LA GRÁFICA SELECCIONADA */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
             <label style={{ fontSize: '9px', color: colors.textMuted, fontWeight: 'bold' }}>BORDES (REDONDEO)</label>
             <select 
@@ -241,7 +252,12 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
                 <div style={{ position: 'absolute', top: 0, left: 0, backgroundColor: 'rgba(0,0,0,0.7)', color: 'white', padding: '10px 20px', fontSize: '26px', fontWeight: 'bold', zIndex: 999 }}>
                   MONITOR PREVIO (1920x1080)
                 </div>
-                {allGraphics.map(graphic => renderPreviewGraphic(graphic.id, graphic.label))}
+                
+                {/* --- MAGIA APLICADA: Solo renderizamos la gráfica seleccionada --- */}
+                {allGraphics
+                  .filter(graphic => graphic.id === selectedGraphic)
+                  .map(graphic => renderPreviewGraphic(graphic.id, graphic.label))}
+
             </div>
         </div>
       </div>

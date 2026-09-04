@@ -8,15 +8,16 @@ export default function VotingQR({ isVisible, config, localIp, id = 'votingQR' }
   // MAGIA DE DISEÑO, BORDES Y ANIMACIÓN
   const customBg = config[`design_${id}`];
   const hasCustomBg = !!customBg;
-  const bRad = config[`borderRadius_${id}`] || '8px';
-  const animStyle = config[`animationStyle_${id}`] || 'slide'
+  const bRad = config.borderRadius !== undefined ? config.borderRadius : '8px';
+  const animStyle = config.animationStyle || 'slide';
 
-  // Animación de entrada (Slide desde abajo)
   let transformHidden = `scale(${pos.scale}) translateY(30px)`; 
   if (animStyle === 'fade') transformHidden = `scale(${pos.scale})`; 
   if (animStyle === 'zoom') transformHidden = `scale(${pos.scale * 0.9})`;
 
-  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=http://${localIp}:8080&margin=10`;
+  // Verificamos si la URL de Cloudflare ya se generó o si sigue cargando
+  const isValidIp = localIp && localIp !== '';
+  const qrUrl = isValidIp ? `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(localIp)}&margin=10` : null;
 
   return (
     <div style={{
@@ -30,7 +31,7 @@ export default function VotingQR({ isVisible, config, localIp, id = 'votingQR' }
       backgroundColor: hasCustomBg ? 'transparent' : themeBg, 
       backgroundImage: hasCustomBg ? `url(${customBg})` : 'none',
       backgroundSize: '100% 100%', backgroundRepeat: 'no-repeat', backgroundPosition: 'center',
-      borderRadius: bRad, // <-- APLICADO BORDE DINÁMICO
+      borderRadius: bRad,
       boxShadow: hasCustomBg ? 'none' : '0 10px 30px rgba(0,0,0,0.8)', 
       overflow: 'hidden', borderLeft: hasCustomBg ? 'none' : `4px solid ${themeMain}`,
       padding: hasCustomBg ? '10px' : '0'
@@ -41,9 +42,19 @@ export default function VotingQR({ isVisible, config, localIp, id = 'votingQR' }
         </span>
       </div>
       <div style={{ padding: '15px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px' }}>
-        <div style={{ padding: '5px', backgroundColor: '#fff', borderRadius: '4px' }}>
-          <img src={qrUrl} alt="QR Code" style={{ width: '140px', height: '140px', display: 'block' }} />
+        
+        {/* CAJA DEL CÓDIGO QR CON ESTADO DE CARGA AUTOMÁTICO */}
+        <div style={{ padding: '5px', backgroundColor: '#fff', borderRadius: '4px', width: '150px', height: '150px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+          {isValidIp ? (
+            <img src={qrUrl} alt="QR Code" style={{ width: '140px', height: '140px', display: 'block' }} />
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '5px' }}>
+              <span style={{ fontSize: '24px' }}>⏳</span>
+              <span style={{ color: '#000', fontSize: '10px', fontWeight: '900', textAlign: 'center', letterSpacing: '1px' }}>GENERANDO<br/>TÚNEL...</span>
+            </div>
+          )}
         </div>
+
         <span style={{ color: '#fff', fontSize: '11px', fontWeight: 'bold', textAlign: 'center', lineHeight: '1.4' }}>
           ESCANEÁ PARA VOTAR<br/>AL GANADOR
         </span>
