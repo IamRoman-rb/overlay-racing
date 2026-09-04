@@ -68,7 +68,7 @@ export default function ControlPanel() {
   const [showFastestLap, setShowFastestLap] = useState(false);
   const [activeFlags, setActiveFlags] = useState({ red: false, tricolor: false, black: false, blue: false });
   const [graphics, setGraphics] = useState({ relator: false, comentarista: false, notero1: false, notero2: false, circuito: false, clima: false });
-  
+  const [showLapCounter, setShowLapCounter] = useState(false);
   const [activeZocaloIndex, setActiveZocaloIndex] = useState(null);
 
   const [autoScrape, setAutoScrape] = useState(false);
@@ -288,7 +288,7 @@ export default function ControlPanel() {
   const handleToggleGraphic = (id) => { const newState = !graphics[id]; setGraphics({ ...graphics, [id]: newState }); if(ipcRenderer) ipcRenderer.send('toggle-graphic', { id, visible: newState }); };
   const handleSelectLogo = async () => { if(ipcRenderer) { const logoData = await ipcRenderer.invoke('select-logo'); if (logoData) handleDirectSave('logo', logoData); } };
   const handleToggleFastestLap = () => { setShowFastestLap(!showFastestLap); setNewRecordAlert(false); if (recordTimeoutRef.current) clearTimeout(recordTimeoutRef.current); if(ipcRenderer) ipcRenderer.send('toggle-fastest-lap', !showFastestLap); };
-
+  const handleToggleLapCounter = () => { setShowLapCounter(!showLapCounter); if(ipcRenderer) ipcRenderer.send('toggle-lap-counter', !showLapCounter); };
   const handleToggleFlag = (type) => {
     const newFlags = { red: false, tricolor: false, black: false, blue: false };
     if (!activeFlags[type]) newFlags[type] = true;
@@ -400,7 +400,7 @@ export default function ControlPanel() {
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '5px' }}>
               <button onClick={handleToggleTicker} style={btnStyle(showTicker)}>TIRA INFERIOR</button>
               <button onClick={handleToggleTower} style={btnStyle(showTower)}>TORRE</button>
-              
+              <button onClick={handleToggleLapCounter} style={btnStyle(showLapCounter)}>VUELTAS</button>
               <button 
                 onClick={handleToggleFastestLap} 
                 style={{ 
@@ -410,8 +410,9 @@ export default function ControlPanel() {
               >
                 RECORD VUELTA
               </button>
-            </div>
 
+            </div>
+              
             <div style={sectionTitleStyle}>BATALLA EN PISTA</div>
             <div style={{ display: 'flex', gap: '5px', marginBottom: '15px' }}>
               <div style={{ display: 'flex', alignItems: 'center', backgroundColor: colors.bgInput, border: `1px solid ${colors.border}`, padding: '0 10px', borderRadius: '4px' }}>

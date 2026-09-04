@@ -24,7 +24,7 @@ const defaultPositions = {
   ticker: { x: 0, y: 660, scale: 1 }, grid: { x: 0, y: 0, scale: 1 }, finalResults: { x: 240, y: 40, scale: 1 },
   tower: { x: 20, y: 20, scale: 1 }, winner: { x: 440, y: 550, scale: 1 }, flags: { x: 320, y: 50, scale: 1 },
   fastestLap: { x: 440, y: 150, scale: 1 }, battle: { x: 50, y: 50, scale: 1 }, customZocalo: { x: 20, y: 580, scale: 1 },
-  votingQR: { x: 20, y: 700, scale: 1 }, votingResults: { x: 1550, y: 50, scale: 1 }
+  votingQR: { x: 20, y: 700, scale: 1 }, votingResults: { x: 1550, y: 50, scale: 1 }, lapCounter: { x: 1700, y: 40, scale: 1 }
 };
 
 if (!fs.existsSync(posPath)) fs.writeFileSync(posPath, JSON.stringify(defaultPositions, null, 2));
@@ -115,6 +115,7 @@ function scheduleTunnelRetry() {
 
 let broadcastState = {
   ticker: false, tower: false, grid: false, finalResults: false, fastestLap: false,
+  lapCounter: false,
   votingQR: false, votingResults: false,
   graphics: {},
   winner: { isVisible: false, driver: null },
@@ -155,7 +156,7 @@ io.on('connection', (socket) => {
   socket.emit('set-driver-info-visibility', broadcastState.driverInfo);
   socket.emit('set-battle-visibility', broadcastState.battle);
   socket.emit('set-custom-zocalo-visibility', broadcastState.customZocalo);
-
+  socket.emit('set-lap-counter-visibility', broadcastState.lapCounter);
   Object.keys(broadcastState.graphics).forEach(id => {
     socket.emit('set-graphic-visibility', { id, visible: broadcastState.graphics[id] });
   });
@@ -229,7 +230,7 @@ ipcMain.on('toggle-battle', (e, data) => { broadcastState.battle = data; broadca
 ipcMain.on('toggle-custom-zocalo', (e, data) => { broadcastState.customZocalo = data; broadcast('set-custom-zocalo-visibility', data); });
 ipcMain.on('toggle-voting-qr', (e, data) => { broadcastState.votingQR = data; broadcast('set-voting-qr', data); });
 ipcMain.on('toggle-voting-results', (e, data) => { broadcastState.votingResults = data; broadcast('set-voting-results', data); });
-
+ipcMain.on('toggle-lap-counter', (e, data) => { broadcastState.lapCounter = data; broadcast('set-lap-counter-visibility', data); });
 ipcMain.on('reset-votes', () => { 
   votesData = {}; 
   broadcast('update-votes', votesData); 

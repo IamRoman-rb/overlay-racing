@@ -2,7 +2,7 @@
   "relator": {
     "x": 21,
     "y": 568,
-    "scale": 0.8
+    "scale": 0.6
   },
   "comentarista": {
     "x": 20,
@@ -35,9 +35,9 @@
     "scale": 0.667
   },
   "grid": {
-    "x": 10,
-    "y": 60,
-    "scale": 0.9
+    "x": 79,
+    "y": 17,
+    "scale": 0.6
   },
   "finalResults": {
     "x": 172,
@@ -74,14 +74,9 @@
     "y": 580,
     "scale": 0.8
   },
-  "driverInfo": {
-    "x": 481,
-    "y": 585,
-    "scale": 0.7
-  },
-  "votingQR": {
-    "x": 1082,
-    "y": 475,
-    "scale": 0.7
+  "lapCounter": {
+    "x": 543,
+    "y": 0,
+    "scale": 0.8
   }
 }
