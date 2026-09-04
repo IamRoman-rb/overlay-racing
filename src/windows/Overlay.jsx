@@ -13,10 +13,10 @@ import Battle from '../graphics/Battle';
 import CustomZocalo from './CustomZocalo';
 import VotingQR from '../graphics/VotingQR';
 import VotingResults from '../graphics/VotingResults';
-import LapCounter from '../graphics/LapCounter'
+import LapCounter from '../graphics/LapCounter';
 import VirtualChamp from '../graphics/VirtualChamp';
+import PitStopTimer from '../graphics/PitStopTimer';
 
-// EL FIX: Protección absoluta para CasparCG / vMix
 let ipcRenderer = null;
 if (typeof window !== 'undefined' && typeof window.require === 'function') {
   try {
@@ -71,6 +71,7 @@ export default function Overlay() {
   const [isHovered, setIsHovered] = useState(false);
   const [isLapCounterVisible, setIsLapCounterVisible] = useState(false);
   const [isVirtualChampVisible, setIsVirtualChampVisible] = useState(false);
+  const [pitStopState, setPitStopState] = useState({ isVisible: false, driver: null, startTime: null, stoppedTime: null, isRunning: false });
 
   useEffect(() => {
     if (ipcRenderer) {
@@ -84,17 +85,12 @@ export default function Overlay() {
 
     socket.on('update-config', setConfig);
     socket.on('update-positions', setPositions);
-
     socket.on('update-ip', setLocalIp); 
-    // ------------------------------------------------
 
     socket.on('update-leaderboard', data => {
       if (data && data.drivers) { setDrivers(data.drivers); setSessionInfo(data.session); }
     });
 
-    socket.on('update-leaderboard', data => {
-      if (data && data.drivers) { setDrivers(data.drivers); setSessionInfo(data.session); }
-    });
     socket.on('set-ticker-visibility', setIsTickerVisible);
     socket.on('set-tower-visibility', setIsTowerVisible);
     socket.on('set-graphic-visibility', ({ id, visible }) => setGraphics(prev => ({ ...prev, [id]: visible })));
@@ -111,6 +107,7 @@ export default function Overlay() {
     socket.on('update-votes', setVotes);
     socket.on('set-lap-counter-visibility', setIsLapCounterVisible);
     socket.on('set-virtual-champ', setIsVirtualChampVisible);
+    socket.on('update-pitstop', setPitStopState);
 
     return () => socket.disconnect();
   }, []);
@@ -178,6 +175,7 @@ export default function Overlay() {
       <VotingResults isVisible={isVotingResultsVisible} drivers={formattedDrivers} votes={votes} config={combinedConfig} />
       <LapCounter isVisible={isLapCounterVisible} config={combinedConfig} sessionInfo={sessionInfo} />
       <VirtualChamp isVisible={isVirtualChampVisible} config={combinedConfig} />
+      <PitStopTimer isVisible={pitStopState.isVisible} pitState={pitStopState} config={combinedConfig} />
     </div>
   );
 }

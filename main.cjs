@@ -25,7 +25,8 @@ const defaultPositions = {
   ticker: { x: 0, y: 660, scale: 1 }, grid: { x: 0, y: 0, scale: 1 }, finalResults: { x: 240, y: 40, scale: 1 },
   tower: { x: 20, y: 20, scale: 1 }, winner: { x: 440, y: 550, scale: 1 }, flags: { x: 320, y: 50, scale: 1 },
   fastestLap: { x: 440, y: 150, scale: 1 }, battle: { x: 50, y: 50, scale: 1 }, customZocalo: { x: 20, y: 580, scale: 1 },
-  votingQR: { x: 20, y: 700, scale: 1 }, votingResults: { x: 1550, y: 50, scale: 1 }, lapCounter: { x: 1700, y: 40, scale: 1 }
+  votingQR: { x: 20, y: 700, scale: 1 }, votingResults: { x: 1550, y: 50, scale: 1 }, lapCounter: { x: 1700, y: 40, scale: 1 },
+  pitStop: { x: 50, y: 700, scale: 1 }
 };
 
 if (!fs.existsSync(posPath)) fs.writeFileSync(posPath, JSON.stringify(defaultPositions, null, 2));
@@ -148,6 +149,7 @@ let broadcastState = {
   ticker: false, tower: false, grid: false, finalResults: false, fastestLap: false,
   lapCounter: false,
   votingQR: false, votingResults: false,
+  pitStop: { isVisible: false, driver: null, startTime: null, stoppedTime: null, isRunning: false },
   graphics: {},
   winner: { isVisible: false, driver: null },
   flags: { red: false, tricolor: false, black: false, blue: false },
@@ -267,9 +269,23 @@ ipcMain.on('reset-votes', () => {
   broadcast('update-votes', votesData); 
   if (controlWindow) controlWindow.webContents.send('update-votes', votesData); 
 });
-
 ipcMain.on('toggle-virtual-champ', (e, data) => { broadcastState.virtualChamp = data; broadcast('set-virtual-champ', data); });
+ipcMain.on('pitstop-action', (e, { action, driver }) => {
+  if (action === 'start') {
+    broadcastState.pitStop = { isVisible: true, driver, startTime: Date.now(), stoppedTime: null, isRunning: true };
+  } else if (action === 'stop') {
+    if (broadcastState.pitStop.isRunning) {
+      broadcastState.pitStop.stoppedTime = Date.now() - broadcastState.pitStop.startTime;
+      broadcastState.pitStop.isRunning = false;
+    }
+  } else if (action === 'hide') {
+    broadcastState.pitStop.isVisible = false;
+  }
+  broadcast('update-pitstop', broadcastState.pitStop);
+  if (controlWindow) controlWindow.webContents.send('update-pitstop', broadcastState.pitStop);
+});
 
+ipcMain.handle('get-pitstop', () => broadcastState.pitStop);
 ipcMain.handle('load-excel', async () => {
   const result = await dialog.showOpenDialog(controlWindow, {
     title: 'Cargar Campeonato (Excel)', properties: ['openFile'], filters: [{ name: 'Excel', extensions: ['xlsx', 'xls'] }]

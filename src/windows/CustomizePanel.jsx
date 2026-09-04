@@ -90,7 +90,8 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
     { id: 'driverInfo', label: 'INFO DEL PILOTO' }, { id: 'battle', label: 'BATALLA (F1)' }, { id: 'customZocalo', label: 'ZÓCALO LIBRE' },
     { id: 'votingQR', label: 'QR DE VOTACIÓN' }, { id: 'votingResults', label: 'RESULTADOS DE VOTACIÓN' },
     { id: 'lapCounter', label: 'CONTADOR DE VUELTAS' },
-    { id: 'virtualChamp', label: 'CAMPEONATO VIRTUAL' } // <-- NUEVO
+    { id: 'virtualChamp', label: 'CAMPEONATO VIRTUAL' },
+    { id: 'pitStop', label: 'CRONÓMETRO DE BOXES' }
   ];
 
   const colorSettings = [
@@ -148,7 +149,6 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
           </div>
         </div>
 
-        {/* --- SELECTORES INTELIGENTES CONDICIONALES --- */}
         {selectedGraphic === 'grid' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', marginBottom: '30px', backgroundColor: '#111', padding: '15px', borderRadius: '8px', border: `1px solid ${colors.border}` }}>
             <label style={{ fontSize: '10px', color: colors.textMuted, fontWeight: 'bold' }}>FORMATO DE GRILLA DE PARTIDA</label>
@@ -176,7 +176,6 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
             </select>
           </div>
         )}
-        {/* --------------------------------------------- */}
 
         <h3 style={{ color: colors.yellow, marginBottom: '15px' }}>ESTILO: {allGraphics.find(g => g.id === selectedGraphic)?.label}</h3>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '30px', backgroundColor: '#111', padding: '15px', borderRadius: '8px', border: `1px solid ${colors.border}` }}>
