@@ -26,7 +26,7 @@ const defaultPositions = {
   tower: { x: 20, y: 20, scale: 1 }, winner: { x: 440, y: 550, scale: 1 }, flags: { x: 320, y: 50, scale: 1 },
   fastestLap: { x: 440, y: 150, scale: 1 }, battle: { x: 50, y: 50, scale: 1 }, customZocalo: { x: 20, y: 580, scale: 1 },
   votingQR: { x: 20, y: 700, scale: 1 }, votingResults: { x: 1550, y: 50, scale: 1 }, lapCounter: { x: 1700, y: 40, scale: 1 },
-  pitStop: { x: 50, y: 700, scale: 1 }
+  virtualChamp: { x: 1400, y: 150, scale: 1 }, pitStop: { x: 50, y: 700, scale: 1 }
 };
 
 if (!fs.existsSync(posPath)) fs.writeFileSync(posPath, JSON.stringify(defaultPositions, null, 2));
@@ -80,57 +80,27 @@ let tunnelConnecting = false;
 const TUNNEL_RETRY_TIME = 5000;
 
 async function createPublicTunnel() {
-  if (tunnelConnecting) {
-    return;
-  }
+  if (tunnelConnecting) return;
   tunnelConnecting = true;
   try {
-    console.log('🌐 Intentando crear túnel público con Cloudflare...');
     if (publicTunnel) {
-      try {
-        await publicTunnel.close();
-      } catch (e) {}
+      try { await publicTunnel.close(); } catch (e) {}
       publicTunnel = null;
     }
     publicVotingUrl = null;
     broadcast('update-ip', null);
-    if (controlWindow) {
-      controlWindow.webContents.send('update-ip', null);
-    }
 
     const { startTunnel } = await import('untun');
     publicTunnel = await startTunnel({ port: 8080 });
-    
-    // Obtenemos la URL de Cloudflare
     const tunnelUrl = await publicTunnel.getURL();
 
-    if (!tunnelUrl) {
-      throw new Error('Cloudflare no devolvió una URL pública');
-    }
+    if (!tunnelUrl) throw new Error('Cloudflare no devolvió una URL pública');
     
     publicVotingUrl = `${tunnelUrl}/votar`;
-    console.log('');
-    console.log('==============================================');
-    console.log('🌍 TÚNEL PÚBLICO DE VOTACIÓN ACTIVO');
-    console.log(`🌍 ${publicVotingUrl}`);
-    console.log('==============================================');
-    console.log('');
-
     broadcast('update-ip', publicVotingUrl);
-    if (controlWindow) {
-      controlWindow.webContents.send('update-ip', publicVotingUrl);
-    }
-    
   } catch (err) {
-    console.error(
-      '❌ No se pudo crear el túnel público:',
-      err?.message || err
-    );
     publicVotingUrl = null;
     broadcast('update-ip', null);
-    if (controlWindow) {
-      controlWindow.webContents.send('update-ip', null);
-    }
     scheduleTunnelRetry();
   } finally {
     tunnelConnecting = false;
@@ -139,16 +109,12 @@ async function createPublicTunnel() {
 
 function scheduleTunnelRetry() {
   if (tunnelConnecting) return;
-  console.log(`🔄 Reintentando túnel público en ${TUNNEL_RETRY_TIME / 1000}s...`);
-  setTimeout(() => {
-    createPublicTunnel();
-  }, TUNNEL_RETRY_TIME);
+  setTimeout(() => { createPublicTunnel(); }, TUNNEL_RETRY_TIME);
 }
 
 let broadcastState = {
   ticker: false, tower: false, grid: false, finalResults: false, fastestLap: false,
-  lapCounter: false,
-  votingQR: false, votingResults: false,
+  lapCounter: false, votingQR: false, votingResults: false, virtualChamp: false,
   pitStop: { isVisible: false, driver: null, startTime: null, stoppedTime: null, isRunning: false },
   graphics: {},
   winner: { isVisible: false, driver: null },
@@ -167,13 +133,15 @@ if (!isDev) {
 }
 
 io.on('connection', (socket) => {
-  console.log('🟢 Visor / vMix conectado al servidor de gráficas.');
-  
   try { if (fs.existsSync(dbPath)) socket.emit('update-config', JSON.parse(fs.readFileSync(dbPath, 'utf-8'))); } catch (e) {}
   try {
-    if (fs.existsSync(posPath)) socket.emit('update-positions', JSON.parse(fs.readFileSync(posPath, 'utf-8')));
-    else socket.emit('update-positions', defaultPositions);
-  } catch (e) {}
+    let savedPos = {};
+    if (fs.existsSync(posPath)) savedPos = JSON.parse(fs.readFileSync(posPath, 'utf-8'));
+    const mergedPositions = { ...defaultPositions, ...savedPos };
+    socket.emit('update-positions', mergedPositions);
+  } catch (e) {
+    socket.emit('update-positions', defaultPositions);
+  }
 
   socket.emit('update-leaderboard', lastLeaderboard);
   socket.emit('update-votes', votesData);
@@ -190,6 +158,8 @@ io.on('connection', (socket) => {
   socket.emit('set-battle-visibility', broadcastState.battle);
   socket.emit('set-custom-zocalo-visibility', broadcastState.customZocalo);
   socket.emit('set-lap-counter-visibility', broadcastState.lapCounter);
+  socket.emit('set-virtual-champ', broadcastState.virtualChamp);
+  socket.emit('update-pitstop', broadcastState.pitStop);
   Object.keys(broadcastState.graphics).forEach(id => {
     socket.emit('set-graphic-visibility', { id, visible: broadcastState.graphics[id] });
   });
@@ -203,15 +173,13 @@ expressApp.get('/votar', (req, res) => {
       if (configData.campeonato) campeonato = configData.campeonato;
     }
   } catch (e) {}
-  const html = getVotingHtml(currentDriversForVote, campeonato);
-  res.send(html);
+  res.send(getVotingHtml(currentDriversForVote, campeonato));
 });
 
 expressApp.post('/vote', (req, res) => {
   const num = decodeURIComponent(req.query.num);
   votesData[num] = (votesData[num] || 0) + 1;
-  io.emit('update-votes', votesData); 
-  if (controlWindow) controlWindow.webContents.send('update-votes', votesData); 
+  broadcast('update-votes', votesData);
   res.sendStatus(200);
 });
 
@@ -220,7 +188,6 @@ expressApp.get('/photo/:number', (req, res) => {
     const configData = JSON.parse(fs.readFileSync(dbPath, 'utf-8'));
     const photosDir = configData.photosPath;
     if (!photosDir) return res.sendStatus(404);
-    
     const num = req.params.number;
     const exts = ['.png', '.jpg', '.jpeg', '.PNG', '.JPG'];
     for (const ext of exts) {
@@ -234,17 +201,19 @@ expressApp.get('/photo/:number', (req, res) => {
 });
 
 server.listen(8080, '0.0.0.0', async () => {
-  console.log('');
-  console.log('==============================================');
-  console.log('📡 BROADCAST SERVER ACTIVO');
-  console.log(`📡 RED LOCAL: http://${localIP}:8080`);
-  console.log('==============================================');
-  console.log('');
-
   await createPublicTunnel();
 });
 
-const broadcast = (event, data) => { io.emit(event, data); };
+// FIX MAESTRO: Enviar a Socket.io Y DIRECTAMENTE a las ventanas de Electron por IPC
+const broadcast = (event, data) => {
+  try { io.emit(event, data); } catch (e) {}
+  if (overlayWindow && !overlayWindow.isDestroyed()) {
+    overlayWindow.webContents.send(event, data);
+  }
+  if (controlWindow && !controlWindow.isDestroyed()) {
+    controlWindow.webContents.send(event, data);
+  }
+};
 
 ipcMain.on('preview-positions', (event, data) => broadcast('update-positions', data));
 ipcMain.on('force-update-leaderboard', (event, data) => { lastLeaderboard = data; broadcast('update-leaderboard', data); });
@@ -267,7 +236,6 @@ ipcMain.on('toggle-lap-counter', (e, data) => { broadcastState.lapCounter = data
 ipcMain.on('reset-votes', () => { 
   votesData = {}; 
   broadcast('update-votes', votesData); 
-  if (controlWindow) controlWindow.webContents.send('update-votes', votesData); 
 });
 ipcMain.on('toggle-virtual-champ', (e, data) => { broadcastState.virtualChamp = data; broadcast('set-virtual-champ', data); });
 ipcMain.on('pitstop-action', (e, { action, driver }) => {
@@ -282,7 +250,6 @@ ipcMain.on('pitstop-action', (e, { action, driver }) => {
     broadcastState.pitStop.isVisible = false;
   }
   broadcast('update-pitstop', broadcastState.pitStop);
-  if (controlWindow) controlWindow.webContents.send('update-pitstop', broadcastState.pitStop);
 });
 
 ipcMain.handle('get-pitstop', () => broadcastState.pitStop);
@@ -295,12 +262,10 @@ ipcMain.handle('load-excel', async () => {
       const workbook = xlsx.readFile(result.filePaths[0]);
       const sheet = xlsx.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
       let drivers = []; let pointScale = {};
-      
       sheet.forEach(row => {
         if (row.Numero !== undefined) drivers.push({ Numero: row.Numero, Nombre: row.Nombre || 'Piloto', Puntos: row.Puntos || 0 });
         if (row.Posicion !== undefined && row.Puntos_Escala !== undefined) pointScale[row.Posicion] = parseFloat(row.Puntos_Escala);
       });
-      
       championshipData = { drivers, pointScale };
       calculateLiveChampionship();
       return true;
@@ -309,21 +274,25 @@ ipcMain.handle('load-excel', async () => {
   return false;
 });
 
-ipcMain.handle('get-local-ip', () => {
-  return publicVotingUrl;
-});
-
+ipcMain.handle('get-local-ip', () => publicVotingUrl || localIP);
 ipcMain.handle('get-votes', () => votesData);
 ipcMain.handle('get-config', () => {
   try { if (fs.existsSync(dbPath)) return JSON.parse(fs.readFileSync(dbPath, 'utf-8')); } catch (e) {}
   return { campeonato: '', relator: '', comentarista: '' };
 });
 ipcMain.handle('save-config', (event, data) => {
-  try { fs.writeFileSync(dbPath, JSON.stringify(data, null, 2)); broadcast('update-config', data); return true; } catch (e) { return false; }
+  try { 
+    fs.writeFileSync(dbPath, JSON.stringify(data, null, 2)); 
+    broadcast('update-config', data); 
+    return true; 
+  } catch (e) { return false; }
 });
 ipcMain.handle('get-default-positions', () => defaultPositions);
 ipcMain.handle('get-positions', () => {
-  try { return JSON.parse(fs.readFileSync(posPath, 'utf-8')); } catch (e) { return defaultPositions; }
+  try { 
+    let savedPos = JSON.parse(fs.readFileSync(posPath, 'utf-8')); 
+    return { ...defaultPositions, ...savedPos };
+  } catch (e) { return defaultPositions; }
 });
 ipcMain.handle('save-positions', (event, data) => {
   try { fs.writeFileSync(posPath, JSON.stringify(data, null, 2)); broadcast('update-positions', data); return true; } catch (e) { return false; }
@@ -348,13 +317,32 @@ ipcMain.handle('scrape-timing', async (event, { provider, code }) => {
   }
   lastLeaderboard = leaderboard; 
   broadcast('update-leaderboard', leaderboard);
-
   calculateLiveChampionship();
-
   return leaderboard;
 });
 
+// NUEVO: Permite al Overlay obtener TODO de un solo golpe al arrancar
+ipcMain.handle('get-initial-state', () => {
+  let config = {};
+  try { if (fs.existsSync(dbPath)) config = JSON.parse(fs.readFileSync(dbPath, 'utf-8')); } catch (e) {}
 
+  let positions = defaultPositions;
+  try {
+    if (fs.existsSync(posPath)) {
+      const savedPos = JSON.parse(fs.readFileSync(posPath, 'utf-8'));
+      positions = { ...defaultPositions, ...savedPos };
+    }
+  } catch (e) {}
+
+  return {
+    config,
+    positions,
+    broadcastState,
+    leaderboard: lastLeaderboard,
+    votes: votesData,
+    localIp: publicVotingUrl || localIP
+  };
+});
 
 const handleFileSelect = async (title, extensions) => {
   const result = await dialog.showOpenDialog(controlWindow, { title, properties: ['openFile'], filters: [{ name: 'Imágenes', extensions }] });
@@ -382,8 +370,10 @@ ipcMain.on('overlay-control', (event, action) => {
 });
 
 function createWindows() {
-  controlWindow = new BrowserWindow({ width: 1050, height: 700, webPreferences: { nodeIntegration: true, contextIsolation: false }, autoHideMenuBar: true });
-  overlayWindow = new BrowserWindow({ width: 1920, height: 1080, frame: false, resizable: false, transparent: true, hasShadow: false, webPreferences: { nodeIntegration: true, contextIsolation: false } });
+  const iconPath = path.join(__dirname, 'src', 'assets', 'logo.png');
+
+  controlWindow = new BrowserWindow({ width: 1050, height: 700, icon: iconPath, webPreferences: { nodeIntegration: true, contextIsolation: false }, autoHideMenuBar: true });
+  overlayWindow = new BrowserWindow({ width: 1920, height: 1080, icon: iconPath, frame: false, resizable: false, transparent: true, hasShadow: false, webPreferences: { nodeIntegration: true, contextIsolation: false } });
 
   if (isDev) {
     controlWindow.loadURL('http://localhost:5173/#/');

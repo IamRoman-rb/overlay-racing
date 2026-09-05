@@ -1,22 +1,22 @@
 {
   "relator": {
-    "x": 21,
-    "y": 568,
-    "scale": 0.6
+    "x": 20,
+    "y": 560,
+    "scale": 1
   },
   "comentarista": {
     "x": 20,
-    "y": 568,
+    "y": 480,
     "scale": 1
   },
   "notero1": {
-    "x": 16,
-    "y": 570,
+    "x": 20,
+    "y": 400,
     "scale": 1
   },
   "notero2": {
-    "x": 18,
-    "y": 571,
+    "x": 20,
+    "y": 320,
     "scale": 1
   },
   "circuito": {
@@ -31,53 +31,53 @@
   },
   "ticker": {
     "x": 0,
-    "y": 635,
-    "scale": 0.667
+    "y": 660,
+    "scale": 1
   },
   "grid": {
-    "x": 79,
-    "y": 17,
-    "scale": 0.6
+    "x": 0,
+    "y": 0,
+    "scale": 1
   },
   "finalResults": {
-    "x": 172,
-    "y": 65,
-    "scale": 0.8
+    "x": 240,
+    "y": 40,
+    "scale": 1
   },
   "tower": {
-    "x": 10,
-    "y": 10,
-    "scale": 0.5
+    "x": 20,
+    "y": 20,
+    "scale": 1
   },
   "winner": {
-    "x": 416,
-    "y": 595,
-    "scale": 0.7
+    "x": 440,
+    "y": 550,
+    "scale": 1
   },
   "flags": {
-    "x": 420,
-    "y": -2,
-    "scale": 0.6
+    "x": 320,
+    "y": 50,
+    "scale": 1
   },
   "fastestLap": {
-    "x": 954,
-    "y": 561,
-    "scale": 0.7
+    "x": 440,
+    "y": 150,
+    "scale": 1
   },
   "battle": {
-    "x": 277,
-    "y": 566,
-    "scale": 0.8
+    "x": 50,
+    "y": 50,
+    "scale": 1
   },
   "customZocalo": {
     "x": 20,
     "y": 580,
-    "scale": 0.8
+    "scale": 1
   },
   "votingQR": {
-    "x": 1085,
-    "y": 470,
-    "scale": 0.7
+    "x": 20,
+    "y": 700,
+    "scale": 1
   },
   "votingResults": {
     "x": 1550,
@@ -90,13 +90,12 @@
     "scale": 1
   },
   "virtualChamp": {
-    "x": 8,
-    "y": 440,
-    "scale": 0.7
+    "x": 1400,
+    "y": 150,
+    "scale": 1
   },
   "pitStop": {
-    "x": 1002,
-    "y": 464,
-    "scale": 0.7
+    "x": 798,
+    "y": 519
   }
 }
