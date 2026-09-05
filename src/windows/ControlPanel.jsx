@@ -84,6 +84,7 @@ export default function ControlPanel() {
   const [newRecordAlert, setNewRecordAlert] = useState(false);
   const bestLapRef = useRef(Infinity);
   const recordTimeoutRef = useRef(null);
+  const autoHideFastestLapRef = useRef(null);
 
   const [showVotingQR, setShowVotingQR] = useState(false);
   const [showVotingResults, setShowVotingResults] = useState(false);
@@ -155,6 +156,15 @@ export default function ControlPanel() {
         setNewRecordAlert(true);
         if (recordTimeoutRef.current) clearTimeout(recordTimeoutRef.current);
         recordTimeoutRef.current = setTimeout(() => { setNewRecordAlert(false); }, 6000);
+
+        // --- NUEVO: mostrar automáticamente la gráfica de récord de vuelta ---
+        setShowFastestLap(true);
+        if (ipcRenderer) ipcRenderer.send('toggle-fastest-lap', true);
+        if (autoHideFastestLapRef.current) clearTimeout(autoHideFastestLapRef.current);
+        autoHideFastestLapRef.current = setTimeout(() => {
+          setShowFastestLap(false);
+          if (ipcRenderer) ipcRenderer.send('toggle-fastest-lap', false);
+        }, 8000); // se oculta sola a los 8s — ajustá este número a gusto
       }
       bestLapRef.current = currentBest;
     }
@@ -315,7 +325,13 @@ export default function ControlPanel() {
   const handleToggleGrid = () => { setShowGrid(!showGrid); if (ipcRenderer) ipcRenderer.send('toggle-grid', !showGrid); };
   const handleToggleGraphic = (id) => { const newState = !graphics[id]; setGraphics({ ...graphics, [id]: newState }); if (ipcRenderer) ipcRenderer.send('toggle-graphic', { id, visible: newState }); };
   const handleSelectLogo = async () => { if (ipcRenderer) { const logoData = await ipcRenderer.invoke('select-logo'); if (logoData) handleDirectSave('logo', logoData); } };
-  const handleToggleFastestLap = () => { setShowFastestLap(!showFastestLap); setNewRecordAlert(false); if (recordTimeoutRef.current) clearTimeout(recordTimeoutRef.current); if (ipcRenderer) ipcRenderer.send('toggle-fastest-lap', !showFastestLap); };
+  const handleToggleFastestLap = () => {
+  setShowFastestLap(!showFastestLap);
+  setNewRecordAlert(false);
+  if (recordTimeoutRef.current) clearTimeout(recordTimeoutRef.current);
+  if (autoHideFastestLapRef.current) clearTimeout(autoHideFastestLapRef.current);
+  if (ipcRenderer) ipcRenderer.send('toggle-fastest-lap', !showFastestLap);
+};
   const handleToggleLapCounter = () => { setShowLapCounter(!showLapCounter); if (ipcRenderer) ipcRenderer.send('toggle-lap-counter', !showLapCounter); };
   const handleToggleFlag = (type) => {
     const newFlags = { red: false, tricolor: false, black: false, blue: false };

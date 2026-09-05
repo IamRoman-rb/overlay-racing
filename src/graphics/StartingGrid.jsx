@@ -1,6 +1,10 @@
 import { useState, useEffect } from 'react';
-import { io } from 'socket.io-client';
-
+let ipcRenderer = null;
+if (typeof window !== 'undefined' && typeof window.require === 'function') {
+  try {
+    ipcRenderer = window.require('electron').ipcRenderer;
+  } catch (e) {}
+}
 export default function StartingGrid({ drivers, config, isVisible, id = 'grid' }) {
   const [page, setPage] = useState(0);
 
@@ -30,21 +34,35 @@ export default function StartingGrid({ drivers, config, isVisible, id = 'grid' }
     if (!isVisible || drivers.length === 0) { setPage(0); return; }
   }, [isVisible, drivers]);
 
-  useEffect(() => {
-    const totalPages = Math.ceil(drivers.length / itemsPerPage);
-    if (totalPages === 0) return;
+useEffect(() => {
+  const totalPages = Math.ceil(drivers.length / itemsPerPage);
+  if (totalPages === 0) return;
 
-    const host = window.location.hostname || 'localhost';
-    const socket = io(`http://${host}:8080`);
+  const handleNext = () => setPage((prev) => (prev + 1) % totalPages);
+  const handlePrev = () => setPage((prev) => (prev - 1 + totalPages) % totalPages);
 
-    const handleNext = () => setPage((prev) => (prev + 1) % totalPages);
-    const handlePrev = () => setPage((prev) => (prev - 1 + totalPages) % totalPages);
-    
-    socket.on('grid-next', handleNext);
-    socket.on('grid-prev', handlePrev);
-    
-    return () => socket.disconnect();
-  }, [drivers, itemsPerPage]);
+  if (ipcRenderer) {
+    // --- MODO ELECTRON: IPC directo, sin depender de la red ---
+    const ipcNext = () => handleNext();
+    const ipcPrev = () => handlePrev();
+    ipcRenderer.on('grid-next', ipcNext);
+    ipcRenderer.on('grid-prev', ipcPrev);
+    return () => {
+      ipcRenderer.removeListener('grid-next', ipcNext);
+      ipcRenderer.removeListener('grid-prev', ipcPrev);
+    };
+  } else {
+    // --- MODO NAVEGADOR: fallback por Socket.io (para preview fuera de Electron) ---
+    let socket;
+    import('socket.io-client').then(({ io }) => {
+      const host = window.location.hostname || 'localhost';
+      socket = io(`http://${host}:8080`);
+      socket.on('grid-next', handleNext);
+      socket.on('grid-prev', handlePrev);
+    });
+    return () => { if (socket) socket.disconnect(); };
+  }
+}, [drivers, itemsPerPage]);
 
   const pos = config?.positions?.[id] || { x: 0, y: 0, scale: 1 };
   const currentDrivers = drivers.slice(page * itemsPerPage, (page + 1) * itemsPerPage);

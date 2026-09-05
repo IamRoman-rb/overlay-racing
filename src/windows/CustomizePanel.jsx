@@ -269,11 +269,7 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
                 border: '4px solid #555', boxSizing: 'border-box', overflow: 'hidden',
                 fontFamily: config.fontFamily || 'Arial, sans-serif'
               }}
-            >
-                <div style={{ position: 'absolute', top: 0, left: 0, backgroundColor: 'rgba(0,0,0,0.7)', color: 'white', padding: '10px 20px', fontSize: '26px', fontWeight: 'bold', zIndex: 999 }}>
-                  MONITOR PREVIO (1920x1080)
-                </div>
-                
+            >               
                 {allGraphics
                   .filter(graphic => graphic.id === selectedGraphic)
                   .map(graphic => renderPreviewGraphic(graphic.id, graphic.label))}
