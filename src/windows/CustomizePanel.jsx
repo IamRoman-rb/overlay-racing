@@ -91,7 +91,8 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
     { id: 'votingQR', label: 'QR DE VOTACIÓN' }, { id: 'votingResults', label: 'RESULTADOS DE VOTACIÓN' },
     { id: 'lapCounter', label: 'CONTADOR DE VUELTAS' },
     { id: 'virtualChamp', label: 'CAMPEONATO VIRTUAL' },
-    { id: 'pitStop', label: 'CRONÓMETRO DE BOXES' }
+    { id: 'pitStop', label: 'CRONÓMETRO DE BOXES' },
+    { id: 'startingLights', label: 'SEMÁFORO DE LARGADA' },
   ];
 
   const colorSettings = [

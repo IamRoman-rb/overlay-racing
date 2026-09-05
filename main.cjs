@@ -26,7 +26,8 @@ const defaultPositions = {
   tower: { x: 20, y: 20, scale: 1 }, winner: { x: 440, y: 550, scale: 1 }, flags: { x: 320, y: 50, scale: 1 },
   fastestLap: { x: 440, y: 150, scale: 1 }, battle: { x: 50, y: 50, scale: 1 }, customZocalo: { x: 20, y: 580, scale: 1 },
   votingQR: { x: 20, y: 700, scale: 1 }, votingResults: { x: 1550, y: 50, scale: 1 }, lapCounter: { x: 1700, y: 40, scale: 1 },
-  virtualChamp: { x: 1400, y: 150, scale: 1 }, pitStop: { x: 50, y: 700, scale: 1 }
+  virtualChamp: { x: 1400, y: 150, scale: 1 }, pitStop: { x: 50, y: 700, scale: 1 },
+  startingLights: { x: 700, y: 400, scale: 1 }
 };
 
 if (!fs.existsSync(posPath)) fs.writeFileSync(posPath, JSON.stringify(defaultPositions, null, 2));
@@ -49,7 +50,7 @@ let liveChampionship = [];
 
 function calculateLiveChampionship() {
   if (!championshipData.drivers.length) return;
-  
+
   let tempStandings = championshipData.drivers.map(d => ({
     number: d.Numero?.toString(), name: d.Nombre,
     basePoints: parseFloat(d.Puntos) || 0, livePoints: parseFloat(d.Puntos) || 0, added: 0
@@ -70,7 +71,7 @@ function calculateLiveChampionship() {
   tempStandings.sort((a, b) => b.livePoints - a.livePoints);
   tempStandings.forEach((d, index) => d.livePos = index + 1);
   liveChampionship = tempStandings;
-  
+
   broadcast('update-championship', liveChampionship);
 }
 
@@ -95,7 +96,7 @@ async function createPublicTunnel() {
     const tunnelUrl = await publicTunnel.getURL();
 
     if (!tunnelUrl) throw new Error('Cloudflare no devolvió una URL pública');
-    
+
     publicVotingUrl = `${tunnelUrl}/votar`;
     broadcast('update-ip', publicVotingUrl);
   } catch (err) {
@@ -116,6 +117,7 @@ let broadcastState = {
   ticker: false, tower: false, grid: false, finalResults: false, fastestLap: false,
   lapCounter: false, votingQR: false, votingResults: false, virtualChamp: false,
   pitStop: { isVisible: false, driver: null, startTime: null, stoppedTime: null, isRunning: false },
+  startingLights: { isVisible: false, step: 0 },
   graphics: {},
   winner: { isVisible: false, driver: null },
   flags: { red: false, tricolor: false, black: false, blue: false },
@@ -160,6 +162,7 @@ io.on('connection', (socket) => {
   socket.emit('set-lap-counter-visibility', broadcastState.lapCounter);
   socket.emit('set-virtual-champ', broadcastState.virtualChamp);
   socket.emit('update-pitstop', broadcastState.pitStop);
+  socket.emit('update-starting-lights', broadcastState.startingLights);
   Object.keys(broadcastState.graphics).forEach(id => {
     socket.emit('set-graphic-visibility', { id, visible: broadcastState.graphics[id] });
   });
@@ -233,9 +236,9 @@ ipcMain.on('toggle-custom-zocalo', (e, data) => { broadcastState.customZocalo = 
 ipcMain.on('toggle-voting-qr', (e, data) => { broadcastState.votingQR = data; broadcast('set-voting-qr', data); });
 ipcMain.on('toggle-voting-results', (e, data) => { broadcastState.votingResults = data; broadcast('set-voting-results', data); });
 ipcMain.on('toggle-lap-counter', (e, data) => { broadcastState.lapCounter = data; broadcast('set-lap-counter-visibility', data); });
-ipcMain.on('reset-votes', () => { 
-  votesData = {}; 
-  broadcast('update-votes', votesData); 
+ipcMain.on('reset-votes', () => {
+  votesData = {};
+  broadcast('update-votes', votesData);
 });
 ipcMain.on('toggle-virtual-champ', (e, data) => { broadcastState.virtualChamp = data; broadcast('set-virtual-champ', data); });
 ipcMain.on('pitstop-action', (e, { action, driver }) => {
@@ -250,6 +253,53 @@ ipcMain.on('pitstop-action', (e, { action, driver }) => {
     broadcastState.pitStop.isVisible = false;
   }
   broadcast('update-pitstop', broadcastState.pitStop);
+});
+
+// --- SEMÁFORO DE LARGADA (LARGADA MANUAL) ---
+let startingLightsTimers = [];
+const clearStartingLightsTimers = () => {
+  startingLightsTimers.forEach(t => clearTimeout(t));
+  startingLightsTimers = [];
+};
+
+ipcMain.on('starting-lights-action', (e, action) => {
+  if (action === 'hide') {
+    clearStartingLightsTimers();
+    broadcastState.startingLights = { isVisible: false, step: 0 };
+    broadcast('update-starting-lights', broadcastState.startingLights);
+    return;
+  }
+
+  if (action === 'start') {
+    clearStartingLightsTimers();
+    broadcastState.startingLights = { isVisible: true, step: 0 };
+    broadcast('update-starting-lights', broadcastState.startingLights);
+
+    // Enciende las 5 luces, una por segundo, y se queda esperando la orden manual de largada
+    for (let i = 1; i <= 5; i++) {
+      const t = setTimeout(() => {
+        broadcastState.startingLights = { isVisible: true, step: i };
+        broadcast('update-starting-lights', broadcastState.startingLights);
+      }, i * 1000);
+      startingLightsTimers.push(t);
+    }
+    return;
+  }
+
+  if (action === 'go') {
+    // Sólo se puede largar si las 5 luces ya están encendidas
+    if (broadcastState.startingLights.step !== 5) return;
+
+    clearStartingLightsTimers();
+    broadcastState.startingLights = { isVisible: true, step: 6 };
+    broadcast('update-starting-lights', broadcastState.startingLights);
+
+    const hideTimer = setTimeout(() => {
+      broadcastState.startingLights = { isVisible: false, step: 0 };
+      broadcast('update-starting-lights', broadcastState.startingLights);
+    }, 2500);
+    startingLightsTimers.push(hideTimer);
+  }
 });
 
 ipcMain.handle('get-pitstop', () => broadcastState.pitStop);
@@ -281,33 +331,33 @@ ipcMain.handle('get-config', () => {
   return { campeonato: '', relator: '', comentarista: '' };
 });
 ipcMain.handle('save-config', (event, data) => {
-  try { 
-    fs.writeFileSync(dbPath, JSON.stringify(data, null, 2)); 
-    broadcast('update-config', data); 
-    return true; 
+  try {
+    fs.writeFileSync(dbPath, JSON.stringify(data, null, 2));
+    broadcast('update-config', data);
+    return true;
   } catch (e) { return false; }
 });
 ipcMain.handle('get-default-positions', () => defaultPositions);
 ipcMain.handle('get-positions', () => {
-  try { 
-    let savedPos = JSON.parse(fs.readFileSync(posPath, 'utf-8')); 
+  try {
+    let savedPos = JSON.parse(fs.readFileSync(posPath, 'utf-8'));
     return { ...defaultPositions, ...savedPos };
   } catch (e) { return defaultPositions; }
 });
 ipcMain.handle('save-positions', (event, data) => {
   try { fs.writeFileSync(posPath, JSON.stringify(data, null, 2)); broadcast('update-positions', data); return true; } catch (e) { return false; }
 });
-ipcMain.handle('save-backup', (event, data) => { 
+ipcMain.handle('save-backup', (event, data) => {
   try { fs.writeFileSync(backupPath, JSON.stringify(data, null, 2)); return true; } catch (e) { return false; }
 });
-ipcMain.handle('load-backup', () => { 
-  try { 
+ipcMain.handle('load-backup', () => {
+  try {
     if (fs.existsSync(backupPath)) {
       const bData = JSON.parse(fs.readFileSync(backupPath, 'utf-8'));
       lastLeaderboard = bData;
       return bData;
     }
-  } catch (e) {} return null; 
+  } catch (e) {} return null;
 });
 
 ipcMain.handle('scrape-timing', async (event, { provider, code }) => {
@@ -315,7 +365,7 @@ ipcMain.handle('scrape-timing', async (event, { provider, code }) => {
   if (leaderboard && leaderboard.drivers && leaderboard.drivers.length > 0) {
     currentDriversForVote = leaderboard.drivers;
   }
-  lastLeaderboard = leaderboard; 
+  lastLeaderboard = leaderboard;
   broadcast('update-leaderboard', leaderboard);
   calculateLiveChampionship();
   return leaderboard;
@@ -365,8 +415,8 @@ ipcMain.handle('select-photos-folder', async () => {
 ipcMain.on('overlay-control', (event, action) => {
   if (!overlayWindow) return;
   if (action === 'minimize') overlayWindow.minimize();
-  else if (action === 'maximize') { overlayWindow.isMaximized() ? overlayWindow.unmaximize() : overlayWindow.maximize(); } 
-  else if (action === 'close') app.quit(); 
+  else if (action === 'maximize') { overlayWindow.isMaximized() ? overlayWindow.unmaximize() : overlayWindow.maximize(); }
+  else if (action === 'close') app.quit();
 });
 
 function createWindows() {

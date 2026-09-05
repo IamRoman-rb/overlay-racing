@@ -49,7 +49,6 @@ const formatDriverName = (name, format) => {
   }
 };
 
-// Lista de eventos que el proceso principal reenvía. Mapea evento -> setter.
 function buildEventHandlers(setters) {
   const {
     setConfig, setPositions, setLocalIp, setDrivers, setSessionInfo,
@@ -125,7 +124,6 @@ export default function Overlay() {
 
   const inBrowserMode = !ipcRenderer;
 
-  // CARGA INICIAL + SUSCRIPCIÓN A EVENTOS
   useEffect(() => {
     const handlers = buildEventHandlers({
       setConfig, setPositions, setLocalIp, setDrivers, setSessionInfo,
@@ -138,7 +136,6 @@ export default function Overlay() {
     });
 
     if (ipcRenderer) {
-      // --- MODO ELECTRON: todo por IPC, sin depender de la red ---
       ipcRenderer.invoke('get-initial-state').then((state) => {
         if (!state) return;
         if (state.config) setConfig(state.config);
@@ -161,6 +158,7 @@ export default function Overlay() {
         setIsVotingResultsVisible(!!bs.votingResults);
         setIsVirtualChampVisible(!!bs.virtualChamp);
         if (bs.pitStop) setPitStopState(bs.pitStop);
+        if (bs.startingLights) setStartingLightsState(bs.startingLights);
         if (bs.graphics) setGraphics(bs.graphics);
         if (bs.winner) { setIsWinnerVisible(bs.winner.isVisible); if (bs.winner.driver) setWinnerData(bs.winner.driver); }
         if (bs.flags) setActiveFlags(bs.flags);
@@ -177,7 +175,6 @@ export default function Overlay() {
         Object.keys(handlers).forEach(event => ipcRenderer.removeAllListeners(event));
       };
     } else {
-      // --- MODO NAVEGADOR (sin Electron, sólo para previsualizar) ---
       let socket;
       import('socket.io-client').then(({ io }) => {
         socket = io('http://127.0.0.1:8080', {

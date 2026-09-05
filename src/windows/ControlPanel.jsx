@@ -4,12 +4,11 @@ import SettingsPanel from '../windows/SettingsPanel';
 import CustomizePanel from '../windows/CustomizePanel';
 import DriversTable from '../windows/DriversTable';
 
-// EL FIX: Protegemos ipcRenderer para que CasparCG no colapse al leer este archivo por culpa del Router de React
 let ipcRenderer = null;
 if (typeof window !== 'undefined' && typeof window.require === 'function') {
   try {
     ipcRenderer = window.require('electron').ipcRenderer;
-  } catch (e) {}
+  } catch (e) { }
 }
 
 const colors = {
@@ -25,7 +24,7 @@ const GraphicControl = ({ id, label, value, isActive, onChange, onBlur, onToggle
 const SelectControl = ({ id, label, value, options, isActive, onChange, onBlur, onToggle }) => (<div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}> <button onClick={() => onToggle(id)} style={btnStyle(isActive)}>{label}</button> <select name={id} value={value || ''} onChange={onChange} onBlur={onBlur} style={inputStyle}> <option value="">SELECCIONAR...</option> {options.map((opt, i) => (<option key={i} value={opt.nombre}>{opt.nombre.toUpperCase()}</option>))} </select> </div>);
 const WeatherControl = ({ id, label, config, isActive, onChange, onBlur, onToggle, setConfig }) => {
   const [loading, setLoading] = useState(false);
-  const fetchWeather = async () => { const circuitoSeleccionado = circuitosData.find(c => c.nombre === config.circuito); if (!circuitoSeleccionado) { alert("⚠️ Selecciona un Circuito primero."); return; } setLoading(true); try { const { lat, lon } = circuitoSeleccionado; const weatherRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`); const weatherData = await weatherRes.json(); const temp = Math.round(weatherData.current_weather.temperature); const code = weatherData.current_weather.weathercode; let desc = "DESPEJADO"; if (code >= 1 && code <= 3) desc = "NUBLADO"; if (code >= 51 && code <= 67) desc = "LLUVIA"; if (code >= 95) desc = "TORMENTA"; const weatherString = `${temp}°C - ${desc}`; const newConfig = { ...config, [id]: weatherString }; setConfig(newConfig); if(ipcRenderer) await ipcRenderer.invoke('save-config', newConfig); } catch (error) { console.error(error); } setLoading(false); };
+  const fetchWeather = async () => { const circuitoSeleccionado = circuitosData.find(c => c.nombre === config.circuito); if (!circuitoSeleccionado) { alert("⚠️ Selecciona un Circuito primero."); return; } setLoading(true); try { const { lat, lon } = circuitoSeleccionado; const weatherRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`); const weatherData = await weatherRes.json(); const temp = Math.round(weatherData.current_weather.temperature); const code = weatherData.current_weather.weathercode; let desc = "DESPEJADO"; if (code >= 1 && code <= 3) desc = "NUBLADO"; if (code >= 51 && code <= 67) desc = "LLUVIA"; if (code >= 95) desc = "TORMENTA"; const weatherString = `${temp}°C - ${desc}`; const newConfig = { ...config, [id]: weatherString }; setConfig(newConfig); if (ipcRenderer) await ipcRenderer.invoke('save-config', newConfig); } catch (error) { console.error(error); } setLoading(false); };
   return (<div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}> <div style={{ display: 'flex', gap: '2px' }}> <button onClick={() => onToggle(id)} style={{ ...btnStyle(isActive), flex: 1 }}>{label}</button> <button onClick={fetchWeather} disabled={loading} style={{ backgroundColor: colors.bgInput, color: colors.yellow, border: `1px solid ${colors.border}`, cursor: 'pointer', padding: '0 10px' }}> {loading ? '⏳' : '☁️'} </button> </div> <input name={id} value={config[id] || ''} onChange={onChange} onBlur={onBlur} style={inputStyle} placeholder={`DATOS DEL CLIMA...`} /> </div>);
 };
 
@@ -36,7 +35,7 @@ export const defaultPositions = {
   tower: { x: 20, y: 20, scale: 1 }, winner: { x: 440, y: 550, scale: 1 }, flags: { x: 320, y: 50, scale: 1 },
   fastestLap: { x: 440, y: 150, scale: 1 }, battle: { x: 50, y: 50, scale: 1 }, customZocalo: { x: 20, y: 580, scale: 1 },
   votingQR: { x: 20, y: 700, scale: 1 }, votingResults: { x: 1550, y: 50, scale: 1 }, lapCounter: { x: 1700, y: 40, scale: 1 },
-  virtualChamp: { x: 1400, y: 150, scale: 1 } // <-- NUEVO
+  virtualChamp: { x: 1400, y: 150, scale: 1 }, startingLights: { x: 700, y: 400, scale: 1 }
 };
 
 const allGraphicsList = [
@@ -47,7 +46,8 @@ const allGraphicsList = [
   { id: 'driverInfo', label: 'INFO DEL PILOTO' }, { id: 'battle', label: 'BATALLA (F1)' }, { id: 'customZocalo', label: 'ZÓCALO LIBRE' },
   { id: 'votingQR', label: 'QR DE VOTACIÓN' }, { id: 'votingResults', label: 'RESULTADOS DE VOTACIÓN' },
   { id: 'lapCounter', label: 'CONTADOR DE VUELTAS' },
-  { id: 'virtualChamp', label: 'CAMPEONATO VIRTUAL' } // <-- NUEVO
+  { id: 'virtualChamp', label: 'CAMPEONATO VIRTUAL' },
+  { id: 'startingLights', label: 'SEMÁFORO DE LARGADA' }
 ];
 
 export default function ControlPanel() {
@@ -73,7 +73,7 @@ export default function ControlPanel() {
   const [activeFlags, setActiveFlags] = useState({ red: false, tricolor: false, black: false, blue: false });
   const [graphics, setGraphics] = useState({ relator: false, comentarista: false, notero1: false, notero2: false, circuito: false, clima: false });
   const [showLapCounter, setShowLapCounter] = useState(false);
-  const [showVirtualChamp, setShowVirtualChamp] = useState(false); // <-- NUEVO
+  const [showVirtualChamp, setShowVirtualChamp] = useState(false);
   const [activeZocaloIndex, setActiveZocaloIndex] = useState(null);
 
   const [autoScrape, setAutoScrape] = useState(false);
@@ -88,8 +88,12 @@ export default function ControlPanel() {
   const [showVotingQR, setShowVotingQR] = useState(false);
   const [showVotingResults, setShowVotingResults] = useState(false);
   const [localIp, setLocalIp] = useState('');
-  
+
   const [votes, setVotes] = useState({});
+
+  // --- NUEVO: SEMÁFORO DE LARGADA ---
+  const [startingLightsVisible, setStartingLightsVisible] = useState(false);
+  const [startingLightsStep, setStartingLightsStep] = useState(0);
 
   useEffect(() => { configRef.current = config; }, [config]);
 
@@ -104,16 +108,28 @@ export default function ControlPanel() {
         });
       });
       ipcRenderer.invoke('get-local-ip').then(setLocalIp);
-      ipcRenderer.invoke('get-votes').then(v => { if(v) setVotes(v) }).catch(() => {});
-      const handleUpdateIp = (event, newIp) => setLocalIp(newIp); 
+      ipcRenderer.invoke('get-votes').then(v => { if (v) setVotes(v) }).catch(() => { });
 
+      // Restaura si el semáforo ya estaba corriendo al abrir/reabrir el panel
+      ipcRenderer.invoke('get-initial-state').then(state => {
+        const sl = state?.broadcastState?.startingLights;
+        if (sl) { setStartingLightsVisible(sl.isVisible); setStartingLightsStep(sl.step); }
+      }).catch(() => { });
+
+      const handleUpdateIp = (event, newIp) => setLocalIp(newIp);
       const handleUpdateVotes = (event, newVotes) => setVotes(newVotes);
+      const handleStartingLights = (event, data) => {
+        if (data) { setStartingLightsVisible(data.isVisible); setStartingLightsStep(data.step); }
+      };
+
       ipcRenderer.on('update-votes', handleUpdateVotes);
       ipcRenderer.on('update-ip', handleUpdateIp);
+      ipcRenderer.on('update-starting-lights', handleStartingLights);
 
       return () => {
         ipcRenderer.removeListener('update-votes', handleUpdateVotes);
         ipcRenderer.removeListener('update-ip', handleUpdateIp);
+        ipcRenderer.removeListener('update-starting-lights', handleStartingLights);
       }
     }
   }, []);
@@ -124,10 +140,10 @@ export default function ControlPanel() {
       if (!str || str === '-') return Infinity;
       const parts = str.split(':');
       let val = parts.length === 2 ? parseInt(parts[0], 10) * 60 + parseFloat(parts[1]) : parseFloat(str);
-      if (isNaN(val) || val <= 0) return Infinity; 
+      if (isNaN(val) || val <= 0) return Infinity;
       return val;
     };
-    
+
     let currentBest = Infinity;
     drivers.forEach(d => {
       const t = parseTime(d.bestLap);
@@ -153,7 +169,7 @@ export default function ControlPanel() {
       if (!str || str === '-') return Infinity;
       const parts = str.split(':');
       let val = parts.length === 2 ? parseInt(parts[0], 10) * 60 + parseFloat(parts[1]) : parseFloat(str);
-      if (isNaN(val) || val <= 0) return Infinity; 
+      if (isNaN(val) || val <= 0) return Infinity;
       return val;
     };
 
@@ -165,13 +181,13 @@ export default function ControlPanel() {
     return best;
   }, [drivers]);
 
-  const handleToggleVotingQR = () => { const newState = !showVotingQR; setShowVotingQR(newState); if(ipcRenderer) ipcRenderer.send('toggle-voting-qr', newState); };
-  const handleToggleVotingResults = () => { const newState = !showVotingResults; setShowVotingResults(newState); if(ipcRenderer) ipcRenderer.send('toggle-voting-results', newState); };
-  const handleResetVotes = () => { if(window.confirm('⚠️ ¿Estás seguro de que quieres borrar todos los votos actuales?')) { if(ipcRenderer) ipcRenderer.send('reset-votes'); } };
+  const handleToggleVotingQR = () => { const newState = !showVotingQR; setShowVotingQR(newState); if (ipcRenderer) ipcRenderer.send('toggle-voting-qr', newState); };
+  const handleToggleVotingResults = () => { const newState = !showVotingResults; setShowVotingResults(newState); if (ipcRenderer) ipcRenderer.send('toggle-voting-results', newState); };
+  const handleResetVotes = () => { if (window.confirm('⚠️ ¿Estás seguro de que quieres borrar todos los votos actuales?')) { if (ipcRenderer) ipcRenderer.send('reset-votes'); } };
 
   const handleSaveBackup = async () => {
     if (drivers.length === 0) return alert("⚠️ No hay datos en pantalla para guardar.");
-    if(ipcRenderer) {
+    if (ipcRenderer) {
       const success = await ipcRenderer.invoke('save-backup', { drivers, session: sessionInfo });
       if (success) alert("✅ Datos de la carrera guardados correctamente en memoria.");
       else alert("❌ Error al guardar los datos.");
@@ -179,7 +195,7 @@ export default function ControlPanel() {
   };
 
   const handleLoadBackup = async () => {
-    if(ipcRenderer) {
+    if (ipcRenderer) {
       const data = await ipcRenderer.invoke('load-backup');
       if (data && data.drivers) {
         setAutoScrape(false); setDrivers(data.drivers); setSessionInfo(data.session);
@@ -189,31 +205,35 @@ export default function ControlPanel() {
     }
   };
 
-  const handleToggleFinalResults = () => { setShowFinalResults(!showFinalResults); if(ipcRenderer) ipcRenderer.send('toggle-final-results', !showFinalResults); };
-  const handleToggleWinner = () => { const newState = !showWinner; setShowWinner(newState); const winnerDriver = drivers.find(d => String(d.pos) === '1') || drivers[0]; if(ipcRenderer) ipcRenderer.send('toggle-winner', { isVisible: newState, driver: winnerDriver }); };
+  const handleToggleFinalResults = () => { setShowFinalResults(!showFinalResults); if (ipcRenderer) ipcRenderer.send('toggle-final-results', !showFinalResults); };
+  const handleToggleWinner = () => { const newState = !showWinner; setShowWinner(newState); const winnerDriver = drivers.find(d => String(d.pos) === '1') || drivers[0]; if (ipcRenderer) ipcRenderer.send('toggle-winner', { isVisible: newState, driver: winnerDriver }); };
   const handleChange = (e) => setConfig({ ...config, [e.target.name]: e.target.value });
-  const handleSave = async () => { if(ipcRenderer) await ipcRenderer.invoke('save-config', config); };
-  const handleToggleBattle = () => { const newState = !showBattle; setShowBattle(newState); if(ipcRenderer) ipcRenderer.send('toggle-battle', { isVisible: newState, pos: battleTarget }); };
-  const handleToggleVirtualChamp = () => { setShowVirtualChamp(!showVirtualChamp); if(ipcRenderer) ipcRenderer.send('toggle-virtual-champ', !showVirtualChamp); }; // <-- NUEVO
+  const handleSave = async () => { if (ipcRenderer) await ipcRenderer.invoke('save-config', config); };
+  const handleToggleBattle = () => { const newState = !showBattle; setShowBattle(newState); if (ipcRenderer) ipcRenderer.send('toggle-battle', { isVisible: newState, pos: battleTarget }); };
+  const handleToggleVirtualChamp = () => { setShowVirtualChamp(!showVirtualChamp); if (ipcRenderer) ipcRenderer.send('toggle-virtual-champ', !showVirtualChamp); };
 
+  // --- NUEVO: HANDLERS SEMÁFORO ---
+  const handleStartLights = () => { if (ipcRenderer) ipcRenderer.send('starting-lights-action', 'start'); };
+  const handleGoLights = () => { if (ipcRenderer) ipcRenderer.send('starting-lights-action', 'go'); };
+  const handleHideLights = () => { if (ipcRenderer) ipcRenderer.send('starting-lights-action', 'hide'); };
   const handleToggleDriverInfo = (driver) => {
     if (activeDriverInfo && activeDriverInfo.number === driver.number) {
-      setActiveDriverInfo(null); if(ipcRenderer) ipcRenderer.send('toggle-driver-info', { isVisible: false, driver: null });
+      setActiveDriverInfo(null); if (ipcRenderer) ipcRenderer.send('toggle-driver-info', { isVisible: false, driver: null });
     } else {
-      setActiveDriverInfo(driver); if(ipcRenderer) ipcRenderer.send('toggle-driver-info', { isVisible: true, driver });
+      setActiveDriverInfo(driver); if (ipcRenderer) ipcRenderer.send('toggle-driver-info', { isVisible: true, driver });
     }
   };
-  
+
   const handleDirectSave = async (key, value) => {
     const newConfig = { ...config, [key]: value };
     setConfig(newConfig);
-    if(ipcRenderer) await ipcRenderer.invoke('save-config', newConfig);
+    if (ipcRenderer) await ipcRenderer.invoke('save-config', newConfig);
   };
 
   const handleUpdatePositions = async (newPositions, shouldSaveToDisk) => {
     setPositions(newPositions);
-    if (shouldSaveToDisk) { if(ipcRenderer) await ipcRenderer.invoke('save-positions', newPositions); }
-    else { if(ipcRenderer) ipcRenderer.send('preview-positions', newPositions); }
+    if (shouldSaveToDisk) { if (ipcRenderer) await ipcRenderer.invoke('save-positions', newPositions); }
+    else { if (ipcRenderer) ipcRenderer.send('preview-positions', newPositions); }
   };
 
   const handleScrape = async () => {
@@ -221,7 +241,7 @@ export default function ControlPanel() {
     let rawCode = configRef.current.speedhiveCode || '';
     rawCode = rawCode.trim();
     const provider = configRef.current.timingProvider || 'speedhive';
-    
+
     if (!rawCode) { alert("⚠️ Ingresa el código de la carrera en la pestaña AJUSTES primero."); setAutoScrape(false); return; }
 
     let finalCode = rawCode;
@@ -237,10 +257,10 @@ export default function ControlPanel() {
         if (match) finalCode = match[1];
       }
     }
-    
+
     isScrapingRef.current = true;
     try {
-      if(ipcRenderer) {
+      if (ipcRenderer) {
         const data = await ipcRenderer.invoke('scrape-timing', { provider, code: finalCode });
         if (data && data.drivers) { setDrivers(data.drivers); if (data.session) setSessionInfo(data.session); }
       }
@@ -249,7 +269,7 @@ export default function ControlPanel() {
   };
 
   const handleSelectCategoryLogo = async () => {
-    if(ipcRenderer) {
+    if (ipcRenderer) {
       const logoData = await ipcRenderer.invoke('select-category-logo');
       if (logoData) handleDirectSave('categoryLogo', logoData);
     }
@@ -262,17 +282,17 @@ export default function ControlPanel() {
     newZocalos[index] = { ...newZocalos[index], [field]: value };
     setConfig({ ...config, zocalos: newZocalos });
     if (activeZocaloIndex === index) {
-      if(ipcRenderer) ipcRenderer.send('toggle-custom-zocalo', { isVisible: true, title: newZocalos[index].title, text: newZocalos[index].text });
+      if (ipcRenderer) ipcRenderer.send('toggle-custom-zocalo', { isVisible: true, title: newZocalos[index].title, text: newZocalos[index].text });
     }
   };
 
   const handleToggleZocalo = (index) => {
     if (activeZocaloIndex === index) {
-      setActiveZocaloIndex(null); if(ipcRenderer) ipcRenderer.send('toggle-custom-zocalo', { isVisible: false, title: '', text: '' });
+      setActiveZocaloIndex(null); if (ipcRenderer) ipcRenderer.send('toggle-custom-zocalo', { isVisible: false, title: '', text: '' });
     } else {
       setActiveZocaloIndex(index);
       const z = currentZocalos[index];
-      if(ipcRenderer) ipcRenderer.send('toggle-custom-zocalo', { isVisible: true, title: z.title, text: z.text });
+      if (ipcRenderer) ipcRenderer.send('toggle-custom-zocalo', { isVisible: true, title: z.title, text: z.text });
     }
   };
 
@@ -290,28 +310,28 @@ export default function ControlPanel() {
     return () => { clearInterval(progressInterval); clearInterval(scrapeInterval); };
   }, [autoScrape]);
 
-  const handleToggleTicker = () => { setShowTicker(!showTicker); if(ipcRenderer) ipcRenderer.send('toggle-ticker', !showTicker); };
-  const handleToggleTower = () => { setShowTower(!showTower); if(ipcRenderer) ipcRenderer.send('toggle-tower', !showTower); };
-  const handleToggleGrid = () => { setShowGrid(!showGrid); if(ipcRenderer) ipcRenderer.send('toggle-grid', !showGrid); };
-  const handleToggleGraphic = (id) => { const newState = !graphics[id]; setGraphics({ ...graphics, [id]: newState }); if(ipcRenderer) ipcRenderer.send('toggle-graphic', { id, visible: newState }); };
-  const handleSelectLogo = async () => { if(ipcRenderer) { const logoData = await ipcRenderer.invoke('select-logo'); if (logoData) handleDirectSave('logo', logoData); } };
-  const handleToggleFastestLap = () => { setShowFastestLap(!showFastestLap); setNewRecordAlert(false); if (recordTimeoutRef.current) clearTimeout(recordTimeoutRef.current); if(ipcRenderer) ipcRenderer.send('toggle-fastest-lap', !showFastestLap); };
-  const handleToggleLapCounter = () => { setShowLapCounter(!showLapCounter); if(ipcRenderer) ipcRenderer.send('toggle-lap-counter', !showLapCounter); };
+  const handleToggleTicker = () => { setShowTicker(!showTicker); if (ipcRenderer) ipcRenderer.send('toggle-ticker', !showTicker); };
+  const handleToggleTower = () => { setShowTower(!showTower); if (ipcRenderer) ipcRenderer.send('toggle-tower', !showTower); };
+  const handleToggleGrid = () => { setShowGrid(!showGrid); if (ipcRenderer) ipcRenderer.send('toggle-grid', !showGrid); };
+  const handleToggleGraphic = (id) => { const newState = !graphics[id]; setGraphics({ ...graphics, [id]: newState }); if (ipcRenderer) ipcRenderer.send('toggle-graphic', { id, visible: newState }); };
+  const handleSelectLogo = async () => { if (ipcRenderer) { const logoData = await ipcRenderer.invoke('select-logo'); if (logoData) handleDirectSave('logo', logoData); } };
+  const handleToggleFastestLap = () => { setShowFastestLap(!showFastestLap); setNewRecordAlert(false); if (recordTimeoutRef.current) clearTimeout(recordTimeoutRef.current); if (ipcRenderer) ipcRenderer.send('toggle-fastest-lap', !showFastestLap); };
+  const handleToggleLapCounter = () => { setShowLapCounter(!showLapCounter); if (ipcRenderer) ipcRenderer.send('toggle-lap-counter', !showLapCounter); };
   const handleToggleFlag = (type) => {
     const newFlags = { red: false, tricolor: false, black: false, blue: false };
     if (!activeFlags[type]) newFlags[type] = true;
     setActiveFlags(newFlags);
-    if(ipcRenderer) ipcRenderer.send('toggle-flag', newFlags);
+    if (ipcRenderer) ipcRenderer.send('toggle-flag', newFlags);
   };
-  
+
   const handleSelectPhotosFolder = async () => {
     try {
-      if(ipcRenderer) {
+      if (ipcRenderer) {
         const folderPath = await ipcRenderer.invoke('select-photos-folder');
         if (folderPath) handleDirectSave('photosPath', folderPath);
       }
     } catch (error) { console.error("Error al seleccionar carpeta:", error); }
-  };  
+  };
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', backgroundColor: colors.bgApp, color: colors.textMain, fontFamily: 'Arial, sans-serif' }}>
@@ -321,6 +341,11 @@ export default function ControlPanel() {
           50% { background-color: #c0392b !important; border-color: #922b21 !important; box-shadow: none !important; color: white !important; }
           100% { background-color: #e74c3c !important; border-color: #c0392b !important; box-shadow: 0 0 15px rgba(231, 76, 60, 0.8) !important; color: white !important; }
         }
+        @keyframes pulseStartingLights {
+          0% { box-shadow: 0 0 15px rgba(255, 34, 0, 0.6) !important; }
+          50% { box-shadow: none !important; }
+          100% { box-shadow: 0 0 15px rgba(255, 34, 0, 0.6) !important; }
+        }
       `}</style>
 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 20px', borderBottom: `1px solid ${colors.border}` }}>
@@ -329,7 +354,7 @@ export default function ControlPanel() {
           <h1 style={{ fontSize: '16px', margin: 0, letterSpacing: '1px' }}>RACE DYNAMICS DASHBOARD</h1>
         </div>
         <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
-          
+
           {fastestDriver && fastestDriver.bestLap !== '-' && (
             <div style={{ textAlign: 'right', borderRight: `1px solid ${colors.border}`, paddingRight: '20px' }}>
               <div style={{ fontSize: '9px', color: colors.textMuted, fontWeight: 'bold', letterSpacing: '1px' }}>
@@ -370,7 +395,7 @@ export default function ControlPanel() {
       {activeTab === 'PANEL' && (
         <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
           <div style={{ width: '320px', backgroundColor: colors.bgPanel, padding: '0 15px', overflowY: 'auto', borderRight: `1px solid ${colors.border}` }}>
-            
+
             <div style={sectionTitleStyle}>BANDERAS DE CARRERA</div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '5px', marginBottom: '20px' }}>
               <button onClick={() => handleToggleFlag('red')} style={{ ...btnStyle(activeFlags.red), backgroundColor: activeFlags.red ? '#e74c3c' : colors.bgInput, color: activeFlags.red ? '#fff' : colors.textMain, borderColor: activeFlags.red ? '#c0392b' : colors.border }}>ROJA</button>
@@ -404,23 +429,54 @@ export default function ControlPanel() {
               </button>
             </div>
 
+            {/* --- SECCIÓN NUEVA: SEMÁFORO DE LARGADA --- */}
+            {/* --- SECCIÓN: SEMÁFORO DE LARGADA (MANUAL) --- */}
+            <div style={sectionTitleStyle}>SEMÁFORO DE LARGADA</div>
+            <div style={{ display: 'flex', gap: '5px', marginBottom: '15px' }}>
+              {startingLightsStep === 5 ? (
+                <button
+                  onClick={handleGoLights}
+                  style={{ ...btnStyle(true), flex: 2, backgroundColor: '#2ecc71', color: '#fff', borderColor: '#27ae60', animation: 'pulseStartingLights 0.8s infinite' }}
+                >
+                  🟢 LARGAR (DAR SALIDA)
+                </button>
+              ) : (
+                <button
+                  onClick={handleStartLights}
+                  disabled={startingLightsVisible}
+                  style={{
+                    ...btnStyle(startingLightsVisible), flex: 2,
+                    backgroundColor: startingLightsVisible ? '#ff2200' : '#2ecc71',
+                    color: '#fff',
+                    borderColor: startingLightsVisible ? '#c0392b' : '#27ae60',
+                    cursor: startingLightsVisible ? 'default' : 'pointer'
+                  }}
+                >
+                  {startingLightsVisible ? `🔴 ENCENDIENDO (${startingLightsStep}/5)` : '🚦 INICIAR SEMÁFORO'}
+                </button>
+              )}
+              <button onClick={handleHideLights} style={{ ...btnStyle(false), flex: 1, backgroundColor: '#c0392b', color: '#fff', borderColor: '#e74c3c' }}>
+                OCULTAR
+              </button>
+            </div>
+
             <div style={sectionTitleStyle}>GRÁFICOS</div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '5px' }}>
               <button onClick={handleToggleTicker} style={btnStyle(showTicker)}>TIRA INFERIOR</button>
               <button onClick={handleToggleTower} style={btnStyle(showTower)}>TORRE</button>
               <button onClick={handleToggleLapCounter} style={btnStyle(showLapCounter)}>VUELTAS</button>
-              <button 
-                onClick={handleToggleFastestLap} 
-                style={{ 
-                  ...btnStyle(showFastestLap), 
-                  ...(newRecordAlert ? { animation: 'pulseRecordAlert 1s infinite' } : {}) 
+              <button
+                onClick={handleToggleFastestLap}
+                style={{
+                  ...btnStyle(showFastestLap),
+                  ...(newRecordAlert ? { animation: 'pulseRecordAlert 1s infinite' } : {})
                 }}
               >
                 RECORD VUELTA
               </button>
 
             </div>
-              
+
             <div style={sectionTitleStyle}>BATALLA EN PISTA</div>
             <div style={{ display: 'flex', gap: '5px', marginBottom: '15px' }}>
               <div style={{ display: 'flex', alignItems: 'center', backgroundColor: colors.bgInput, border: `1px solid ${colors.border}`, padding: '0 10px', borderRadius: '4px' }}>
@@ -436,7 +492,6 @@ export default function ControlPanel() {
               </button>
             </div>
 
-            {/* --- SECCIÓN NUEVA: CAMPEONATO VIRTUAL --- */}
             <div style={sectionTitleStyle}>CAMPEONATO VIRTUAL</div>
             <div style={{ display: 'flex', gap: '5px', marginBottom: '15px' }}>
               <button onClick={() => ipcRenderer && ipcRenderer.invoke('load-excel').then(res => alert(res ? "✅ Excel cargado con éxito. ¡Los puntos se calcularán automáticamente!" : "❌ Error al cargar Excel o acción cancelada."))} style={{ ...btnStyle(false), flex: 1, backgroundColor: '#2ecc71', color: 'white', borderColor: '#27ae60' }}>
@@ -446,7 +501,6 @@ export default function ControlPanel() {
                 {showVirtualChamp ? 'OCULTAR TABLA' : 'MOSTRAR TABLA'}
               </button>
             </div>
-            {/* ------------------------------------------- */}
 
             <div style={sectionTitleStyle}>INTERACTIVIDAD (VOTOS)</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', marginBottom: '20px' }}>
@@ -486,26 +540,26 @@ export default function ControlPanel() {
 
       {activeTab === 'VOTACIONES' && (
         <div style={{ padding: '30px', flex: 1, backgroundColor: colors.bgApp, overflowY: 'auto' }}>
-          
+
           <h2 style={{ color: colors.yellow, marginTop: 0, borderBottom: `1px solid ${colors.border}`, paddingBottom: '10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <span>📊 PANEL DE VOTACIONES EN VIVO</span>
             <span style={{ fontSize: '14px', color: colors.textMuted, fontWeight: 'normal' }}>
-              TOTAL VOTOS: <span style={{ color: colors.textMain, fontWeight: 'bold' }}>{Object.values(votes).reduce((a,b)=>a+b, 0)}</span>
+              TOTAL VOTOS: <span style={{ color: colors.textMain, fontWeight: 'bold' }}>{Object.values(votes).reduce((a, b) => a + b, 0)}</span>
             </span>
           </h2>
-          
+
           <div style={{ display: 'flex', gap: '10px', marginBottom: '30px' }}>
             <button onClick={handleToggleVotingQR} style={{ ...btnStyle(showVotingQR), flex: 1 }}>{showVotingQR ? 'OCULTAR QR' : 'MOSTRAR QR EN PANTALLA'}</button>
             <button onClick={handleToggleVotingResults} style={{ ...btnStyle(showVotingResults), flex: 1 }}>{showVotingResults ? 'OCULTAR RESULTADOS' : 'MOSTRAR RESULTADOS EN PANTALLA'}</button>
             <button onClick={handleResetVotes} style={{ ...btnStyle(), backgroundColor: '#c0392b', color: '#fff', borderColor: '#e74c3c', flex: 1 }}>🗑️ REINICIAR VOTOS</button>
           </div>
-          
+
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
             {(() => {
-              const totalVotes = Object.values(votes).reduce((a,b) => a+b, 0);
+              const totalVotes = Object.values(votes).reduce((a, b) => a + b, 0);
               const topDrivers = [...drivers]
                 .filter(d => votes[d.number] > 0)
-                .sort((a,b) => (votes[b.number] || 0) - (votes[a.number] || 0));
+                .sort((a, b) => (votes[b.number] || 0) - (votes[a.number] || 0));
 
               if (topDrivers.length === 0) {
                 return <div style={{ textAlign: 'center', padding: '40px', color: colors.textMuted, fontStyle: 'italic' }}>No hay votos registrados en esta sesión aún. Activa el QR para comenzar.</div>;
@@ -518,19 +572,19 @@ export default function ControlPanel() {
 
                 return (
                   <div key={driver.number} style={{ backgroundColor: colors.bgPanel, padding: '15px 20px', borderRadius: '8px', border: `1px solid ${isWinner ? colors.yellow : colors.border}`, display: 'flex', alignItems: 'center', gap: '20px', boxShadow: isWinner ? `0 0 15px rgba(255, 204, 0, 0.15)` : 'none' }}>
-                    
+
                     <div style={{ fontSize: '24px', fontWeight: '900', color: isWinner ? colors.yellow : colors.textMuted, width: '30px', textAlign: 'center' }}>
                       {index + 1}
                     </div>
-                    
+
                     <div style={{ backgroundColor: colors.bgInput, color: colors.textMain, padding: '8px 15px', borderRadius: '6px', fontSize: '18px', fontWeight: '900', border: `1px solid ${colors.border}` }}>
                       #{driver.number}
                     </div>
-                    
+
                     <div style={{ fontSize: '20px', fontWeight: 'bold', width: '250px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                       {driver.name}
                     </div>
-                    
+
                     <div style={{ flex: 1, backgroundColor: colors.bgInput, height: '24px', borderRadius: '12px', overflow: 'hidden', position: 'relative', border: `1px solid ${colors.border}` }}>
                       <div style={{ width: `${percentage}%`, height: '100%', backgroundColor: isWinner ? colors.yellow : colors.red, transition: 'width 0.5s ease' }} />
                       <span style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', fontSize: '11px', fontWeight: 'bold', color: percentage > 50 ? '#000' : '#fff', textShadow: percentage <= 50 ? '1px 1px 2px rgba(0,0,0,0.8)' : 'none' }}>
@@ -593,11 +647,11 @@ export default function ControlPanel() {
                 <div key={graphic.id} style={{ backgroundColor: colors.bgPanel, padding: '15px', borderRadius: '8px', border: `1px solid ${colors.border}`, display: 'flex', flexDirection: 'column', gap: '10px' }}>
                   <span style={{ fontSize: '12px', color: colors.textMain, fontWeight: 'bold', textAlign: 'center' }}>{graphic.label}</span>
                   <div style={{ backgroundColor: '#000', height: '80px', borderRadius: '4px', border: `1px dashed ${hasDesign ? colors.green : colors.border}`, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
-                    {hasDesign ? <img src={config[configKey]} alt={graphic.label} style={{ maxHeight: '70px', maxWidth: '90%', objectFit: 'contain' }} /> : <span style={{fontSize: '10px', color: '#444'}}>DISEÑO ESTÁNDAR</span>}
+                    {hasDesign ? <img src={config[configKey]} alt={graphic.label} style={{ maxHeight: '70px', maxWidth: '90%', objectFit: 'contain' }} /> : <span style={{ fontSize: '10px', color: '#444' }}>DISEÑO ESTÁNDAR</span>}
                   </div>
                   <div style={{ display: 'flex', gap: '5px' }}>
-                    <button onClick={async () => { if(ipcRenderer) { const imgData = await ipcRenderer.invoke('select-design-image', graphic.label); if (imgData) handleDirectSave(configKey, imgData); } }} style={{...btnStyle(false), flex: 1, padding: '8px', fontSize: '10px'}}>📷 CARGAR PNG/SVG</button>
-                    {hasDesign && <button onClick={() => handleDirectSave(configKey, null)} style={{...btnStyle(false), flex: 1, backgroundColor: '#c0392b', color: 'white', border: 'none', padding: '8px', fontSize: '10px'}}>🗑️ QUITAR</button>}
+                    <button onClick={async () => { if (ipcRenderer) { const imgData = await ipcRenderer.invoke('select-design-image', graphic.label); if (imgData) handleDirectSave(configKey, imgData); } }} style={{ ...btnStyle(false), flex: 1, padding: '8px', fontSize: '10px' }}>📷 CARGAR PNG/SVG</button>
+                    {hasDesign && <button onClick={() => handleDirectSave(configKey, null)} style={{ ...btnStyle(false), flex: 1, backgroundColor: '#c0392b', color: 'white', border: 'none', padding: '8px', fontSize: '10px' }}>🗑️ QUITAR</button>}
                   </div>
                 </div>
               );
@@ -605,7 +659,7 @@ export default function ControlPanel() {
           </div>
         </div>
       )}
-      
+
     </div>
   );
 }
