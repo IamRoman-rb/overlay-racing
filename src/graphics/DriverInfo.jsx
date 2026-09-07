@@ -1,9 +1,9 @@
 export default function DriverInfo({ driver, config, isVisible, id = 'driverInfo' }) {
   const pos = config?.positions?.[id] || { x: 80, y: 480, scale: 1 };
-  
+
   const themeBg = config?.themeBg || 'rgba(0,0,0,0.85)';
   const themeMain = config?.themeMain || '#e74c3c';
-  const themeSecondary = config?.themeSecondary || '#3498db';
+  const themeAccent = config?.themeAccent || '#f39c12';
   const themeTitleText = config?.themeTitleText || '#ffcc00';
   const themeNormalText = config?.themeNormalText || '#ffffff';
   const themeNumberText = config?.themeNumberText || '#bdc3c7';
@@ -13,7 +13,7 @@ export default function DriverInfo({ driver, config, isVisible, id = 'driverInfo
 
   // LECTURA DE BORDES Y ANIMACIÓN
   const bRad = config[`borderRadius_${id}`] || '8px';
-  const animStyle = config[`animationStyle_${id}`] || 'slide'
+  const animStyle = config[`animationStyle_${id}`] || 'slide';
 
   // CÁLCULO DE LA ANIMACIÓN DE ENTRADA
   let transformHidden = `scale(${pos.scale}) translateX(-40px)`; // Slide
@@ -30,23 +30,37 @@ export default function DriverInfo({ driver, config, isVisible, id = 'driverInfo
     }}>
       {driver && (
         <div style={{
-          display: 'flex', width: '480px', 
-          backgroundColor: hasCustomBg ? 'transparent' : themeBg, 
-          borderTop: hasCustomBg ? 'none' : `4px solid ${themeMain}`, 
+          display: 'flex', width: '480px',
+          backgroundColor: hasCustomBg ? 'transparent' : themeBg,
+          borderTop: hasCustomBg ? 'none' : `4px solid ${themeMain}`,
           backgroundImage: hasCustomBg ? `url(${customBg})` : 'none',
           backgroundSize: '100% 100%', backgroundRepeat: 'no-repeat', backgroundPosition: 'center',
           boxShadow: hasCustomBg ? 'none' : '0 10px 30px rgba(0,0,0,0.6)',
-          borderRadius: bRad, // <-- APLICAMOS EL BORDE REDONDEADO SELECCIONADO
+          borderRadius: bRad,
           overflow: 'hidden'
         }}>
+          {/* POS: bloque propio, chico, separado del número */}
           <div style={{
-            backgroundColor: hasCustomBg ? 'transparent' : themeSecondary, 
+            backgroundColor: hasCustomBg ? 'transparent' : themeMain,
             display: 'flex', flexDirection: 'column',
-            justifyContent: 'center', alignItems: 'center', padding: '15px 25px',
+            justifyContent: 'center', alignItems: 'center',
+            padding: '15px 12px', minWidth: '55px',
+            borderRight: hasCustomBg ? 'none' : `2px solid rgba(0,0,0,0.3)`
+          }}>
+            <span style={{ fontSize: '10px', fontWeight: '900', color: '#fff', letterSpacing: '1px', opacity: 0.85 }}>POS</span>
+            <span style={{ fontSize: '30px', fontWeight: '900', color: '#fff', lineHeight: '1' }}>{driver.pos}</span>
+          </div>
+
+          {/* NÚMERO: bloque propio, con el color de acento del tema */}
+          <div style={{
+            backgroundColor: hasCustomBg ? 'transparent' : themeAccent,
+            display: 'flex', flexDirection: 'column',
+            justifyContent: 'center', alignItems: 'center',
+            padding: '15px 20px',
             borderRight: hasCustomBg ? 'none' : `3px solid ${themeMain}`
           }}>
-            <span style={{ fontSize: '13px', fontWeight: '900', color: hasCustomBg ? themeAccent : themeBg, letterSpacing: '1px' }}>POS {driver.pos}</span>
-            <span style={{ fontSize: '38px', fontWeight: '900', color: hasCustomBg ? themeNormalText : themeBg, lineHeight: '1' }}>{driver.number}</span>
+            <span style={{ fontSize: '10px', fontWeight: '900', color: '#000', letterSpacing: '1px', opacity: 0.75 }}>Nº</span>
+            <span style={{ fontSize: '38px', fontWeight: '900', color: '#000', lineHeight: '1' }}>{driver.number}</span>
           </div>
 
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '15px 25px' }}>

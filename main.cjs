@@ -40,7 +40,9 @@ function getLocalIP() {
   return '127.0.0.1';
 }
 const localIP = getLocalIP();
-
+function getVotingUrl() {
+  return publicVotingUrl || `http://${localIP}:8080/votar`;
+}
 let currentDriversForVote = [];
 let votesData = {};
 let lastLeaderboard = { session: {}, drivers: [] };
@@ -101,7 +103,7 @@ async function createPublicTunnel() {
     broadcast('update-ip', publicVotingUrl);
   } catch (err) {
     publicVotingUrl = null;
-    broadcast('update-ip', null);
+    broadcast('update-ip', `http://${localIP}:8080/votar`); // fallback: funciona en la misma red WiFi mientras el túnel público reintenta
     scheduleTunnelRetry();
   } finally {
     tunnelConnecting = false;
@@ -324,7 +326,7 @@ ipcMain.handle('load-excel', async () => {
   return false;
 });
 
-ipcMain.handle('get-local-ip', () => publicVotingUrl || localIP);
+ipcMain.handle('get-local-ip', () => getVotingUrl());
 ipcMain.handle('get-votes', () => votesData);
 ipcMain.handle('get-config', () => {
   try { if (fs.existsSync(dbPath)) return JSON.parse(fs.readFileSync(dbPath, 'utf-8')); } catch (e) {}
@@ -390,7 +392,7 @@ ipcMain.handle('get-initial-state', () => {
     broadcastState,
     leaderboard: lastLeaderboard,
     votes: votesData,
-    localIp: publicVotingUrl || localIP
+    localIp: getVotingUrl()
   };
 });
 
