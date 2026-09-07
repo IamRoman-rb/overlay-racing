@@ -2,7 +2,8 @@ const puppeteer = require('puppeteer');
 
 let browser = null;
 let page = null;
-
+let pageJustNavigated = false;
+let raceMonitorFrame = null; 
 async function initBrowser() {
 
   if (!browser) {
@@ -81,6 +82,7 @@ async function scrapeSpeedhive(inputCode) {
         );
 
       });
+      pageJustNavigated = true;
     }
 
     async function handleCookiebot() {
@@ -113,10 +115,10 @@ async function scrapeSpeedhive(inputCode) {
 
             const text =
               (el.innerText ||
-               el.textContent ||
-               '')
-              .trim()
-              .toLowerCase();
+                el.textContent ||
+                '')
+                .trim()
+                .toLowerCase();
 
             return (
               text === 'reject all cookies' ||
@@ -139,10 +141,10 @@ async function scrapeSpeedhive(inputCode) {
 
               const text =
                 (el.innerText ||
-                 el.textContent ||
-                 '')
-                .trim()
-                .toLowerCase();
+                  el.textContent ||
+                  '')
+                  .trim()
+                  .toLowerCase();
 
               return (
                 text.includes('reject') &&
@@ -201,27 +203,32 @@ async function scrapeSpeedhive(inputCode) {
         };
       }
     }
-    await handleCookiebot();
+    if (pageJustNavigated) {
+      await handleCookiebot();
 
-    await p.waitForFunction(() => {
+      await p.waitForFunction(() => {
 
-      const text =
-        document.body?.innerText || '';
+        const text =
+          document.body?.innerText || '';
 
-      return !/Allow all cookies/i.test(text);
+        return !/Allow all cookies/i.test(text);
 
-    }, {
-      timeout: 10000
-    }).catch(() => {
+      }, {
+        timeout: 10000
+      }).catch(() => {
 
-      console.log(
-        `⚠️ Cookiebot todavía aparece en pantalla`
+        console.log(
+          `⚠️ Cookiebot todavía aparece en pantalla`
+        );
+
+      });
+
+      await new Promise(
+        resolve => setTimeout(resolve, 2000)
       );
 
-    });
-    await new Promise(
-      resolve => setTimeout(resolve, 2000)
-    );
+      pageJustNavigated = false;
+    }
     async function findSpeedhiveFrame() {
 
       const frames = p.frames();
@@ -582,13 +589,13 @@ async function scrapeSpeedhive(inputCode) {
 
               diff:
                 gap &&
-                gap !== '-' &&
-                gap !== ''
+                  gap !== '-' &&
+                  gap !== ''
                   ? gap
                   : (
-                      difference ||
-                      '-'
-                    ),
+                    difference ||
+                    '-'
+                  ),
 
               totalTime,
 
@@ -659,7 +666,7 @@ async function scrapeSpeedhive(inputCode) {
     ) {
 
       await browser.close()
-        .catch(() => {});
+        .catch(() => { });
 
       browser = null;
       page = null;
@@ -677,86 +684,109 @@ async function scrapeSpeedhive(inputCode) {
 // =========================================================================
 async function scrapeRaceMonitor(inputCode) {
   if (!inputCode) return { session: {}, drivers: [] };
-  
+
   let code = inputCode.trim();
   if (code.includes('race-monitor.com')) {
     const match = code.match(/Race\/(\d+)/);
     if (match) code = match[1];
   }
-  
+
   const url = `https://www.race-monitor.com/Live/Race/${code}`;
 
   try {
     const p = await initBrowser();
     if (p.url() !== url && p.url() !== url + '/') {
       console.log(`⏳ Conectando a Race Monitor: ${url}`);
-      await p.goto(url, { waitUntil: 'domcontentloaded', timeout: 45000 }).catch(() => {});
+      await p.goto(url, { waitUntil: 'domcontentloaded', timeout: 45000 }).catch(() => { });
       await new Promise(r => setTimeout(r, 2000));
+      raceMonitorFrame = null; // navegamos a una carrera nueva: hay que rebuscar el frame
     }
-    
-    await p.waitForSelector('.racerRowWide, .racerRow, .racerRowStacked', { timeout: 3000 }).catch(() => {});
 
-    let finalResult = { session: { name: '', totalTime: '-', laps: '-' }, drivers: [] };
-    const frames = p.frames();
-    
-    for (const frame of frames) {
-      try {
-        const frameData = await frame.evaluate(() => {
-          const sessionData = { name: '', totalTime: '-', laps: '-' };
-          const data = [];
+    const evalFrame = async (frame) => {
+      return frame.evaluate(() => {
+        const sessionData = { name: '', totalTime: '-', laps: '-' };
+        const data = [];
 
-          const sessionNameEl = document.querySelector('.timingHeader div[style*="top: 7px"][style*="left: 60px"]');
-          if (sessionNameEl) sessionData.name = sessionNameEl.textContent.trim();
+        const sessionNameEl = document.querySelector('.timingHeader div[style*="top: 7px"][style*="left: 60px"]');
+        if (sessionNameEl) sessionData.name = sessionNameEl.textContent.trim();
 
-          const timeEl = document.querySelector('.timingHeader div[style*="top: 21px"][style*="left: 60px"]');
-          if (timeEl) sessionData.totalTime = timeEl.textContent.trim();
+        const timeEl = document.querySelector('.timingHeader div[style*="top: 21px"][style*="left: 60px"]');
+        if (timeEl) sessionData.totalTime = timeEl.textContent.trim();
 
-          const rows = document.querySelectorAll('.racerRowWide, .racerRow, .racerRowStacked');
-          rows.forEach(row => {
-            const pos = row.querySelector('.position')?.textContent.trim() || '';
-            let rawName = row.querySelector('.racerName')?.textContent.trim() || '';
-            let number = '-'; let name = rawName;
-            
-            if (rawName.startsWith('#') || /^\d+\s/.test(rawName)) {
-              const parts = rawName.split(' ');
-              number = parts[0].replace('#', '').trim();
-              name = parts.slice(1).join(' ').trim();
-            }
-            
-            if (!name && number) name = `Piloto ${number}`;
+        const rows = document.querySelectorAll('.racerRowWide, .racerRow, .racerRowStacked');
+        rows.forEach(row => {
+          const pos = row.querySelector('.position')?.textContent.trim() || '';
+          let rawName = row.querySelector('.racerName')?.textContent.trim() || '';
+          let number = '-'; let name = rawName;
 
-            const category = row.querySelector('.racerCategory')?.textContent.trim() || '';
-            const laps = row.querySelector('.lapsValue')?.textContent.trim() || '0';
-            const lastLap = row.querySelector('.lastTimeValue')?.textContent.trim() || '-';
-            const bestLap = row.querySelector('.bestTimeValue')?.textContent.trim() || '-';
-            let diff = row.querySelector('.diffValue')?.textContent.trim() || '-';
-            let gap = row.querySelector('.gapValue')?.textContent.trim() || '-';
+          if (rawName.startsWith('#') || /^\d+\s/.test(rawName)) {
+            const parts = rawName.split(' ');
+            number = parts[0].replace('#', '').trim();
+            name = parts.slice(1).join(' ').trim();
+          }
 
-            if (pos && (name || number)) {
-              data.push({
-                pos, number, name, make: category, laps, lastLap, bestLap, totalTime: '-',
-                diff: gap !== '-' && gap !== '' ? gap : diff
-              });
-            }
-          });
+          if (!name && number) name = `Piloto ${number}`;
 
-          if (data.length > 0) sessionData.laps = data[0].laps;
-          return { session: sessionData, drivers: data };
+          const category = row.querySelector('.racerCategory')?.textContent.trim() || '';
+          const laps = row.querySelector('.lapsValue')?.textContent.trim() || '0';
+          const lastLap = row.querySelector('.lastTimeValue')?.textContent.trim() || '-';
+          const bestLap = row.querySelector('.bestTimeValue')?.textContent.trim() || '-';
+          let diff = row.querySelector('.diffValue')?.textContent.trim() || '-';
+          let gap = row.querySelector('.gapValue')?.textContent.trim() || '-';
+
+          if (pos && (name || number)) {
+            data.push({
+              pos, number, name, make: category, laps, lastLap, bestLap, totalTime: '-',
+              diff: gap !== '-' && gap !== '' ? gap : diff
+            });
+          }
         });
 
+        if (data.length > 0) sessionData.laps = data[0].laps;
+        return { session: sessionData, drivers: data };
+      });
+    };
+
+    let finalResult = { session: { name: '', totalTime: '-', laps: '-' }, drivers: [] };
+
+    // --- CAMINO RÁPIDO: ya tenemos el frame bueno cacheado, vamos directo ---
+    if (raceMonitorFrame) {
+      try {
+        const cachedData = await evalFrame(raceMonitorFrame);
+        if (cachedData && cachedData.drivers.length > 0) {
+          console.log(`✅ [1s Tick] Race Monitor - "${cachedData.session.name}" | Pilotos: ${cachedData.drivers.length}`);
+          return cachedData;
+        }
+        // El frame cacheado ya no tiene datos (recargó / cambió sesión): invalidar y rebuscar abajo
+        raceMonitorFrame = null;
+      } catch (e) {
+        // El frame se destruyó (navegación, iframe removido, etc.): invalidar y rebuscar abajo
+        raceMonitorFrame = null;
+      }
+    }
+
+    // --- CAMINO LENTO: buscar el frame correcto entre todos los iframes (sólo cuando hace falta) ---
+    await p.waitForSelector('.racerRowWide, .racerRow, .racerRowStacked', { timeout: 3000 }).catch(() => { });
+
+    const frames = p.frames();
+    for (const frame of frames) {
+      try {
+        const frameData = await evalFrame(frame);
         if (frameData && frameData.drivers.length > 0) {
           finalResult = frameData;
+          raceMonitorFrame = frame; // cachear para los próximos ticks
           break;
         }
       } catch (e) {}
     }
-    
+
     console.log(`✅ [1s Tick] Race Monitor - "${finalResult.session.name}" | Pilotos: ${finalResult.drivers.length}`);
     return finalResult;
   } catch (e) {
     console.error(`⚠️ Error Race Monitor:`, e.message);
-    if (browser && (e.message.includes('Execution context') || e.message.includes('Target closed'))) { 
-      await browser.close().catch(()=>{}); browser = null; page = null; 
+    raceMonitorFrame = null;
+    if (browser && (e.message.includes('Execution context') || e.message.includes('Target closed'))) {
+      await browser.close().catch(() => { }); browser = null; page = null;
     }
     return { session: {}, drivers: [] };
   }
