@@ -22,10 +22,66 @@ const sectionTitleStyle = { fontSize: '10px', color: colors.textMuted, textTrans
 
 const GraphicControl = ({ id, label, value, isActive, onChange, onBlur, onToggle }) => (<div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}> <button onClick={() => onToggle(id)} style={btnStyle(isActive)}>{label}</button> <input name={id} value={value || ''} onChange={onChange} onBlur={onBlur} style={inputStyle} placeholder={`NOMBRE...`} /> </div>);
 const SelectControl = ({ id, label, value, options, isActive, onChange, onBlur, onToggle }) => (<div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}> <button onClick={() => onToggle(id)} style={btnStyle(isActive)}>{label}</button> <select name={id} value={value || ''} onChange={onChange} onBlur={onBlur} style={inputStyle}> <option value="">SELECCIONAR...</option> {options.map((opt, i) => (<option key={i} value={opt.nombre}>{opt.nombre.toUpperCase()}</option>))} </select> </div>);
-const WeatherControl = ({ id, label, config, isActive, onChange, onBlur, onToggle, setConfig }) => {
+const WeatherControl = ({ id, label, config, isActive, onToggle, setConfig }) => {
   const [loading, setLoading] = useState(false);
-  const fetchWeather = async () => { const circuitoSeleccionado = circuitosData.find(c => c.nombre === config.circuito); if (!circuitoSeleccionado) { alert("⚠️ Selecciona un Circuito primero."); return; } setLoading(true); try { const { lat, lon } = circuitoSeleccionado; const weatherRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`); const weatherData = await weatherRes.json(); const temp = Math.round(weatherData.current_weather.temperature); const code = weatherData.current_weather.weathercode; let desc = "DESPEJADO"; if (code >= 1 && code <= 3) desc = "NUBLADO"; if (code >= 51 && code <= 67) desc = "LLUVIA"; if (code >= 95) desc = "TORMENTA"; const weatherString = `${temp}°C - ${desc}`; const newConfig = { ...config, [id]: weatherString }; setConfig(newConfig); if (ipcRenderer) await ipcRenderer.invoke('save-config', newConfig); } catch (error) { console.error(error); } setLoading(false); };
-  return (<div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}> <div style={{ display: 'flex', gap: '2px' }}> <button onClick={() => onToggle(id)} style={{ ...btnStyle(isActive), flex: 1 }}>{label}</button> <button onClick={fetchWeather} disabled={loading} style={{ backgroundColor: colors.bgInput, color: colors.yellow, border: `1px solid ${colors.border}`, cursor: 'pointer', padding: '0 10px' }}> {loading ? '⏳' : '☁️'} </button> </div> <input name={id} value={config[id] || ''} onChange={onChange} onBlur={onBlur} style={inputStyle} placeholder={`DATOS DEL CLIMA...`} /> </div>);
+
+  const fetchWeather = async () => {
+    const circuitoSeleccionado = circuitosData.find(c => c.nombre === config.circuito);
+    if (!circuitoSeleccionado) { alert("⚠️ Selecciona un Circuito primero."); return; }
+    setLoading(true);
+    try {
+      const { lat, lon } = circuitoSeleccionado;
+      const weatherRes = await fetch(
+        `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true&hourly=relative_humidity_2m,apparent_temperature,precipitation_probability&windspeed_unit=kmh&timezone=auto`
+      );
+      const weatherData = await weatherRes.json();
+      const cw = weatherData.current_weather;
+
+      // Buscamos el índice de la hora actual dentro del array horario para sacar humedad/ST/lluvia
+      const hourIdx = weatherData.hourly?.time?.findIndex(t => t === cw.time?.slice(0, 13) + ':00' || t.startsWith(cw.time?.slice(0, 13)));
+      const idx = hourIdx >= 0 ? hourIdx : 0;
+
+      const newWeatherData = {
+        temp: cw.temperature,
+        windSpeed: cw.windspeed,
+        windDir: cw.winddirection,
+        weathercode: cw.weathercode,
+        feelsLike: weatherData.hourly?.apparent_temperature?.[idx] ?? null,
+        humidity: weatherData.hourly?.relative_humidity_2m?.[idx] ?? null,
+        precipProb: weatherData.hourly?.precipitation_probability?.[idx] ?? null,
+      };
+
+      const newConfig = { ...config, weatherData: newWeatherData };
+      setConfig(newConfig);
+      if (ipcRenderer) await ipcRenderer.invoke('save-config', newConfig);
+    } catch (error) {
+      console.error(error);
+      alert("❌ No se pudo obtener el clima. Revisá la conexión a internet.");
+    }
+    setLoading(false);
+  };
+
+  const wd = config.weatherData;
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+      <div style={{ display: 'flex', gap: '2px' }}>
+        <button onClick={() => onToggle(id)} style={{ ...btnStyle(isActive), flex: 1 }}>{label}</button>
+        <button onClick={fetchWeather} disabled={loading} style={{ backgroundColor: colors.bgInput, color: colors.yellow, border: `1px solid ${colors.border}`, cursor: 'pointer', padding: '0 10px' }}>
+          {loading ? '⏳' : '☁️'}
+        </button>
+      </div>
+      <div style={{ ...inputStyle, textTransform: 'none', cursor: 'default', display: 'flex', alignItems: 'center', minHeight: '32px' }}>
+        {wd ? (
+          <span style={{ fontSize: '10px' }}>
+            {Math.round(wd.temp)}°C · ST {wd.feelsLike !== null ? Math.round(wd.feelsLike) + '°' : '-'} · 💨 {wd.windSpeed !== undefined ? Math.round(wd.windSpeed) : '-'}km/h · 💧 {wd.humidity !== null ? Math.round(wd.humidity) + '%' : '-'} · 🌧 {wd.precipProb !== null ? Math.round(wd.precipProb) + '%' : '-'}
+          </span>
+        ) : (
+          <span style={{ color: colors.textMuted, fontSize: '10px' }}>SIN DATOS DE CLIMA...</span>
+        )}
+      </div>
+    </div>
+  );
 };
 
 export const defaultPositions = {
@@ -456,7 +512,7 @@ export default function ControlPanel() {
               <GraphicControl id="notero1" label="NOTERO 1" value={config.notero1} isActive={graphics.notero1} onChange={handleChange} onBlur={handleSave} onToggle={handleToggleGraphic} />
               <GraphicControl id="notero2" label="NOTERO 2" value={config.notero2} isActive={graphics.notero2} onChange={handleChange} onBlur={handleSave} onToggle={handleToggleGraphic} />
               <SelectControl id="circuito" label="CIRCUITO" value={config.circuito} options={circuitosData} isActive={graphics.circuito} onChange={handleChange} onBlur={handleSave} onToggle={handleToggleGraphic} />
-              <WeatherControl id="clima" label="CLIMA" config={config} setConfig={setConfig} isActive={graphics.clima} onChange={handleChange} onBlur={handleSave} onToggle={handleToggleGraphic} />
+              <WeatherControl id="clima" label="CLIMA" config={config} setConfig={setConfig} isActive={graphics.clima} onToggle={handleToggleGraphic} />
             </div>
 
             <div style={sectionTitleStyle}>GRILLA</div>

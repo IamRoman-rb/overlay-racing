@@ -41,5 +41,14 @@
   "nameFormat": "original",
   "photosPath": "C:\\Users\\USER\\Downloads\\Pilotos",
   "borderRadius_lapCounter": "0px",
-  "timingProvider": "racemonitor"
+  "timingProvider": "racemonitor",
+  "weatherData": {
+    "temp": 10.2,
+    "windSpeed": 16.6,
+    "windDir": 359,
+    "weathercode": 2,
+    "feelsLike": 5.8,
+    "humidity": 48,
+    "precipProb": 0
+  }
 }

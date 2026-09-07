@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import TimingTower from '../graphics/TimingTower';
 import Ticker from '../graphics/Ticker';
 import LowerThird from '../graphics/LowerThird';
+import Weather from '../graphics/Weather';
 import StartingGrid from '../graphics/StartingGrid';
 import FinalResults from '../graphics/FinalResults';
 import WinnerGraphic from '../graphics/WinnerGraphic';
@@ -259,7 +260,7 @@ export default function Overlay() {
       <LowerThird id="notero1" role="Notero" name={safeConfig.notero1} isVisible={graphics?.notero1} config={combinedConfig} />
       <LowerThird id="notero2" role="Notero" name={safeConfig.notero2} isVisible={graphics?.notero2} config={combinedConfig} />
       <LowerThird id="circuito" role="Circuito" name={safeConfig.circuito} isVisible={graphics?.circuito} config={combinedConfig} />
-      <LowerThird id="clima" role="Clima" name={safeConfig.clima} isVisible={graphics?.clima} config={combinedConfig} />
+      <Weather data={safeConfig.weatherData} isVisible={graphics?.clima} config={combinedConfig} />
 
       <FastestLap drivers={formattedDrivers} config={combinedConfig} isVisible={isFastestLapVisible} />
       <DriverInfo driver={formattedDriverInfoData} config={combinedConfig} isVisible={isDriverInfoVisible} />
