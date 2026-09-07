@@ -93,6 +93,7 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
     { id: 'virtualChamp', label: 'CAMPEONATO VIRTUAL' },
     { id: 'pitStop', label: 'CRONÓMETRO DE BOXES' },
     { id: 'startingLights', label: 'SEMÁFORO DE LARGADA' },
+    { id: 'positionHistory', label: 'EVOLUCIÓN DE POSICIONES' },
   ];
 
   const colorSettings = [

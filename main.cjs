@@ -27,7 +27,8 @@ const defaultPositions = {
   fastestLap: { x: 440, y: 150, scale: 1 }, battle: { x: 50, y: 50, scale: 1 }, customZocalo: { x: 20, y: 580, scale: 1 },
   votingQR: { x: 20, y: 700, scale: 1 }, votingResults: { x: 1550, y: 50, scale: 1 }, lapCounter: { x: 1700, y: 40, scale: 1 },
   virtualChamp: { x: 1400, y: 150, scale: 1 }, pitStop: { x: 50, y: 700, scale: 1 },
-  startingLights: { x: 700, y: 400, scale: 1 }
+  startingLights: { x: 700, y: 400, scale: 1 },
+  positionHistory: { x: 100, y: 100, scale: 1 } 
 };
 
 if (!fs.existsSync(posPath)) fs.writeFileSync(posPath, JSON.stringify(defaultPositions, null, 2));
@@ -46,6 +47,7 @@ function getVotingUrl() {
 let currentDriversForVote = [];
 let votesData = {};
 let lastLeaderboard = { session: {}, drivers: [] };
+let positionHistory = {};
 
 let championshipData = { drivers: [], pointScale: {} };
 let liveChampionship = [];
@@ -75,6 +77,34 @@ function calculateLiveChampionship() {
   liveChampionship = tempStandings;
 
   broadcast('update-championship', liveChampionship);
+}
+
+function updatePositionHistory(leaderboard) {
+  if (!leaderboard || !leaderboard.drivers || leaderboard.drivers.length === 0) return;
+
+  let changed = false;
+  leaderboard.drivers.forEach(driver => {
+    const num = driver.number;
+    const lap = parseInt(driver.laps) || 0;
+    const posVal = parseInt(driver.pos);
+    if (!num || !posVal || lap <= 0) return;
+
+    if (!positionHistory[num]) positionHistory[num] = [];
+    const arr = positionHistory[num];
+    const lastEntry = arr[arr.length - 1];
+
+    if (!lastEntry || lastEntry.lap !== lap) {
+      arr.push({ lap, pos: posVal });
+      changed = true;
+    }
+  });
+
+  if (changed) broadcast('update-position-history', positionHistory);
+}
+
+function resetPositionHistory() {
+  positionHistory = {};
+  broadcast('update-position-history', positionHistory);
 }
 
 let publicVotingUrl = null;
@@ -121,11 +151,13 @@ let broadcastState = {
   pitStop: { isVisible: false, driver: null, startTime: null, stoppedTime: null, isRunning: false },
   startingLights: { isVisible: false, step: 0 },
   graphics: {},
+  positionHistory: false, 
+  positionHistoryFocus: null,
   winner: { isVisible: false, driver: null },
   flags: { red: false, tricolor: false, black: false, blue: false },
   driverInfo: { isVisible: false, driver: null },
   battle: { isVisible: false, pos: 1 },
-  customZocalo: { isVisible: false, title: '', text: '' }
+  customZocalo: { isVisible: false, title: '', text: '' },
 };
 
 const expressApp = express();
@@ -165,6 +197,9 @@ io.on('connection', (socket) => {
   socket.emit('set-virtual-champ', broadcastState.virtualChamp);
   socket.emit('update-pitstop', broadcastState.pitStop);
   socket.emit('update-starting-lights', broadcastState.startingLights);
+  socket.emit('set-position-history-visibility', broadcastState.positionHistory);
+  socket.emit('update-position-history-focus', broadcastState.positionHistoryFocus);
+  socket.emit('update-position-history', positionHistory);
   Object.keys(broadcastState.graphics).forEach(id => {
     socket.emit('set-graphic-visibility', { id, visible: broadcastState.graphics[id] });
   });
@@ -243,6 +278,9 @@ ipcMain.on('reset-votes', () => {
   broadcast('update-votes', votesData);
 });
 ipcMain.on('toggle-virtual-champ', (e, data) => { broadcastState.virtualChamp = data; broadcast('set-virtual-champ', data); });
+ipcMain.on('toggle-position-history', (e, data) => { broadcastState.positionHistory = data; broadcast('set-position-history-visibility', data); });
+ipcMain.on('set-position-history-focus', (e, driverNumber) => { broadcastState.positionHistoryFocus = driverNumber; broadcast('update-position-history-focus', driverNumber); }); 
+ipcMain.on('reset-position-history', () => resetPositionHistory());
 ipcMain.on('pitstop-action', (e, { action, driver }) => {
   if (action === 'start') {
     broadcastState.pitStop = { isVisible: true, driver, startTime: Date.now(), stoppedTime: null, isRunning: true };
@@ -370,10 +408,10 @@ ipcMain.handle('scrape-timing', async (event, { provider, code }) => {
   lastLeaderboard = leaderboard;
   broadcast('update-leaderboard', leaderboard);
   calculateLiveChampionship();
+  updatePositionHistory(leaderboard);
   return leaderboard;
 });
 
-// NUEVO: Permite al Overlay obtener TODO de un solo golpe al arrancar
 ipcMain.handle('get-initial-state', () => {
   let config = {};
   try { if (fs.existsSync(dbPath)) config = JSON.parse(fs.readFileSync(dbPath, 'utf-8')); } catch (e) {}
@@ -391,10 +429,13 @@ ipcMain.handle('get-initial-state', () => {
     positions,
     broadcastState,
     leaderboard: lastLeaderboard,
+    positionHistory,
     votes: votesData,
     localIp: getVotingUrl()
   };
 });
+
+
 
 const handleFileSelect = async (title, extensions) => {
   const result = await dialog.showOpenDialog(controlWindow, { title, properties: ['openFile'], filters: [{ name: 'Imágenes', extensions }] });

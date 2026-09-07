@@ -6,7 +6,7 @@ if (typeof window !== 'undefined' && typeof window.require === 'function') {
   try { ipcRenderer = window.require('electron').ipcRenderer; } catch (e) {}
 }
 
-export default function DriversTable({ drivers, colors, activeDriverNumber, onToggleInfo }) {
+export default function DriversTable({ drivers, colors, activeDriverNumber, onToggleInfo, selectedHistoryNumber, onToggleHistorySelect }) {
   const [pitState, setPitState] = useState({ isVisible: false, driver: null, isRunning: false });
 
   useEffect(() => {
@@ -58,6 +58,7 @@ export default function DriversTable({ drivers, colors, activeDriverNumber, onTo
           {drivers.map((d, index) => {
             const isInfoActive = activeDriverNumber === d.number;
             const isThisPitActive = pitState.isVisible && pitState.driver?.number === d.number;
+            const isHistorySelected = selectedHistoryNumber === d.number;
             
             // Lógica de colores para el botón de Boxes
             let pitBtnText = '⏱️ BOX';
@@ -74,7 +75,7 @@ export default function DriversTable({ drivers, colors, activeDriverNumber, onTo
             }
 
             return (
-              <tr key={index} style={{ borderBottom: `1px solid ${colors.border}`, backgroundColor: isInfoActive ? 'rgba(52, 152, 219, 0.1)' : 'transparent', transition: 'background-color 0.2s' }}>
+              <tr key={index} style={{ borderBottom: `1px solid ${colors.border}`, backgroundColor: isInfoActive ? 'rgba(52, 152, 219, 0.1)' : (isHistorySelected ? 'rgba(155, 89, 182, 0.12)' : 'transparent'), transition: 'background-color 0.2s' }}>
                 <td style={{ padding: '10px', fontWeight: 'bold', color: colors.yellow }}>{d.pos}</td>
                 <td style={{ padding: '10px', color: colors.textMuted }}>{d.number}</td>
                 <td style={{ padding: '10px', textAlign: 'left', fontWeight: 'bold', color: colors.textMain, textTransform: 'uppercase' }}>{d.name}</td>
@@ -90,6 +91,22 @@ export default function DriversTable({ drivers, colors, activeDriverNumber, onTo
                 <td style={{ padding: '10px', color: colors.textMuted }}>{d.bestLap || '-'}</td>
                 
                 <td style={{ padding: '10px', display: 'flex', gap: '5px', justifyContent: 'flex-end' }}>
+                  {/* BOTÓN EVOLUCIÓN DE POSICIONES: enfocar/quitar foco de este piloto */}
+                  {onToggleHistorySelect && (
+                    <button
+                      onClick={() => onToggleHistorySelect(d)}
+                      style={{
+                        backgroundColor: isHistorySelected ? '#9b59b6' : colors.bgInput,
+                        color: isHistorySelected ? '#fff' : colors.textMuted,
+                        border: `1px solid ${isHistorySelected ? '#8e44ad' : colors.border}`,
+                        padding: '6px 10px', borderRadius: '4px', fontSize: '10px', fontWeight: 'bold', cursor: 'pointer'
+                      }}
+                      title="Ver evolución de posiciones de este piloto"
+                    >
+                      📈 {isHistorySelected ? 'QUITAR' : 'HIST.'}
+                    </button>
+                  )}
+
                   {/* BOTÓN ZÓCALO DE INFO */}
                   <button 
                     onClick={() => onToggleInfo(d)} 

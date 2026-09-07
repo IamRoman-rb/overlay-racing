@@ -35,7 +35,7 @@ export const defaultPositions = {
   tower: { x: 20, y: 20, scale: 1 }, winner: { x: 440, y: 550, scale: 1 }, flags: { x: 320, y: 50, scale: 1 },
   fastestLap: { x: 440, y: 150, scale: 1 }, battle: { x: 50, y: 50, scale: 1 }, customZocalo: { x: 20, y: 580, scale: 1 },
   votingQR: { x: 20, y: 700, scale: 1 }, votingResults: { x: 1550, y: 50, scale: 1 }, lapCounter: { x: 1700, y: 40, scale: 1 },
-  virtualChamp: { x: 1400, y: 150, scale: 1 }, startingLights: { x: 700, y: 400, scale: 1 }
+  virtualChamp: { x: 1400, y: 150, scale: 1 }, startingLights: { x: 700, y: 400, scale: 1 }, positionHistory: { x: 100, y: 100, scale: 1 }
 };
 
 const allGraphicsList = [
@@ -47,7 +47,7 @@ const allGraphicsList = [
   { id: 'votingQR', label: 'QR DE VOTACIÓN' }, { id: 'votingResults', label: 'RESULTADOS DE VOTACIÓN' },
   { id: 'lapCounter', label: 'CONTADOR DE VUELTAS' },
   { id: 'virtualChamp', label: 'CAMPEONATO VIRTUAL' },
-  { id: 'startingLights', label: 'SEMÁFORO DE LARGADA' }
+  { id: 'startingLights', label: 'SEMÁFORO DE LARGADA' },
 ];
 
 export default function ControlPanel() {
@@ -75,7 +75,8 @@ export default function ControlPanel() {
   const [showLapCounter, setShowLapCounter] = useState(false);
   const [showVirtualChamp, setShowVirtualChamp] = useState(false);
   const [activeZocaloIndex, setActiveZocaloIndex] = useState(null);
-
+  const [showPositionHistory, setShowPositionHistory] = useState(false);
+  const [selectedHistoryDriver, setSelectedHistoryDriver] = useState(null);
   const [autoScrape, setAutoScrape] = useState(false);
   const [scrapeProgress, setScrapeProgress] = useState(0);
   const configRef = useRef(config);
@@ -221,8 +222,34 @@ export default function ControlPanel() {
   const handleSave = async () => { if (ipcRenderer) await ipcRenderer.invoke('save-config', config); };
   const handleToggleBattle = () => { const newState = !showBattle; setShowBattle(newState); if (ipcRenderer) ipcRenderer.send('toggle-battle', { isVisible: newState, pos: battleTarget }); };
   const handleToggleVirtualChamp = () => { setShowVirtualChamp(!showVirtualChamp); if (ipcRenderer) ipcRenderer.send('toggle-virtual-champ', !showVirtualChamp); };
+  const handleTogglePositionHistory = () => {
+    const newState = !showPositionHistory;
+    setShowPositionHistory(newState);
+    if (ipcRenderer) ipcRenderer.send('toggle-position-history', newState);
 
-  // --- NUEVO: HANDLERS SEMÁFORO ---
+    // El botón del panel siempre muestra la comparativa de TODOS los pilotos: limpiamos cualquier foco activo
+    if (newState) {
+      setSelectedHistoryDriver(null);
+      if (ipcRenderer) ipcRenderer.send('set-position-history-focus', null);
+    }
+  };
+  const handleToggleHistorySelect = (driver) => {
+    const newSelection = selectedHistoryDriver === driver.number ? null : driver.number;
+    setSelectedHistoryDriver(newSelection);
+    if (ipcRenderer) ipcRenderer.send('set-position-history-focus', newSelection);
+
+    // Al seleccionar un piloto, mostramos la gráfica automáticamente enfocada en él
+    if (newSelection) {
+      setShowPositionHistory(true);
+      if (ipcRenderer) ipcRenderer.send('toggle-position-history', true);
+    } else {
+      // Al deseleccionar (QUITAR), ocultamos la gráfica por completo
+      setShowPositionHistory(false);
+      if (ipcRenderer) ipcRenderer.send('toggle-position-history', false);
+    }
+  };
+  const handleResetPositionHistory = () => { if (window.confirm('⚠️ ¿Borrar el historial de posiciones acumulado?')) { if (ipcRenderer) ipcRenderer.send('reset-position-history'); } };
+
   const handleStartLights = () => { if (ipcRenderer) ipcRenderer.send('starting-lights-action', 'start'); };
   const handleGoLights = () => { if (ipcRenderer) ipcRenderer.send('starting-lights-action', 'go'); };
   const handleHideLights = () => { if (ipcRenderer) ipcRenderer.send('starting-lights-action', 'hide'); };
@@ -326,12 +353,12 @@ export default function ControlPanel() {
   const handleToggleGraphic = (id) => { const newState = !graphics[id]; setGraphics({ ...graphics, [id]: newState }); if (ipcRenderer) ipcRenderer.send('toggle-graphic', { id, visible: newState }); };
   const handleSelectLogo = async () => { if (ipcRenderer) { const logoData = await ipcRenderer.invoke('select-logo'); if (logoData) handleDirectSave('logo', logoData); } };
   const handleToggleFastestLap = () => {
-  setShowFastestLap(!showFastestLap);
-  setNewRecordAlert(false);
-  if (recordTimeoutRef.current) clearTimeout(recordTimeoutRef.current);
-  if (autoHideFastestLapRef.current) clearTimeout(autoHideFastestLapRef.current);
-  if (ipcRenderer) ipcRenderer.send('toggle-fastest-lap', !showFastestLap);
-};
+    setShowFastestLap(!showFastestLap);
+    setNewRecordAlert(false);
+    if (recordTimeoutRef.current) clearTimeout(recordTimeoutRef.current);
+    if (autoHideFastestLapRef.current) clearTimeout(autoHideFastestLapRef.current);
+    if (ipcRenderer) ipcRenderer.send('toggle-fastest-lap', !showFastestLap);
+  };
   const handleToggleLapCounter = () => { setShowLapCounter(!showLapCounter); if (ipcRenderer) ipcRenderer.send('toggle-lap-counter', !showLapCounter); };
   const handleToggleFlag = (type) => {
     const newFlags = { red: false, tricolor: false, black: false, blue: false };
@@ -518,6 +545,21 @@ export default function ControlPanel() {
               </button>
             </div>
 
+            <div style={sectionTitleStyle}>EVOLUCIÓN DE POSICIONES</div>
+            <div style={{ display: 'flex', gap: '5px', marginBottom: '15px' }}>
+              <button onClick={handleTogglePositionHistory} style={{ ...btnStyle(showPositionHistory), flex: 2 }}>
+                {showPositionHistory ? 'OCULTAR GRÁFICO' : 'MOSTRAR GRÁFICO'}
+              </button>
+              <button onClick={handleResetPositionHistory} style={{ ...btnStyle(false), flex: 1, backgroundColor: '#c0392b', color: '#fff', borderColor: '#e74c3c' }}>
+                🗑️ REINICIAR
+              </button>
+            </div>
+            {selectedHistoryDriver && (
+              <div style={{ fontSize: '10px', color: '#9b59b6', fontWeight: 'bold', marginTop: '-8px', marginBottom: '15px' }}>
+                📈 Mostrando sólo #{selectedHistoryDriver} — click en "QUITAR" en la tabla para ver a todos
+              </div>
+            )}
+
             <div style={sectionTitleStyle}>INTERACTIVIDAD (VOTOS)</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', marginBottom: '20px' }}>
               <button onClick={handleToggleVotingQR} style={btnStyle(showVotingQR)}>QR DE VOTACIÓN</button>
@@ -549,7 +591,7 @@ export default function ControlPanel() {
                 boxShadow: `0 0 10px ${colors.green}`, transition: scrapeProgress === 0 ? 'none' : 'width 10ms linear', zIndex: 10
               }} />
             )}
-            <DriversTable drivers={drivers} colors={colors} activeDriverNumber={activeDriverInfo?.number} onToggleInfo={handleToggleDriverInfo} />
+            <DriversTable drivers={drivers} colors={colors} activeDriverNumber={activeDriverInfo?.number} onToggleInfo={handleToggleDriverInfo} selectedHistoryNumber={selectedHistoryDriver} onToggleHistorySelect={handleToggleHistorySelect} />
           </div>
         </div>
       )}

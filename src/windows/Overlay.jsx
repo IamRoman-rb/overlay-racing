@@ -16,6 +16,7 @@ import LapCounter from '../graphics/LapCounter';
 import VirtualChamp from '../graphics/VirtualChamp';
 import PitStopTimer from '../graphics/PitStopTimer';
 import StartingLights from '../graphics/StartingLights';
+import PositionHistory from '../graphics/PositionHistory';
 
 let ipcRenderer = null;
 if (typeof window !== 'undefined' && typeof window.require === 'function') {
@@ -57,7 +58,8 @@ function buildEventHandlers(setters) {
     setIsFastestLapVisible, setIsDriverInfoVisible, setDriverInfoData,
     setBattleData, setCustomZocaloData, setIsVotingQRVisible, setIsVotingResultsVisible,
     setVotes, setIsLapCounterVisible, setIsVirtualChampVisible, setPitStopState,
-    setStartingLightsState
+    setStartingLightsState, setIsPositionHistoryVisible, setPositionHistory,
+    setPositionHistoryFocus 
   } = setters;
 
   return {
@@ -91,6 +93,9 @@ function buildEventHandlers(setters) {
     'set-virtual-champ': (data) => setIsVirtualChampVisible(!!data),
     'update-pitstop': (data) => data && setPitStopState(data),
     'update-starting-lights': (data) => data && setStartingLightsState(data),
+    'set-position-history-visibility': (data) => setIsPositionHistoryVisible(!!data),
+    'update-position-history': (data) => data && setPositionHistory(data),
+    'update-position-history-focus': (data) => setPositionHistoryFocus(data ?? null),
   };
 }
 
@@ -121,6 +126,9 @@ export default function Overlay() {
   const [isVirtualChampVisible, setIsVirtualChampVisible] = useState(false);
   const [pitStopState, setPitStopState] = useState({ isVisible: false, driver: null, startTime: null, stoppedTime: null, isRunning: false });
   const [startingLightsState, setStartingLightsState] = useState({ isVisible: false, step: 0 });
+  const [isPositionHistoryVisible, setIsPositionHistoryVisible] = useState(false);
+  const [positionHistory, setPositionHistory] = useState({});
+  const [positionHistoryFocus, setPositionHistoryFocus] = useState(null);
 
   const inBrowserMode = !ipcRenderer;
 
@@ -132,7 +140,8 @@ export default function Overlay() {
       setIsFastestLapVisible, setIsDriverInfoVisible, setDriverInfoData,
       setBattleData, setCustomZocaloData, setIsVotingQRVisible, setIsVotingResultsVisible,
       setVotes, setIsLapCounterVisible, setIsVirtualChampVisible, setPitStopState,
-      setStartingLightsState
+      setStartingLightsState, setIsPositionHistoryVisible, setPositionHistory,
+      setPositionHistoryFocus
     });
 
     if (ipcRenderer) {
@@ -146,6 +155,7 @@ export default function Overlay() {
           setSessionInfo(state.leaderboard.session || {});
         }
         if (state.votes) setVotes(state.votes);
+        if (state.positionHistory) setPositionHistory(state.positionHistory);
 
         const bs = state.broadcastState || {};
         setIsTickerVisible(!!bs.ticker);
@@ -157,6 +167,8 @@ export default function Overlay() {
         setIsVotingQRVisible(!!bs.votingQR);
         setIsVotingResultsVisible(!!bs.votingResults);
         setIsVirtualChampVisible(!!bs.virtualChamp);
+        setIsPositionHistoryVisible(!!bs.positionHistory); 
+        setPositionHistoryFocus(bs.positionHistoryFocus ?? null);
         if (bs.pitStop) setPitStopState(bs.pitStop);
         if (bs.startingLights) setStartingLightsState(bs.startingLights);
         if (bs.graphics) setGraphics(bs.graphics);
@@ -255,6 +267,7 @@ export default function Overlay() {
       <VotingResults isVisible={isVotingResultsVisible} drivers={formattedDrivers} votes={votes} config={combinedConfig} />
       <LapCounter isVisible={isLapCounterVisible} config={combinedConfig} sessionInfo={sessionInfo} />
       <VirtualChamp isVisible={isVirtualChampVisible} config={combinedConfig} />
+      <PositionHistory history={positionHistory} drivers={formattedDrivers} config={combinedConfig} isVisible={isPositionHistoryVisible} focusDriver={positionHistoryFocus} />
       <PitStopTimer isVisible={pitStopState?.isVisible} pitState={pitStopState} config={combinedConfig} />
     </div>
   );

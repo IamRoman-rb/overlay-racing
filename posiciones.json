@@ -99,9 +99,9 @@
     "y": -2,
     "scale": 0.5
   },
-  "pitStop": {
-    "x": 1565,
-    "y": 815,
-    "scale": 0.8
+  "positionHistory": {
+    "x": 416,
+    "y": 51,
+    "scale": 1.9
   }
 }
