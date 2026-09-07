@@ -18,6 +18,7 @@ const userDataPath = isDev ? __dirname : app.getPath('userData');
 const dbPath = path.join(userDataPath, 'database.json');
 const posPath = path.join(userDataPath, 'posiciones.json');
 const backupPath = path.join(userDataPath, 'last_race.json');
+const lapTimesPath = path.join(userDataPath, 'lap_times.json');
 
 const defaultPositions = {
   relator: { x: 20, y: 560, scale: 1 }, comentarista: { x: 20, y: 480, scale: 1 }, notero1: { x: 20, y: 400, scale: 1 },
@@ -28,7 +29,7 @@ const defaultPositions = {
   votingQR: { x: 20, y: 700, scale: 1 }, votingResults: { x: 1550, y: 50, scale: 1 }, lapCounter: { x: 1700, y: 40, scale: 1 },
   virtualChamp: { x: 1400, y: 150, scale: 1 }, pitStop: { x: 50, y: 700, scale: 1 },
   startingLights: { x: 700, y: 400, scale: 1 },
-  positionHistory: { x: 100, y: 100, scale: 1 } 
+  lapTimesHistory: { x: 100, y: 500, scale: 1 }
 };
 
 if (!fs.existsSync(posPath)) fs.writeFileSync(posPath, JSON.stringify(defaultPositions, null, 2));
@@ -47,7 +48,15 @@ function getVotingUrl() {
 let currentDriversForVote = [];
 let votesData = {};
 let lastLeaderboard = { session: {}, drivers: [] };
-let positionHistory = {};
+
+let lapTimesHistory = {};
+try {
+  if (fs.existsSync(lapTimesPath)) {
+    lapTimesHistory = JSON.parse(fs.readFileSync(lapTimesPath, 'utf-8'));
+  }
+} catch (e) {
+  lapTimesHistory = {};
+}
 
 let championshipData = { drivers: [], pointScale: {} };
 let liveChampionship = [];
@@ -79,33 +88,51 @@ function calculateLiveChampionship() {
   broadcast('update-championship', liveChampionship);
 }
 
-function updatePositionHistory(leaderboard) {
+function parseLapTimeToSeconds(str) {
+  if (!str || str === '-' || str.toUpperCase?.() === 'IN PIT') return null;
+  const parts = str.split(':');
+  let val = parts.length === 2 ? parseInt(parts[0], 10) * 60 + parseFloat(parts[1]) : parseFloat(str);
+  if (isNaN(val) || val <= 0) return null;
+  return val;
+}
+
+function saveLapTimesToDisk() {
+  try { fs.writeFileSync(lapTimesPath, JSON.stringify(lapTimesHistory, null, 2)); } catch (e) {}
+}
+
+function updateLapTimesHistory(leaderboard) {
   if (!leaderboard || !leaderboard.drivers || leaderboard.drivers.length === 0) return;
 
   let changed = false;
   leaderboard.drivers.forEach(driver => {
     const num = driver.number;
     const lap = parseInt(driver.laps) || 0;
-    const posVal = parseInt(driver.pos);
-    if (!num || !posVal || lap <= 0) return;
+    const seconds = parseLapTimeToSeconds(driver.lastLap);
+    if (!num || lap <= 0 || seconds === null) return;
 
-    if (!positionHistory[num]) positionHistory[num] = [];
-    const arr = positionHistory[num];
+    if (!lapTimesHistory[num]) lapTimesHistory[num] = [];
+    const arr = lapTimesHistory[num];
     const lastEntry = arr[arr.length - 1];
 
+    // Sólo agregamos un punto nuevo si es una vuelta que todavía no registramos para este piloto
     if (!lastEntry || lastEntry.lap !== lap) {
-      arr.push({ lap, pos: posVal });
+      arr.push({ lap, seconds, timeStr: driver.lastLap });
       changed = true;
     }
   });
 
-  if (changed) broadcast('update-position-history', positionHistory);
+  if (changed) {
+    saveLapTimesToDisk();
+    broadcast('update-lap-times-history', lapTimesHistory);
+  }
 }
 
-function resetPositionHistory() {
-  positionHistory = {};
-  broadcast('update-position-history', positionHistory);
+function resetLapTimesHistory() {
+  lapTimesHistory = {};
+  saveLapTimesToDisk(); // pisa el archivo con datos vacíos: arranca limpio para la próxima carrera
+  broadcast('update-lap-times-history', lapTimesHistory);
 }
+
 
 let publicVotingUrl = null;
 let publicTunnel = null;
@@ -151,8 +178,8 @@ let broadcastState = {
   pitStop: { isVisible: false, driver: null, startTime: null, stoppedTime: null, isRunning: false },
   startingLights: { isVisible: false, step: 0 },
   graphics: {},
-  positionHistory: false, 
-  positionHistoryFocus: null,
+  lapTimesHistory: false,
+  lapTimesFocus: null,
   winner: { isVisible: false, driver: null },
   flags: { red: false, tricolor: false, black: false, blue: false },
   driverInfo: { isVisible: false, driver: null },
@@ -197,9 +224,6 @@ io.on('connection', (socket) => {
   socket.emit('set-virtual-champ', broadcastState.virtualChamp);
   socket.emit('update-pitstop', broadcastState.pitStop);
   socket.emit('update-starting-lights', broadcastState.startingLights);
-  socket.emit('set-position-history-visibility', broadcastState.positionHistory);
-  socket.emit('update-position-history-focus', broadcastState.positionHistoryFocus);
-  socket.emit('update-position-history', positionHistory);
   Object.keys(broadcastState.graphics).forEach(id => {
     socket.emit('set-graphic-visibility', { id, visible: broadcastState.graphics[id] });
   });
@@ -278,9 +302,11 @@ ipcMain.on('reset-votes', () => {
   broadcast('update-votes', votesData);
 });
 ipcMain.on('toggle-virtual-champ', (e, data) => { broadcastState.virtualChamp = data; broadcast('set-virtual-champ', data); });
-ipcMain.on('toggle-position-history', (e, data) => { broadcastState.positionHistory = data; broadcast('set-position-history-visibility', data); });
-ipcMain.on('set-position-history-focus', (e, driverNumber) => { broadcastState.positionHistoryFocus = driverNumber; broadcast('update-position-history-focus', driverNumber); }); 
-ipcMain.on('reset-position-history', () => resetPositionHistory());
+
+ipcMain.on('toggle-lap-times-history', (e, data) => { broadcastState.lapTimesHistory = data; broadcast('set-lap-times-history-visibility', data); });
+ipcMain.on('set-lap-times-focus', (e, driverNumber) => { broadcastState.lapTimesFocus = driverNumber; broadcast('update-lap-times-focus', driverNumber); });
+ipcMain.on('reset-lap-times-history', () => resetLapTimesHistory());
+
 ipcMain.on('pitstop-action', (e, { action, driver }) => {
   if (action === 'start') {
     broadcastState.pitStop = { isVisible: true, driver, startTime: Date.now(), stoppedTime: null, isRunning: true };
@@ -408,7 +434,7 @@ ipcMain.handle('scrape-timing', async (event, { provider, code }) => {
   lastLeaderboard = leaderboard;
   broadcast('update-leaderboard', leaderboard);
   calculateLiveChampionship();
-  updatePositionHistory(leaderboard);
+  updateLapTimesHistory(leaderboard); 
   return leaderboard;
 });
 
@@ -425,13 +451,13 @@ ipcMain.handle('get-initial-state', () => {
   } catch (e) {}
 
   return {
-    config,
-    positions,
-    broadcastState,
-    leaderboard: lastLeaderboard,
-    positionHistory,
-    votes: votesData,
-    localIp: getVotingUrl()
+  config,
+  positions,
+  broadcastState,
+  leaderboard: lastLeaderboard,
+  lapTimesHistory,
+  votes: votesData,
+  localIp: getVotingUrl()
   };
 });
 

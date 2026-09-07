@@ -99,9 +99,12 @@
     "y": -2,
     "scale": 0.5
   },
-  "positionHistory": {
-    "x": 416,
-    "y": 51,
-    "scale": 1.9
+  "lapTimesHistory": {
+    "x": 143,
+    "y": 122
+  },
+  "pitStop": {
+    "x": 1512,
+    "y": 733
   }
 }
