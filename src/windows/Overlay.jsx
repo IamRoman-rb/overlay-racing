@@ -18,6 +18,7 @@ import VirtualChamp from '../graphics/VirtualChamp';
 import PitStopTimer from '../graphics/PitStopTimer';
 import StartingLights from '../graphics/StartingLights';
 import LapTimeEvolution from '../graphics/LapTimeEvolution';
+import TrackAlert from '../graphics/TrackAlert';
 
 let ipcRenderer = null;
 if (typeof window !== 'undefined' && typeof window.require === 'function') {
@@ -60,7 +61,7 @@ function buildEventHandlers(setters) {
     setBattleData, setCustomZocaloData, setIsVotingQRVisible, setIsVotingResultsVisible,
     setVotes, setIsLapCounterVisible, setIsVirtualChampVisible, setPitStopState,
     setStartingLightsState, setIsLapTimesHistoryVisible, setLapTimesHistory,
-    setLapTimesFocus
+    setLapTimesFocus, setTrackAlert
   } = setters;
 
   return {
@@ -97,6 +98,7 @@ function buildEventHandlers(setters) {
     'set-lap-times-history-visibility': (data) => setIsLapTimesHistoryVisible(!!data),
     'update-lap-times-history': (data) => data && setLapTimesHistory(data),
     'update-lap-times-focus': (data) => setLapTimesFocus(data ?? null),
+    'update-track-alert': (data) => data && setTrackAlert(data),
   };
 }
 
@@ -127,9 +129,10 @@ export default function Overlay() {
   const [isVirtualChampVisible, setIsVirtualChampVisible] = useState(false);
   const [pitStopState, setPitStopState] = useState({ isVisible: false, driver: null, startTime: null, stoppedTime: null, isRunning: false });
   const [startingLightsState, setStartingLightsState] = useState({ isVisible: false, step: 0 });
-  const [isLapTimesHistoryVisible, setIsLapTimesHistoryVisible] = useState(false); // NUEVO
-  const [lapTimesHistory, setLapTimesHistory] = useState({}); // NUEVO
-  const [lapTimesFocus, setLapTimesFocus] = useState(null); // NUEVO
+  const [isLapTimesHistoryVisible, setIsLapTimesHistoryVisible] = useState(false);
+  const [lapTimesHistory, setLapTimesHistory] = useState({});
+  const [lapTimesFocus, setLapTimesFocus] = useState(null);
+  const [trackAlert, setTrackAlert] = useState({ isVisible: false, curveId: null, curveName: '', type: 'yellow' });
 
   const inBrowserMode = !ipcRenderer;
 
@@ -142,7 +145,7 @@ export default function Overlay() {
       setBattleData, setCustomZocaloData, setIsVotingQRVisible, setIsVotingResultsVisible,
       setVotes, setIsLapCounterVisible, setIsVirtualChampVisible, setPitStopState,
       setStartingLightsState, setIsLapTimesHistoryVisible, setLapTimesHistory,
-  setLapTimesFocus
+      setLapTimesFocus, setTrackAlert
     });
 
     if (ipcRenderer) {
@@ -168,8 +171,9 @@ export default function Overlay() {
         setIsVotingQRVisible(!!bs.votingQR);
         setIsVotingResultsVisible(!!bs.votingResults);
         setIsVirtualChampVisible(!!bs.virtualChamp);
-          setIsLapTimesHistoryVisible(!!bs.lapTimesHistory); // NUEVO
-  setLapTimesFocus(bs.lapTimesFocus ?? null); // NUEVO
+        setIsLapTimesHistoryVisible(!!bs.lapTimesHistory);
+        setLapTimesFocus(bs.lapTimesFocus ?? null);
+        if (bs.trackAlert) setTrackAlert(bs.trackAlert);
         if (bs.pitStop) setPitStopState(bs.pitStop);
         if (bs.startingLights) setStartingLightsState(bs.startingLights);
         if (bs.graphics) setGraphics(bs.graphics);
@@ -268,8 +272,9 @@ export default function Overlay() {
       <VotingResults isVisible={isVotingResultsVisible} drivers={formattedDrivers} votes={votes} config={combinedConfig} />
       <LapCounter isVisible={isLapCounterVisible} config={combinedConfig} sessionInfo={sessionInfo} />
       <VirtualChamp isVisible={isVirtualChampVisible} config={combinedConfig} />
-      <LapTimeEvolution history={lapTimesHistory} drivers={formattedDrivers} config={combinedConfig} isVisible={isLapTimesHistoryVisible} focusDriver={lapTimesFocus} /> 
+      <LapTimeEvolution history={lapTimesHistory} drivers={formattedDrivers} config={combinedConfig} isVisible={isLapTimesHistoryVisible} focusDriver={lapTimesFocus} />
       <PitStopTimer isVisible={pitStopState?.isVisible} pitState={pitStopState} config={combinedConfig} />
+      <TrackAlert alert={trackAlert} config={combinedConfig} />
     </div>
   );
 }

@@ -29,7 +29,7 @@
   "campeonato": "",
   "relator": "",
   "comentarista": "",
-  "speedhiveCode": "162661",
+  "speedhiveCode": "169734",
   "borderRadius_ticker": "0px",
   "gridFormat": "photos",
   "circuito": "Autódromo Roberto Mouras",
@@ -43,12 +43,28 @@
   "borderRadius_lapCounter": "0px",
   "timingProvider": "racemonitor",
   "weatherData": {
-    "temp": 10.2,
+    "temp": 10.3,
     "windSpeed": 16.6,
     "windDir": 359,
     "weathercode": 2,
     "feelsLike": 5.8,
     "humidity": 48,
     "precipProb": 0
-  }
+  },
+  "trackImage": "data:image/png;base64,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",
+  "trackCurves": [
+    {
+      "id": "curve_1788799121899",
+      "name": "Curva 1",
+      "x": 31.169323063113968,
+      "y": 6.2924516211713435
+    },
+    {
+      "id": "curve_1788799148792",
+      "name": "Curva 2",
+      "x": 45.861805978831505,
+      "y": 24.336793540945788
+    }
+  ],
+  "animationStyle_trackAlert": "zoom"
 }

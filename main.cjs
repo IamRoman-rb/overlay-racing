@@ -29,7 +29,8 @@ const defaultPositions = {
   votingQR: { x: 20, y: 700, scale: 1 }, votingResults: { x: 1550, y: 50, scale: 1 }, lapCounter: { x: 1700, y: 40, scale: 1 },
   virtualChamp: { x: 1400, y: 150, scale: 1 }, pitStop: { x: 50, y: 700, scale: 1 },
   startingLights: { x: 700, y: 400, scale: 1 },
-  lapTimesHistory: { x: 100, y: 500, scale: 1 }
+  lapTimesHistory: { x: 100, y: 500, scale: 1 },
+  trackAlert: { x: 1500, y: 500, scale: 1 }
 };
 
 if (!fs.existsSync(posPath)) fs.writeFileSync(posPath, JSON.stringify(defaultPositions, null, 2));
@@ -185,6 +186,7 @@ let broadcastState = {
   driverInfo: { isVisible: false, driver: null },
   battle: { isVisible: false, pos: 1 },
   customZocalo: { isVisible: false, title: '', text: '' },
+  trackAlert: { isVisible: false, curveId: null, curveName: '', type: 'yellow' },
 };
 
 const expressApp = express();
@@ -224,6 +226,7 @@ io.on('connection', (socket) => {
   socket.emit('set-virtual-champ', broadcastState.virtualChamp);
   socket.emit('update-pitstop', broadcastState.pitStop);
   socket.emit('update-starting-lights', broadcastState.startingLights);
+  socket.emit('update-track-alert', broadcastState.trackAlert);
   Object.keys(broadcastState.graphics).forEach(id => {
     socket.emit('set-graphic-visibility', { id, visible: broadcastState.graphics[id] });
   });
@@ -306,6 +309,15 @@ ipcMain.on('toggle-virtual-champ', (e, data) => { broadcastState.virtualChamp = 
 ipcMain.on('toggle-lap-times-history', (e, data) => { broadcastState.lapTimesHistory = data; broadcast('set-lap-times-history-visibility', data); });
 ipcMain.on('set-lap-times-focus', (e, driverNumber) => { broadcastState.lapTimesFocus = driverNumber; broadcast('update-lap-times-focus', driverNumber); });
 ipcMain.on('reset-lap-times-history', () => resetLapTimesHistory());
+
+ipcMain.on('trigger-track-alert', (e, data) => {
+  broadcastState.trackAlert = { isVisible: true, curveId: data.curveId, curveName: data.curveName, type: data.type };
+  broadcast('update-track-alert', broadcastState.trackAlert);
+});
+ipcMain.on('hide-track-alert', () => {
+  broadcastState.trackAlert = { isVisible: false, curveId: null, curveName: '', type: 'yellow' };
+  broadcast('update-track-alert', broadcastState.trackAlert);
+});
 
 ipcMain.on('pitstop-action', (e, { action, driver }) => {
   if (action === 'start') {
@@ -475,6 +487,7 @@ const handleFileSelect = async (title, extensions) => {
 };
 ipcMain.handle('select-logo', () => handleFileSelect('Seleccionar Logo', ['png', 'jpg', 'jpeg']));
 ipcMain.handle('select-category-logo', () => handleFileSelect('Seleccionar Logo Categoría', ['png', 'jpg', 'jpeg']));
+ipcMain.handle('select-track-image', () => handleFileSelect('Seleccionar Imagen del Circuito', ['png', 'jpg', 'jpeg']));
 ipcMain.handle('select-design-image', (e, title) => handleFileSelect(`Diseño PNG/SVG: ${title}`, ['png', 'svg']));
 ipcMain.handle('select-photos-folder', async () => {
   const result = await dialog.showOpenDialog(controlWindow, { title: 'Seleccionar Carpeta Fotos', properties: ['openDirectory'] });

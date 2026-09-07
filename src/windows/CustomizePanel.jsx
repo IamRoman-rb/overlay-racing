@@ -94,6 +94,7 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
     { id: 'pitStop', label: 'CRONÓMETRO DE BOXES' },
     { id: 'startingLights', label: 'SEMÁFORO DE LARGADA' },
     { id: 'lapTimesHistory', label: 'EVOLUCIÓN DE TIEMPOS DE VUELTA' }, 
+    { id: 'trackAlert', label: 'ALERTA EN CURVA' },
   ];
 
   const colorSettings = [

@@ -3,6 +3,7 @@ import circuitosData from '../data/circuitos.json';
 import SettingsPanel from '../windows/SettingsPanel';
 import CustomizePanel from '../windows/CustomizePanel';
 import DriversTable from '../windows/DriversTable';
+import TrackMapPanel from '../windows/TrackMapPanel';
 
 let ipcRenderer = null;
 if (typeof window !== 'undefined' && typeof window.require === 'function') {
@@ -91,7 +92,8 @@ export const defaultPositions = {
   tower: { x: 20, y: 20, scale: 1 }, winner: { x: 440, y: 550, scale: 1 }, flags: { x: 320, y: 50, scale: 1 },
   fastestLap: { x: 440, y: 150, scale: 1 }, battle: { x: 50, y: 50, scale: 1 }, customZocalo: { x: 20, y: 580, scale: 1 },
   votingQR: { x: 20, y: 700, scale: 1 }, votingResults: { x: 1550, y: 50, scale: 1 }, lapCounter: { x: 1700, y: 40, scale: 1 },
-  virtualChamp: { x: 1400, y: 150, scale: 1 }, startingLights: { x: 700, y: 400, scale: 1 }, lapTimesHistory: { x: 100, y: 500, scale: 1 }
+  virtualChamp: { x: 1400, y: 150, scale: 1 }, startingLights: { x: 700, y: 400, scale: 1 }, lapTimesHistory: { x: 100, y: 500, scale: 1 },
+  trackAlert: { x: 1500, y: 500, scale: 1 }
 };
 
 const allGraphicsList = [
@@ -104,7 +106,8 @@ const allGraphicsList = [
   { id: 'lapCounter', label: 'CONTADOR DE VUELTAS' },
   { id: 'virtualChamp', label: 'CAMPEONATO VIRTUAL' },
   { id: 'startingLights', label: 'SEMÁFORO DE LARGADA' },
-  { id: 'lapTimesHistory', label: 'EVOLUCIÓN DE TIEMPOS DE VUELTA' }
+  { id: 'lapTimesHistory', label: 'EVOLUCIÓN DE TIEMPOS DE VUELTA' },
+  { id: 'trackAlert', label: 'ALERTA EN CURVA' }
 ];
 
 export default function ControlPanel() {
@@ -133,6 +136,8 @@ export default function ControlPanel() {
   const [showVirtualChamp, setShowVirtualChamp] = useState(false);
   const [activeZocaloIndex, setActiveZocaloIndex] = useState(null);
   const [showLapTimesHistory, setShowLapTimesHistory] = useState(false);
+  const [selectedCurveId, setSelectedCurveId] = useState(null);
+  const [trackAlertType, setTrackAlertType] = useState('yellow');
   const [selectedLapTimesDriver, setSelectedLapTimesDriver] = useState(null);
   const [autoScrape, setAutoScrape] = useState(false);
   const [scrapeProgress, setScrapeProgress] = useState(0);
@@ -280,30 +285,30 @@ export default function ControlPanel() {
   const handleToggleBattle = () => { const newState = !showBattle; setShowBattle(newState); if (ipcRenderer) ipcRenderer.send('toggle-battle', { isVisible: newState, pos: battleTarget }); };
   const handleToggleVirtualChamp = () => { setShowVirtualChamp(!showVirtualChamp); if (ipcRenderer) ipcRenderer.send('toggle-virtual-champ', !showVirtualChamp); };
   const handleToggleLapTimesHistory = () => {
-  const newState = !showLapTimesHistory;
-  setShowLapTimesHistory(newState);
-  if (ipcRenderer) ipcRenderer.send('toggle-lap-times-history', newState);
+    const newState = !showLapTimesHistory;
+    setShowLapTimesHistory(newState);
+    if (ipcRenderer) ipcRenderer.send('toggle-lap-times-history', newState);
 
-  // El botón del panel siempre muestra la comparativa de TODOS los pilotos: limpiamos cualquier foco activo
-  if (newState) {
-    setSelectedLapTimesDriver(null);
-    if (ipcRenderer) ipcRenderer.send('set-lap-times-focus', null);
-  }
-};
+    // El botón del panel siempre muestra la comparativa de TODOS los pilotos: limpiamos cualquier foco activo
+    if (newState) {
+      setSelectedLapTimesDriver(null);
+      if (ipcRenderer) ipcRenderer.send('set-lap-times-focus', null);
+    }
+  };
 
   const handleToggleLapTimesSelect = (driver) => {
-  const newSelection = selectedLapTimesDriver === driver.number ? null : driver.number;
-  setSelectedLapTimesDriver(newSelection);
-  if (ipcRenderer) ipcRenderer.send('set-lap-times-focus', newSelection);
-  if (newSelection) {
-    setShowLapTimesHistory(true);
-    if (ipcRenderer) ipcRenderer.send('toggle-lap-times-history', true);
-  } else {
-    setShowLapTimesHistory(false);
-    if (ipcRenderer) ipcRenderer.send('toggle-lap-times-history', false);
-  }
+    const newSelection = selectedLapTimesDriver === driver.number ? null : driver.number;
+    setSelectedLapTimesDriver(newSelection);
+    if (ipcRenderer) ipcRenderer.send('set-lap-times-focus', newSelection);
+    if (newSelection) {
+      setShowLapTimesHistory(true);
+      if (ipcRenderer) ipcRenderer.send('toggle-lap-times-history', true);
+    } else {
+      setShowLapTimesHistory(false);
+      if (ipcRenderer) ipcRenderer.send('toggle-lap-times-history', false);
+    }
   };
-  
+
   const handleResetLapTimesHistory = () => { if (window.confirm('⚠️ ¿Borrar el historial de tiempos de vuelta guardado en disco?')) { if (ipcRenderer) ipcRenderer.send('reset-lap-times-history'); } };
   const handleStartLights = () => { if (ipcRenderer) ipcRenderer.send('starting-lights-action', 'start'); };
   const handleGoLights = () => { if (ipcRenderer) ipcRenderer.send('starting-lights-action', 'go'); };
@@ -431,6 +436,13 @@ export default function ControlPanel() {
     } catch (error) { console.error("Error al seleccionar carpeta:", error); }
   };
 
+  const handleTriggerTrackAlert = () => {
+    const curve = (config.trackCurves || []).find(c => c.id === selectedCurveId);
+    if (!curve) { alert('⚠️ Seleccioná una curva primero.'); return; }
+    if (ipcRenderer) ipcRenderer.send('trigger-track-alert', { curveId: curve.id, curveName: curve.name, type: trackAlertType });
+  };
+  const handleHideTrackAlert = () => { if (ipcRenderer) ipcRenderer.send('hide-track-alert'); };
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', backgroundColor: colors.bgApp, color: colors.textMain, fontFamily: 'Arial, sans-serif' }}>
       <style>{`
@@ -483,7 +495,7 @@ export default function ControlPanel() {
       </div>
 
       <div style={{ display: 'flex', borderBottom: `1px solid ${colors.border}` }}>
-        {['PANEL', 'VOTACIONES', 'ZÓCALOS', 'DISEÑOS', 'AJUSTES', 'PERSONALIZAR'].map(tab => (
+        {['PANEL', 'VOTACIONES', 'ZÓCALOS', 'DISEÑOS', 'CIRCUITO', 'AJUSTES', 'PERSONALIZAR'].map(tab => (
           <div key={tab} onClick={() => setActiveTab(tab)} style={{ padding: '12px 25px', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer', borderBottom: activeTab === tab ? `3px solid ${colors.textMain}` : '3px solid transparent', color: activeTab === tab ? colors.textMain : colors.textMuted }}>
             {tab}
           </div>
@@ -515,6 +527,38 @@ export default function ControlPanel() {
               <WeatherControl id="clima" label="CLIMA" config={config} setConfig={setConfig} isActive={graphics.clima} onToggle={handleToggleGraphic} />
             </div>
 
+            <div style={sectionTitleStyle}>ALERTA EN CURVA</div>
+<div style={{ display: 'flex', flexDirection: 'column', gap: '5px', marginBottom: '20px' }}>
+  <select
+    value={selectedCurveId || ''}
+    onChange={(e) => setSelectedCurveId(e.target.value || null)}
+    style={{ ...inputStyle, padding: '10px', fontSize: '11px', cursor: 'pointer' }}
+  >
+    <option value="">SELECCIONAR CURVA...</option>
+    {(config.trackCurves || []).map(c => (
+      <option key={c.id} value={c.id}>{c.name}</option>
+    ))}
+  </select>
+  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '5px' }}>
+    <button
+      onClick={() => setTrackAlertType('yellow')}
+      style={{ ...btnStyle(trackAlertType === 'yellow'), backgroundColor: trackAlertType === 'yellow' ? '#f1c40f' : colors.bgInput, color: trackAlertType === 'yellow' ? '#000' : colors.textMain }}
+    >⚠️ AMARILLA</button>
+    <button
+      onClick={() => setTrackAlertType('incident')}
+      style={{ ...btnStyle(trackAlertType === 'incident'), backgroundColor: trackAlertType === 'incident' ? '#e74c3c' : colors.bgInput, color: '#fff' }}
+    >🚨 INCIDENTE</button>
+  </div>
+  <div style={{ display: 'flex', gap: '5px' }}>
+    <button onClick={handleTriggerTrackAlert} style={{ ...btnStyle(false), flex: 2, backgroundColor: '#2ecc71', color: '#fff', borderColor: '#27ae60' }}>
+      🔴 EMITIR ALERTA
+    </button>
+    <button onClick={handleHideTrackAlert} style={{ ...btnStyle(false), flex: 1, backgroundColor: '#c0392b', color: '#fff', borderColor: '#e74c3c' }}>
+      OCULTAR
+    </button>
+  </div>
+</div>
+
             <div style={sectionTitleStyle}>GRILLA</div>
             <div style={{ display: 'flex', gap: '5px', marginBottom: '5px' }}>
               <button onClick={() => ipcRenderer.send('grid-prev')} style={{ ...btnStyle(), flex: 1 }}>◀ ANT</button>
@@ -527,8 +571,6 @@ export default function ControlPanel() {
               </button>
             </div>
 
-            {/* --- SECCIÓN NUEVA: SEMÁFORO DE LARGADA --- */}
-            {/* --- SECCIÓN: SEMÁFORO DE LARGADA (MANUAL) --- */}
             <div style={sectionTitleStyle}>SEMÁFORO DE LARGADA</div>
             <div style={{ display: 'flex', gap: '5px', marginBottom: '15px' }}>
               {startingLightsStep === 5 ? (
@@ -600,20 +642,20 @@ export default function ControlPanel() {
               </button>
             </div>
 
-<div style={sectionTitleStyle}>EVOLUCIÓN DE TIEMPOS DE VUELTA</div>
-<div style={{ display: 'flex', gap: '5px', marginBottom: '15px' }}>
-  <button onClick={handleToggleLapTimesHistory} style={{ ...btnStyle(showLapTimesHistory), flex: 2 }}>
-    {showLapTimesHistory ? 'OCULTAR GRÁFICO' : 'MOSTRAR GRÁFICO'}
-  </button>
-  <button onClick={handleResetLapTimesHistory} style={{ ...btnStyle(false), flex: 1, backgroundColor: '#c0392b', color: '#fff', borderColor: '#e74c3c' }}>
-    🗑️ REINICIAR
-  </button>
-</div>
-{selectedLapTimesDriver && (
-  <div style={{ fontSize: '10px', color: '#00b8cc', fontWeight: 'bold', marginTop: '-8px', marginBottom: '15px' }}>
-    ⏱️ Mostrando sólo #{selectedLapTimesDriver} — click en "QUITAR" en la tabla para ver a todos
-  </div>
-)}
+            <div style={sectionTitleStyle}>EVOLUCIÓN DE TIEMPOS DE VUELTA</div>
+            <div style={{ display: 'flex', gap: '5px', marginBottom: '15px' }}>
+              <button onClick={handleToggleLapTimesHistory} style={{ ...btnStyle(showLapTimesHistory), flex: 2 }}>
+                {showLapTimesHistory ? 'OCULTAR GRÁFICO' : 'MOSTRAR GRÁFICO'}
+              </button>
+              <button onClick={handleResetLapTimesHistory} style={{ ...btnStyle(false), flex: 1, backgroundColor: '#c0392b', color: '#fff', borderColor: '#e74c3c' }}>
+                🗑️ REINICIAR
+              </button>
+            </div>
+            {selectedLapTimesDriver && (
+              <div style={{ fontSize: '10px', color: '#00b8cc', fontWeight: 'bold', marginTop: '-8px', marginBottom: '15px' }}>
+                ⏱️ Mostrando sólo #{selectedLapTimesDriver} — click en "QUITAR" en la tabla para ver a todos
+              </div>
+            )}
 
             <div style={sectionTitleStyle}>INTERACTIVIDAD (VOTOS)</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', marginBottom: '20px' }}>
@@ -647,13 +689,13 @@ export default function ControlPanel() {
               }} />
             )}
             <DriversTable
-  drivers={drivers}
-  colors={colors}
-  activeDriverNumber={activeDriverInfo?.number}
-  onToggleInfo={handleToggleDriverInfo}
-  selectedLapTimesNumber={selectedLapTimesDriver}
-  onToggleLapTimesSelect={handleToggleLapTimesSelect}
-/>
+              drivers={drivers}
+              colors={colors}
+              activeDriverNumber={activeDriverInfo?.number}
+              onToggleInfo={handleToggleDriverInfo}
+              selectedLapTimesNumber={selectedLapTimesDriver}
+              onToggleLapTimesSelect={handleToggleLapTimesSelect}
+            />
           </div>
         </div>
       )}
@@ -730,6 +772,10 @@ export default function ControlPanel() {
 
       {activeTab === 'PERSONALIZAR' && (
         <CustomizePanel config={config} positions={positions} defaultPositions={defaultPositions} onUpdatePositions={handleUpdatePositions} onSelectLogo={handleSelectLogo} onSelectCategoryLogo={handleSelectCategoryLogo} onSelectPhotosFolder={handleSelectPhotosFolder} onClearLogo={() => handleDirectSave('logo', null)} onClearCategoryLogo={() => handleDirectSave('categoryLogo', null)} onClearPhotosFolder={() => handleDirectSave('photosPath', null)} onConfigChange={handleDirectSave} colors={colors} inputStyle={inputStyle} btnStyle={btnStyle} />
+      )}
+
+      {activeTab === 'CIRCUITO' && (
+        <TrackMapPanel config={config} onConfigChange={handleDirectSave} colors={colors} inputStyle={inputStyle} btnStyle={btnStyle} />
       )}
 
       {activeTab === 'ZÓCALOS' && (
