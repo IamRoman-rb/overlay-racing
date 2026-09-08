@@ -42,9 +42,8 @@ function getLocalIP() {
   }
   return '127.0.0.1';
 }
-const localIP = getLocalIP();
 function getVotingUrl() {
-  return publicVotingUrl || `http://${localIP}:8080/votar`;
+  return publicVotingUrl || `http://${getLocalIP()}:8080/votar`;
 }
 let currentDriversForVote = [];
 let votesData = {};
@@ -161,7 +160,7 @@ async function createPublicTunnel() {
     broadcast('update-ip', publicVotingUrl);
   } catch (err) {
     publicVotingUrl = null;
-    broadcast('update-ip', `http://${localIP}:8080/votar`); // fallback: funciona en la misma red WiFi mientras el túnel público reintenta
+    broadcast('update-ip', `http://${getLocalIP()}:8080/votar`);
     scheduleTunnelRetry();
   } finally {
     tunnelConnecting = false;
@@ -269,6 +268,14 @@ expressApp.get('/photo/:number', (req, res) => {
 
 server.listen(8080, '0.0.0.0', async () => {
   await createPublicTunnel();
+    setTimeout(() => {
+    if (!publicVotingUrl) {
+      const ip = getLocalIP();
+      if (ip !== '127.0.0.1') {
+        broadcast('update-ip', `http://${ip}:8080/votar`);
+      }
+    }
+  }, 3000);
 });
 
 // FIX MAESTRO: Enviar a Socket.io Y DIRECTAMENTE a las ventanas de Electron por IPC
