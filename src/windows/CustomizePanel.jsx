@@ -163,6 +163,7 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
             >
               <option value="standard">Clásica (Cajas Pequeñas)</option>
               <option value="photos">Fila x Fila (Fotos Gigantes F1)</option>
+              <option value="cinematic">Cinematic (Grilla + Foto Central + Info)</option>
             </select>
           </div>
         )}

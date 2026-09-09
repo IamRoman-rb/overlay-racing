@@ -25,9 +25,10 @@ export default function StartingGrid({ drivers, config, isVisible, id = 'grid' }
   const bRad = config[`borderRadius_${id}`] || '8px';
   const animStyle = config[`animationStyle_${id}`] || 'slide';
 
-  // TIPO DE GRILLA: 'standard' o 'photos'
+  // TIPO DE GRILLA: 'standard', 'photos' o 'cinematic'
   const gridFormat = config?.gridFormat || 'standard';
-  const itemsPerPage = gridFormat === 'photos' ? 2 : 2; // Ambos usan 2 por página ahora, pero listos para separar lógicas
+  // 'cinematic' avanza piloto por piloto (1 a la vez); el resto sigue de a 2 por página.
+  const itemsPerPage = gridFormat === 'cinematic' ? 1 : 2;
 
   let transformHidden = `scale(${config?.positions?.[id]?.scale || 1}) translateY(40px)`;
   if (animStyle === 'fade') transformHidden = `scale(${config?.positions?.[id]?.scale || 1})`;
@@ -74,8 +75,8 @@ export default function StartingGrid({ drivers, config, isVisible, id = 'grid' }
     <div style={{
       position: 'absolute', left: `${pos.x}px`, top: `${pos.y}px`,
       transformOrigin: 'top left',
-      width: gridFormat === 'photos' ? '1920px' : '1280px',
-      height: gridFormat === 'photos' ? '1080px' : '720px',
+      width: (gridFormat === 'photos' || gridFormat === 'cinematic') ? '1920px' : '1280px',
+      height: (gridFormat === 'photos' || gridFormat === 'cinematic') ? '1080px' : '720px',
       display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
       backgroundColor: 'transparent',
       zIndex: 30,
@@ -87,10 +88,11 @@ export default function StartingGrid({ drivers, config, isVisible, id = 'grid' }
       <style>{`
         @keyframes zoomInForward { 0% { transform: scale(0.8) translateZ(-500px); opacity: 0; } 70% { transform: scale(1.02) translateZ(0); opacity: 1; } 100% { transform: scale(1) translateZ(0); opacity: 1; } }
         .grid-page { width: 100%; display: flex; justify-content: center; gap: 60px; animation: zoomInForward 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+        @keyframes cinematicFade { 0% { opacity: 0; transform: translateY(20px); } 100% { opacity: 1; transform: translateY(0); } }
       `}</style>
 
-      {/* RENDERIZADO CONDICIONAL: ESTÁNDAR VS FOTOS */}
-      {gridFormat === 'standard' ? (
+      {/* RENDERIZADO CONDICIONAL: ESTÁNDAR VS FOTOS VS CINEMATIC */}
+      {gridFormat === 'standard' && (
         <>
           <div style={{
             position: 'absolute', top: '50px', left: '10%',
@@ -119,7 +121,9 @@ export default function StartingGrid({ drivers, config, isVisible, id = 'grid' }
             ))}
           </div>
         </>
-      ) : (
+      )}
+
+      {gridFormat === 'photos' && (
         <>
           {/* MODO FOTOS: HEADER BROADCAST (TIPO FÓRMULA 1) */}
           <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', display: 'flex', flexDirection: 'column' }}>
@@ -156,6 +160,22 @@ export default function StartingGrid({ drivers, config, isVisible, id = 'grid' }
             </div>
           </div>
         </>
+      )}
+
+      {gridFormat === 'cinematic' && (
+        <CinematicGridView
+          allDrivers={drivers}
+          currentDriver={currentDrivers[0]}
+          page={page}
+          config={config}
+          bRad={bRad}
+          themeMain={themeMain}
+          themeHeaderBg={themeHeaderBg}
+          themeAccent={themeAccent}
+          themeTitleText={themeTitleText}
+          themeNormalText={themeNormalText}
+          themeNumberText={themeNumberText}
+        />
       )}
     </div>
   );
@@ -205,7 +225,7 @@ function DriverCardStandard({ driver, config, customBg, bRad, themeBg, themeHead
 }
 
 // ----------------------------------------------------------------------------------
-// NUEVA TARJETA MODO FOTOS (Cuerpo entero tipo Broadcast)
+// TARJETA MODO FOTOS (Cuerpo entero tipo Broadcast)
 // ----------------------------------------------------------------------------------
 function PhotoDriverCard({ driver, align, config, themeMain, themeAccent, themeHeaderBg }) {
   const [imgSrc, setImgSrc] = useState(pilotoAnonimo);
@@ -261,4 +281,159 @@ function PhotoDriverCard({ driver, align, config, themeMain, themeAccent, themeH
        </div>
     </div>
   )
+}
+
+// ----------------------------------------------------------------------------------
+// NUEVO MODO CINEMATIC: grilla completa a la izquierda (resaltada), foto centrada, info a la derecha
+// ----------------------------------------------------------------------------------
+function CinematicGridView({ allDrivers, currentDriver, page, config, bRad, themeMain, themeHeaderBg, themeAccent, themeTitleText, themeNormalText, themeNumberText }) {
+  const [imgSrc, setImgSrc] = useState(pilotoAnonimo);
+
+  useEffect(() => {
+    if (!currentDriver) return;
+    if (!config?.photosPath) { setImgSrc(pilotoAnonimo); return; }
+    const host = window.location.hostname || 'localhost';
+    const photoUrl = `http://${host}:8080/photo/${currentDriver.number}`;
+    const img = new Image();
+    img.onload = () => setImgSrc(photoUrl);
+    img.onerror = () => setImgSrc(pilotoAnonimo);
+    img.src = photoUrl;
+  }, [config?.photosPath, currentDriver?.number]);
+
+  if (!currentDriver) return null;
+
+  // Grilla de partida clásica: impares a la izquierda, pares a la derecha (dos columnas dentro del panel)
+  const colA = [];
+  const colB = [];
+  (allDrivers || []).forEach((d, idx) => {
+    if (idx % 2 === 0) colA.push(d); else colB.push(d);
+  });
+
+  // --- ESCALADO AUTOMÁTICO DE FILAS ---
+  // Con pocos pilotos las filas se ven a tamaño normal; con muchos (ej. 50 autos)
+  // se van achicando para que la grilla ENTRE COMPLETA sin cortarse arriba ni abajo.
+  const PANEL_HEIGHT = 1080;
+  const HEADER_RESERVED = 110; // espacio fijo arriba para el título/logo, nunca se pisa
+  const BOTTOM_MARGIN = 30;
+  const AVAILABLE_HEIGHT = PANEL_HEIGHT - HEADER_RESERVED - BOTTOM_MARGIN;
+  const IDEAL_ROW_HEIGHT = 46; // tamaño "cómodo" original, tope máximo
+
+  const rowsPerColumn = Math.max(1, Math.max(colA.length, colB.length));
+  const rowSlot = Math.min(IDEAL_ROW_HEIGHT, Math.floor(AVAILABLE_HEIGHT / rowsPerColumn));
+  const rowGap = Math.max(2, Math.round(rowSlot * 0.15));
+  const rowBoxHeight = Math.max(14, rowSlot - rowGap);
+  const posFontSize = Math.max(9, Math.round(rowBoxHeight * 0.5));
+  const nameFontSize = Math.max(8, Math.round(rowBoxHeight * 0.42));
+  const rowPaddingH = Math.max(4, Math.round(rowBoxHeight * 0.32));
+  const rowRadius = rowBoxHeight < 24 ? '3px' : bRad;
+
+  const renderRow = (driver) => {
+    const isActive = driver?.pos === currentDriver?.pos;
+    return (
+      <div
+        key={driver.pos}
+        style={{
+          display: 'flex', alignItems: 'center', gap: `${Math.max(4, Math.round(rowBoxHeight * 0.2))}px`,
+          height: `${rowBoxHeight}px`, boxSizing: 'border-box',
+          backgroundColor: isActive ? themeAccent : 'rgba(255,255,255,0.04)',
+          border: `1px solid ${isActive ? themeAccent : 'rgba(255,255,255,0.12)'}`,
+          borderRadius: rowRadius, padding: `0 ${rowPaddingH}px`, marginBottom: `${rowGap}px`,
+          transition: 'background-color 0.3s ease, border-color 0.3s ease',
+          boxShadow: isActive ? `0 0 18px ${themeAccent}88` : 'none'
+        }}
+      >
+        <span style={{
+          fontSize: `${posFontSize}px`, fontWeight: '900', color: isActive ? '#000000' : themeNumberText,
+          width: `${Math.max(16, Math.round(posFontSize * 1.4))}px`, textAlign: 'center', flexShrink: 0
+        }}>
+          {driver.pos}
+        </span>
+        <span style={{
+          fontSize: `${nameFontSize}px`, fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.5px',
+          color: isActive ? '#000000' : themeNormalText, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'
+        }}>
+          {(driver.name || '').slice(0, 3)}
+        </span>
+      </div>
+    );
+  };
+
+  return (
+    <div style={{ width: '100%', height: '100%', display: 'flex', position: 'relative', overflow: 'hidden' }}>
+
+      {/* PANEL IZQUIERDO: GRILLA COMPLETA */}
+      <div style={{
+        width: '600px', height: '100%', flexShrink: 0,
+        backgroundColor: themeHeaderBg || '#0a0a0a',
+        borderRight: `4px solid ${themeMain}`,
+        display: 'flex', flexDirection: 'column',
+        padding: `${HEADER_RESERVED}px 40px ${BOTTOM_MARGIN}px 110px`,
+        position: 'relative', boxSizing: 'border-box', overflow: 'hidden'
+      }}>
+        {/* TÍTULO ROTADO "GRILLA" */}
+        <div style={{
+          position: 'absolute', left: '20px', top: '50%',
+          transform: 'translateY(-50%) rotate(-90deg)', transformOrigin: 'left center',
+          fontSize: '52px', fontWeight: '900', color: 'rgba(255,255,255,0.15)',
+          letterSpacing: '4px', whiteSpace: 'nowrap'
+        }}>
+          GRILLA
+        </div>
+
+        {/* ENCABEZADO / CAMPEONATO (altura reservada aparte, nunca se pisa con las filas) */}
+        <div style={{ position: 'absolute', top: '30px', left: '110px', display: 'flex', alignItems: 'center', gap: '15px' }}>
+          {config?.logo && <img src={config.logo} alt="Productora" style={{ height: '32px', maxWidth: '90px', objectFit: 'contain' }} />}
+          <span style={{ fontSize: '16px', fontWeight: '900', color: themeTitleText, textTransform: 'uppercase', letterSpacing: '1px' }}>
+            {config?.campeonato || 'CARRERA'}
+          </span>
+        </div>
+
+        {/* DOS COLUMNAS: altura tope fija = AVAILABLE_HEIGHT, así nunca se sale del panel */}
+        <div style={{ display: 'flex', gap: '20px', height: `${AVAILABLE_HEIGHT}px`, overflow: 'hidden' }}>
+          <div style={{ flex: 1 }}>{colA.map(renderRow)}</div>
+          <div style={{ flex: 1 }}>{colB.map(renderRow)}</div>
+        </div>
+      </div>
+
+      {/* CENTRO: FOTO DEL PILOTO ACTIVO */}
+      <div key={`cinematic-photo-${page}`} style={{
+        flex: 1, height: '100%', display: 'flex', alignItems: 'flex-end', justifyContent: 'center',
+        position: 'relative', animation: 'cinematicFade 0.5s ease forwards'
+      }}>
+        <img
+          src={imgSrc}
+          style={{ height: '95%', objectFit: 'contain', filter: 'drop-shadow(0px 15px 30px rgba(0,0,0,0.85))' }}
+        />
+      </div>
+
+      {/* DERECHA: INFO DEL PILOTO ACTIVO */}
+      <div key={`cinematic-info-${page}`} style={{
+        width: '520px', height: '100%', flexShrink: 0,
+        display: 'flex', flexDirection: 'column', justifyContent: 'center',
+        padding: '40px 60px', boxSizing: 'border-box',
+        animation: 'cinematicFade 0.5s ease forwards'
+      }}>
+        <span style={{ fontSize: '90px', fontWeight: '900', color: themeTitleText, lineHeight: 1 }}>
+          {currentDriver?.pos}°
+        </span>
+        <div style={{ width: '100%', height: '4px', backgroundColor: themeAccent, margin: '15px 0' }} />
+        <span style={{ fontSize: '28px', fontWeight: '400', color: themeNormalText, textTransform: 'uppercase', letterSpacing: '1px' }}>
+          {(currentDriver?.name || '').split(' ').slice(0, -1).join(' ')}
+        </span>
+        <span style={{ fontSize: '46px', fontWeight: '900', color: themeNormalText, textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '10px' }}>
+          {(currentDriver?.name || '').split(' ').slice(-1).join(' ')}
+        </span>
+        {currentDriver?.make && (
+          <span style={{ fontSize: '20px', fontWeight: '700', color: themeNumberText, textTransform: 'uppercase' }}>
+            #{currentDriver.number} — {currentDriver.make}
+          </span>
+        )}
+        {(currentDriver?.bestLap || currentDriver?.points) && (
+          <span style={{ fontSize: '70px', fontWeight: '900', color: themeAccent, marginTop: '20px' }}>
+            {currentDriver?.points || currentDriver?.bestLap}
+          </span>
+        )}
+      </div>
+    </div>
+  );
 }
