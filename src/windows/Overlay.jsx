@@ -67,7 +67,9 @@ function buildEventHandlers(setters) {
   return {
     'update-config': (data) => data && setConfig(data),
     'update-positions': (data) => data && setPositions(data),
-    'update-ip': (data) => data && setLocalIp(data),
+    // OJO: acá SÍ queremos aceptar explícitamente los valores "falsy" que no sean null/undefined
+    // (ej: si algún día se emite '' a propósito) — por eso chequeamos contra null/undefined en vez de "data &&"
+    'update-ip': (data) => { if (data !== null && data !== undefined) setLocalIp(data); },
     'update-leaderboard': (data) => {
       if (data && data.drivers) { setDrivers(data.drivers); setSessionInfo(data.session || {}); }
     },
@@ -123,7 +125,10 @@ export default function Overlay() {
   const [isVotingQRVisible, setIsVotingQRVisible] = useState(false);
   const [isVotingResultsVisible, setIsVotingResultsVisible] = useState(false);
   const [votes, setVotes] = useState({});
-  const [localIp, setLocalIp] = useState('localhost');
+  // FIX BUG 1: el default NO puede ser un string "válido" tipo 'localhost' — eso hace que
+  // VotingQR lo trate como una URL real y genere un QR roto antes de tiempo. Arranca vacío
+  // a propósito, así VotingQR muestra el estado de carga hasta que llegue el dato real.
+  const [localIp, setLocalIp] = useState('');
   const [isHovered, setIsHovered] = useState(false);
   const [isLapCounterVisible, setIsLapCounterVisible] = useState(false);
   const [isVirtualChampVisible, setIsVirtualChampVisible] = useState(false);
@@ -194,7 +199,19 @@ export default function Overlay() {
     } else {
       let socket;
       import('socket.io-client').then(({ io }) => {
-        socket = io('http://127.0.0.1:8080', {
+        // FIX BUG 2: antes esto apuntaba siempre a 'http://127.0.0.1:8080'. Si esta pantalla
+        // se abre como Browser Source en OBS/vMix en OTRA PC de la red, 127.0.0.1 apunta a esa
+        // PC y nunca conecta al servidor real. Usamos el HOSTNAME real desde el que se cargó
+        // la página (LAN IP, localhost, etc.) pero forzando el puerto 8080, que es donde vive
+        // el backend de Express/Socket.IO SIEMPRE (main.cjs: server.listen(8080, ...)).
+        // OJO: no usar window.location.origin a secas — en modo dev (npm start) el frontend
+        // se sirve desde el puerto 5173 de Vite, que NO tiene servidor de sockets. Copiar el
+        // origin completo rompe la conexión en dev aunque funcione en el .exe empaquetado.
+        const socketUrl = (typeof window !== 'undefined' && window.location && window.location.hostname)
+          ? `${window.location.protocol}//${window.location.hostname}:8080`
+          : 'http://127.0.0.1:8080'; // fallback sólo por si el entorno no expone window.location
+
+        socket = io(socketUrl, {
           reconnectionDelay: 1000,
           reconnection: true,
           transports: ['websocket', 'polling'],

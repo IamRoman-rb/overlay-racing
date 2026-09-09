@@ -159,6 +159,9 @@ export default function ControlPanel() {
   const [startingLightsVisible, setStartingLightsVisible] = useState(false);
   const [startingLightsStep, setStartingLightsStep] = useState(0);
 
+  // --- NUEVO: ESTADO DEL TÚNEL DE VOTACIÓN (para avisar cuando el QR ya es escaneable) ---
+  const isTunnelReady = typeof localIp === 'string' && localIp.trim() !== '';
+
   useEffect(() => { configRef.current = config; }, [config]);
 
   useEffect(() => {
@@ -254,7 +257,16 @@ export default function ControlPanel() {
     return best;
   }, [drivers]);
 
-  const handleToggleVotingQR = () => { const newState = !showVotingQR; setShowVotingQR(newState); if (ipcRenderer) ipcRenderer.send('toggle-voting-qr', newState); };
+  const handleToggleVotingQR = () => {
+    const newState = !showVotingQR;
+    // Si están por ENCENDER el QR y el túnel todavía no tiene una URL válida, avisamos antes de salir al aire
+    if (newState && !isTunnelReady) {
+      const proceed = window.confirm('⚠️ El túnel de votación todavía se está generando (no hay URL válida todavía). Si mostrás el QR ahora, puede no funcionar al escanearlo.\n\n¿Mostrarlo igual?');
+      if (!proceed) return;
+    }
+    setShowVotingQR(newState);
+    if (ipcRenderer) ipcRenderer.send('toggle-voting-qr', newState);
+  };
   const handleToggleVotingResults = () => { const newState = !showVotingResults; setShowVotingResults(newState); if (ipcRenderer) ipcRenderer.send('toggle-voting-results', newState); };
   const handleResetVotes = () => { if (window.confirm('⚠️ ¿Estás seguro de que quieres borrar todos los votos actuales?')) { if (ipcRenderer) ipcRenderer.send('reset-votes'); } };
 
@@ -456,6 +468,11 @@ export default function ControlPanel() {
           50% { box-shadow: none !important; }
           100% { box-shadow: 0 0 15px rgba(255, 34, 0, 0.6) !important; }
         }
+        @keyframes pulseTunnelDot {
+          0% { opacity: 1; }
+          50% { opacity: 0.3; }
+          100% { opacity: 1; }
+        }
       `}</style>
 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 20px', borderBottom: `1px solid ${colors.border}` }}>
@@ -561,9 +578,9 @@ export default function ControlPanel() {
 
             <div style={sectionTitleStyle}>GRILLA</div>
             <div style={{ display: 'flex', gap: '5px', marginBottom: '5px' }}>
-              <button onClick={() => ipcRenderer.send('grid-prev')} style={{ ...btnStyle(), flex: 1 }}>◀ ANT</button>
+              <button onClick={() => { if (ipcRenderer) ipcRenderer.send('grid-prev'); }} style={{ ...btnStyle(), flex: 1 }}>◀ ANT</button>
               <button onClick={handleToggleGrid} style={{ ...btnStyle(showGrid), flex: 2 }}>MOSTRAR GRILLA</button>
-              <button onClick={() => ipcRenderer.send('grid-next')} style={{ ...btnStyle(), flex: 1 }}>SIG ▶</button>
+              <button onClick={() => { if (ipcRenderer) ipcRenderer.send('grid-next'); }} style={{ ...btnStyle(), flex: 1 }}>SIG ▶</button>
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '5px' }}>
               <button onClick={() => setAutoScrape(!autoScrape)} style={{ ...btnStyle(autoScrape), color: autoScrape ? '#000' : colors.green, borderColor: autoScrape ? colors.yellow : colors.green }}>
@@ -658,6 +675,17 @@ export default function ControlPanel() {
             )}
 
             <div style={sectionTitleStyle}>INTERACTIVIDAD (VOTOS)</div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px' }}>
+              <span style={{
+                width: '8px', height: '8px', borderRadius: '50%',
+                backgroundColor: isTunnelReady ? colors.green : colors.yellow,
+                display: 'inline-block',
+                animation: isTunnelReady ? 'none' : 'pulseTunnelDot 1.2s infinite'
+              }} />
+              <span style={{ fontSize: '9px', color: colors.textMuted, fontWeight: 'bold', letterSpacing: '0.5px' }}>
+                {isTunnelReady ? 'TÚNEL LISTO PARA ESCANEAR' : 'GENERANDO TÚNEL...'}
+              </span>
+            </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', marginBottom: '20px' }}>
               <button onClick={handleToggleVotingQR} style={btnStyle(showVotingQR)}>QR DE VOTACIÓN</button>
               <button onClick={handleToggleVotingResults} style={btnStyle(showVotingResults)}>RESULTADOS EN VIVO</button>
@@ -709,6 +737,25 @@ export default function ControlPanel() {
               TOTAL VOTOS: <span style={{ color: colors.textMain, fontWeight: 'bold' }}>{Object.values(votes).reduce((a, b) => a + b, 0)}</span>
             </span>
           </h2>
+
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: '12px',
+            backgroundColor: isTunnelReady ? 'rgba(46, 204, 113, 0.1)' : 'rgba(241, 196, 15, 0.1)',
+            border: `1px solid ${isTunnelReady ? colors.green : colors.yellow}`,
+            borderRadius: '6px', padding: '14px 18px', marginBottom: '25px'
+          }}>
+            <span style={{ fontSize: '22px', animation: isTunnelReady ? 'none' : 'pulseTunnelDot 1.2s infinite' }}>
+              {isTunnelReady ? '✅' : '⏳'}
+            </span>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
+              <span style={{ fontSize: '12px', fontWeight: 'bold', color: isTunnelReady ? colors.green : colors.yellow, letterSpacing: '0.5px' }}>
+                {isTunnelReady ? 'TÚNEL LISTO — EL QR YA SE PUEDE ESCANEAR' : 'GENERANDO TÚNEL... TODAVÍA NO MUESTRES EL QR EN PANTALLA'}
+              </span>
+              <span style={{ fontSize: '11px', color: colors.textMuted, wordBreak: 'break-all' }}>
+                {isTunnelReady ? localIp : 'Esperando URL pública de Cloudflare, puede tardar unos segundos...'}
+              </span>
+            </div>
+          </div>
 
           <div style={{ display: 'flex', gap: '10px', marginBottom: '30px' }}>
             <button onClick={handleToggleVotingQR} style={{ ...btnStyle(showVotingQR), flex: 1 }}>{showVotingQR ? 'OCULTAR QR' : 'MOSTRAR QR EN PANTALLA'}</button>

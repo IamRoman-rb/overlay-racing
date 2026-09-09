@@ -75,8 +75,8 @@
     "scale": 1
   },
   "votingQR": {
-    "x": 1679,
-    "y": 750,
+    "x": 1671,
+    "y": 719,
     "scale": 0.8
   },
   "votingResults": {
@@ -100,12 +100,13 @@
     "scale": 0.5
   },
   "lapTimesHistory": {
-    "x": 143,
-    "y": 122
+    "x": 21,
+    "y": 686,
+    "scale": 1.3
   },
   "trackAlert": {
-    "x": 1393,
-    "y": 571,
-    "scale": 1.2
+    "x": 1362,
+    "y": 609,
+    "scale": 0.7
   }
 }

@@ -207,6 +207,12 @@ io.on('connection', (socket) => {
     socket.emit('update-positions', defaultPositions);
   }
 
+  // FIX QR: sin esto, cualquier cliente que conectara después del arranque
+  // (overlay que tarda en montar, reconexión, browser source de OBS/vMix, o un simple
+  // "Reload" del input en vMix) se quedaba pegado al valor por defecto ("localhost")
+  // porque nunca recibía la URL real. Cada conexión nueva ahora recibe el estado actual.
+  socket.emit('update-ip', getVotingUrl());
+
   socket.emit('update-leaderboard', lastLeaderboard);
   socket.emit('update-votes', votesData);
   socket.emit('set-ticker-visibility', broadcastState.ticker);

@@ -1,9 +1,11 @@
+// src/windows/TrackMapPanel.jsx
 import { useState, useRef } from 'react';
 
 let ipcRenderer = null;
 if (typeof window !== 'undefined' && typeof window.require === 'function') {
   try { ipcRenderer = window.require('electron').ipcRenderer; } catch (e) {}
 }
+
 // Calcula el rectángulo real que ocupa la imagen dentro de un contenedor con backgroundSize:contain
 function getContainedImageRect(containerW, containerH, imgW, imgH) {
   const containerRatio = containerW / containerH;
@@ -22,26 +24,36 @@ function getContainedImageRect(containerW, containerH, imgW, imgH) {
   }
   return { renderW, renderH, offsetX, offsetY };
 }
+
 export default function TrackMapPanel({ config, onConfigChange, colors, inputStyle, btnStyle }) {
   const [selectedCurveId, setSelectedCurveId] = useState(null);
   const dragInfo = useRef({ isDragging: false, curveId: null });
   const imgRef = useRef(null);
 
-  const curves = config.trackCurves || [];
+  const curves = config?.trackCurves || [];
 
   const handleSelectImage = async () => {
     if (!ipcRenderer) return;
-    const imgData = await ipcRenderer.invoke('select-track-image');
-    if (imgData) onConfigChange('trackImage', imgData);
+    try {
+      const imgData = await ipcRenderer.invoke('select-track-image');
+      if (imgData) onConfigChange?.('trackImage', imgData);
+    } catch (e) {
+      console.error('Error seleccionando imagen del circuito:', e);
+    }
   };
 
   const handleClearImage = () => {
-    onConfigChange('trackImage', null);
-    onConfigChange('trackCurves', []);
+    if (typeof window !== 'undefined' && !window.confirm('¿Seguro que querés quitar el mapa del circuito? Se perderán las curvas marcadas.')) {
+      return;
+    }
+    onConfigChange?.('trackImage', null);
+    onConfigChange?.('trackCurves', []);
+    setSelectedCurveId(null);
   };
 
   const getPercentFromEvent = (e) => {
-    const rect = imgRef.current.getBoundingClientRect();
+    const rect = imgRef.current?.getBoundingClientRect();
+    if (!rect) return { x: 0, y: 0 };
     const x = ((e.clientX - rect.left) / rect.width) * 100;
     const y = ((e.clientY - rect.top) / rect.height) * 100;
     return { x: Math.max(0, Math.min(100, x)), y: Math.max(0, Math.min(100, y)) };
@@ -52,7 +64,7 @@ export default function TrackMapPanel({ config, onConfigChange, colors, inputSty
     const { x, y } = getPercentFromEvent(e);
     const newCurve = { id: `curve_${Date.now()}`, name: `Curva ${curves.length + 1}`, x, y };
     const newCurves = [...curves, newCurve];
-    onConfigChange('trackCurves', newCurves);
+    onConfigChange?.('trackCurves', newCurves);
     setSelectedCurveId(newCurve.id);
   };
 
@@ -66,7 +78,7 @@ export default function TrackMapPanel({ config, onConfigChange, colors, inputSty
     if (!dragInfo.current.isDragging) return;
     const { x, y } = getPercentFromEvent(e);
     const newCurves = curves.map(c => c.id === dragInfo.current.curveId ? { ...c, x, y } : c);
-    onConfigChange('trackCurves', newCurves);
+    onConfigChange?.('trackCurves', newCurves);
   };
 
   const handleImageMouseUp = () => {
@@ -75,11 +87,11 @@ export default function TrackMapPanel({ config, onConfigChange, colors, inputSty
 
   const handleRenameCurve = (curveId, newName) => {
     const newCurves = curves.map(c => c.id === curveId ? { ...c, name: newName } : c);
-    onConfigChange('trackCurves', newCurves);
+    onConfigChange?.('trackCurves', newCurves);
   };
 
   const handleDeleteCurve = (curveId) => {
-    onConfigChange('trackCurves', curves.filter(c => c.id !== curveId));
+    onConfigChange?.('trackCurves', curves.filter(c => c.id !== curveId));
     if (selectedCurveId === curveId) setSelectedCurveId(null);
   };
 
@@ -90,12 +102,12 @@ export default function TrackMapPanel({ config, onConfigChange, colors, inputSty
 
         <div style={{ display: 'flex', gap: '5px', marginBottom: '20px' }}>
           <button onClick={handleSelectImage} style={{ ...btnStyle(false), flex: 1 }}>📷 CARGAR IMAGEN</button>
-          {config.trackImage && (
+          {config?.trackImage && (
             <button onClick={handleClearImage} style={{ ...btnStyle(false), flex: 1, backgroundColor: '#c0392b', color: '#fff', border: 'none' }}>🗑️ QUITAR</button>
           )}
         </div>
 
-        {config.trackImage && (
+        {config?.trackImage && (
           <p style={{ fontSize: '11px', color: colors.textMuted, marginBottom: '15px', lineHeight: '1.5' }}>
             Hacé click en la imagen para agregar una curva. Arrastrá un marcador para moverlo.
           </p>
@@ -134,7 +146,7 @@ export default function TrackMapPanel({ config, onConfigChange, colors, inputSty
       </div>
 
       <div style={{ flex: 1, backgroundColor: colors.bgApp, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', padding: '20px' }}>
-        {config.trackImage ? (
+        {config?.trackImage ? (
           <div
             ref={imgRef}
             onClick={handleImageClick}

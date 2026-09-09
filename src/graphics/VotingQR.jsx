@@ -6,17 +6,17 @@ export default function VotingQR({ isVisible, config, localIp, id = 'votingQR' }
   const themeAccent = config?.themeAccent || '#f39c12';
 
   // MAGIA DE DISEÑO, BORDES Y ANIMACIÓN
-  const customBg = config[`design_${id}`];
+  const customBg = config?.[`design_${id}`];
   const hasCustomBg = !!customBg;
-  const bRad = config.borderRadius !== undefined ? config.borderRadius : '8px';
-  const animStyle = config.animationStyle || 'slide';
+  const bRad = config?.borderRadius !== undefined ? config.borderRadius : '8px';
+  const animStyle = config?.animationStyle || 'slide';
 
   let transformHidden = `scale(${pos.scale}) translateY(30px)`; 
   if (animStyle === 'fade') transformHidden = `scale(${pos.scale})`; 
   if (animStyle === 'zoom') transformHidden = `scale(${pos.scale * 0.9})`;
 
-  // Verificamos si la URL de Cloudflare ya se generó o si sigue cargando
-  const isValidIp = localIp && localIp !== '';
+  // Verificamos si la URL ya se generó (túnel/IP local) o si sigue cargando
+  const isValidIp = typeof localIp === 'string' && localIp.trim() !== '';
   const qrUrl = isValidIp ? `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(localIp)}&margin=10` : null;
 
   return (
