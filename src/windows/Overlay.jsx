@@ -19,6 +19,7 @@ import PitStopTimer from '../graphics/PitStopTimer';
 import StartingLights from '../graphics/StartingLights';
 import LapTimeEvolution from '../graphics/LapTimeEvolution';
 import TrackAlert from '../graphics/TrackAlert';
+import PenaltyAlert from '../graphics/PenaltyAlert';
 
 let ipcRenderer = null;
 if (typeof window !== 'undefined' && typeof window.require === 'function') {
@@ -61,7 +62,7 @@ function buildEventHandlers(setters) {
     setBattleData, setCustomZocaloData, setIsVotingQRVisible, setIsVotingResultsVisible,
     setVotes, setIsLapCounterVisible, setIsVirtualChampVisible, setPitStopState,
     setStartingLightsState, setIsLapTimesHistoryVisible, setLapTimesHistory,
-    setLapTimesFocus, setTrackAlert
+    setLapTimesFocus, setTrackAlert, setPenaltyAlert
   } = setters;
 
   return {
@@ -101,6 +102,7 @@ function buildEventHandlers(setters) {
     'update-lap-times-history': (data) => data && setLapTimesHistory(data),
     'update-lap-times-focus': (data) => setLapTimesFocus(data ?? null),
     'update-track-alert': (data) => data && setTrackAlert(data),
+    'update-penalty': (data) => data && setPenaltyAlert(data),
   };
 }
 
@@ -138,6 +140,7 @@ export default function Overlay() {
   const [lapTimesHistory, setLapTimesHistory] = useState({});
   const [lapTimesFocus, setLapTimesFocus] = useState(null);
   const [trackAlert, setTrackAlert] = useState({ isVisible: false, curveId: null, curveName: '', type: 'yellow' });
+  const [penaltyAlert, setPenaltyAlert] = useState({ isVisible: false, driverNumber: null, driverName: '', type: 'penalty', reason: '' });
 
   const inBrowserMode = !ipcRenderer;
 
@@ -150,7 +153,7 @@ export default function Overlay() {
       setBattleData, setCustomZocaloData, setIsVotingQRVisible, setIsVotingResultsVisible,
       setVotes, setIsLapCounterVisible, setIsVirtualChampVisible, setPitStopState,
       setStartingLightsState, setIsLapTimesHistoryVisible, setLapTimesHistory,
-      setLapTimesFocus, setTrackAlert
+      setLapTimesFocus, setTrackAlert, setPenaltyAlert
     });
 
     if (ipcRenderer) {
@@ -179,6 +182,7 @@ export default function Overlay() {
         setIsLapTimesHistoryVisible(!!bs.lapTimesHistory);
         setLapTimesFocus(bs.lapTimesFocus ?? null);
         if (bs.trackAlert) setTrackAlert(bs.trackAlert);
+        if (bs.penaltyAlert) setPenaltyAlert(bs.penaltyAlert);
         if (bs.pitStop) setPitStopState(bs.pitStop);
         if (bs.startingLights) setStartingLightsState(bs.startingLights);
         if (bs.graphics) setGraphics(bs.graphics);
@@ -292,6 +296,7 @@ export default function Overlay() {
       <LapTimeEvolution history={lapTimesHistory} drivers={formattedDrivers} config={combinedConfig} isVisible={isLapTimesHistoryVisible} focusDriver={lapTimesFocus} />
       <PitStopTimer isVisible={pitStopState?.isVisible} pitState={pitStopState} config={combinedConfig} />
       <TrackAlert alert={trackAlert} config={combinedConfig} />
+      <PenaltyAlert alert={penaltyAlert} config={combinedConfig} />
     </div>
   );
 }

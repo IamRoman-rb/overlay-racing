@@ -1,5 +1,6 @@
 const { app, BrowserWindow, ipcMain, dialog } = require('electron');
 const { getVotingHtml } = require('./src/scripts/votingHtml.cjs');
+const { getPenaltyHtml } = require('./src/scripts/penaltyHtml.cjs');
 const fs = require('fs');
 const path = require('path');
 const { scrapeSpeedhive, scrapeRaceMonitor } = require('./src/scripts/scraper.cjs');
@@ -30,7 +31,8 @@ const defaultPositions = {
   virtualChamp: { x: 1400, y: 150, scale: 1 }, pitStop: { x: 50, y: 700, scale: 1 },
   startingLights: { x: 700, y: 400, scale: 1 },
   lapTimesHistory: { x: 100, y: 500, scale: 1 },
-  trackAlert: { x: 1500, y: 500, scale: 1 }
+  trackAlert: { x: 1500, y: 500, scale: 1 },
+  penaltyAlert: { x: 1500, y: 750, scale: 1 }
 };
 
 if (!fs.existsSync(posPath)) fs.writeFileSync(posPath, JSON.stringify(defaultPositions, null, 2));
@@ -44,6 +46,11 @@ function getLocalIP() {
 }
 function getVotingUrl() {
   return publicVotingUrl || `http://${getLocalIP()}:8080/votar`;
+}
+// Comparte el mismo túnel público que la votación: sólo cambia el path final.
+function getStewardUrl() {
+  if (publicVotingUrl) return publicVotingUrl.replace(/\/votar$/, '/comisarios');
+  return `http://${getLocalIP()}:8080/comisarios`;
 }
 let currentDriversForVote = [];
 let votesData = {};
@@ -186,11 +193,15 @@ let broadcastState = {
   battle: { isVisible: false, pos: 1 },
   customZocalo: { isVisible: false, title: '', text: '' },
   trackAlert: { isVisible: false, curveId: null, curveName: '', type: 'yellow' },
+  penaltyAlert: { isVisible: false, driverNumber: null, driverName: '', type: 'investigation', reason: '' },
 };
 
 const expressApp = express();
 const server = http.createServer(expressApp);
 const io = new Server(server, { cors: { origin: '*' } });
+
+// Necesario para leer el body JSON que manda el panel web de comisarios (fetch POST).
+expressApp.use(express.json());
 
 if (!isDev) {
   expressApp.use(express.static(path.join(__dirname, 'dist')));
@@ -232,6 +243,7 @@ io.on('connection', (socket) => {
   socket.emit('update-pitstop', broadcastState.pitStop);
   socket.emit('update-starting-lights', broadcastState.startingLights);
   socket.emit('update-track-alert', broadcastState.trackAlert);
+  socket.emit('update-penalty', broadcastState.penaltyAlert);
   Object.keys(broadcastState.graphics).forEach(id => {
     socket.emit('set-graphic-visibility', { id, visible: broadcastState.graphics[id] });
   });
@@ -253,6 +265,38 @@ expressApp.post('/vote', (req, res) => {
   votesData[num] = (votesData[num] || 0) + 1;
   broadcast('update-votes', votesData);
   res.sendStatus(200);
+});
+
+// --- WEB DE COMISARIOS DEPORTIVOS (misma URL/túnel que la votación, distinto path) ---
+expressApp.get('/comisarios', (req, res) => {
+  let campeonato = 'CARRERA';
+  try {
+    if (fs.existsSync(dbPath)) {
+      const configData = JSON.parse(fs.readFileSync(dbPath, 'utf-8'));
+      if (configData.campeonato) campeonato = configData.campeonato;
+    }
+  } catch (e) {}
+  // currentDriversForVote se actualiza en cada scrape, así que esta página siempre
+  // se renderiza con la lista de pilotos vigente al momento en que el comisario la abre.
+  res.send(getPenaltyHtml(currentDriversForVote, campeonato, broadcastState.penaltyAlert));
+});
+
+expressApp.post('/comisarios/trigger', (req, res) => {
+  try {
+    triggerPenalty(req.body || {});
+    res.sendStatus(200);
+  } catch (e) {
+    res.sendStatus(500);
+  }
+});
+
+expressApp.post('/comisarios/hide', (req, res) => {
+  try {
+    hidePenaltyAlert();
+    res.sendStatus(200);
+  } catch (e) {
+    res.sendStatus(500);
+  }
 });
 
 expressApp.get('/photo/:number', (req, res) => {
@@ -331,6 +375,47 @@ ipcMain.on('hide-track-alert', () => {
   broadcastState.trackAlert = { isVisible: false, curveId: null, curveName: '', type: 'yellow' };
   broadcast('update-track-alert', broadcastState.trackAlert);
 });
+
+// --- SANCIONES / BAJO INVESTIGACIÓN (COMISARIOS DEPORTIVOS, ESTILO F1) ---
+// Se puede disparar desde DOS lugares: el panel de Electron (ipcMain 'trigger-penalty')
+// o la web de comisarios (POST /comisarios/trigger). Ambos caen en esta misma función,
+// así el estado y el timer de auto-ocultado quedan sincronizados sin importar el origen.
+let penaltyHideTimer = null;
+const clearPenaltyTimer = () => {
+  if (penaltyHideTimer) { clearTimeout(penaltyHideTimer); penaltyHideTimer = null; }
+};
+
+function triggerPenalty(data) {
+  clearPenaltyTimer();
+
+  broadcastState.penaltyAlert = {
+    isVisible: true,
+    driverNumber: data?.driverNumber ?? null,
+    driverName: data?.driverName ?? '',
+    type: data?.type === 'penalty' ? 'penalty' : 'investigation',
+    reason: data?.reason || ''
+  };
+  broadcast('update-penalty', broadcastState.penaltyAlert);
+
+  // Auto-ocultado: viene configurado desde el panel o la web. Si no llega o es inválido, usamos 10s por defecto.
+  const rawSeconds = Number(data?.autoHideSeconds);
+  const seconds = Number.isFinite(rawSeconds) && rawSeconds > 0 ? rawSeconds : 10;
+
+  penaltyHideTimer = setTimeout(() => {
+    broadcastState.penaltyAlert = { ...broadcastState.penaltyAlert, isVisible: false };
+    broadcast('update-penalty', broadcastState.penaltyAlert);
+    penaltyHideTimer = null;
+  }, seconds * 1000);
+}
+
+function hidePenaltyAlert() {
+  clearPenaltyTimer();
+  broadcastState.penaltyAlert = { ...broadcastState.penaltyAlert, isVisible: false };
+  broadcast('update-penalty', broadcastState.penaltyAlert);
+}
+
+ipcMain.on('trigger-penalty', (e, data) => triggerPenalty(data));
+ipcMain.on('hide-penalty', () => hidePenaltyAlert());
 
 ipcMain.on('pitstop-action', (e, { action, driver }) => {
   if (action === 'start') {
@@ -416,6 +501,7 @@ ipcMain.handle('load-excel', async () => {
 });
 
 ipcMain.handle('get-local-ip', () => getVotingUrl());
+ipcMain.handle('get-steward-url', () => getStewardUrl());
 ipcMain.handle('get-votes', () => votesData);
 ipcMain.handle('get-config', () => {
   try { if (fs.existsSync(dbPath)) return JSON.parse(fs.readFileSync(dbPath, 'utf-8')); } catch (e) {}

@@ -47,7 +47,8 @@
       "output": "release"
     },
     "win": {
-      "target": "portable"
+      "target": "portable",
+      "icon": "src/assets/icon.ico"
     },
     "asarUnpack": [
       "**/node_modules/puppeteer/**/*",

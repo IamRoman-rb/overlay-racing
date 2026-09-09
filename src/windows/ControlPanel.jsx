@@ -93,7 +93,7 @@ export const defaultPositions = {
   fastestLap: { x: 440, y: 150, scale: 1 }, battle: { x: 50, y: 50, scale: 1 }, customZocalo: { x: 20, y: 580, scale: 1 },
   votingQR: { x: 20, y: 700, scale: 1 }, votingResults: { x: 1550, y: 50, scale: 1 }, lapCounter: { x: 1700, y: 40, scale: 1 },
   virtualChamp: { x: 1400, y: 150, scale: 1 }, startingLights: { x: 700, y: 400, scale: 1 }, lapTimesHistory: { x: 100, y: 500, scale: 1 },
-  trackAlert: { x: 1500, y: 500, scale: 1 }
+  trackAlert: { x: 1500, y: 500, scale: 1 }, penaltyAlert: { x: 1500, y: 750, scale: 1 }
 };
 
 const allGraphicsList = [
@@ -107,7 +107,8 @@ const allGraphicsList = [
   { id: 'virtualChamp', label: 'CAMPEONATO VIRTUAL' },
   { id: 'startingLights', label: 'SEMÁFORO DE LARGADA' },
   { id: 'lapTimesHistory', label: 'EVOLUCIÓN DE TIEMPOS DE VUELTA' },
-  { id: 'trackAlert', label: 'ALERTA EN CURVA' }
+  { id: 'trackAlert', label: 'ALERTA EN CURVA' },
+  { id: 'penaltyAlert', label: 'SANCIÓN / INVESTIGACIÓN' }
 ];
 
 export default function ControlPanel() {
@@ -159,8 +160,17 @@ export default function ControlPanel() {
   const [startingLightsVisible, setStartingLightsVisible] = useState(false);
   const [startingLightsStep, setStartingLightsStep] = useState(0);
 
+  // --- NUEVO: SANCIONES / BAJO INVESTIGACIÓN (COMISARIOS DEPORTIVOS) ---
+  const [penaltyDriverNumber, setPenaltyDriverNumber] = useState('');
+  const [penaltyType, setPenaltyType] = useState('investigation'); // 'investigation' | 'penalty'
+  const [penaltyReason, setPenaltyReason] = useState('');
+  const [penaltyAutoHideSeconds, setPenaltyAutoHideSeconds] = useState(10);
+  const [penaltyAlertState, setPenaltyAlertState] = useState({ isVisible: false, driverNumber: null, driverName: '', type: 'investigation', reason: '' });
+
   // --- NUEVO: ESTADO DEL TÚNEL DE VOTACIÓN (para avisar cuando el QR ya es escaneable) ---
   const isTunnelReady = typeof localIp === 'string' && localIp.trim() !== '';
+  // El panel de comisarios comparte el mismo túnel público que la votación: mismo dominio, distinto path.
+  const stewardUrl = isTunnelReady ? localIp.replace('/votar', '/comisarios') : '';
 
   useEffect(() => { configRef.current = config; }, [config]);
 
@@ -177,10 +187,12 @@ export default function ControlPanel() {
       ipcRenderer.invoke('get-local-ip').then(setLocalIp);
       ipcRenderer.invoke('get-votes').then(v => { if (v) setVotes(v) }).catch(() => { });
 
-      // Restaura si el semáforo ya estaba corriendo al abrir/reabrir el panel
+      // Restaura si el semáforo o una sanción ya estaban corriendo al abrir/reabrir el panel
       ipcRenderer.invoke('get-initial-state').then(state => {
         const sl = state?.broadcastState?.startingLights;
         if (sl) { setStartingLightsVisible(sl.isVisible); setStartingLightsStep(sl.step); }
+        const pa = state?.broadcastState?.penaltyAlert;
+        if (pa) setPenaltyAlertState(pa);
       }).catch(() => { });
 
       const handleUpdateIp = (event, newIp) => setLocalIp(newIp);
@@ -188,15 +200,18 @@ export default function ControlPanel() {
       const handleStartingLights = (event, data) => {
         if (data) { setStartingLightsVisible(data.isVisible); setStartingLightsStep(data.step); }
       };
+      const handleUpdatePenalty = (event, data) => { if (data) setPenaltyAlertState(data); };
 
       ipcRenderer.on('update-votes', handleUpdateVotes);
       ipcRenderer.on('update-ip', handleUpdateIp);
       ipcRenderer.on('update-starting-lights', handleStartingLights);
+      ipcRenderer.on('update-penalty', handleUpdatePenalty);
 
       return () => {
         ipcRenderer.removeListener('update-votes', handleUpdateVotes);
         ipcRenderer.removeListener('update-ip', handleUpdateIp);
         ipcRenderer.removeListener('update-starting-lights', handleStartingLights);
+        ipcRenderer.removeListener('update-penalty', handleUpdatePenalty);
       }
     }
   }, []);
@@ -455,6 +470,26 @@ export default function ControlPanel() {
   };
   const handleHideTrackAlert = () => { if (ipcRenderer) ipcRenderer.send('hide-track-alert'); };
 
+  // --- NUEVO: SANCIONES / BAJO INVESTIGACIÓN ---
+  const handleTriggerPenalty = () => {
+    const driver = drivers.find(d => String(d.number) === String(penaltyDriverNumber));
+    if (!driver) { alert('⚠️ Seleccioná un piloto primero.'); return; }
+
+    const seconds = Number(penaltyAutoHideSeconds);
+    const finalSeconds = Number.isFinite(seconds) && seconds > 0 ? seconds : 10;
+
+    if (ipcRenderer) {
+      ipcRenderer.send('trigger-penalty', {
+        driverNumber: driver.number,
+        driverName: driver.name,
+        type: penaltyType,
+        reason: penaltyReason,
+        autoHideSeconds: finalSeconds
+      });
+    }
+  };
+  const handleHidePenalty = () => { if (ipcRenderer) ipcRenderer.send('hide-penalty'); };
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', backgroundColor: colors.bgApp, color: colors.textMain, fontFamily: 'Arial, sans-serif' }}>
       <style>{`
@@ -469,6 +504,11 @@ export default function ControlPanel() {
           100% { box-shadow: 0 0 15px rgba(255, 34, 0, 0.6) !important; }
         }
         @keyframes pulseTunnelDot {
+          0% { opacity: 1; }
+          50% { opacity: 0.3; }
+          100% { opacity: 1; }
+        }
+        @keyframes pulsePenaltyDot {
           0% { opacity: 1; }
           50% { opacity: 0.3; }
           100% { opacity: 1; }
@@ -512,9 +552,12 @@ export default function ControlPanel() {
       </div>
 
       <div style={{ display: 'flex', borderBottom: `1px solid ${colors.border}` }}>
-        {['PANEL', 'VOTACIONES', 'ZÓCALOS', 'DISEÑOS', 'CIRCUITO', 'AJUSTES', 'PERSONALIZAR'].map(tab => (
-          <div key={tab} onClick={() => setActiveTab(tab)} style={{ padding: '12px 25px', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer', borderBottom: activeTab === tab ? `3px solid ${colors.textMain}` : '3px solid transparent', color: activeTab === tab ? colors.textMain : colors.textMuted }}>
+        {['PANEL', 'VOTACIONES', 'SANCIONES', 'ZÓCALOS', 'DISEÑOS', 'CIRCUITO', 'AJUSTES', 'PERSONALIZAR'].map(tab => (
+          <div key={tab} onClick={() => setActiveTab(tab)} style={{ padding: '12px 25px', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer', borderBottom: activeTab === tab ? `3px solid ${colors.textMain}` : '3px solid transparent', color: activeTab === tab ? colors.textMain : colors.textMuted, display: 'flex', alignItems: 'center', gap: '6px' }}>
             {tab}
+            {tab === 'SANCIONES' && penaltyAlertState.isVisible && (
+              <span style={{ width: '7px', height: '7px', borderRadius: '50%', backgroundColor: colors.red, animation: 'pulsePenaltyDot 1s infinite' }} />
+            )}
           </div>
         ))}
       </div>
@@ -809,6 +852,141 @@ export default function ControlPanel() {
                 );
               });
             })()}
+          </div>
+        </div>
+      )}
+
+      {activeTab === 'SANCIONES' && (
+        <div style={{ padding: '30px', flex: 1, backgroundColor: colors.bgApp, overflowY: 'auto' }}>
+
+          <h2 style={{ color: colors.yellow, marginTop: 0, borderBottom: `1px solid ${colors.border}`, paddingBottom: '10px' }}>
+            🚩 COMISARIOS DEPORTIVOS — SANCIONES E INVESTIGACIONES
+          </h2>
+          <p style={{ color: colors.textMuted, fontSize: '13px', marginBottom: '25px', maxWidth: '700px' }}>
+            Cargá una sanción o marcá una maniobra bajo investigación. Aparece al instante en el overlay
+            (estilo F1) y se oculta sola pasado el tiempo que definas abajo.
+          </p>
+
+          <div style={{
+            display: 'flex', gap: '20px', alignItems: 'center',
+            backgroundColor: colors.bgPanel, border: `1px solid ${colors.border}`,
+            borderRadius: '8px', padding: '18px 20px', marginBottom: '25px', maxWidth: '700px'
+          }}>
+            {isTunnelReady && (
+              <img
+                src={`https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=${encodeURIComponent(stewardUrl)}`}
+                alt="QR panel de comisarios"
+                style={{ width: '110px', height: '110px', borderRadius: '6px', flexShrink: 0, backgroundColor: '#fff', padding: '5px' }}
+              />
+            )}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', minWidth: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span style={{
+                  width: '8px', height: '8px', borderRadius: '50%',
+                  backgroundColor: isTunnelReady ? colors.green : colors.yellow,
+                  display: 'inline-block',
+                  animation: isTunnelReady ? 'none' : 'pulseTunnelDot 1.2s infinite'
+                }} />
+                <span style={{ fontSize: '11px', fontWeight: 'bold', color: isTunnelReady ? colors.green : colors.yellow, letterSpacing: '0.5px' }}>
+                  {isTunnelReady ? 'PANEL WEB PARA COMISARIOS — LISTO' : 'GENERANDO TÚNEL...'}
+                </span>
+              </div>
+              <span style={{ fontSize: '12px', color: colors.textMain, wordBreak: 'break-all' }}>
+                {isTunnelReady ? stewardUrl : 'Esperando URL pública de Cloudflare...'}
+              </span>
+              <span style={{ fontSize: '11px', color: colors.textMuted }}>
+                Compartile este link (o el QR) al comisario deportivo. Desde su celular puede cargar
+                sanciones sin pasar por este panel.
+              </span>
+              {isTunnelReady && (
+                <button
+                  onClick={() => { navigator.clipboard?.writeText(stewardUrl); }}
+                  style={{ ...btnStyle(false), width: 'fit-content', padding: '6px 14px', fontSize: '10px', marginTop: '4px' }}
+                >
+                  📋 COPIAR LINK
+                </button>
+              )}
+            </div>
+          </div>
+
+          {penaltyAlertState.isVisible && (
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: '12px',
+              backgroundColor: penaltyAlertState.type === 'investigation' ? 'rgba(241, 196, 15, 0.1)' : 'rgba(231, 76, 60, 0.1)',
+              border: `1px solid ${penaltyAlertState.type === 'investigation' ? colors.yellow : colors.red}`,
+              borderRadius: '6px', padding: '14px 18px', marginBottom: '25px', maxWidth: '700px'
+            }}>
+              <span style={{ width: '10px', height: '10px', borderRadius: '50%', backgroundColor: colors.red, animation: 'pulsePenaltyDot 1s infinite', flexShrink: 0 }} />
+              <div>
+                <div style={{ fontSize: '12px', fontWeight: 'bold', letterSpacing: '0.5px', color: penaltyAlertState.type === 'investigation' ? colors.yellow : colors.red }}>
+                  EN AIRE: #{penaltyAlertState.driverNumber} {penaltyAlertState.driverName} — {penaltyAlertState.type === 'investigation' ? 'BAJO INVESTIGACIÓN' : 'SANCIÓN'}
+                </div>
+                {penaltyAlertState.reason && (
+                  <div style={{ fontSize: '11px', color: colors.textMuted, marginTop: '3px' }}>{penaltyAlertState.reason}</div>
+                )}
+              </div>
+            </div>
+          )}
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', maxWidth: '700px', marginBottom: '15px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+              <label style={{ fontSize: '10px', color: colors.textMuted, fontWeight: 'bold' }}>PILOTO</label>
+              <select value={penaltyDriverNumber} onChange={(e) => setPenaltyDriverNumber(e.target.value)} style={{ ...inputStyle, padding: '10px', cursor: 'pointer' }}>
+                <option value="">SELECCIONAR PILOTO...</option>
+                {drivers.map(d => (
+                  <option key={d.number} value={d.number}>#{d.number} — {d.name}</option>
+                ))}
+              </select>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+              <label style={{ fontSize: '10px', color: colors.textMuted, fontWeight: 'bold' }}>TIPO</label>
+              <div style={{ display: 'flex', gap: '5px' }}>
+                <button
+                  onClick={() => setPenaltyType('investigation')}
+                  style={{ ...btnStyle(penaltyType === 'investigation'), flex: 1, backgroundColor: penaltyType === 'investigation' ? colors.yellow : colors.bgInput, color: penaltyType === 'investigation' ? '#000' : colors.textMain }}
+                >
+                  🔎 INVESTIGACIÓN
+                </button>
+                <button
+                  onClick={() => setPenaltyType('penalty')}
+                  style={{ ...btnStyle(penaltyType === 'penalty'), flex: 1, backgroundColor: penaltyType === 'penalty' ? colors.red : colors.bgInput, color: '#fff', borderColor: penaltyType === 'penalty' ? '#c0392b' : colors.border }}
+                >
+                  🚫 SANCIÓN
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', maxWidth: '700px', marginBottom: '15px' }}>
+            <label style={{ fontSize: '10px', color: colors.textMuted, fontWeight: 'bold' }}>MOTIVO (OPCIONAL)</label>
+            <textarea
+              value={penaltyReason}
+              onChange={(e) => setPenaltyReason(e.target.value)}
+              style={{ ...inputStyle, padding: '10px', fontSize: '13px', textTransform: 'none', minHeight: '80px', resize: 'vertical' }}
+              placeholder="Ej: Contacto en curva 4 con el auto #12..."
+            />
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', maxWidth: '700px', marginBottom: '25px' }}>
+            <label style={{ fontSize: '10px', color: colors.textMuted, fontWeight: 'bold', whiteSpace: 'nowrap' }}>
+              OCULTAR AUTOMÁTICAMENTE DESPUÉS DE (SEGUNDOS)
+            </label>
+            <input
+              type="number" min="3" max="120"
+              value={penaltyAutoHideSeconds}
+              onChange={(e) => setPenaltyAutoHideSeconds(e.target.value)}
+              style={{ ...inputStyle, width: '70px', textAlign: 'center' }}
+            />
+          </div>
+
+          <div style={{ display: 'flex', gap: '10px', maxWidth: '700px' }}>
+            <button onClick={handleTriggerPenalty} style={{ ...btnStyle(false), flex: 2, backgroundColor: '#2ecc71', color: '#fff', borderColor: '#27ae60', padding: '14px' }}>
+              🔴 EMITIR EN PANTALLA
+            </button>
+            <button onClick={handleHidePenalty} style={{ ...btnStyle(false), flex: 1, backgroundColor: '#c0392b', color: '#fff', borderColor: '#e74c3c', padding: '14px' }}>
+              OCULTAR
+            </button>
           </div>
         </div>
       )}

@@ -189,9 +189,6 @@ function DriverCardStandard({ driver, config, customBg, bRad, themeBg, themeHead
       boxShadow: hasCustomBg ? 'none' : '10px 15px 30px rgba(0,0,0,0.8)',
       position: 'relative', overflow: 'visible'
     }}>
-      <div style={{ position: 'absolute', right: '20px', bottom: '100%', marginBottom: '-20px', height: '210px', zIndex: 1, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
-        <img src={imgSrc} alt={driver.name} style={{ height: '100%', objectFit: 'contain', filter: 'drop-shadow(-5px 5px 15px rgba(0,0,0,0.6))' }} />
-      </div>
       <div style={{ width: '90px', backgroundColor: hasCustomBg ? 'transparent' : themeHeaderBg, height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '48px', fontWeight: '900', color: themeNumberText, borderTopLeftRadius: bRad, borderBottomLeftRadius: bRad, zIndex: 2 }}>
         {driver.pos}
       </div>

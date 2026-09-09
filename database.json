@@ -2,8 +2,8 @@
   "chromaColor": "#00FF00",
   "zocalos": [
     {
-      "title": "",
-      "text": ""
+      "title": "PRESIDENTE - ALMA",
+      "text": "MARINO"
     },
     {
       "title": "",
@@ -27,11 +27,11 @@
     }
   ],
   "campeonato": "",
-  "relator": "",
-  "comentarista": "",
+  "relator": "JUAN LEIVA",
+  "comentarista": "PABLO NARCISI",
   "speedhiveCode": "MRQRNDLQ-2147484053",
   "borderRadius_ticker": "0px",
-  "gridFormat": "photos",
+  "gridFormat": "standard",
   "circuito": "Autódromo Oscar y Juan Gálvez",
   "clima": "8°C - NUBLADO",
   "battleFormat": "horizontal",
