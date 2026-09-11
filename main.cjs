@@ -7,7 +7,9 @@ const { scrapeSpeedhive, scrapeRaceMonitor } = require('./src/scripts/scraper.cj
 const { networkInterfaces } = require('os');
 const express = require('express');
 const http = require('http');
+const https = require('https');
 const { Server } = require('socket.io');
+const { io: ioClient } = require('socket.io-client');
 const xlsx = require('xlsx');
 
 let controlWindow;
@@ -44,14 +46,20 @@ function getLocalIP() {
   }
   return '127.0.0.1';
 }
+
+const CLOUD_PUBLIC_URL = 'https://overlayracing.site';
+
 function getVotingUrl() {
+  // Prioridad: servidor cloud propio > túnel de Cloudflare > IP local de la red
+  if (cloudConfig?.qrToken) return `${CLOUD_PUBLIC_URL}/qr/${cloudConfig.qrToken}`;
   return publicVotingUrl || `http://${getLocalIP()}:8080/votar`;
 }
-// Comparte el mismo túnel público que la votación: sólo cambia el path final.
 function getStewardUrl() {
+  if (cloudConfig?.comisarioToken) return `${CLOUD_PUBLIC_URL}/comisario/${cloudConfig.comisarioToken}`;
   if (publicVotingUrl) return publicVotingUrl.replace(/\/votar$/, '/comisarios');
   return `http://${getLocalIP()}:8080/comisarios`;
 }
+
 let currentDriversForVote = [];
 let votesData = {};
 let lastLeaderboard = { session: {}, drivers: [] };
@@ -165,6 +173,7 @@ async function createPublicTunnel() {
 
     publicVotingUrl = `${tunnelUrl}/votar`;
     broadcast('update-ip', publicVotingUrl);
+    startTunnelHealthCheck(); // arranca (o reinicia) el monitoreo sobre el túnel recién creado
   } catch (err) {
     publicVotingUrl = null;
     broadcast('update-ip', `http://${getLocalIP()}:8080/votar`);
@@ -177,6 +186,135 @@ async function createPublicTunnel() {
 function scheduleTunnelRetry() {
   if (tunnelConnecting) return;
   setTimeout(() => { createPublicTunnel(); }, TUNNEL_RETRY_TIME);
+}
+
+// --- HEALTH CHECK DEL TÚNEL (FIX del error DNS_PROBE_POSSIBLE) ---
+function checkUrlAlive(url, timeoutMs = 6000) {
+  return new Promise((resolve) => {
+    try {
+      const req = https.request(url, { method: 'HEAD', timeout: timeoutMs }, (res) => {
+        res.resume();
+        resolve(res.statusCode < 500);
+      });
+      req.on('timeout', () => { req.destroy(); resolve(false); });
+      req.on('error', () => resolve(false));
+      req.end();
+    } catch (e) {
+      resolve(false);
+    }
+  });
+}
+
+let tunnelHealthInterval = null;
+const TUNNEL_HEALTH_CHECK_INTERVAL = 30000; // chequea cada 30s
+
+function startTunnelHealthCheck() {
+  if (tunnelHealthInterval) clearInterval(tunnelHealthInterval);
+  tunnelHealthInterval = setInterval(async () => {
+    if (!publicVotingUrl || tunnelConnecting) return;
+    const alive = await checkUrlAlive(publicVotingUrl);
+    if (!alive) {
+      console.log('[Tunnel] URL caída (DNS/timeout). Regenerando túnel...');
+      createPublicTunnel();
+    }
+  }, TUNNEL_HEALTH_CHECK_INTERVAL);
+}
+
+// --- CONEXIÓN AL SERVIDOR CLOUD (overlayracing.site) ---
+// El software se conecta como CLIENTE hacia tu VPS. Desde ahí se empuja en vivo:
+//  - la lista de pilotos habilitados para votar (para el QR público)
+//  - las sanciones/investigaciones (para el panel del comisario público)
+// Los tokens de evento (qr_token / comisario_token) se cargan desde database.json,
+// bajo la clave "cloud", y se configuran desde el panel (IPC get/save-cloud-config).
+const CLOUD_URL = 'https://overlayracing.site';
+let cloudSocket = null;
+let cloudConfig = { qrToken: '', comisarioToken: '' };
+
+function loadCloudConfig() {
+  try {
+    if (fs.existsSync(dbPath)) {
+      const configData = JSON.parse(fs.readFileSync(dbPath, 'utf-8'));
+      if (configData?.cloud) {
+        cloudConfig = {
+          qrToken: configData.cloud.qrToken || '',
+          comisarioToken: configData.cloud.comisarioToken || ''
+        };
+      }
+    }
+  } catch (e) {}
+  broadcast('update-ip', getVotingUrl());
+}
+
+function connectToCloud() {
+  try {
+    if (cloudSocket) {
+      try { cloudSocket.removeAllListeners(); cloudSocket.disconnect(); } catch (e) {}
+      cloudSocket = null;
+    }
+
+    cloudSocket = ioClient(CLOUD_URL, { transports: ['websocket'], reconnection: true });
+
+    cloudSocket.on('connect', () => {
+      broadcast('cloud-status', { connected: true });
+      // Le decimos al servidor "yo soy el Electron dueño de este evento" para que
+      // pueda reenviarnos votos y sanciones de la web directo a este socket.
+      cloudSocket.emit('register-event', {
+        qr_token: cloudConfig.qrToken,
+        comisario_token: cloudConfig.comisarioToken
+      });
+      pushDriversToCloud();
+    });
+    cloudSocket.on('disconnect', () => {
+      broadcast('cloud-status', { connected: false });
+    });
+    cloudSocket.on('connect_error', () => {
+      broadcast('cloud-status', { connected: false });
+    });
+
+    // Cuando alguien vota desde overlayracing.site, sumamos el voto acá como si
+    // hubiera entrado por el túnel local.
+    cloudSocket.on('vote:new', (data) => {
+      try {
+        const num = data?.option_key;
+        if (!num) return;
+        votesData[num] = (votesData[num] || 0) + 1;
+        broadcast('update-votes', votesData);
+      } catch (e) {}
+    });
+
+    // Cuando el comisario carga una sanción desde su celular, sale al aire acá mismo
+    cloudSocket.on('penalty:trigger', (data) => {
+      try { triggerPenalty(data); } catch (e) {}
+    });
+
+    // Cuando el comisario la oculta manualmente desde su celular
+    cloudSocket.on('penalty:hide', () => {
+      try { hidePenaltyAlert(); } catch (e) {}
+    });
+  } catch (e) {
+    cloudSocket = null;
+  }
+}
+
+function pushDriversToCloud() {
+  try {
+    if (!cloudSocket?.connected || !cloudConfig?.qrToken) return;
+    const drivers = (currentDriversForVote || []).map(d => ({ number: d?.number, name: d?.name }));
+    cloudSocket.emit('push-drivers', { qr_token: cloudConfig.qrToken, drivers });
+  } catch (e) {}
+}
+
+function pushPenaltyToCloud(penalty) {
+  try {
+    if (!cloudSocket?.connected || !cloudConfig?.comisarioToken) return;
+    cloudSocket.emit('push-penalty', {
+      comisario_token: cloudConfig.comisarioToken,
+      driver: penalty?.driverName || null,
+      reason: penalty?.reason || null,
+      decision: penalty?.type || null,
+      payload: penalty
+    });
+  } catch (e) {}
 }
 
 let broadcastState = {
@@ -218,10 +356,6 @@ io.on('connection', (socket) => {
     socket.emit('update-positions', defaultPositions);
   }
 
-  // FIX QR: sin esto, cualquier cliente que conectara después del arranque
-  // (overlay que tarda en montar, reconexión, browser source de OBS/vMix, o un simple
-  // "Reload" del input en vMix) se quedaba pegado al valor por defecto ("localhost")
-  // porque nunca recibía la URL real. Cada conexión nueva ahora recibe el estado actual.
   socket.emit('update-ip', getVotingUrl());
 
   socket.emit('update-leaderboard', lastLeaderboard);
@@ -244,6 +378,7 @@ io.on('connection', (socket) => {
   socket.emit('update-starting-lights', broadcastState.startingLights);
   socket.emit('update-track-alert', broadcastState.trackAlert);
   socket.emit('update-penalty', broadcastState.penaltyAlert);
+  socket.emit('cloud-status', { connected: !!cloudSocket?.connected });
   Object.keys(broadcastState.graphics).forEach(id => {
     socket.emit('set-graphic-visibility', { id, visible: broadcastState.graphics[id] });
   });
@@ -267,7 +402,7 @@ expressApp.post('/vote', (req, res) => {
   res.sendStatus(200);
 });
 
-// --- WEB DE COMISARIOS DEPORTIVOS (misma URL/túnel que la votación, distinto path) ---
+// --- WEB LOCAL DE COMISARIOS (vía túnel Cloudflare, se mantiene como respaldo) ---
 expressApp.get('/comisarios', (req, res) => {
   let campeonato = 'CARRERA';
   try {
@@ -276,8 +411,6 @@ expressApp.get('/comisarios', (req, res) => {
       if (configData.campeonato) campeonato = configData.campeonato;
     }
   } catch (e) {}
-  // currentDriversForVote se actualiza en cada scrape, así que esta página siempre
-  // se renderiza con la lista de pilotos vigente al momento en que el comisario la abre.
   res.send(getPenaltyHtml(currentDriversForVote, campeonato, broadcastState.penaltyAlert));
 });
 
@@ -318,7 +451,9 @@ expressApp.get('/photo/:number', (req, res) => {
 
 server.listen(8080, '0.0.0.0', async () => {
   await createPublicTunnel();
-    setTimeout(() => {
+  loadCloudConfig();
+  connectToCloud();
+  setTimeout(() => {
     if (!publicVotingUrl) {
       const ip = getLocalIP();
       if (ip !== '127.0.0.1') {
@@ -377,9 +512,6 @@ ipcMain.on('hide-track-alert', () => {
 });
 
 // --- SANCIONES / BAJO INVESTIGACIÓN (COMISARIOS DEPORTIVOS, ESTILO F1) ---
-// Se puede disparar desde DOS lugares: el panel de Electron (ipcMain 'trigger-penalty')
-// o la web de comisarios (POST /comisarios/trigger). Ambos caen en esta misma función,
-// así el estado y el timer de auto-ocultado quedan sincronizados sin importar el origen.
 let penaltyHideTimer = null;
 const clearPenaltyTimer = () => {
   if (penaltyHideTimer) { clearTimeout(penaltyHideTimer); penaltyHideTimer = null; }
@@ -396,8 +528,8 @@ function triggerPenalty(data) {
     reason: data?.reason || ''
   };
   broadcast('update-penalty', broadcastState.penaltyAlert);
+  pushPenaltyToCloud(broadcastState.penaltyAlert);
 
-  // Auto-ocultado: viene configurado desde el panel o la web. Si no llega o es inválido, usamos 10s por defecto.
   const rawSeconds = Number(data?.autoHideSeconds);
   const seconds = Number.isFinite(rawSeconds) && rawSeconds > 0 ? rawSeconds : 10;
 
@@ -451,7 +583,6 @@ ipcMain.on('starting-lights-action', (e, action) => {
     broadcastState.startingLights = { isVisible: true, step: 0 };
     broadcast('update-starting-lights', broadcastState.startingLights);
 
-    // Enciende las 5 luces, una por segundo, y se queda esperando la orden manual de largada
     for (let i = 1; i <= 5; i++) {
       const t = setTimeout(() => {
         broadcastState.startingLights = { isVisible: true, step: i };
@@ -463,7 +594,6 @@ ipcMain.on('starting-lights-action', (e, action) => {
   }
 
   if (action === 'go') {
-    // Sólo se puede largar si las 5 luces ya están encendidas
     if (broadcastState.startingLights.step !== 5) return;
 
     clearStartingLightsTimers();
@@ -541,12 +671,34 @@ ipcMain.handle('scrape-timing', async (event, { provider, code }) => {
   let leaderboard = provider === 'racemonitor' ? await scrapeRaceMonitor(code) : await scrapeSpeedhive(code);
   if (leaderboard && leaderboard.drivers && leaderboard.drivers.length > 0) {
     currentDriversForVote = leaderboard.drivers;
+    pushDriversToCloud();
   }
   lastLeaderboard = leaderboard;
   broadcast('update-leaderboard', leaderboard);
   calculateLiveChampionship();
   updateLapTimesHistory(leaderboard); 
   return leaderboard;
+});
+
+// --- CONFIG DEL SERVIDOR CLOUD (tokens de QR / Comisario del evento activo) ---
+ipcMain.handle('get-cloud-config', () => {
+  loadCloudConfig();
+  return { ...cloudConfig, connected: !!cloudSocket?.connected, url: CLOUD_URL };
+});
+ipcMain.handle('save-cloud-config', (event, data) => {
+  try {
+    let configData = {};
+    if (fs.existsSync(dbPath)) configData = JSON.parse(fs.readFileSync(dbPath, 'utf-8'));
+    configData.cloud = {
+      qrToken: data?.qrToken || '',
+      comisarioToken: data?.comisarioToken || ''
+    };
+    fs.writeFileSync(dbPath, JSON.stringify(configData, null, 2));
+    cloudConfig = configData.cloud;
+    broadcast('update-ip', getVotingUrl());
+    connectToCloud(); // reconecta / reaplica con los tokens nuevos
+    return true;
+  } catch (e) { return false; }
 });
 
 ipcMain.handle('get-initial-state', () => {

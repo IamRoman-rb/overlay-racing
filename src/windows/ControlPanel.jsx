@@ -167,6 +167,13 @@ export default function ControlPanel() {
   const [penaltyAutoHideSeconds, setPenaltyAutoHideSeconds] = useState(10);
   const [penaltyAlertState, setPenaltyAlertState] = useState({ isVisible: false, driverNumber: null, driverName: '', type: 'investigation', reason: '' });
 
+  // --- NUEVO: SERVIDOR CLOUD (overlayracing.site) — tokens del evento activo ---
+  const [cloudQrToken, setCloudQrToken] = useState('');
+  const [cloudComisarioToken, setCloudComisarioToken] = useState('');
+  const [cloudConnected, setCloudConnected] = useState(false);
+  const [cloudSaving, setCloudSaving] = useState(false);
+  const [cloudSavedFlash, setCloudSavedFlash] = useState(false);
+
   // --- NUEVO: ESTADO DEL TÚNEL DE VOTACIÓN (para avisar cuando el QR ya es escaneable) ---
   const isTunnelReady = typeof localIp === 'string' && localIp.trim() !== '';
   // El panel de comisarios comparte el mismo túnel público que la votación: mismo dominio, distinto path.
@@ -195,23 +202,33 @@ export default function ControlPanel() {
         if (pa) setPenaltyAlertState(pa);
       }).catch(() => { });
 
+      // Carga los tokens del evento cloud ya guardados (si los hay) y el estado de conexión actual
+      ipcRenderer.invoke('get-cloud-config').then(cloudData => {
+        setCloudQrToken(cloudData?.qrToken || '');
+        setCloudComisarioToken(cloudData?.comisarioToken || '');
+        setCloudConnected(!!cloudData?.connected);
+      }).catch(() => { });
+
       const handleUpdateIp = (event, newIp) => setLocalIp(newIp);
       const handleUpdateVotes = (event, newVotes) => setVotes(newVotes);
       const handleStartingLights = (event, data) => {
         if (data) { setStartingLightsVisible(data.isVisible); setStartingLightsStep(data.step); }
       };
       const handleUpdatePenalty = (event, data) => { if (data) setPenaltyAlertState(data); };
+      const handleCloudStatus = (event, data) => { if (data) setCloudConnected(!!data.connected); };
 
       ipcRenderer.on('update-votes', handleUpdateVotes);
       ipcRenderer.on('update-ip', handleUpdateIp);
       ipcRenderer.on('update-starting-lights', handleStartingLights);
       ipcRenderer.on('update-penalty', handleUpdatePenalty);
+      ipcRenderer.on('cloud-status', handleCloudStatus);
 
       return () => {
         ipcRenderer.removeListener('update-votes', handleUpdateVotes);
         ipcRenderer.removeListener('update-ip', handleUpdateIp);
         ipcRenderer.removeListener('update-starting-lights', handleStartingLights);
         ipcRenderer.removeListener('update-penalty', handleUpdatePenalty);
+        ipcRenderer.removeListener('cloud-status', handleCloudStatus);
       }
     }
   }, []);
@@ -490,6 +507,29 @@ export default function ControlPanel() {
   };
   const handleHidePenalty = () => { if (ipcRenderer) ipcRenderer.send('hide-penalty'); };
 
+  // --- NUEVO: GUARDAR TOKENS DEL SERVIDOR CLOUD ---
+  const handleSaveCloudConfig = async () => {
+    setCloudSaving(true);
+    try {
+      if (ipcRenderer) {
+        const ok = await ipcRenderer.invoke('save-cloud-config', {
+          qrToken: cloudQrToken?.trim() || '',
+          comisarioToken: cloudComisarioToken?.trim() || ''
+        });
+        if (ok) {
+          setCloudSavedFlash(true);
+          setTimeout(() => setCloudSavedFlash(false), 2000);
+        } else {
+          alert('❌ No se pudieron guardar los tokens del servidor cloud.');
+        }
+      }
+    } catch (e) {
+      console.error('Error guardando config cloud:', e);
+      alert('❌ Error guardando los tokens del servidor cloud.');
+    }
+    setCloudSaving(false);
+  };
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', backgroundColor: colors.bgApp, color: colors.textMain, fontFamily: 'Arial, sans-serif' }}>
       <style>{`
@@ -552,11 +592,14 @@ export default function ControlPanel() {
       </div>
 
       <div style={{ display: 'flex', borderBottom: `1px solid ${colors.border}` }}>
-        {['PANEL', 'VOTACIONES', 'SANCIONES', 'ZÓCALOS', 'DISEÑOS', 'CIRCUITO', 'AJUSTES', 'PERSONALIZAR'].map(tab => (
+        {['PANEL', 'VOTACIONES', 'SANCIONES', 'CLOUD', 'ZÓCALOS', 'DISEÑOS', 'CIRCUITO', 'AJUSTES', 'PERSONALIZAR'].map(tab => (
           <div key={tab} onClick={() => setActiveTab(tab)} style={{ padding: '12px 25px', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer', borderBottom: activeTab === tab ? `3px solid ${colors.textMain}` : '3px solid transparent', color: activeTab === tab ? colors.textMain : colors.textMuted, display: 'flex', alignItems: 'center', gap: '6px' }}>
             {tab}
             {tab === 'SANCIONES' && penaltyAlertState.isVisible && (
               <span style={{ width: '7px', height: '7px', borderRadius: '50%', backgroundColor: colors.red, animation: 'pulsePenaltyDot 1s infinite' }} />
+            )}
+            {tab === 'CLOUD' && (
+              <span style={{ width: '7px', height: '7px', borderRadius: '50%', backgroundColor: cloudConnected ? colors.green : colors.textMuted }} />
             )}
           </div>
         ))}
@@ -896,7 +939,8 @@ export default function ControlPanel() {
               </span>
               <span style={{ fontSize: '11px', color: colors.textMuted }}>
                 Compartile este link (o el QR) al comisario deportivo. Desde su celular puede cargar
-                sanciones sin pasar por este panel.
+                sanciones sin pasar por este panel. También podés usar el link fijo del servidor
+                cloud en la pestaña CLOUD, que no depende de este túnel.
               </span>
               {isTunnelReady && (
                 <button
@@ -987,6 +1031,79 @@ export default function ControlPanel() {
             <button onClick={handleHidePenalty} style={{ ...btnStyle(false), flex: 1, backgroundColor: '#c0392b', color: '#fff', borderColor: '#e74c3c', padding: '14px' }}>
               OCULTAR
             </button>
+          </div>
+        </div>
+      )}
+
+      {activeTab === 'CLOUD' && (
+        <div style={{ padding: '30px', flex: 1, backgroundColor: colors.bgApp, overflowY: 'auto' }}>
+
+          <h2 style={{ color: colors.yellow, marginTop: 0, borderBottom: `1px solid ${colors.border}`, paddingBottom: '10px' }}>
+            ☁️ SERVIDOR CLOUD — overlayracing.site
+          </h2>
+          <p style={{ color: colors.textMuted, fontSize: '13px', marginBottom: '25px', maxWidth: '700px' }}>
+            Conectá este software al servidor propio (sin depender de Cloudflare). Creá el evento en{' '}
+            <span style={{ color: colors.textMain, fontWeight: 'bold' }}>overlayracing.site/dashboard</span>, copiá
+            los dos tokens que aparecen ahí (de la URL del QR y de la URL del comisario) y pegalos acá abajo.
+          </p>
+
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: '10px',
+            backgroundColor: cloudConnected ? 'rgba(46, 204, 113, 0.1)' : 'rgba(231, 76, 60, 0.1)',
+            border: `1px solid ${cloudConnected ? colors.green : colors.red}`,
+            borderRadius: '6px', padding: '14px 18px', marginBottom: '25px', maxWidth: '700px'
+          }}>
+            <span style={{ width: '10px', height: '10px', borderRadius: '50%', backgroundColor: cloudConnected ? colors.green : colors.red, flexShrink: 0 }} />
+            <span style={{ fontSize: '12px', fontWeight: 'bold', letterSpacing: '0.5px', color: cloudConnected ? colors.green : colors.red }}>
+              {cloudConnected ? 'CONECTADO AL SERVIDOR CLOUD' : 'SIN CONEXIÓN AL SERVIDOR CLOUD'}
+            </span>
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', maxWidth: '700px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+              <label style={{ fontSize: '10px', color: colors.textMuted, fontWeight: 'bold' }}>
+                TOKEN DEL QR (de la URL /qr/&lt;token&gt; del evento)
+              </label>
+              <input
+                type="text"
+                value={cloudQrToken}
+                onChange={(e) => setCloudQrToken(e.target.value)}
+                style={{ ...inputStyle, padding: '10px', fontSize: '13px', textTransform: 'none' }}
+                placeholder="Ej: VsKOKSH7ONbr"
+              />
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+              <label style={{ fontSize: '10px', color: colors.textMuted, fontWeight: 'bold' }}>
+                TOKEN DEL COMISARIO (de la URL /comisario/&lt;token&gt; del evento)
+              </label>
+              <input
+                type="text"
+                value={cloudComisarioToken}
+                onChange={(e) => setCloudComisarioToken(e.target.value)}
+                style={{ ...inputStyle, padding: '10px', fontSize: '13px', textTransform: 'none' }}
+                placeholder="Ej: Xz899501dFa9"
+              />
+            </div>
+
+            <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+              <button
+                onClick={handleSaveCloudConfig}
+                disabled={cloudSaving}
+                style={{ ...btnStyle(false), flex: 1, backgroundColor: '#2ecc71', color: '#fff', borderColor: '#27ae60', padding: '14px' }}
+              >
+                {cloudSaving ? 'GUARDANDO...' : '💾 GUARDAR Y CONECTAR'}
+              </button>
+              {cloudSavedFlash && (
+                <span style={{ fontSize: '12px', color: colors.green, fontWeight: 'bold' }}>✅ Guardado</span>
+              )}
+            </div>
+
+            <p style={{ color: colors.textMuted, fontSize: '11px', marginTop: '10px' }}>
+              Una vez guardado, la lista de pilotos se empuja automáticamente al QR de votación cada vez que
+              se actualiza el timing, y las sanciones que emitas en la pestaña SANCIONES aparecen en vivo en{' '}
+              <span style={{ color: colors.textMain }}>overlayracing.site/comisario/&lt;token&gt;</span>.
+            </p>
           </div>
         </div>
       )}
