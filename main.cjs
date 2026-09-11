@@ -11,9 +11,13 @@ const https = require('https');
 const { Server } = require('socket.io');
 const { io: ioClient } = require('socket.io-client');
 const xlsx = require('xlsx');
+const { getLoginHtml } = require('./src/scripts/loginHtml.cjs');
+const crypto = require('crypto');
+const os = require('os');
 
 let controlWindow;
 let overlayWindow;
+let loginWindow;
 
 const isDev = !app.isPackaged;
 const userDataPath = isDev ? __dirname : app.getPath('userData');
@@ -295,6 +299,61 @@ function connectToCloud() {
     cloudSocket = null;
   }
 }
+
+// Identificador único y estable de esta computadora, para vincular la licencia.
+// No depende de un paquete externo: usa la MAC de la primera interfaz de red real
+// combinada con el hostname, todo hasheado (no guarda datos sensibles en crudo).
+function getMachineId() {
+  try {
+    const nets = os.networkInterfaces();
+    let mac = null;
+    for (const name of Object.keys(nets)) {
+      for (const net of nets[name]) {
+        if (!net.internal && net.mac && net.mac !== '00:00:00:00:00:00') {
+          mac = net.mac;
+          break;
+        }
+      }
+      if (mac) break;
+    }
+    const raw = `${mac || 'nomac'}-${os.hostname()}-${os.platform()}-${os.arch()}`;
+    return crypto.createHash('sha256').update(raw).digest('hex');
+  } catch (e) {
+    return crypto.createHash('sha256').update(`fallback-${Date.now()}`).digest('hex');
+  }
+}
+
+function createLoginWindow() {
+  const iconPath = path.join(__dirname, 'src', 'assets', 'logo.png');
+  loginWindow = new BrowserWindow({
+    width: 420, height: 480, icon: iconPath, resizable: false, autoHideMenuBar: true,
+    webPreferences: { nodeIntegration: true, contextIsolation: false }
+  });
+  loginWindow.loadURL('data:text/html;charset=utf-8,' + encodeURIComponent(getLoginHtml()));
+  loginWindow.on('closed', () => { loginWindow = null; if (!controlWindow) app.quit(); });
+}
+
+ipcMain.handle('attempt-license-login', async (event, { username, password }) => {
+  try {
+    const machineId = getMachineId();
+    const response = await fetch(`${CLOUD_URL}/api/public/license/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password, machineId })
+    });
+    const data = await response.json().catch(() => ({}));
+
+    if (!response.ok) {
+      return { success: false, error: data?.error || 'No se pudo iniciar sesión' };
+    }
+
+    if (loginWindow) { loginWindow.close(); loginWindow = null; }
+    createWindows();
+    return { success: true };
+  } catch (e) {
+    return { success: false, error: 'No se pudo conectar al servidor. Revisá tu conexión a internet.' };
+  }
+});
 
 function pushDriversToCloud() {
   try {
@@ -769,5 +828,5 @@ function createWindows() {
   controlWindow.on('closed', () => app.quit());
 }
 
-app.whenReady().then(createWindows);
+app.whenReady().then(createLoginWindow);
 app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(); });
