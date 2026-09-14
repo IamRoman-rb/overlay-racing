@@ -168,6 +168,22 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
           </div>
         )}
 
+        {['relator', 'comentarista', 'notero1', 'notero2'].includes(selectedGraphic) && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', marginBottom: '30px', backgroundColor: '#111', padding: '15px', borderRadius: '8px', border: `1px solid ${colors.border}` }}>
+            <label style={{ fontSize: '10px', color: colors.textMuted, fontWeight: 'bold' }}>FORMATO DE ZÓCALO</label>
+            <select
+              value={config[`lowerThirdFormat_${selectedGraphic}`] || 'standard'}
+              onChange={(e) => onConfigChange(`lowerThirdFormat_${selectedGraphic}`, e.target.value)}
+              style={{ ...inputStyle, padding: '10px', fontSize: '11px', cursor: 'pointer', border: `1px solid ${colors.border}` }}
+            >
+              <option value="standard">Clásico (Barra Lateral)</option>
+              <option value="minimal">Minimalista (Solo Línea)</option>
+              <option value="boxed">Con Marco (Badge + Caja)</option>
+              <option value="broadcast">Broadcast (Bloques Bicolor)</option>
+            </select>
+          </div>
+        )}
+
         {selectedGraphic === 'ticker' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', marginBottom: '30px', backgroundColor: '#111', padding: '15px', borderRadius: '8px', border: `1px solid ${colors.border}` }}>
             <label style={{ fontSize: '10px', color: colors.textMuted, fontWeight: 'bold' }}>FORMATO DE TIRA INFERIOR</label>
