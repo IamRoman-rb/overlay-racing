@@ -1,3 +1,5 @@
+import banderaCuadrosImg from '../assets/bandera cuadros.jpg';
+
 export default function Flags({ activeFlags, config, id = 'flags' }) {
   let activeFlagType = null;
   if (activeFlags?.red) activeFlagType = 'red';
@@ -14,7 +16,6 @@ export default function Flags({ activeFlags, config, id = 'flags' }) {
 
   // MAGIA DE DISEÑO INDIVIDUAL
   const customBg = config[`design_${id}`];
-  const hasCustomBg = !!customBg;
   const bRad = config[`borderRadius_${id}`] || '8px';
   const animStyle = config[`animationStyle_${id}`] || 'slide';
   const flagsFormat = config?.flagsFormat || 'standard';
@@ -34,12 +35,17 @@ export default function Flags({ activeFlags, config, id = 'flags' }) {
       text: 'AUTO DE SEGURIDAD', color: '#000', textShadow: '0px 0px 8px rgba(255,255,255,0.8)'
     },
     checkered: {
-      bg: 'repeating-conic-gradient(#0a0a0a 0% 25%, #f5f5f5 0% 50%) 0 0 / 44px 44px',
-      text: 'BANDERA A CUADROS - ÚLTIMA VUELTA', color: '#000000', textBoxBg: 'rgba(255,255,255,0.88)'
+      bg: '#000000', image: banderaCuadrosImg,
+      text: 'BANDERA A CUADROS - ÚLTIMA VUELTA', color: '#ffffff', textBoxBg: 'rgba(0,0,0,0.65)'
     }
   };
 
   const currentStyle = activeFlagType ? flagStyles[activeFlagType] : flagStyles.red;
+
+  // La bandera a cuadros usa la foto subida por el usuario como fondo (salvo que haya un diseño custom propio)
+  const bgUrl = customBg || currentStyle.image || null;
+  const useImageBg = !!bgUrl;
+  const bgSize = customBg ? '100% 100%' : 'cover';
 
   // Animación de entrada (Las banderas suelen caer de arriba)
   let transformHidden = 'translateY(-150%) scale(1)';
@@ -62,13 +68,13 @@ export default function Flags({ activeFlags, config, id = 'flags' }) {
         zIndex: 60, pointerEvents: 'none', width: '1920px'
       }}>
         <div style={{
-          background: hasCustomBg ? 'transparent' : currentStyle.bg,
-          backgroundImage: hasCustomBg ? `url(${customBg})` : 'none',
-          backgroundSize: '100% 100%', backgroundRepeat: 'no-repeat', backgroundPosition: 'center',
+          background: useImageBg ? 'transparent' : currentStyle.bg,
+          backgroundImage: useImageBg ? `url(${bgUrl})` : 'none',
+          backgroundSize: bgSize, backgroundRepeat: 'no-repeat', backgroundPosition: 'center',
           padding: '18px 0', textAlign: 'center', width: '100%',
-          borderTop: hasCustomBg ? 'none' : '4px solid rgba(0,0,0,0.35)',
-          borderBottom: hasCustomBg ? 'none' : '4px solid rgba(0,0,0,0.35)',
-          boxShadow: hasCustomBg ? 'none' : '0 6px 20px rgba(0,0,0,0.6)',
+          borderTop: useImageBg ? 'none' : '4px solid rgba(0,0,0,0.35)',
+          borderBottom: useImageBg ? 'none' : '4px solid rgba(0,0,0,0.35)',
+          boxShadow: useImageBg ? 'none' : '0 6px 20px rgba(0,0,0,0.6)',
           transform: isVisible ? 'translateY(0) scale(1)' : transformHidden,
           opacity: isVisible ? 1 : 0,
           transition: 'transform 0.4s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.4s ease-in-out'
@@ -90,13 +96,13 @@ export default function Flags({ activeFlags, config, id = 'flags' }) {
         zIndex: 60, pointerEvents: 'none'
       }}>
         <div style={{
-          background: hasCustomBg ? 'transparent' : currentStyle.bg,
-          backgroundImage: hasCustomBg ? `url(${customBg})` : 'none',
-          backgroundSize: '100% 100%', backgroundRepeat: 'no-repeat', backgroundPosition: 'center',
+          background: useImageBg ? 'transparent' : currentStyle.bg,
+          backgroundImage: useImageBg ? `url(${bgUrl})` : 'none',
+          backgroundSize: bgSize, backgroundRepeat: 'no-repeat', backgroundPosition: 'center',
           padding: '14px 30px 14px 22px', maxWidth: '480px',
           borderRadius: `0 ${bRad} ${bRad} 0`,
-          borderLeft: hasCustomBg ? 'none' : '8px solid rgba(0,0,0,0.35)',
-          boxShadow: hasCustomBg ? 'none' : '0 5px 15px rgba(0,0,0,0.5)',
+          borderLeft: useImageBg ? 'none' : '8px solid rgba(0,0,0,0.35)',
+          boxShadow: useImageBg ? 'none' : '0 5px 15px rgba(0,0,0,0.5)',
           transform: isVisible ? 'translateX(0) scale(1)' : 'translateX(-120%) scale(1)',
           opacity: isVisible ? 1 : 0,
           transition: 'transform 0.4s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.4s ease-in-out'
@@ -124,9 +130,9 @@ export default function Flags({ activeFlags, config, id = 'flags' }) {
           transition: 'transform 0.4s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.4s ease-in-out'
         }}>
           <div style={{
-            width: '70px', background: hasCustomBg ? 'transparent' : currentStyle.bg,
-            backgroundImage: hasCustomBg ? `url(${customBg})` : 'none',
-            backgroundSize: '100% 100%', backgroundRepeat: 'no-repeat', backgroundPosition: 'center'
+            width: '70px', background: useImageBg ? 'transparent' : currentStyle.bg,
+            backgroundImage: useImageBg ? `url(${bgUrl})` : 'none',
+            backgroundSize: bgSize, backgroundRepeat: 'no-repeat', backgroundPosition: 'center'
           }} />
           <div style={{ backgroundColor: '#0a0a0a', padding: '14px 26px', display: 'flex', alignItems: 'center' }}>
             <h2 style={{ margin: 0, fontSize: '24px', fontWeight: '900', color: '#fff', textTransform: 'uppercase' }}>
@@ -146,12 +152,12 @@ export default function Flags({ activeFlags, config, id = 'flags' }) {
       zIndex: 60, pointerEvents: 'none', width: '640px', display: 'flex', justifyContent: 'center'
     }}>
       <div style={{
-         background: hasCustomBg ? 'transparent' : currentStyle.bg,
-         backgroundImage: hasCustomBg ? `url(${customBg})` : 'none',
-         backgroundSize: '100% 100%', backgroundRepeat: 'no-repeat', backgroundPosition: 'center',
+         background: useImageBg ? 'transparent' : currentStyle.bg,
+         backgroundImage: useImageBg ? `url(${bgUrl})` : 'none',
+         backgroundSize: bgSize, backgroundRepeat: 'no-repeat', backgroundPosition: 'center',
          padding: '10px 30px',
          borderRadius: bRad, // <-- BORDE INDIVIDUAL
-         boxShadow: hasCustomBg ? 'none' : '0 5px 15px rgba(0,0,0,0.5)',
+         boxShadow: useImageBg ? 'none' : '0 5px 15px rgba(0,0,0,0.5)',
          textAlign: 'center', width: '100%',
          transform: isVisible ? 'translateY(0) scale(1)' : transformHidden,
          opacity: isVisible ? 1 : 0,

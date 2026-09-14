@@ -4,6 +4,7 @@ import SettingsPanel from '../windows/SettingsPanel';
 import CustomizePanel from '../windows/CustomizePanel';
 import DriversTable from '../windows/DriversTable';
 import TrackMapPanel from '../windows/TrackMapPanel';
+import banderaCuadrosImg from '../assets/bandera cuadros.jpg';
 
 let ipcRenderer = null;
 if (typeof window !== 'undefined' && typeof window.require === 'function') {
@@ -618,11 +619,11 @@ export default function ControlPanel() {
                 onClick={() => handleToggleFlag('checkered')}
                 style={{
                   ...btnStyle(activeFlags.checkered),
-                  background: activeFlags.checkered
-                    ? 'repeating-conic-gradient(#000 0% 25%, #fff 0% 50%) 0 0 / 16px 16px'
-                    : colors.bgInput,
-                  color: activeFlags.checkered ? '#000' : colors.textMain,
-                  textShadow: activeFlags.checkered ? '0 0 4px #fff, 0 0 2px #fff' : 'none',
+                  backgroundImage: activeFlags.checkered ? `url(${banderaCuadrosImg})` : 'none',
+                  backgroundSize: 'cover', backgroundPosition: 'center',
+                  backgroundColor: activeFlags.checkered ? undefined : colors.bgInput,
+                  color: '#fff',
+                  textShadow: activeFlags.checkered ? '0 0 4px #000, 0 0 6px #000' : 'none',
                   fontWeight: 'bold'
                 }}
               >
