@@ -1,7 +1,16 @@
 import { useState, useEffect } from 'react';
 import { getSkinStyle } from '../utils/skinStyles';
+import pilotoAnonimo from '../assets/piloto_anonimo.png';
 
 const PODIUM_COLORS = { 1: '#ffd700', 2: '#c0c0c0', 3: '#cd7f32' };
+
+// Convierte "1:22.167" o "22.167" a segundos, para encontrar la vuelta más rápida de la tanda visible
+function parseLapSeconds(str) {
+  if (!str || str === '-') return null;
+  const parts = str.split(':');
+  const val = parts.length === 2 ? parseInt(parts[0], 10) * 60 + parseFloat(parts[1]) : parseFloat(str);
+  return isNaN(val) || val <= 0 ? null : val;
+}
 
 export default function FinalResults({ drivers, config, isVisible, id = 'finalResults' }) {
   const pos = config?.positions?.[id] || { x: 240, y: 40, scale: 1 };
@@ -27,8 +36,22 @@ export default function FinalResults({ drivers, config, isVisible, id = 'finalRe
   const skin = getSkinStyle(resultsFormat, { themeMain, themeAccent });
   const transparent = hasCustomBg || isMinimal;
 
+  const isBroadcast = resultsFormat === 'broadcast';
   const [page, setPage] = useState(0);
   const itemsPerPage = isCompact ? 14 : 10;
+
+  // FORMATO BROADCAST: foto del ganador servida por el mini-servidor local (misma fuente que WinnerGraphic)
+  const winnerDriver = drivers.find(d => String(d.pos) === '1') || drivers[0];
+  const [winnerPhoto, setWinnerPhoto] = useState(pilotoAnonimo);
+  useEffect(() => {
+    if (!isBroadcast || !winnerDriver || !config?.photosPath) { setWinnerPhoto(pilotoAnonimo); return; }
+    const host = window.location.hostname || 'localhost';
+    const photoUrl = `http://${host}:8080/photo/${winnerDriver.number}`;
+    const img = new Image();
+    img.onload = () => setWinnerPhoto(photoUrl);
+    img.onerror = () => setWinnerPhoto(pilotoAnonimo);
+    img.src = photoUrl;
+  }, [isBroadcast, config?.photosPath, winnerDriver?.number]);
 
   // CORRECCIÓN 1: Incluimos pos.scale para que la animación no dé un salto de tamaño
   let transformHidden = `scale(${pos.scale}) translateY(-60px)`;
@@ -52,6 +75,146 @@ export default function FinalResults({ drivers, config, isVisible, id = 'finalRe
 
   const currentDrivers = drivers.slice(page * itemsPerPage, (page + 1) * itemsPerPage);
   const totalPages = Math.ceil(drivers.length / itemsPerPage);
+
+  // FORMATO BROADCAST: estilo transmisión TV (F1/MotoGP) — tabla a la izquierda, foto del ganador a la derecha
+  if (isBroadcast) {
+    let fastestDriver = null;
+    let fastestSeconds = Infinity;
+    drivers.forEach(d => {
+      const s = parseLapSeconds(d.bestLap);
+      if (s !== null && s < fastestSeconds) { fastestSeconds = s; fastestDriver = d; }
+    });
+
+    const broadcastDrivers = drivers.slice(page * 10, (page + 1) * 10);
+    const broadcastPages = Math.ceil(drivers.length / 10);
+
+    return (
+      <div style={{
+        position: 'absolute', left: `${pos.x}px`, top: `${pos.y}px`,
+        transformOrigin: 'top left', zIndex: 35,
+        transition: 'all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+        opacity: isVisible ? 1 : 0,
+        transform: isVisible ? `scale(${pos.scale}) translateY(0)` : transformHidden,
+        pointerEvents: isVisible ? 'auto' : 'none'
+      }}>
+        <style>{`@keyframes fadePageBroadcast { 0% { opacity: 0; transform: translateY(10px); } 100% { opacity: 1; transform: translateY(0); } }`}</style>
+        <div style={{
+          width: '1500px', display: 'flex', flexDirection: 'column',
+          backgroundColor: themeHeaderBg, borderRadius: bRad, overflow: 'hidden',
+          border: '1px solid rgba(255,255,255,0.1)', boxShadow: '0 20px 60px rgba(0,0,0,0.8)'
+        }}>
+          {/* BARRA SUPERIOR: LOGO + TÍTULO */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px', padding: '14px 26px', backgroundColor: themeMain }}>
+            {config?.logo && <img src={config.logo} alt="Logo" style={{ height: '34px', maxWidth: '160px', objectFit: 'contain' }} />}
+            <span style={{ color: '#fff', fontWeight: 900, fontSize: '20px', letterSpacing: '1px', textTransform: 'uppercase' }}>
+              {config.campeonato || 'CARRERA'}
+            </span>
+          </div>
+
+          <div style={{ display: 'flex' }}>
+            {/* COLUMNA IZQUIERDA: TABLA DE RESULTADOS */}
+            <div style={{ flex: '0 0 940px', padding: '24px 26px', display: 'flex', flexDirection: 'column' }}>
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: '10px', marginBottom: '14px' }}>
+                <span style={{ fontSize: '30px', fontWeight: 900, color: themeNormalText, letterSpacing: '1px' }}>CARRERA</span>
+                {broadcastPages > 1 && (
+                  <span style={{ fontSize: '12px', color: themeTitleText, fontWeight: 'bold' }}>PÁGINA {page + 1} DE {broadcastPages}</span>
+                )}
+              </div>
+
+              <div style={{
+                display: 'flex', padding: '6px 12px', borderBottom: `2px solid ${themeMain}`,
+                color: themeTitleText, fontWeight: 'bold', fontSize: '12px', letterSpacing: '1px', marginBottom: '2px'
+              }}>
+                <span style={{ width: '50px' }}>POS</span>
+                <span style={{ flex: 1 }}>PILOTO</span>
+                <span style={{ width: '260px' }}>EQUIPO</span>
+                <span style={{ width: '160px', textAlign: 'right' }}>TIEMPO</span>
+              </div>
+
+              <div key={page} style={{ animation: 'fadePageBroadcast 0.4s ease-out' }}>
+                {broadcastDrivers.map((d, i) => {
+                  const isLeader = String(d.pos) === '1';
+                  return (
+                    <div key={i} style={{
+                      display: 'flex', alignItems: 'center', padding: '8px 12px',
+                      backgroundColor: isLeader ? 'rgba(255,255,255,0.92)' : 'transparent',
+                      borderBottom: '1px solid rgba(255,255,255,0.08)'
+                    }}>
+                      <span style={{ width: '50px', fontWeight: 900, fontSize: '17px', color: isLeader ? '#111' : themeNormalText }}>{d.pos}</span>
+                      <span style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '10px', overflow: 'hidden' }}>
+                        <span style={{
+                          fontSize: '11px', fontWeight: 900, padding: '2px 6px', borderRadius: '3px',
+                          backgroundColor: isLeader ? themeMain : themeSecondary, color: '#fff', flexShrink: 0
+                        }}>{d.number}</span>
+                        <span style={{
+                          fontWeight: 900, fontSize: '16px', textTransform: 'uppercase',
+                          color: isLeader ? '#111' : themeNormalText, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'
+                        }}>{d.name}</span>
+                      </span>
+                      <span style={{
+                        width: '260px', fontSize: '13px', fontWeight: 'bold', textTransform: 'uppercase',
+                        color: isLeader ? '#333' : themeNumberText, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'
+                      }}>{d.make || '—'}</span>
+                      <span style={{
+                        width: '160px', textAlign: 'right', fontSize: '15px', fontWeight: 'bold', fontFamily: 'monospace',
+                        color: isLeader ? '#111' : themeNumberText
+                      }}>{isLeader ? d.totalTime : (d.diff || d.gap || d.totalTime)}</span>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {fastestDriver && (
+                <div style={{ marginTop: 'auto', paddingTop: '18px', fontSize: '15px', fontWeight: 'bold' }}>
+                  <span style={{ color: '#9b59ff' }}>VUELTA RÁPIDA:</span>{' '}
+                  <span style={{ color: themeNormalText, textTransform: 'uppercase' }}>{fastestDriver.name}</span>{' '}
+                  <span style={{ color: themeNumberText, fontFamily: 'monospace' }}>{fastestDriver.bestLap}</span>
+                </div>
+              )}
+            </div>
+
+            {/* COLUMNA DERECHA: FOTO DEL GANADOR */}
+            <div style={{ flex: '1 1 auto', position: 'relative', backgroundColor: themeBg, overflow: 'hidden', minHeight: '520px' }}>
+              <div style={{
+                position: 'absolute', top: '10px', right: '20px', fontSize: '22px', fontWeight: 900,
+                color: themeNormalText, letterSpacing: '2px'
+              }}>GANADOR</div>
+
+              <div style={{
+                position: 'absolute', right: '-10px', bottom: '-40px', fontSize: '340px', fontWeight: 900,
+                color: themeAccent, opacity: 0.15, lineHeight: 1, userSelect: 'none'
+              }}>1</div>
+
+              {winnerDriver && (
+                <img
+                  src={winnerPhoto}
+                  alt={winnerDriver.name}
+                  style={{
+                    position: 'absolute', bottom: 0, right: '30px', height: '92%', objectFit: 'contain',
+                    filter: 'drop-shadow(0px 15px 25px rgba(0,0,0,0.7))'
+                  }}
+                />
+              )}
+
+              {winnerDriver && (
+                <div style={{
+                  position: 'absolute', left: 0, right: 0, bottom: 0, padding: '18px 26px',
+                  background: 'linear-gradient(0deg, rgba(0,0,0,0.85) 20%, rgba(0,0,0,0) 100%)'
+                }}>
+                  <div style={{ fontSize: '26px', fontWeight: 900, color: themeAccent, textTransform: 'uppercase', lineHeight: 1.1 }}>
+                    {winnerDriver.name}
+                  </div>
+                  <div style={{ fontSize: '14px', fontWeight: 'bold', color: themeNormalText, textTransform: 'uppercase', opacity: 0.85 }}>
+                    {winnerDriver.make || (config.campeonato || 'CARRERA')}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
      <div style={{

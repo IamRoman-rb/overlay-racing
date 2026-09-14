@@ -399,6 +399,7 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
               <option value="compact">Compacto (Sin Vueltas/Mejor V., Más Filas)</option>
               <option value="podium">Podio (Colores Oro/Plata/Bronce)</option>
               <option value="minimal">Minimalista (Sin Caja ni Header)</option>
+              <option value="broadcast">Broadcast (Tabla + Foto del Ganador, Estilo F1)</option>
               {renderSkinOptions()}
             </select>
           </div>
