@@ -133,15 +133,101 @@ function F1BarFormat({ alert, config, pos }) {
   );
 }
 
+function MinimalFormat({ alert, config, pos }) {
+  const isInvestigation = alert?.type === 'investigation';
+  const accentColor = isInvestigation ? '#ffcc00' : '#e74c3c';
+  const badgeText = isInvestigation ? 'BAJO INVESTIGACIÓN' : 'SANCIÓN';
+  const badgeIcon = isInvestigation ? '🔎' : '🚫';
+
+  return (
+    <div
+      style={{
+        position: 'absolute',
+        left: `${pos?.x ?? 1500}px`,
+        top: `${pos?.y ?? 750}px`,
+        transform: `scale(${pos?.scale ?? 1})`,
+        transformOrigin: 'top left',
+        fontFamily: config?.fontFamily || 'Arial, sans-serif',
+        zIndex: 500
+      }}
+    >
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+        <span style={{ color: accentColor, fontWeight: '900', fontSize: '13px', letterSpacing: '1px', textTransform: 'uppercase', textShadow: '2px 2px 6px rgba(0,0,0,0.9)' }}>
+          {badgeIcon} {badgeText}
+        </span>
+        <span style={{ color: '#fff', fontSize: '24px', fontWeight: '900', textShadow: '2px 2px 6px rgba(0,0,0,0.9)' }}>
+          {alert?.driverNumber ? `#${alert.driverNumber} ` : ''}{alert?.driverName || 'PILOTO'}
+        </span>
+        {alert?.reason && (
+          <span style={{ color: '#ddd', fontSize: '14px', textShadow: '2px 2px 6px rgba(0,0,0,0.9)' }}>
+            {alert.reason}
+          </span>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function CornerFormat({ alert, config, pos }) {
+  const isInvestigation = alert?.type === 'investigation';
+  const accentColor = isInvestigation ? '#ffcc00' : '#e10600';
+  const badgeText = isInvestigation ? 'BAJO INVESTIGACIÓN' : 'SANCIÓN';
+  const badgeIcon = isInvestigation ? '🔎' : '🚫';
+  const radius = config?.[`borderRadius_penaltyAlert`] || '0 8px 8px 0';
+
+  return (
+    <div
+      style={{
+        position: 'absolute',
+        left: `${pos?.x ?? 1500}px`,
+        top: `${pos?.y ?? 750}px`,
+        transform: `scale(${pos?.scale ?? 1})`,
+        transformOrigin: 'top left',
+        display: 'flex', alignItems: 'stretch',
+        maxWidth: '460px',
+        backgroundColor: 'rgba(10,10,10,0.92)',
+        borderRadius: radius,
+        borderLeft: `8px solid ${accentColor}`,
+        boxShadow: '0 5px 15px rgba(0,0,0,0.6)',
+        color: '#ffffff',
+        fontFamily: config?.fontFamily || 'Arial, sans-serif',
+        overflow: 'hidden',
+        zIndex: 500
+      }}
+    >
+      <div style={{ padding: '10px 18px' }}>
+        <span style={{ color: accentColor, fontWeight: '900', fontSize: '11px', letterSpacing: '1px', textTransform: 'uppercase' }}>
+          {badgeIcon} {badgeText}
+        </span><br />
+        <span style={{ fontSize: '18px', fontWeight: '900' }}>
+          {alert?.driverNumber ? `#${alert.driverNumber} ` : ''}{alert?.driverName || 'PILOTO'}
+        </span>
+        {alert?.reason && (
+          <div style={{ fontSize: '12px', color: '#ccc', marginTop: '3px' }}>
+            {alert.reason}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function PenaltyAlert({ alert, config }) {
   if (!alert?.isVisible) return null;
 
-  const format = config?.penaltyAlertFormat === 'f1bar' ? 'f1bar' : 'card';
+  const validFormats = ['card', 'f1bar', 'minimal', 'corner'];
+  const format = validFormats.includes(config?.penaltyAlertFormat) ? config.penaltyAlertFormat : 'card';
   const defaultPos = format === 'f1bar' ? { x: 500, y: 30, scale: 1 } : { x: 1500, y: 750, scale: 1 };
   const pos = config?.positions?.penaltyAlert || defaultPos;
 
   if (format === 'f1bar') {
     return <F1BarFormat alert={alert} config={config} pos={pos} />;
+  }
+  if (format === 'minimal') {
+    return <MinimalFormat alert={alert} config={config} pos={pos} />;
+  }
+  if (format === 'corner') {
+    return <CornerFormat alert={alert} config={config} pos={pos} />;
   }
   return <CardFormat alert={alert} config={config} pos={pos} />;
 }

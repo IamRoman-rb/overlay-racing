@@ -280,6 +280,38 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
           </div>
         )}
 
+        {selectedGraphic === 'lapTimesHistory' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', marginBottom: '30px', backgroundColor: '#111', padding: '15px', borderRadius: '8px', border: `1px solid ${colors.border}` }}>
+            <label style={{ fontSize: '10px', color: colors.textMuted, fontWeight: 'bold' }}>FORMATO DE EVOLUCIÓN DE TIEMPOS</label>
+            <select
+              value={config.lapTimesHistoryFormat || 'standard'}
+              onChange={(e) => onConfigChange('lapTimesHistoryFormat', e.target.value)}
+              style={{ ...inputStyle, padding: '10px', fontSize: '11px', cursor: 'pointer', border: `1px solid ${colors.border}` }}
+            >
+              <option value="standard">Clásico (Gráfico + Leyenda)</option>
+              <option value="compact">Compacto (Sin Leyenda, Más Chico)</option>
+              <option value="large">Grande (Gráfico Ampliado)</option>
+              <option value="minimal">Minimalista (Sin Caja)</option>
+            </select>
+          </div>
+        )}
+
+        {selectedGraphic === 'trackAlert' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', marginBottom: '30px', backgroundColor: '#111', padding: '15px', borderRadius: '8px', border: `1px solid ${colors.border}` }}>
+            <label style={{ fontSize: '10px', color: colors.textMuted, fontWeight: 'bold' }}>FORMATO DE ALERTA EN CURVA</label>
+            <select
+              value={config.trackAlertFormat || 'standard'}
+              onChange={(e) => onConfigChange('trackAlertFormat', e.target.value)}
+              style={{ ...inputStyle, padding: '10px', fontSize: '11px', cursor: 'pointer', border: `1px solid ${colors.border}` }}
+            >
+              <option value="standard">Clásico (Con Mapa de Circuito)</option>
+              <option value="compact">Compacto (Una Línea, Sin Mapa)</option>
+              <option value="banner">Banner (Barra Completa)</option>
+              <option value="minimal">Minimalista (Sin Caja)</option>
+            </select>
+          </div>
+        )}
+
         {selectedGraphic === 'customZocalo' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', marginBottom: '30px', backgroundColor: '#111', padding: '15px', borderRadius: '8px', border: `1px solid ${colors.border}` }}>
             <label style={{ fontSize: '10px', color: colors.textMuted, fontWeight: 'bold' }}>FORMATO DE ZÓCALO LIBRE</label>
@@ -451,6 +483,8 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
             >
               <option value="card">Tarjeta (Cuadrada, con badge)</option>
               <option value="f1bar">Barra F1 (Fina, Horizontal, Superior)</option>
+              <option value="corner">Esquina (Franja Lateral Compacta)</option>
+              <option value="minimal">Minimalista (Sin Caja)</option>
             </select>
           </div>
         )}

@@ -10,9 +10,15 @@ export default function LapTimeEvolution({ history, drivers, config, isVisible, 
   const customBg = config?.[`design_${id}`];
   const bRad = config?.[`borderRadius_${id}`] || '8px';
   const animStyle = config?.[`animationStyle_${id}`] || 'slide';
+  const chartFormat = config?.lapTimesHistoryFormat || 'standard';
+  const isCompact = chartFormat === 'compact';
+  const isLarge = chartFormat === 'large';
+  const isMinimal = chartFormat === 'minimal';
+  const transparent = !!customBg || isMinimal;
 
-  // --- CAJA RECTANGULAR ANCHA Y BAJA ---
-  const W = 420, H = 90;
+  // --- CAJA RECTANGULAR ANCHA Y BAJA (el tamaño varía según el formato) ---
+  const W = isLarge ? 560 : (isCompact ? 320 : 420);
+  const H = isLarge ? 130 : (isCompact ? 70 : 90);
   const PAD_LEFT = 30, PAD_RIGHT = 8, PAD_TOP = 6, PAD_BOTTOM = 6;
   const chartW = W - PAD_LEFT - PAD_RIGHT;
   const chartH = H - PAD_TOP - PAD_BOTTOM;
@@ -80,38 +86,45 @@ export default function LapTimeEvolution({ history, drivers, config, isVisible, 
       opacity: isVisible ? 1 : 0,
       transform: isVisible ? `scale(${pos.scale}) translateY(0)` : transformHidden
     }}>
+      {isMinimal && (
+        <span style={{ display: 'block', color: themeTitleText, fontSize: '11px', fontWeight: '900', letterSpacing: '0.5px', textTransform: 'uppercase', marginBottom: '4px', textShadow: '2px 2px 6px rgba(0,0,0,0.9)' }}>
+          {isFocusMode ? `RITMO — #${focusDriver} ${getDriverName(focusDriver)}` : 'EVOLUCIÓN DE TIEMPOS DE VUELTA'}
+        </span>
+      )}
       <div style={{
         width: `${W}px`,
-        backgroundColor: customBg ? 'transparent' : themeBg,
+        backgroundColor: transparent ? 'transparent' : themeBg,
         backgroundImage: customBg ? `url(${customBg})` : 'none',
         backgroundSize: '100% 100%', backgroundRepeat: 'no-repeat', backgroundPosition: 'center',
-        borderTop: customBg ? 'none' : `3px solid ${isFocusMode ? '#00e5ff' : themeMain}`,
+        borderTop: transparent ? 'none' : `3px solid ${isFocusMode ? '#00e5ff' : themeMain}`,
         borderRadius: bRad,
-        boxShadow: customBg ? 'none' : '0 6px 18px rgba(0,0,0,0.6)',
+        boxShadow: transparent ? 'none' : '0 6px 18px rgba(0,0,0,0.6)',
         overflow: 'hidden',
         display: 'flex',
         flexDirection: 'column'
       }}>
-        <div style={{
-          backgroundColor: customBg ? 'transparent' : themeHeaderBg,
-          padding: '6px 12px', borderBottom: customBg ? 'none' : `1px solid ${isFocusMode ? '#00e5ff' : themeMain}`,
-          display: 'flex', justifyContent: 'space-between', alignItems: 'center'
-        }}>
-          <span style={{ color: themeTitleText, fontSize: '11px', fontWeight: '900', letterSpacing: '0.5px', textTransform: 'uppercase', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-            {isFocusMode ? `RITMO — #${focusDriver} ${getDriverName(focusDriver)}` : 'EVOLUCIÓN DE TIEMPOS DE VUELTA'}
-          </span>
+        {!isMinimal && (
+          <div style={{
+            backgroundColor: customBg ? 'transparent' : themeHeaderBg,
+            padding: isCompact ? '4px 10px' : '6px 12px', borderBottom: customBg ? 'none' : `1px solid ${isFocusMode ? '#00e5ff' : themeMain}`,
+            display: 'flex', justifyContent: 'space-between', alignItems: 'center'
+          }}>
+            <span style={{ color: themeTitleText, fontSize: isLarge ? '13px' : '11px', fontWeight: '900', letterSpacing: '0.5px', textTransform: 'uppercase', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              {isFocusMode ? `RITMO — #${focusDriver} ${getDriverName(focusDriver)}` : (isCompact ? 'TIEMPOS' : 'EVOLUCIÓN DE TIEMPOS DE VUELTA')}
+            </span>
 
-          {isFocusMode && focusStats && (
-            <div style={{ display: 'flex', gap: '10px', flexShrink: 0 }}>
-              <span style={{ fontSize: '10px', color: '#2ecc71', fontWeight: '900' }}>MEJOR {formatSeconds(focusStats.best)}</span>
-              <span style={{ fontSize: '10px', color: themeAccent, fontWeight: '900' }}>ÚLTIMA {formatSeconds(focusStats.last)}</span>
-              <span style={{ fontSize: '10px', color: '#e74c3c', fontWeight: '900' }}>PEOR {formatSeconds(focusStats.worst)}</span>
-            </div>
-          )}
-        </div>
+            {isFocusMode && focusStats && !isCompact && (
+              <div style={{ display: 'flex', gap: '10px', flexShrink: 0 }}>
+                <span style={{ fontSize: '10px', color: '#2ecc71', fontWeight: '900' }}>MEJOR {formatSeconds(focusStats.best)}</span>
+                <span style={{ fontSize: '10px', color: themeAccent, fontWeight: '900' }}>ÚLTIMA {formatSeconds(focusStats.last)}</span>
+                <span style={{ fontSize: '10px', color: '#e74c3c', fontWeight: '900' }}>PEOR {formatSeconds(focusStats.worst)}</span>
+              </div>
+            )}
+          </div>
+        )}
 
         <div style={{ display: 'flex', padding: '4px 8px', alignItems: 'center', gap: '10px' }}>
-          <svg width={isFocusMode ? W - 16 : (W - 16) * 0.62} height={H} viewBox={`0 0 ${W} ${H}`} style={{ overflow: 'visible', flexShrink: 0 }}>
+          <svg width={(isFocusMode || isCompact) ? W - 16 : (W - 16) * 0.62} height={H} viewBox={`0 0 ${W} ${H}`} style={{ overflow: 'visible', flexShrink: 0 }}>
             <line x1={PAD_LEFT} y1={yScale(minSec)} x2={W - PAD_RIGHT} y2={yScale(minSec)} stroke="rgba(46,204,113,0.25)" strokeWidth="1" strokeDasharray="2,2" />
             <text x={PAD_LEFT - 4} y={yScale(minSec) + 3} textAnchor="end" fontSize="8" fill="rgba(46,204,113,0.8)" fontWeight="bold">
               {formatSeconds(minSec)}
@@ -151,12 +164,12 @@ export default function LapTimeEvolution({ history, drivers, config, isVisible, 
             })}
           </svg>
 
-          {!isFocusMode && (
+          {!isFocusMode && !isCompact && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', minWidth: 0 }}>
               {topDriverNumbers.map((num, idx) => (
                 <div key={num} style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                   <div style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: palette[idx % palette.length], flexShrink: 0 }} />
-                  <span style={{ fontSize: '9px', color: themeNormalText, fontWeight: 'bold', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  <span style={{ fontSize: isLarge ? '11px' : '9px', color: themeNormalText, fontWeight: 'bold', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                     #{num} {getDriverName(num)}
                   </span>
                 </div>
