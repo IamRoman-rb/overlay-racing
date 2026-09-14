@@ -4,6 +4,7 @@ import SettingsPanel from '../windows/SettingsPanel';
 import CustomizePanel from '../windows/CustomizePanel';
 import DriversTable from '../windows/DriversTable';
 import TrackMapPanel from '../windows/TrackMapPanel';
+import UserManual from '../windows/UserManual';
 import banderaCuadrosImg from '../assets/bandera cuadros.jpg';
 
 let ipcRenderer = null;
@@ -609,7 +610,7 @@ export default function ControlPanel() {
       </div>
 
       <div style={{ display: 'flex', borderBottom: `1px solid ${colors.border}` }}>
-        {['PANEL', 'CAMPEONATO', 'VOTACIONES', 'SANCIONES', 'CLOUD', 'ZÓCALOS', 'DISEÑOS', 'CIRCUITO', 'AJUSTES', 'PERSONALIZAR'].map(tab => (
+        {['PANEL', 'CAMPEONATO', 'VOTACIONES', 'SANCIONES', 'CLOUD', 'ZÓCALOS', 'DISEÑOS', 'CIRCUITO', 'AJUSTES', 'PERSONALIZAR', 'MANUAL'].map(tab => (
           <div key={tab} onClick={() => setActiveTab(tab)} style={{ padding: '12px 25px', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer', borderBottom: activeTab === tab ? `3px solid ${colors.textMain}` : '3px solid transparent', color: activeTab === tab ? colors.textMain : colors.textMuted, display: 'flex', alignItems: 'center', gap: '6px' }}>
             {tab}
             {tab === 'SANCIONES' && penaltyAlertState.isVisible && (
@@ -1204,6 +1205,10 @@ export default function ControlPanel() {
 
       {activeTab === 'CIRCUITO' && (
         <TrackMapPanel config={config} onConfigChange={handleDirectSave} colors={colors} inputStyle={inputStyle} btnStyle={btnStyle} />
+      )}
+
+      {activeTab === 'MANUAL' && (
+        <UserManual colors={colors} />
       )}
 
       {activeTab === 'ZÓCALOS' && (
