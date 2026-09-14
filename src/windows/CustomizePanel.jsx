@@ -469,6 +469,7 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
               <option value="compact">Compacta (Sin Tiempo, Más Pilotos)</option>
               <option value="podium">Podio (Colores Oro/Plata/Bronce)</option>
               <option value="spotlight">Spotlight (Un Piloto a la Vez)</option>
+              <option value="board">Tablero (3 Columnas x 4 Filas, Estilo TC)</option>
               {renderSkinOptions()}
             </select>
           </div>

@@ -27,6 +27,7 @@ export default function Ticker({ drivers, isVisible, config, id = 'ticker', sess
   const isCompact = tickerFormat === 'compact';
   const isPodium = tickerFormat === 'podium';
   const isSpotlight = tickerFormat === 'spotlight';
+  const isBoard = tickerFormat === 'board';
   const skin = getSkinStyle(tickerFormat, { themeMain, themeAccent });
   const barHeight = isSpotlight ? '110px' : (isCompact ? '46px' : (hasCustomBg ? '80px' : '60px'));
 
@@ -41,6 +42,16 @@ export default function Ticker({ drivers, isVisible, config, id = 'ticker', sess
   }, [isSpotlight, drivers.length]);
   const spotlightDriver = drivers.length > 0 ? drivers[spotlightIndex % drivers.length] : null;
 
+  // Rotación automática para el formato "Board" (tabla de 12 posiciones, pasa de página si hay más pilotos)
+  const BOARD_PER_PAGE = 12;
+  const [boardPage, setBoardPage] = useState(0);
+  useEffect(() => {
+    if (!isBoard || drivers.length <= BOARD_PER_PAGE) { setBoardPage(0); return; }
+    const totalPages = Math.ceil(drivers.length / BOARD_PER_PAGE);
+    const interval = setInterval(() => setBoardPage(prev => (prev + 1) % totalPages), 8000);
+    return () => clearInterval(interval);
+  }, [isBoard, drivers.length]);
+
   // Animación de entrada (La tira inferior suele deslizar desde abajo hacia arriba)
   let transformHidden = `scale(${pos.scale}) translateY(60px)`;
   if (animStyle === 'fade') transformHidden = `scale(${pos.scale})`;
@@ -48,6 +59,109 @@ export default function Ticker({ drivers, isVisible, config, id = 'ticker', sess
   if (animStyle === 'bounce') transformHidden = `scale(${pos.scale * 0.3})`;
   if (animStyle === 'flip') transformHidden = `scale(${pos.scale}) scaleY(0.05)`;
   if (animStyle === 'rotate') transformHidden = `scale(${pos.scale * 0.85}) rotate(-15deg)`;
+
+  // FORMATO BOARD: tabla de 3 columnas x 4 filas (12 posiciones fijas a la vez), estilo TC —
+  // el puntero muestra el tiempo total en una placa roja, el resto la diferencia en una placa verde.
+  if (isBoard) {
+    const COLS = 3, ROWS = 4;
+    const perPage = COLS * ROWS;
+    const totalPages = Math.max(1, Math.ceil(drivers.length / perPage));
+    const pageDrivers = drivers.slice(boardPage * perPage, boardPage * perPage + perPage);
+    const columns = Array.from({ length: COLS }, (_, c) => pageDrivers.slice(c * ROWS, c * ROWS + ROWS));
+
+    return (
+      <div style={{
+        position: 'absolute', left: `${pos.x}px`, top: `${pos.y}px`,
+        transformOrigin: 'top left', zIndex: 20, width: '1920px',
+        transition: 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+        opacity: isVisible ? 1 : 0,
+        transform: isVisible ? `scale(${pos.scale}) translateY(0)` : transformHidden,
+        pointerEvents: isVisible ? 'auto' : 'none'
+      }}>
+        <style>{`@keyframes fadeBoardPage { 0% { opacity: 0; transform: translateY(8px); } 100% { opacity: 1; transform: translateY(0); } }`}</style>
+        <div style={{
+          position: 'relative', display: 'flex', width: '100%', height: '210px',
+          backgroundColor: skin ? skin.background : (hasCustomBg ? 'transparent' : themeBg),
+          backgroundImage: hasCustomBg ? `url(${customBg})` : 'none',
+          backgroundSize: '100% 100%', backgroundRepeat: 'no-repeat', backgroundPosition: 'center',
+          border: skin ? skin.border : 'none',
+          borderTop: skin ? skin.border : (hasCustomBg ? 'none' : `4px solid ${themeMain}`),
+          boxShadow: skin ? skin.boxShadow : 'none', backdropFilter: skin?.backdropFilter,
+          borderRadius: bRad, overflow: 'hidden', boxSizing: 'border-box'
+        }}>
+          {/* PLACA DE CATEGORÍA + VUELTAS */}
+          <div style={{ width: '230px', flexShrink: 0, display: 'flex', flexDirection: 'column' }}>
+            <div style={{
+              flex: 1, backgroundColor: hasCustomBg ? 'rgba(0,0,0,0.4)' : themeMain,
+              display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 10px'
+            }}>
+              <span style={{ color: '#fff', fontWeight: '900', fontSize: '20px', textAlign: 'center', textTransform: 'uppercase', lineHeight: '1.15' }}>
+                {config?.campeonato || 'CATEGORÍA'}
+              </span>
+            </div>
+            <div style={{
+              flex: 1, backgroundColor: hasCustomBg ? 'rgba(0,0,0,0.6)' : themeHeaderBg,
+              borderLeft: `6px solid ${themeAccent}`, display: 'flex', flexDirection: 'column',
+              alignItems: 'center', justifyContent: 'center'
+            }}>
+              <span style={{ color: themeNormalText, fontWeight: '900', fontSize: '30px', lineHeight: '1' }}>
+                {sessionInfo?.laps || '-'}
+              </span>
+              <span style={{ color: themeTitleText, fontWeight: 'bold', fontSize: '11px', letterSpacing: '1px', marginTop: '2px' }}>
+                {sessionInfo?.name || 'VUELTA'}
+              </span>
+            </div>
+          </div>
+
+          {/* GRILLA 3x4 DE POSICIONES */}
+          <div key={boardPage} style={{ flex: 1, display: 'flex', animation: 'fadeBoardPage 0.4s ease-out' }}>
+            {columns.map((col, colIdx) => (
+              <div key={colIdx} style={{ flex: 1, display: 'flex', flexDirection: 'column', borderRight: colIdx < COLS - 1 ? '1px solid rgba(255,255,255,0.1)' : 'none' }}>
+                {col.map((driver, rowIdx) => {
+                  const isLeader = String(driver.pos) === '1';
+                  return (
+                    <div key={rowIdx} style={{
+                      flex: 1, display: 'flex', alignItems: 'center', gap: '10px', padding: '0 14px',
+                      borderBottom: rowIdx < ROWS - 1 ? '1px solid rgba(255,255,255,0.08)' : 'none'
+                    }}>
+                      <span style={{ color: themeNormalText, fontWeight: '900', fontSize: '18px', width: '22px', flexShrink: 0 }}>
+                        {driver.pos}
+                      </span>
+                      <span style={{
+                        flexShrink: 0, width: '34px', height: '34px', borderRadius: '50%',
+                        backgroundColor: themeSecondary, color: '#000', fontWeight: '900', fontSize: '13px',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center'
+                      }}>
+                        {driver.number}
+                      </span>
+                      <span style={{
+                        flex: 1, color: themeNormalText, fontWeight: '900', fontSize: '15px', textTransform: 'uppercase',
+                        whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'
+                      }}>
+                        {driver.name}
+                      </span>
+                      <span style={{
+                        flexShrink: 0, minWidth: '68px', textAlign: 'center', padding: '4px 8px', borderRadius: '4px',
+                        backgroundColor: isLeader ? themeMain : '#1e8449', color: '#fff', fontWeight: '900', fontSize: '13px', fontFamily: 'monospace'
+                      }}>
+                        {isLeader ? driver.totalTime : (driver.diff || driver.gap || '-')}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            ))}
+          </div>
+
+          {totalPages > 1 && (
+            <div style={{ position: 'absolute', bottom: '4px', right: '14px', fontSize: '10px', color: themeTitleText, fontWeight: 'bold', letterSpacing: '1px' }}>
+              {boardPage + 1}/{totalPages}
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div style={{
