@@ -16,6 +16,7 @@ export default function LapTimeEvolution({ history, drivers, config, isVisible, 
   const isCompact = chartFormat === 'compact';
   const isLarge = chartFormat === 'large';
   const isMinimal = chartFormat === 'minimal';
+  const isTable = chartFormat === 'table';
   const skin = getSkinStyle(chartFormat, { themeMain, themeAccent });
   const transparent = !!customBg || isMinimal;
 
@@ -82,6 +83,124 @@ export default function LapTimeEvolution({ history, drivers, config, isVisible, 
       worst: Math.max(...secondsOnly),
       last: points[points.length - 1]?.seconds
     };
+  }
+
+  // FORMATO TABLA: "últimas N vueltas" estilo transmisión TV — el líder muestra el tiempo
+  // absoluto de cada vuelta y el resto la diferencia contra él, vuelta por vuelta.
+  if (isTable) {
+    const formatDelta = (secs) => {
+      if (secs === null || secs === undefined) return '-';
+      const sign = secs > 0 ? '+' : (secs < 0 ? '-' : '');
+      return `${sign}${Math.abs(secs).toFixed(3)}`;
+    };
+
+    const rows = topDriverNumbers
+      .map(num => ({ num, driver: drivers?.find(d => String(d.number) === String(num)), points: historyData[num] || [] }))
+      .sort((a, b) => {
+        const pa = a.driver?.pos ? parseInt(a.driver.pos, 10) : 999;
+        const pb = b.driver?.pos ? parseInt(b.driver.pos, 10) : 999;
+        return pa - pb;
+      });
+
+    const lapCols = Math.min(4, maxLap);
+    const lapNumbers = Array.from({ length: lapCols }, (_, i) => maxLap - lapCols + 1 + i);
+    const leaderPoints = rows[0]?.points || [];
+    const getSecondsForLap = (points, lap) => points.find(p => p.lap === lap)?.seconds ?? null;
+
+    const TABLE_W = 130 + lapCols * 110;
+
+    return (
+      <div style={{
+        position: 'absolute', left: `${pos.x}px`, top: `${pos.y}px`,
+        transformOrigin: 'top left', zIndex: 40, pointerEvents: 'none',
+        transition: 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+        opacity: isVisible ? 1 : 0,
+        transform: isVisible ? `scale(${pos.scale}) translateY(0)` : transformHidden
+      }}>
+        <div style={{
+          width: `${TABLE_W}px`,
+          backgroundColor: skin ? skin.background : (transparent ? 'transparent' : themeBg),
+          backgroundImage: customBg ? `url(${customBg})` : 'none',
+          backgroundSize: '100% 100%', backgroundRepeat: 'no-repeat', backgroundPosition: 'center',
+          border: skin ? skin.border : 'none',
+          borderRadius: bRad, overflow: 'hidden',
+          boxShadow: skin ? skin.boxShadow : (transparent ? 'none' : '0 6px 18px rgba(0,0,0,0.6)'),
+          backdropFilter: skin?.backdropFilter
+        }}>
+          {/* BARRA SUPERIOR: LOGO + ETIQUETA */}
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: '10px', padding: '8px 14px',
+            backgroundColor: skin ? 'transparent' : themeHeaderBg
+          }}>
+            {config?.logo && <img src={config.logo} alt="Logo" style={{ height: '20px', maxWidth: '90px', objectFit: 'contain' }} />}
+            <span style={{ color: themeNormalText, fontSize: '13px', fontWeight: '900', letterSpacing: '0.5px', textTransform: 'uppercase' }}>
+              ÚLTIMAS {lapCols} VUELTAS
+            </span>
+          </div>
+
+          {/* ENCABEZADO DE VUELTAS */}
+          <div style={{ display: 'flex', borderBottom: `2px solid ${themeMain}` }}>
+            <div style={{ width: '130px', flexShrink: 0 }} />
+            {lapNumbers.map(lap => (
+              <div key={lap} style={{
+                width: '110px', flexShrink: 0, textAlign: 'center', padding: '6px 4px',
+                color: themeAccent, fontSize: '12px', fontWeight: '900', letterSpacing: '0.5px'
+              }}>
+                VUELTA {lap}
+              </div>
+            ))}
+          </div>
+
+          {/* FILAS DE PILOTOS */}
+          {rows.map((row, i) => {
+            const isLeaderRow = i === 0;
+            const last = row.points[row.points.length - 1];
+            const prev = row.points[row.points.length - 2];
+            let trendColor = themeNormalText;
+            let trendArrow = '—';
+            if (last && prev) {
+              if (last.seconds < prev.seconds) { trendColor = '#2ecc71'; trendArrow = '↗'; }
+              else if (last.seconds > prev.seconds) { trendColor = '#e74c3c'; trendArrow = '↘'; }
+            }
+
+            return (
+              <div key={row.num} style={{
+                display: 'flex', alignItems: 'center',
+                borderBottom: i === rows.length - 1 ? 'none' : '1px solid rgba(255,255,255,0.08)'
+              }}>
+                <div style={{ width: '130px', flexShrink: 0, display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 10px' }}>
+                  <span style={{ color: themeTitleText, fontSize: '13px', fontWeight: '900', width: '16px' }}>{row.driver?.pos || '-'}</span>
+                  <span style={{ color: trendColor, fontSize: '13px', fontWeight: '900' }}>{trendArrow}</span>
+                  <span style={{
+                    color: themeNormalText, fontSize: '13px', fontWeight: '900', textTransform: 'uppercase',
+                    whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'
+                  }}>{row.driver?.name || `#${row.num}`}</span>
+                </div>
+
+                {lapNumbers.map(lap => {
+                  const secs = getSecondsForLap(row.points, lap);
+                  if (isLeaderRow) {
+                    return (
+                      <div key={lap} style={{ width: '110px', flexShrink: 0, textAlign: 'center', padding: '8px 4px', color: themeNormalText, fontSize: '15px', fontWeight: 'bold', fontFamily: 'monospace' }}>
+                        {formatSeconds(secs)}
+                      </div>
+                    );
+                  }
+                  const leaderSecs = getSecondsForLap(leaderPoints, lap);
+                  const delta = (secs !== null && leaderSecs !== null) ? secs - leaderSecs : null;
+                  const deltaColor = delta === null ? themeNormalText : (delta < 0 ? '#2ecc71' : (delta > 0 ? '#e74c3c' : themeNormalText));
+                  return (
+                    <div key={lap} style={{ width: '110px', flexShrink: 0, textAlign: 'center', padding: '8px 4px', color: deltaColor, fontSize: '15px', fontWeight: 'bold', fontFamily: 'monospace' }}>
+                      {formatDelta(delta)}
+                    </div>
+                  );
+                })}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
   }
 
   return (

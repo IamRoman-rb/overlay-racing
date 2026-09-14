@@ -297,6 +297,7 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
               <option value="compact">Compacto (Sin Leyenda, Más Chico)</option>
               <option value="large">Grande (Gráfico Ampliado)</option>
               <option value="minimal">Minimalista (Sin Caja)</option>
+              <option value="table">Tabla (Últimas 4 Vueltas, Estilo F1)</option>
               {renderSkinOptions()}
             </select>
           </div>
