@@ -184,6 +184,22 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
           </div>
         )}
 
+        {selectedGraphic === 'winner' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', marginBottom: '30px', backgroundColor: '#111', padding: '15px', borderRadius: '8px', border: `1px solid ${colors.border}` }}>
+            <label style={{ fontSize: '10px', color: colors.textMuted, fontWeight: 'bold' }}>FORMATO DE GANADOR</label>
+            <select
+              value={config.winnerFormat || 'standard'}
+              onChange={(e) => onConfigChange('winnerFormat', e.target.value)}
+              style={{ ...inputStyle, padding: '10px', fontSize: '11px', cursor: 'pointer', border: `1px solid ${colors.border}` }}
+            >
+              <option value="standard">Clásico (Cartel Horizontal)</option>
+              <option value="photo">Foto (Retrato Grande)</option>
+              <option value="podium">Podio (Tarjeta Campeón)</option>
+              <option value="minimal">Minimalista (Sin Caja)</option>
+            </select>
+          </div>
+        )}
+
         {selectedGraphic === 'fastestLap' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', marginBottom: '30px', backgroundColor: '#111', padding: '15px', borderRadius: '8px', border: `1px solid ${colors.border}` }}>
             <label style={{ fontSize: '10px', color: colors.textMuted, fontWeight: 'bold' }}>FORMATO DE RÉCORD DE VUELTA</label>
