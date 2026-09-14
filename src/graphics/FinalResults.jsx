@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 
+const PODIUM_COLORS = { 1: '#ffd700', 2: '#c0c0c0', 3: '#cd7f32' };
+
 export default function FinalResults({ drivers, config, isVisible, id = 'finalResults' }) {
   const pos = config?.positions?.[id] || { x: 240, y: 40, scale: 1 };
 
@@ -16,13 +18,19 @@ export default function FinalResults({ drivers, config, isVisible, id = 'finalRe
   const hasCustomBg = !!customBg;
   const bRad = config[`borderRadius_${id}`] || '8px';
   const animStyle = config[`animationStyle_${id}`] || 'slide';
-  
+
+  const resultsFormat = config?.finalResultsFormat || 'standard';
+  const isCompact = resultsFormat === 'compact';
+  const isPodium = resultsFormat === 'podium';
+  const isMinimal = resultsFormat === 'minimal';
+  const transparent = hasCustomBg || isMinimal;
+
   const [page, setPage] = useState(0);
-  const itemsPerPage = 10;
-  
+  const itemsPerPage = isCompact ? 14 : 10;
+
   // CORRECCIÓN 1: Incluimos pos.scale para que la animación no dé un salto de tamaño
-  let transformHidden = `scale(${pos.scale}) translateY(-60px)`; 
-  if (animStyle === 'fade') transformHidden = `scale(${pos.scale})`; 
+  let transformHidden = `scale(${pos.scale}) translateY(-60px)`;
+  if (animStyle === 'fade') transformHidden = `scale(${pos.scale})`;
   if (animStyle === 'zoom') transformHidden = `scale(${pos.scale * 0.9})`;
 
   useEffect(() => {
@@ -33,9 +41,9 @@ export default function FinalResults({ drivers, config, isVisible, id = 'finalRe
     const totalPages = Math.ceil(drivers.length / itemsPerPage);
     const interval = setInterval(() => {
       setPage(prev => (prev + 1) % totalPages);
-    }, 8000); 
+    }, 8000);
     return () => clearInterval(interval);
-  }, [isVisible, drivers.length]);
+  }, [isVisible, drivers.length, itemsPerPage]);
 
   const currentDrivers = drivers.slice(page * itemsPerPage, (page + 1) * itemsPerPage);
   const totalPages = Math.ceil(drivers.length / itemsPerPage);
@@ -57,65 +65,70 @@ export default function FinalResults({ drivers, config, isVisible, id = 'finalRe
          `}</style>
 
          <div style={{
-             backgroundColor: hasCustomBg ? 'transparent' : themeBg, 
+             backgroundColor: transparent ? 'transparent' : themeBg,
              backgroundImage: hasCustomBg ? `url(${customBg})` : 'none',
              backgroundSize: '100% 100%', backgroundRepeat: 'no-repeat', backgroundPosition: 'center',
-             padding: '40px', display: 'flex', flexDirection: 'column', 
-             alignItems: 'center', boxShadow: hasCustomBg ? 'none' : '0 15px 50px rgba(0,0,0,0.8)',
-             border: hasCustomBg ? 'none' : `2px solid ${themeMain}`,
-             borderRadius: bRad 
+             padding: isMinimal ? '10px' : '40px', display: 'flex', flexDirection: 'column',
+             alignItems: 'center', boxShadow: transparent ? 'none' : '0 15px 50px rgba(0,0,0,0.8)',
+             border: transparent ? 'none' : `2px solid ${themeMain}`,
+             borderRadius: bRad
          }}>
-             
+
              {/* ENCABEZADO CON LOGO Y TÍTULO */}
-             <div style={{ 
-               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '25px', 
-               marginBottom: '30px', borderBottom: hasCustomBg ? 'none' : `4px solid ${themeMain}`, paddingBottom: '15px', width: '100%'
+             <div style={{
+               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '25px',
+               marginBottom: isCompact ? '15px' : '30px', borderBottom: transparent ? 'none' : `4px solid ${themeMain}`, paddingBottom: '15px', width: '100%'
              }}>
                  {config?.logo && (
-                   <img src={config.logo} alt="Logo Productora" style={{ height: '55px', maxWidth: '180px', objectFit: 'contain' }} />
+                   <img src={config.logo} alt="Logo Productora" style={{ height: isCompact ? '38px' : '55px', maxWidth: '180px', objectFit: 'contain' }} />
                  )}
-                 <h1 style={{ color: themeTitleText, fontSize: '40px', fontWeight: '900', textTransform: 'uppercase', margin: 0 }}>
+                 <h1 style={{ color: themeTitleText, fontSize: isCompact ? '28px' : '40px', fontWeight: '900', textTransform: 'uppercase', margin: 0 }}>
                      RESULTADOS FINALES - {config.campeonato || 'CARRERA'}
                  </h1>
              </div>
-             
+
              {/* CONTENEDOR DE LA TABLA */}
-             <div style={{ 
-               width: '1050px', backgroundColor: hasCustomBg ? 'transparent' : themeHeaderBg, 
-               borderRadius: bRad, 
-               padding: '10px 20px 20px 20px', border: hasCustomBg ? 'none' : '1px solid rgba(255,255,255,0.1)', position: 'relative' 
+             <div style={{
+               width: '1050px', backgroundColor: transparent ? 'transparent' : themeHeaderBg,
+               borderRadius: bRad,
+               padding: '10px 20px 20px 20px', border: transparent ? 'none' : '1px solid rgba(255,255,255,0.1)', position: 'relative'
              }}>
-                
+
                 {/* ENCABEZADO DE LA TABLA */}
-                <div style={{ 
-                  display: 'flex', padding: '10px 10px', borderBottom: hasCustomBg ? 'none' : `2px solid ${themeMain}`, 
+                <div style={{
+                  display: 'flex', padding: '10px 10px', borderBottom: transparent ? 'none' : `2px solid ${themeMain}`,
                   color: themeTitleText, fontWeight: 'bold', fontSize: '14px', letterSpacing: '1px', marginBottom: '5px'
                 }}>
                    <span style={{ width: '60px' }}>POS</span>
                    <span style={{ width: '80px' }}>NUM</span>
                    <span style={{ flex: 1 }}>PILOTO</span>
-                   <span style={{ width: '120px', textAlign: 'center' }}>VUELTAS</span>
+                   {!isCompact && <span style={{ width: '120px', textAlign: 'center' }}>VUELTAS</span>}
                    <span style={{ width: '180px', textAlign: 'right' }}>T. TOTAL</span>
-                   <span style={{ width: '160px', textAlign: 'right' }}>MEJOR V.</span>
+                   {!isCompact && <span style={{ width: '160px', textAlign: 'right' }}>MEJOR V.</span>}
                 </div>
 
                 {/* FILAS DE PILOTOS */}
                 <div key={page} style={{ animation: 'fadePage 0.5s ease-out' }}>
-                  {currentDrivers.map((d, i) => (
-                     <div key={i} style={{ 
-                       display: 'flex', alignItems: 'center', padding: '12px 10px', 
-                       borderBottom: (i === currentDrivers.length - 1 || hasCustomBg) ? 'none' : '1px solid rgba(255,255,255,0.05)', fontSize: '20px' 
+                  {currentDrivers.map((d, i) => {
+                    const podiumColor = isPodium ? PODIUM_COLORS[Number(d.pos)] : null;
+                    return (
+                     <div key={i} style={{
+                       display: 'flex', alignItems: 'center', padding: isCompact ? '7px 10px' : '12px 10px',
+                       borderBottom: (i === currentDrivers.length - 1 || transparent) ? 'none' : '1px solid rgba(255,255,255,0.05)',
+                       borderLeft: podiumColor ? `4px solid ${podiumColor}` : 'none',
+                       fontSize: isCompact ? '16px' : '20px'
                      }}>
-                        <span style={{ width: '60px', color: themeAccent, fontWeight: '900', fontSize: '24px' }}>{d.pos}</span>
+                        <span style={{ width: '60px', color: podiumColor || themeAccent, fontWeight: '900', fontSize: isCompact ? '18px' : '24px' }}>{d.pos}</span>
                         <span style={{ width: '80px' }}>
-                          <span style={{ backgroundColor: themeSecondary, color: '#000', padding: '4px 10px', borderRadius: '4px', fontWeight: '900', fontSize: '18px' }}>{d.number}</span>
+                          <span style={{ backgroundColor: podiumColor || themeSecondary, color: '#000', padding: '4px 10px', borderRadius: '4px', fontWeight: '900', fontSize: isCompact ? '14px' : '18px' }}>{d.number}</span>
                         </span>
                         <span style={{ flex: 1, fontWeight: '900', color: themeNormalText, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{d.name.toUpperCase()}</span>
-                        <span style={{ width: '120px', textAlign: 'center', color: themeNumberText, fontWeight: 'bold' }}>{d.laps}</span>
+                        {!isCompact && <span style={{ width: '120px', textAlign: 'center', color: themeNumberText, fontWeight: 'bold' }}>{d.laps}</span>}
                         <span style={{ width: '180px', textAlign: 'right', color: themeNumberText, fontWeight: 'bold' }}>{d.totalTime}</span>
-                        <span style={{ width: '160px', textAlign: 'right', color: themeAccent, fontWeight: '900' }}>{d.bestLap}</span>
+                        {!isCompact && <span style={{ width: '160px', textAlign: 'right', color: themeAccent, fontWeight: '900' }}>{d.bestLap}</span>}
                      </div>
-                  ))}
+                    );
+                  })}
                 </div>
 
                 {/* INDICADOR DE PÁGINA */}

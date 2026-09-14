@@ -184,6 +184,22 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
           </div>
         )}
 
+        {selectedGraphic === 'finalResults' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', marginBottom: '30px', backgroundColor: '#111', padding: '15px', borderRadius: '8px', border: `1px solid ${colors.border}` }}>
+            <label style={{ fontSize: '10px', color: colors.textMuted, fontWeight: 'bold' }}>FORMATO DE RESULTADOS FINALES</label>
+            <select
+              value={config.finalResultsFormat || 'standard'}
+              onChange={(e) => onConfigChange('finalResultsFormat', e.target.value)}
+              style={{ ...inputStyle, padding: '10px', fontSize: '11px', cursor: 'pointer', border: `1px solid ${colors.border}` }}
+            >
+              <option value="standard">Clásico (Tabla Completa)</option>
+              <option value="compact">Compacto (Sin Vueltas/Mejor V., Más Filas)</option>
+              <option value="podium">Podio (Colores Oro/Plata/Bronce)</option>
+              <option value="minimal">Minimalista (Sin Caja ni Header)</option>
+            </select>
+          </div>
+        )}
+
         {selectedGraphic === 'clima' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', marginBottom: '30px', backgroundColor: '#111', padding: '15px', borderRadius: '8px', border: `1px solid ${colors.border}` }}>
             <label style={{ fontSize: '10px', color: colors.textMuted, fontWeight: 'bold' }}>FORMATO DE CLIMA</label>
