@@ -6,7 +6,7 @@ if (typeof window !== 'undefined' && typeof window.require === 'function') {
   try { ipcRenderer = window.require('electron').ipcRenderer; } catch (e) { }
 }
 
-export default function DriversTable({ drivers, colors, activeDriverNumber, onToggleInfo, selectedLapTimesNumber, onToggleLapTimesSelect }) {
+export default function DriversTable({ drivers, colors, activeDriverNumber, onToggleInfo, selectedLapTimesNumber, onToggleLapTimesSelect, t }) {
   const [pitState, setPitState] = useState({ isVisible: false, driver: null, isRunning: false });
 
   useEffect(() => {
@@ -33,7 +33,7 @@ export default function DriversTable({ drivers, colors, activeDriverNumber, onTo
   if (!drivers || drivers.length === 0) {
     return (
       <div style={{ textAlign: 'center', padding: '40px', color: colors.textMuted, fontStyle: 'italic' }}>
-        No hay datos de telemetría. Conecta Speedhive o RaceMonitor para ver la tabla en vivo.
+        {t('driversTable.noData')}
       </div>
     );
   }
@@ -43,15 +43,15 @@ export default function DriversTable({ drivers, colors, activeDriverNumber, onTo
       <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', textAlign: 'center' }}>
         <thead>
           <tr style={{ backgroundColor: colors.bgInput, color: colors.textMuted, borderBottom: `2px solid ${colors.border}` }}>
-            <th style={{ padding: '12px 10px' }}>POS</th>
-            <th style={{ padding: '12px 10px' }}>NUM</th>
-            <th style={{ padding: '12px 10px', textAlign: 'left' }}>PILOTO</th>
-            <th style={{ padding: '12px 10px' }}>VUELTAS</th>
-            <th style={{ padding: '12px 10px' }}>ÚLTIMA V.</th>
-            <th style={{ padding: '12px 10px' }}>DIFERENCIA</th>
-            <th style={{ padding: '12px 10px' }}>T. TOTAL</th>
-            <th style={{ padding: '12px 10px' }}>MEJOR V.</th>
-            <th style={{ padding: '12px 10px', textAlign: 'right' }}>ACCIÓN</th>
+            <th style={{ padding: '12px 10px' }}>{t('driversTable.colPos')}</th>
+            <th style={{ padding: '12px 10px' }}>{t('driversTable.colNum')}</th>
+            <th style={{ padding: '12px 10px', textAlign: 'left' }}>{t('driversTable.colDriver')}</th>
+            <th style={{ padding: '12px 10px' }}>{t('driversTable.colLaps')}</th>
+            <th style={{ padding: '12px 10px' }}>{t('driversTable.colLastLap')}</th>
+            <th style={{ padding: '12px 10px' }}>{t('driversTable.colDiff')}</th>
+            <th style={{ padding: '12px 10px' }}>{t('driversTable.colTotalTime')}</th>
+            <th style={{ padding: '12px 10px' }}>{t('driversTable.colBestLap')}</th>
+            <th style={{ padding: '12px 10px', textAlign: 'right' }}>{t('driversTable.colAction')}</th>
           </tr>
         </thead>
         <tbody>
@@ -60,15 +60,15 @@ export default function DriversTable({ drivers, colors, activeDriverNumber, onTo
             const isThisPitActive = pitState.isVisible && pitState.driver?.number === d.number;
 
             // Lógica de colores para el botón de Boxes
-            let pitBtnText = '⏱️ BOX';
+            let pitBtnText = t('driversTable.pitBox');
             let pitBtnColor = '#34495e'; // Gris neutro
 
             if (isThisPitActive) {
               if (pitState.isRunning) {
-                pitBtnText = '🛑 STOP';
+                pitBtnText = t('driversTable.pitStop');
                 pitBtnColor = colors.red; // Rojo peligro
               } else {
-                pitBtnText = '❌ QUITAR';
+                pitBtnText = t('driversTable.pitRemove');
                 pitBtnColor = '#000000'; // Negro para limpiar
               }
             }
@@ -101,9 +101,9 @@ export default function DriversTable({ drivers, colors, activeDriverNumber, onTo
                         border: `1px solid ${selectedLapTimesNumber === d.number ? '#00b8cc' : colors.border}`,
                         padding: '6px 10px', borderRadius: '4px', fontSize: '10px', fontWeight: 'bold', cursor: 'pointer'
                       }}
-                      title="Ver evolución de tiempos de vuelta de este piloto"
+                      title={t('driversTable.lapTimesTitle')}
                     >
-                      ⏱️ {selectedLapTimesNumber === d.number ? 'QUITAR' : 'VUELTAS'}
+                      ⏱️ {selectedLapTimesNumber === d.number ? t('driversTable.lapTimesRemove') : t('driversTable.lapTimesShow')}
                     </button>
                   )}
 
@@ -117,7 +117,7 @@ export default function DriversTable({ drivers, colors, activeDriverNumber, onTo
                       padding: '6px 12px', borderRadius: '4px', fontSize: '10px', fontWeight: 'bold', cursor: 'pointer'
                     }}
                   >
-                    {isInfoActive ? 'OCULTAR' : 'INFO'}
+                    {isInfoActive ? t('common.hide') : t('driversTable.infoShow')}
                   </button>
 
                   {/* BOTÓN MAGICO DE CRONOMETRO EN BOXES */}

@@ -21,7 +21,7 @@ function Section({ id, icon, title, children, colors, openId, setOpenId }) {
   );
 }
 
-export default function UserManual({ colors }) {
+export default function UserManual({ colors, t, language }) {
   const [openId, setOpenId] = useState('intro');
 
   const h4 = { color: colors.yellow, fontSize: '13px', marginTop: '18px', marginBottom: '8px' };
@@ -37,13 +37,16 @@ export default function UserManual({ colors }) {
   return (
     <div style={{ padding: '30px', flex: 1, backgroundColor: colors.bgApp, overflowY: 'auto' }}>
       <h2 style={{ color: colors.yellow, marginTop: 0, borderBottom: `1px solid ${colors.border}`, paddingBottom: '10px' }}>
-        📖 MANUAL DE USUARIO
+        {t('manual.title')}
       </h2>
-      <p style={{ color: colors.textMuted, fontSize: '13px', marginBottom: '20px', maxWidth: '800px' }}>
-        Guía rápida de todas las funciones del programa. Hacé clic en cada sección para desplegarla.
+      <p style={{ color: colors.textMuted, fontSize: '13px', marginBottom: '10px', maxWidth: '800px' }}>
+        {t('manual.intro')}
       </p>
+      {language && language !== 'es' && (
+        <div style={{ ...note, marginBottom: '20px', maxWidth: '800px' }}>{t('manual.contentSpanishOnly')}</div>
+      )}
 
-      <Section id="intro" icon="🎬" title="¿Qué es este programa?" {...sectionProps}>
+      <Section id="intro" icon="🎬" title={t('manual.sections.intro')} {...sectionProps}>
         <p>
           Este programa tiene <b>dos ventanas</b>: el <b>Panel de Control</b> (donde estás ahora, para manejar todo)
           y la ventana <b>Overlay</b> (las gráficas que se ven al aire), que se abre por separado.
@@ -55,7 +58,7 @@ export default function UserManual({ colors }) {
         </p>
       </Section>
 
-      <Section id="vmix" icon="📡" title="Cómo conectar la ventana Overlay a vMix" {...sectionProps}>
+      <Section id="vmix" icon="📡" title={t('manual.sections.vmix')} {...sectionProps}>
         <p>Hay dos formas de meter la gráfica en vMix. La <b>Opción A</b> es la recomendada y funciona siempre.</p>
 
         <div style={h4}>Opción A — Capturar la ventana + Chroma Key (recomendado)</div>
@@ -79,7 +82,7 @@ export default function UserManual({ colors }) {
         </div>
       </Section>
 
-      <Section id="server" icon="🖧" title="Servidor local (puerto 8080)" {...sectionProps}>
+      <Section id="server" icon="🖧" title={t('manual.sections.server')} {...sectionProps}>
         <p>Apenas arranca el programa, se levanta un servidor en esta PC que expone, dentro de tu red local:</p>
         <table style={table}>
           <thead><tr><th style={th}>Dirección</th><th style={th}>Para qué sirve</th></tr></thead>
@@ -97,7 +100,7 @@ export default function UserManual({ colors }) {
         </p>
       </Section>
 
-      <Section id="cloud" icon="☁️" title="Cómo conectarse al servidor Cloud (overlayracing.site)" {...sectionProps}>
+      <Section id="cloud" icon="☁️" title={t('manual.sections.cloud')} {...sectionProps}>
         <p>
           El túnel automático de la sección anterior es temporal y cambia cada vez que abrís el programa. Si querés
           un link <b>fijo</b> para votación y comisarios (por ejemplo para imprimir el QR con anticipación), usá el
@@ -115,7 +118,7 @@ export default function UserManual({ colors }) {
         </p>
       </Section>
 
-      <Section id="timing" icon="⏱️" title="Cómo conectar el timing en vivo (Speedhive / Race Monitor)" {...sectionProps}>
+      <Section id="timing" icon="⏱️" title={t('manual.sections.timing')} {...sectionProps}>
         <ol style={ol}>
           <li style={li}>Andá a la pestaña <b>AJUSTES</b> y elegí el proveedor: <b>Speedhive (MyLaps)</b> o <b>Race Monitor</b>.</li>
           <li style={li}>Pegá el código de la carrera, o directamente la URL completa de Speedhive/Race Monitor — el programa reconoce ambos formatos igual.</li>
@@ -124,7 +127,7 @@ export default function UserManual({ colors }) {
         <div style={note}>Si intentás hacer auto-carga sin haber cargado antes un código, el programa te va a avisar que primero completes el código en AJUSTES.</div>
       </Section>
 
-      <Section id="excel" icon="📊" title="Formato del Excel para el Campeonato" {...sectionProps}>
+      <Section id="excel" icon="📊" title={t('manual.sections.excel')} {...sectionProps}>
         <p>
           En la pestaña <b>CAMPEONATO</b>, el botón "CARGAR EXCEL" acepta un archivo <span style={code}>.xlsx</span>{' '}
           o <span style={code}>.xls</span>. Solo lee la <b>primera hoja</b> del archivo, y busca estas columnas
@@ -152,7 +155,7 @@ export default function UserManual({ colors }) {
         </p>
       </Section>
 
-      <Section id="photos" icon="🖼️" title="Fotos de los pilotos" {...sectionProps}>
+      <Section id="photos" icon="🖼️" title={t('manual.sections.photos')} {...sectionProps}>
         <ol style={ol}>
           <li style={li}>En la pestaña <b>PERSONALIZAR</b>, sección "CARPETA FOTOS DE PILOTOS", elegí la carpeta donde tenés las fotos.</li>
           <li style={li}>
@@ -168,7 +171,7 @@ export default function UserManual({ colors }) {
         </p>
       </Section>
 
-      <Section id="tabs" icon="🗂️" title="Guía rápida de cada pestaña" {...sectionProps}>
+      <Section id="tabs" icon="🗂️" title={t('manual.sections.tabs')} {...sectionProps}>
         <table style={table}>
           <tbody>
             <tr><td style={{ ...td, fontWeight: 'bold', whiteSpace: 'nowrap' }}>PANEL</td><td style={td}>El control principal al aire: banderas, zócalos de relator/comentarista/noteros/circuito/clima, alertas de curva, grilla de partida, auto-carga de tiempos, semáforo de largada, torre de posiciones, batalla, campeonato virtual, evolución de tiempos, votación, resultados finales y ganador. A la derecha está la tabla de pilotos en vivo.</td></tr>
@@ -186,7 +189,7 @@ export default function UserManual({ colors }) {
       </Section>
 
       <div style={{ ...note, marginTop: '10px', backgroundColor: 'rgba(52, 152, 219, 0.1)', borderColor: '#3498db' }}>
-        💡 ¿Algo no coincide con cómo lo usás en la práctica, o falta explicar algo? Avisale al equipo de desarrollo para actualizar este manual.
+        {t('manual.feedbackNote')}
       </div>
     </div>
   );

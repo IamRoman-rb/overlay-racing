@@ -1,14 +1,15 @@
 import { useState, useEffect } from 'react';
+import { LANGUAGES } from '../i18n/translations';
 
-export default function SettingsPanel({ config, handleDirectSave, handleScrape, colors, inputStyle, btnStyle }) {
-  
+export default function SettingsPanel({ config, handleDirectSave, handleScrape, colors, inputStyle, btnStyle, t, language, setLanguage }) {
+
   const chromaColors = [
-    { label: 'VERDE (CLÁSICO)', value: '#00FF00' },
-    { label: 'AZUL', value: '#0000FF' },
-    { label: 'MAGENTA / ROSA', value: '#FF00FF' },
-    { label: 'NEGRO', value: '#000000' },
-    { label: 'BLANCO', value: '#FFFFFF' },
-    { label: 'AMARILLO', value: '#FFFF00' }
+    { label: t('ajustes.chromaGreen'), value: '#00FF00' },
+    { label: t('ajustes.chromaBlue'), value: '#0000FF' },
+    { label: t('ajustes.chromaMagenta'), value: '#FF00FF' },
+    { label: t('ajustes.chromaBlack'), value: '#000000' },
+    { label: t('ajustes.chromaWhite'), value: '#FFFFFF' },
+    { label: t('ajustes.chromaYellow'), value: '#FFFF00' }
   ];
 
   const [localCode, setLocalCode] = useState(config.speedhiveCode || '');
@@ -21,13 +22,29 @@ export default function SettingsPanel({ config, handleDirectSave, handleScrape, 
   return (
     <div style={{ flex: 1, padding: '30px', backgroundColor: colors.bgApp, overflowY: 'auto' }}>
       <h2 style={{ borderBottom: `1px solid ${colors.border}`, paddingBottom: '10px', color: colors.yellow, marginTop: 0 }}>
-        AJUSTES DEL SISTEMA
+        {t('ajustes.title')}
       </h2>
+
+      {/* SECCIÓN: IDIOMA */}
+      <div style={{ marginTop: '20px', backgroundColor: colors.bgPanel, padding: '20px', borderRadius: '8px', border: `1px solid ${colors.border}` }}>
+        <label style={{ display: 'block', marginBottom: '10px', fontSize: '12px', fontWeight: 'bold', color: colors.textMuted }}>
+          {t('ajustes.languageLabel')}
+        </label>
+        <select
+          value={language}
+          onChange={(e) => setLanguage(e.target.value)}
+          style={{ ...inputStyle, fontSize: '14px', padding: '12px', width: '300px', cursor: 'pointer' }}
+        >
+          {LANGUAGES.map(lang => (
+            <option key={lang.value} value={lang.value}>{lang.label}</option>
+          ))}
+        </select>
+      </div>
 
       {/* SECCIÓN 1: CHROMA KEY */}
       <div style={{ marginTop: '20px', backgroundColor: colors.bgPanel, padding: '20px', borderRadius: '8px', border: `1px solid ${colors.border}` }}>
         <label style={{ display: 'block', marginBottom: '10px', fontSize: '12px', fontWeight: 'bold', color: colors.textMuted }}>
-          COLOR DE FONDO (CHROMA KEY)
+          {t('ajustes.chromaLabel')}
         </label>
         <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
           <select
@@ -45,10 +62,10 @@ export default function SettingsPanel({ config, handleDirectSave, handleScrape, 
 
       {/* SECCIÓN 2: ORIGEN DE DATOS */}
       <div style={{ marginTop: '20px', backgroundColor: colors.bgPanel, padding: '20px', borderRadius: '8px', border: `1px solid ${colors.border}` }}>
-        
+
         {/* SELECTOR DE PROVEEDOR */}
         <label style={{ display: 'block', marginBottom: '10px', fontSize: '12px', fontWeight: 'bold', color: colors.textMuted }}>
-          PROVEEDOR DE TIEMPOS (TIMING)
+          {t('ajustes.providerLabel')}
         </label>
         <select
           value={provider}
@@ -61,14 +78,14 @@ export default function SettingsPanel({ config, handleDirectSave, handleScrape, 
 
         {/* INPUT DEL CÓDIGO */}
         <label style={{ display: 'block', marginBottom: '10px', fontSize: '12px', fontWeight: 'bold', color: colors.textMuted }}>
-          CÓDIGO DE LA CARRERA
+          {t('ajustes.codeLabel')}
         </label>
         <div style={{ display: 'flex', gap: '10px', alignItems: 'center', backgroundColor: colors.bgApp, padding: '10px', borderRadius: '4px', border: `1px solid ${colors.border}` }}>
-          
+
           <span style={{ color: colors.textMuted, fontSize: '14px' }}>
             {provider === 'racemonitor' ? 'https://www.race-monitor.com/Live/Race/' : 'https://speedhive.mylaps.com/livetiming/'}
           </span>
-          
+
           <input
             value={localCode}
             onChange={(e) => setLocalCode(e.target.value)}
@@ -76,19 +93,19 @@ export default function SettingsPanel({ config, handleDirectSave, handleScrape, 
             style={{ ...inputStyle, fontSize: '14px', padding: '10px', textTransform: 'none', flex: 1, backgroundColor: colors.bgPanel, color: colors.yellow }}
             placeholder={provider === 'racemonitor' ? "Ej: 169244" : "Ej: 74582"}
           />
-          
+
           {provider === 'speedhive' && (
             <span style={{ color: colors.textMuted, fontSize: '14px' }}>/active</span>
           )}
         </div>
-        
+
         {/* Botón rápido para testear */}
         <div style={{ marginTop: '15px' }}>
           <button onClick={handleScrape} style={{ ...btnStyle(true), width: 'auto', padding: '10px 30px' }}>
-            🔄 CARGAR DATOS AHORA
+            {t('ajustes.loadNowBtn')}
           </button>
         </div>
-        
+
       </div>
     </div>
   );

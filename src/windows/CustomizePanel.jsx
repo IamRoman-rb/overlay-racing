@@ -1,12 +1,13 @@
 import { useState, useRef } from 'react';
-import { SKIN_OPTIONS } from '../utils/skinStyles';
+import { SKIN_FORMATS } from '../utils/skinStyles';
 
-const renderSkinOptions = () => SKIN_OPTIONS.map(opt => (
-  <option key={opt.value} value={opt.value}>{opt.label}</option>
-));
-
-export default function CustomizePanel({ config, positions, defaultPositions, onUpdatePositions, onSelectLogo, onSelectCategoryLogo, onSelectPhotosFolder, onClearLogo, onClearCategoryLogo, onClearPhotosFolder, onConfigChange, colors, inputStyle, btnStyle }) {
+export default function CustomizePanel({ config, positions, defaultPositions, onUpdatePositions, onSelectLogo, onSelectCategoryLogo, onSelectPhotosFolder, onClearLogo, onClearCategoryLogo, onClearPhotosFolder, onConfigChange, colors, inputStyle, btnStyle, t }) {
   const [selectedGraphic, setSelectedGraphic] = useState('relator');
+
+  const skinLabels = { pro: t('personalizar.skinPro'), gradient: t('personalizar.skinGradient'), glass: t('personalizar.skinGlass') };
+  const renderSkinOptions = () => SKIN_FORMATS.map(value => (
+    <option key={value} value={value}>{skinLabels[value] || value}</option>
+  ));
 
   const dragInfo = useRef({ isDragging: false, id: null, startX: 0, startY: 0, initialX: 0, initialY: 0 });
   const previewRef = useRef(null);
@@ -81,47 +82,38 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
         }}
       >
         <span style={{ color: config.themeTitleText || '#888888', fontSize: '11px', fontWeight: 'bold' }}>{label}</span><br />
-        <span style={{ color: config.themeNormalText || '#ffffff', fontSize: '22px', fontWeight: 'bold' }}>{config[id] || 'ÁREA DE GRÁFICA'}</span>
+        <span style={{ color: config.themeNormalText || '#ffffff', fontSize: '22px', fontWeight: 'bold' }}>{config[id] || t('personalizar.previewPlaceholder')}</span>
       </div>
     );
   };
 
-  // --- FIX: Añadimos el Campeonato Virtual a la lista maestra ---
-  const allGraphics = [
-    { id: 'relator', label: 'RELATOR' }, { id: 'comentarista', label: 'COMENTARISTA' }, { id: 'notero1', label: 'NOTERO 1' }, { id: 'notero2', label: 'NOTERO 2' },
-    { id: 'circuito', label: 'CIRCUITO' }, { id: 'clima', label: 'CLIMA' }, { id: 'ticker', label: 'TIRA INFERIOR' }, { id: 'tower', label: 'TORRE POSICIONES' },
-    { id: 'grid', label: 'GRILLA PARTIDA' }, { id: 'finalResults', label: 'RESULTADOS FINALES' }, { id: 'winner', label: 'GANADOR' },
-    { id: 'flags', label: 'BANDERAS DE ALERTA' }, { id: 'fastestLap', label: 'RECORD DE VUELTA' },
-    { id: 'driverInfo', label: 'INFO DEL PILOTO' }, { id: 'battle', label: 'BATALLA (F1)' }, { id: 'customZocalo', label: 'ZÓCALO LIBRE' },
-    { id: 'votingQR', label: 'QR DE VOTACIÓN' }, { id: 'votingResults', label: 'RESULTADOS DE VOTACIÓN' },
-    { id: 'lapCounter', label: 'CONTADOR DE VUELTAS' },
-    { id: 'virtualChamp', label: 'CAMPEONATO VIRTUAL' },
-    { id: 'pitStop', label: 'CRONÓMETRO DE BOXES' },
-    { id: 'startingLights', label: 'SEMÁFORO DE LARGADA' },
-    { id: 'lapTimesHistory', label: 'EVOLUCIÓN DE TIEMPOS DE VUELTA' }, 
-    { id: 'trackAlert', label: 'ALERTA EN CURVA' },
-    { id: 'penaltyAlert', label: 'SANCIÓN / INVESTIGACIÓN' },
+  const GRAPHIC_IDS = [
+    'relator', 'comentarista', 'notero1', 'notero2', 'circuito', 'clima', 'ticker', 'tower',
+    'grid', 'finalResults', 'winner', 'flags', 'fastestLap', 'driverInfo', 'battle', 'customZocalo',
+    'votingQR', 'votingResults', 'lapCounter', 'virtualChamp', 'pitStop', 'startingLights',
+    'lapTimesHistory', 'trackAlert', 'penaltyAlert'
   ];
+  const allGraphics = GRAPHIC_IDS.map(id => ({ id, label: t(`graphics.${id}`) }));
 
   const colorSettings = [
-    { id: 'themeMain', label: 'BORDES / LÍNEAS', default: '#e74c3c' }, { id: 'themeSecondary', label: 'CAJAS / SECUNDARIO', default: '#3498db' },
-    { id: 'themeAccent', label: 'ACENTO / POSICIÓN', default: '#f39c12' }, { id: 'themeBg', label: 'FONDO GENERAL', default: '#1a1a1a' },
-    { id: 'themeHeaderBg', label: 'FONDO ENCABEZADOS', default: '#000000' }, { id: 'themeTitleText', label: 'TEXTO TÍTULOS', default: '#ffcc00' },
-    { id: 'themeNormalText', label: 'TEXTO NOMBRES', default: '#ffffff' }, { id: 'themeNumberText', label: 'TEXTO TIEMPOS', default: '#bdc3c7' }
+    { id: 'themeMain', label: t('personalizar.colorBorder'), default: '#e74c3c' }, { id: 'themeSecondary', label: t('personalizar.colorSecondary'), default: '#3498db' },
+    { id: 'themeAccent', label: t('personalizar.colorAccent'), default: '#f39c12' }, { id: 'themeBg', label: t('personalizar.colorBg'), default: '#1a1a1a' },
+    { id: 'themeHeaderBg', label: t('personalizar.colorHeaderBg'), default: '#000000' }, { id: 'themeTitleText', label: t('personalizar.colorTitleText'), default: '#ffcc00' },
+    { id: 'themeNormalText', label: t('personalizar.colorNormalText'), default: '#ffffff' }, { id: 'themeNumberText', label: t('personalizar.colorNumberText'), default: '#bdc3c7' }
   ];
 
   return (
     <div style={{ display: 'flex', flex: 1, overflow: 'hidden', backgroundColor: colors.bgApp }} onMouseMove={handlePreviewMouseMove} onMouseUp={handlePreviewMouseUp} onMouseLeave={handlePreviewMouseUp} >
       <div style={{ width: '380px', minWidth: '380px', backgroundColor: colors.bgPanel, padding: '20px', overflowY: 'auto', borderRight: `1px solid ${colors.border}`, zIndex: 100 }}>
 
-        <h3 style={{ color: colors.yellow, marginTop: 0, marginBottom: '15px' }}>SELECCIONAR GRÁFICA</h3>
+        <h3 style={{ color: colors.yellow, marginTop: 0, marginBottom: '15px' }}>{t('personalizar.selectGraphic')}</h3>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '5px', marginBottom: '30px' }}>
           {allGraphics.map(graphic => (
             <button key={graphic.id} onClick={() => setSelectedGraphic(graphic.id)} style={{ ...btnStyle(selectedGraphic === graphic.id), padding: '8px 5px', fontSize: '9px' }}> {graphic.label} </button>
           ))}
         </div>
 
-        <h3 style={{ color: colors.yellow, marginBottom: '15px' }}>CONFIGURACIÓN VISUAL (TEMA)</h3>
+        <h3 style={{ color: colors.yellow, marginBottom: '15px' }}>{t('personalizar.themeConfig')}</h3>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '15px', backgroundColor: '#111', padding: '15px', borderRadius: '8px', border: `1px solid ${colors.border}` }}>
           {colorSettings.map(c => (
             <div key={c.id} style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
@@ -134,33 +126,33 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
           ))}
         </div>
 
-        <h3 style={{ color: colors.yellow, marginBottom: '15px' }}>TEXTO Y TIPOGRAFÍA</h3>
+        <h3 style={{ color: colors.yellow, marginBottom: '15px' }}>{t('personalizar.textTypography')}</h3>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '20px' }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
-            <label style={{ fontSize: '9px', color: colors.textMuted, fontWeight: 'bold' }}>TIPOGRAFÍA GENERAL</label>
+            <label style={{ fontSize: '9px', color: colors.textMuted, fontWeight: 'bold' }}>{t('personalizar.fontLabel')}</label>
             <select value={config.fontFamily || 'Arial, sans-serif'} onChange={(e) => onConfigChange('fontFamily', e.target.value)} style={{ ...inputStyle, padding: '10px', fontSize: '11px', cursor: 'pointer', border: `1px solid ${colors.border}` }}>
-              <option value="Arial, sans-serif">Arial (Clásica)</option>
-              <option value="'Oswald', sans-serif">Oswald (TV)</option>
-              <option value="'Montserrat', sans-serif">Montserrat (Moderna)</option>
-              <option value="'Teko', sans-serif">Teko (Racing)</option>
-              <option value="'Exo 2', sans-serif">Exo 2 (Futurista)</option>
+              <option value="Arial, sans-serif">{t('personalizar.fontArial')}</option>
+              <option value="'Oswald', sans-serif">{t('personalizar.fontOswald')}</option>
+              <option value="'Montserrat', sans-serif">{t('personalizar.fontMontserrat')}</option>
+              <option value="'Teko', sans-serif">{t('personalizar.fontTeko')}</option>
+              <option value="'Exo 2', sans-serif">{t('personalizar.fontExo')}</option>
             </select>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
-            <label style={{ fontSize: '9px', color: colors.textMuted, fontWeight: 'bold' }}>FORMATO NOMBRES</label>
+            <label style={{ fontSize: '9px', color: colors.textMuted, fontWeight: 'bold' }}>{t('personalizar.nameFormatLabel')}</label>
             <select value={config.nameFormat || 'original'} onChange={(e) => onConfigChange('nameFormat', e.target.value)} style={{ ...inputStyle, padding: '10px', fontSize: '11px', cursor: 'pointer', border: `1px solid ${colors.border}` }}>
-              <option value="original">Original</option>
-              <option value="uppercase">MAYÚSCULAS</option>
-              <option value="firstInitialLast">R. Borla</option>
-              <option value="firstLastInitial">Roman B.</option>
-              <option value="lastOnly">Borla (Solo Apellido)</option>
+              <option value="original">{t('personalizar.nameOriginal')}</option>
+              <option value="uppercase">{t('personalizar.nameUppercase')}</option>
+              <option value="firstInitialLast">{t('personalizar.nameFirstInitialLast')}</option>
+              <option value="firstLastInitial">{t('personalizar.nameFirstLastInitial')}</option>
+              <option value="lastOnly">{t('personalizar.nameLastOnly')}</option>
             </select>
           </div>
         </div>
 
         {selectedGraphic === 'grid' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', marginBottom: '30px', backgroundColor: '#111', padding: '15px', borderRadius: '8px', border: `1px solid ${colors.border}` }}>
-            <label style={{ fontSize: '10px', color: colors.textMuted, fontWeight: 'bold' }}>FORMATO DE GRILLA DE PARTIDA</label>
+            <label style={{ fontSize: '10px', color: colors.textMuted, fontWeight: 'bold' }}>{t('personalizar.formatOf', { name: t('graphics.grid') })}</label>
             <select
               value={config.gridFormat || 'standard'}
               onChange={(e) => onConfigChange('gridFormat', e.target.value)}
@@ -176,7 +168,7 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
 
         {['relator', 'comentarista', 'notero1', 'notero2', 'circuito'].includes(selectedGraphic) && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', marginBottom: '30px', backgroundColor: '#111', padding: '15px', borderRadius: '8px', border: `1px solid ${colors.border}` }}>
-            <label style={{ fontSize: '10px', color: colors.textMuted, fontWeight: 'bold' }}>FORMATO DE ZÓCALO</label>
+            <label style={{ fontSize: '10px', color: colors.textMuted, fontWeight: 'bold' }}>{t('personalizar.lowerThirdFormatLabel')}</label>
             <select
               value={config[`lowerThirdFormat_${selectedGraphic}`] || 'standard'}
               onChange={(e) => onConfigChange(`lowerThirdFormat_${selectedGraphic}`, e.target.value)}
@@ -193,7 +185,7 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
 
         {selectedGraphic === 'pitStop' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', marginBottom: '30px', backgroundColor: '#111', padding: '15px', borderRadius: '8px', border: `1px solid ${colors.border}` }}>
-            <label style={{ fontSize: '10px', color: colors.textMuted, fontWeight: 'bold' }}>FORMATO DE CRONÓMETRO DE BOXES</label>
+            <label style={{ fontSize: '10px', color: colors.textMuted, fontWeight: 'bold' }}>{t('personalizar.formatOf', { name: t('graphics.pitStop') })}</label>
             <select
               value={config.pitStopFormat || 'standard'}
               onChange={(e) => onConfigChange('pitStopFormat', e.target.value)}
@@ -210,7 +202,7 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
 
         {selectedGraphic === 'startingLights' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', marginBottom: '30px', backgroundColor: '#111', padding: '15px', borderRadius: '8px', border: `1px solid ${colors.border}` }}>
-            <label style={{ fontSize: '10px', color: colors.textMuted, fontWeight: 'bold' }}>FORMATO DE SEMÁFORO DE LARGADA</label>
+            <label style={{ fontSize: '10px', color: colors.textMuted, fontWeight: 'bold' }}>{t('personalizar.formatOf', { name: t('graphics.startingLights') })}</label>
             <select
               value={config.startingLightsFormat || 'classic'}
               onChange={(e) => onConfigChange('startingLightsFormat', e.target.value)}
@@ -227,7 +219,7 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
 
         {selectedGraphic === 'lapCounter' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', marginBottom: '30px', backgroundColor: '#111', padding: '15px', borderRadius: '8px', border: `1px solid ${colors.border}` }}>
-            <label style={{ fontSize: '10px', color: colors.textMuted, fontWeight: 'bold' }}>FORMATO DE CONTADOR DE VUELTAS</label>
+            <label style={{ fontSize: '10px', color: colors.textMuted, fontWeight: 'bold' }}>{t('personalizar.formatOf', { name: t('graphics.lapCounter') })}</label>
             <select
               value={config.lapCounterFormat || 'standard'}
               onChange={(e) => onConfigChange('lapCounterFormat', e.target.value)}
@@ -244,7 +236,7 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
 
         {selectedGraphic === 'virtualChamp' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', marginBottom: '30px', backgroundColor: '#111', padding: '15px', borderRadius: '8px', border: `1px solid ${colors.border}` }}>
-            <label style={{ fontSize: '10px', color: colors.textMuted, fontWeight: 'bold' }}>FORMATO DE CAMPEONATO VIRTUAL</label>
+            <label style={{ fontSize: '10px', color: colors.textMuted, fontWeight: 'bold' }}>{t('personalizar.formatOf', { name: t('graphics.virtualChamp') })}</label>
             <select
               value={config.virtualChampFormat || 'standard'}
               onChange={(e) => onConfigChange('virtualChampFormat', e.target.value)}
@@ -261,7 +253,7 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
 
         {selectedGraphic === 'votingQR' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', marginBottom: '30px', backgroundColor: '#111', padding: '15px', borderRadius: '8px', border: `1px solid ${colors.border}` }}>
-            <label style={{ fontSize: '10px', color: colors.textMuted, fontWeight: 'bold' }}>FORMATO DE QR DE VOTACIÓN</label>
+            <label style={{ fontSize: '10px', color: colors.textMuted, fontWeight: 'bold' }}>{t('personalizar.formatOf', { name: t('graphics.votingQR') })}</label>
             <select
               value={config.votingQRFormat || 'standard'}
               onChange={(e) => onConfigChange('votingQRFormat', e.target.value)}
@@ -278,7 +270,7 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
 
         {selectedGraphic === 'votingResults' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', marginBottom: '30px', backgroundColor: '#111', padding: '15px', borderRadius: '8px', border: `1px solid ${colors.border}` }}>
-            <label style={{ fontSize: '10px', color: colors.textMuted, fontWeight: 'bold' }}>FORMATO DE RESULTADOS DE VOTACIÓN</label>
+            <label style={{ fontSize: '10px', color: colors.textMuted, fontWeight: 'bold' }}>{t('personalizar.formatOf', { name: t('graphics.votingResults') })}</label>
             <select
               value={config.votingResultsFormat || 'standard'}
               onChange={(e) => onConfigChange('votingResultsFormat', e.target.value)}
@@ -295,7 +287,7 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
 
         {selectedGraphic === 'lapTimesHistory' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', marginBottom: '30px', backgroundColor: '#111', padding: '15px', borderRadius: '8px', border: `1px solid ${colors.border}` }}>
-            <label style={{ fontSize: '10px', color: colors.textMuted, fontWeight: 'bold' }}>FORMATO DE EVOLUCIÓN DE TIEMPOS</label>
+            <label style={{ fontSize: '10px', color: colors.textMuted, fontWeight: 'bold' }}>{t('personalizar.formatOf', { name: t('graphics.lapTimesHistory') })}</label>
             <select
               value={config.lapTimesHistoryFormat || 'standard'}
               onChange={(e) => onConfigChange('lapTimesHistoryFormat', e.target.value)}
@@ -312,7 +304,7 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
 
         {selectedGraphic === 'trackAlert' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', marginBottom: '30px', backgroundColor: '#111', padding: '15px', borderRadius: '8px', border: `1px solid ${colors.border}` }}>
-            <label style={{ fontSize: '10px', color: colors.textMuted, fontWeight: 'bold' }}>FORMATO DE ALERTA EN CURVA</label>
+            <label style={{ fontSize: '10px', color: colors.textMuted, fontWeight: 'bold' }}>{t('personalizar.formatOf', { name: t('graphics.trackAlert') })}</label>
             <select
               value={config.trackAlertFormat || 'standard'}
               onChange={(e) => onConfigChange('trackAlertFormat', e.target.value)}
@@ -329,7 +321,7 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
 
         {selectedGraphic === 'customZocalo' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', marginBottom: '30px', backgroundColor: '#111', padding: '15px', borderRadius: '8px', border: `1px solid ${colors.border}` }}>
-            <label style={{ fontSize: '10px', color: colors.textMuted, fontWeight: 'bold' }}>FORMATO DE ZÓCALO LIBRE</label>
+            <label style={{ fontSize: '10px', color: colors.textMuted, fontWeight: 'bold' }}>{t('personalizar.formatOf', { name: t('graphics.customZocalo') })}</label>
             <select
               value={config.customZocaloFormat || 'standard'}
               onChange={(e) => onConfigChange('customZocaloFormat', e.target.value)}
@@ -346,7 +338,7 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
 
         {selectedGraphic === 'driverInfo' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', marginBottom: '30px', backgroundColor: '#111', padding: '15px', borderRadius: '8px', border: `1px solid ${colors.border}` }}>
-            <label style={{ fontSize: '10px', color: colors.textMuted, fontWeight: 'bold' }}>FORMATO DE INFO DEL PILOTO</label>
+            <label style={{ fontSize: '10px', color: colors.textMuted, fontWeight: 'bold' }}>{t('personalizar.formatOf', { name: t('graphics.driverInfo') })}</label>
             <select
               value={config.driverInfoFormat || 'standard'}
               onChange={(e) => onConfigChange('driverInfoFormat', e.target.value)}
@@ -363,7 +355,7 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
 
         {selectedGraphic === 'winner' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', marginBottom: '30px', backgroundColor: '#111', padding: '15px', borderRadius: '8px', border: `1px solid ${colors.border}` }}>
-            <label style={{ fontSize: '10px', color: colors.textMuted, fontWeight: 'bold' }}>FORMATO DE GANADOR</label>
+            <label style={{ fontSize: '10px', color: colors.textMuted, fontWeight: 'bold' }}>{t('personalizar.formatOf', { name: t('graphics.winner') })}</label>
             <select
               value={config.winnerFormat || 'standard'}
               onChange={(e) => onConfigChange('winnerFormat', e.target.value)}
@@ -380,7 +372,7 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
 
         {selectedGraphic === 'fastestLap' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', marginBottom: '30px', backgroundColor: '#111', padding: '15px', borderRadius: '8px', border: `1px solid ${colors.border}` }}>
-            <label style={{ fontSize: '10px', color: colors.textMuted, fontWeight: 'bold' }}>FORMATO DE RÉCORD DE VUELTA</label>
+            <label style={{ fontSize: '10px', color: colors.textMuted, fontWeight: 'bold' }}>{t('personalizar.formatOf', { name: t('graphics.fastestLap') })}</label>
             <select
               value={config.fastestLapFormat || 'standard'}
               onChange={(e) => onConfigChange('fastestLapFormat', e.target.value)}
@@ -397,7 +389,7 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
 
         {selectedGraphic === 'finalResults' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', marginBottom: '30px', backgroundColor: '#111', padding: '15px', borderRadius: '8px', border: `1px solid ${colors.border}` }}>
-            <label style={{ fontSize: '10px', color: colors.textMuted, fontWeight: 'bold' }}>FORMATO DE RESULTADOS FINALES</label>
+            <label style={{ fontSize: '10px', color: colors.textMuted, fontWeight: 'bold' }}>{t('personalizar.formatOf', { name: t('graphics.finalResults') })}</label>
             <select
               value={config.finalResultsFormat || 'standard'}
               onChange={(e) => onConfigChange('finalResultsFormat', e.target.value)}
@@ -414,7 +406,7 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
 
         {selectedGraphic === 'clima' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', marginBottom: '30px', backgroundColor: '#111', padding: '15px', borderRadius: '8px', border: `1px solid ${colors.border}` }}>
-            <label style={{ fontSize: '10px', color: colors.textMuted, fontWeight: 'bold' }}>FORMATO DE CLIMA</label>
+            <label style={{ fontSize: '10px', color: colors.textMuted, fontWeight: 'bold' }}>{t('personalizar.formatOf', { name: t('graphics.clima') })}</label>
             <select
               value={config.climaFormat || 'standard'}
               onChange={(e) => onConfigChange('climaFormat', e.target.value)}
@@ -431,7 +423,7 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
 
         {selectedGraphic === 'flags' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', marginBottom: '30px', backgroundColor: '#111', padding: '15px', borderRadius: '8px', border: `1px solid ${colors.border}` }}>
-            <label style={{ fontSize: '10px', color: colors.textMuted, fontWeight: 'bold' }}>FORMATO DE BANDERAS DE ALERTA</label>
+            <label style={{ fontSize: '10px', color: colors.textMuted, fontWeight: 'bold' }}>{t('personalizar.formatOf', { name: t('graphics.flags') })}</label>
             <select
               value={config.flagsFormat || 'standard'}
               onChange={(e) => onConfigChange('flagsFormat', e.target.value)}
@@ -448,7 +440,7 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
 
         {selectedGraphic === 'tower' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', marginBottom: '30px', backgroundColor: '#111', padding: '15px', borderRadius: '8px', border: `1px solid ${colors.border}` }}>
-            <label style={{ fontSize: '10px', color: colors.textMuted, fontWeight: 'bold' }}>FORMATO DE TORRE DE POSICIONES</label>
+            <label style={{ fontSize: '10px', color: colors.textMuted, fontWeight: 'bold' }}>{t('personalizar.formatOf', { name: t('graphics.tower') })}</label>
             <select
               value={config.towerFormat || 'standard'}
               onChange={(e) => onConfigChange('towerFormat', e.target.value)}
@@ -465,7 +457,7 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
 
         {selectedGraphic === 'ticker' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', marginBottom: '30px', backgroundColor: '#111', padding: '15px', borderRadius: '8px', border: `1px solid ${colors.border}` }}>
-            <label style={{ fontSize: '10px', color: colors.textMuted, fontWeight: 'bold' }}>FORMATO DE TIRA INFERIOR</label>
+            <label style={{ fontSize: '10px', color: colors.textMuted, fontWeight: 'bold' }}>{t('personalizar.formatOf', { name: t('graphics.ticker') })}</label>
             <select
               value={config.tickerFormat || 'standard'}
               onChange={(e) => onConfigChange('tickerFormat', e.target.value)}
@@ -482,7 +474,7 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
 
         {selectedGraphic === 'battle' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', marginBottom: '30px', backgroundColor: '#111', padding: '15px', borderRadius: '8px', border: `1px solid ${colors.border}` }}>
-            <label style={{ fontSize: '10px', color: colors.textMuted, fontWeight: 'bold' }}>FORMATO DE BATALLA</label>
+            <label style={{ fontSize: '10px', color: colors.textMuted, fontWeight: 'bold' }}>{t('personalizar.formatOf', { name: t('graphics.battle') })}</label>
             <select
               value={config.battleFormat || 'vertical'}
               onChange={(e) => onConfigChange('battleFormat', e.target.value)}
@@ -500,7 +492,7 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
 
         {selectedGraphic === 'penaltyAlert' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', marginBottom: '30px', backgroundColor: '#111', padding: '15px', borderRadius: '8px', border: `1px solid ${colors.border}` }}>
-            <label style={{ fontSize: '10px', color: colors.textMuted, fontWeight: 'bold' }}>FORMATO DE SANCIÓN / INVESTIGACIÓN</label>
+            <label style={{ fontSize: '10px', color: colors.textMuted, fontWeight: 'bold' }}>{t('personalizar.formatOf', { name: t('graphics.penaltyAlert') })}</label>
             <select
               value={config.penaltyAlertFormat || 'card'}
               onChange={(e) => onConfigChange('penaltyAlertFormat', e.target.value)}
@@ -515,80 +507,80 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
           </div>
         )}
 
-        <h3 style={{ color: colors.yellow, marginBottom: '15px' }}>ESTILO: {allGraphics.find(g => g.id === selectedGraphic)?.label}</h3>
+        <h3 style={{ color: colors.yellow, marginBottom: '15px' }}>{t('personalizar.styleOf', { name: allGraphics.find(g => g.id === selectedGraphic)?.label })}</h3>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '30px', backgroundColor: '#111', padding: '15px', borderRadius: '8px', border: `1px solid ${colors.border}` }}>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
-            <label style={{ fontSize: '9px', color: colors.textMuted, fontWeight: 'bold' }}>BORDES (REDONDEO)</label>
+            <label style={{ fontSize: '9px', color: colors.textMuted, fontWeight: 'bold' }}>{t('personalizar.borderRadiusLabel')}</label>
             <select
               value={config[`borderRadius_${selectedGraphic}`] || '8px'}
               onChange={(e) => onConfigChange(`borderRadius_${selectedGraphic}`, e.target.value)}
               style={{ ...inputStyle, padding: '10px', fontSize: '11px', cursor: 'pointer' }}
             >
-              <option value="0px">0px (Cuadrados)</option>
-              <option value="8px">8px (Normal)</option>
-              <option value="16px">16px (Redondeados)</option>
-              <option value="30px">30px (Píldora)</option>
+              <option value="0px">{t('personalizar.radius0')}</option>
+              <option value="8px">{t('personalizar.radius8')}</option>
+              <option value="16px">{t('personalizar.radius16')}</option>
+              <option value="30px">{t('personalizar.radius30')}</option>
             </select>
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
-            <label style={{ fontSize: '9px', color: colors.textMuted, fontWeight: 'bold' }}>ANIMACIÓN (ENTRADA)</label>
+            <label style={{ fontSize: '9px', color: colors.textMuted, fontWeight: 'bold' }}>{t('personalizar.animationLabel')}</label>
             <select
               value={config[`animationStyle_${selectedGraphic}`] || 'slide'}
               onChange={(e) => onConfigChange(`animationStyle_${selectedGraphic}`, e.target.value)}
               style={{ ...inputStyle, padding: '10px', fontSize: '11px', cursor: 'pointer' }}
             >
-              <option value="slide">Deslizar (Slide)</option>
-              <option value="fade">Desvanecer (Fade)</option>
-              <option value="zoom">Aumentar (Zoom)</option>
-              <option value="bounce">Rebote (Bounce)</option>
-              <option value="flip">Voltear (Flip)</option>
-              <option value="rotate">Rotar (Rotate)</option>
+              <option value="slide">{t('personalizar.animSlide')}</option>
+              <option value="fade">{t('personalizar.animFade')}</option>
+              <option value="zoom">{t('personalizar.animZoom')}</option>
+              <option value="bounce">{t('personalizar.animBounce')}</option>
+              <option value="flip">{t('personalizar.animFlip')}</option>
+              <option value="rotate">{t('personalizar.animRotate')}</option>
             </select>
           </div>
         </div>
 
-        <h3 style={{ color: colors.yellow, marginBottom: '15px' }}>COORDENADAS Y TAMAÑO</h3>
+        <h3 style={{ color: colors.yellow, marginBottom: '15px' }}>{t('personalizar.coordsTitle')}</h3>
         {positions[selectedGraphic] && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', marginBottom: '30px' }}>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px' }}>
-              <div><label style={{ fontSize: '9px', color: colors.textMuted }}>EJE X</label><input type="number" value={positions[selectedGraphic].x} onChange={(e) => handlePosChange('x', e.target.value)} style={inputStyle} /></div>
-              <div><label style={{ fontSize: '9px', color: colors.textMuted }}>EJE Y</label><input type="number" value={positions[selectedGraphic].y} onChange={(e) => handlePosChange('y', e.target.value)} style={inputStyle} /></div>
-              <div><label style={{ fontSize: '9px', color: colors.textMuted }}>ESCALA</label><input type="number" step="0.1" value={positions[selectedGraphic].scale} onChange={(e) => handlePosChange('scale', e.target.value)} style={inputStyle} /></div>
+              <div><label style={{ fontSize: '9px', color: colors.textMuted }}>{t('personalizar.axisX')}</label><input type="number" value={positions[selectedGraphic].x} onChange={(e) => handlePosChange('x', e.target.value)} style={inputStyle} /></div>
+              <div><label style={{ fontSize: '9px', color: colors.textMuted }}>{t('personalizar.axisY')}</label><input type="number" value={positions[selectedGraphic].y} onChange={(e) => handlePosChange('y', e.target.value)} style={inputStyle} /></div>
+              <div><label style={{ fontSize: '9px', color: colors.textMuted }}>{t('personalizar.scaleLabel')}</label><input type="number" step="0.1" value={positions[selectedGraphic].scale} onChange={(e) => handlePosChange('scale', e.target.value)} style={inputStyle} /></div>
             </div>
-            <button onClick={handleResetPosition} style={{ ...btnStyle(false), backgroundColor: '#c0392b', color: 'white', border: '1px solid #e74c3c' }}> 🔄 RESTABLECER POSICIÓN </button>
+            <button onClick={handleResetPosition} style={{ ...btnStyle(false), backgroundColor: '#c0392b', color: 'white', border: '1px solid #e74c3c' }}> {t('personalizar.resetPositionBtn')} </button>
           </div>
         )}
 
-        <h3 style={{ color: colors.yellow, marginBottom: '15px' }}>RECURSOS MULTIMEDIA</h3>
+        <h3 style={{ color: colors.yellow, marginBottom: '15px' }}>{t('personalizar.mediaTitle')}</h3>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '15px' }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
-            <span style={{ fontSize: '10px', color: colors.textMuted, fontWeight: 'bold' }}>LOGO PRODUCTORA</span>
+            <span style={{ fontSize: '10px', color: colors.textMuted, fontWeight: 'bold' }}>{t('personalizar.producerLogo')}</span>
             <div style={{ backgroundColor: '#000', height: '60px', borderRadius: '4px', border: `1px solid ${colors.border}`, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
-              {config.logo ? <img src={config.logo} alt="Logo" style={{ maxHeight: '50px', maxWidth: '90%', objectFit: 'contain' }} /> : <span style={{ fontSize: '10px', color: '#444' }}>VACÍO</span>}
+              {config.logo ? <img src={config.logo} alt="Logo" style={{ maxHeight: '50px', maxWidth: '90%', objectFit: 'contain' }} /> : <span style={{ fontSize: '10px', color: '#444' }}>{t('common.emptyLabel')}</span>}
             </div>
-            <button onClick={onSelectLogo} style={{ ...btnStyle(false), padding: '6px', fontSize: '9px' }}>📷 CARGAR</button>
-            {config.logo && <button onClick={onClearLogo} style={{ ...btnStyle(false), backgroundColor: '#c0392b', color: 'white', border: 'none', padding: '6px', fontSize: '9px' }}>🗑️ QUITAR</button>}
+            <button onClick={onSelectLogo} style={{ ...btnStyle(false), padding: '6px', fontSize: '9px' }}>{t('common.loadBtn')}</button>
+            {config.logo && <button onClick={onClearLogo} style={{ ...btnStyle(false), backgroundColor: '#c0392b', color: 'white', border: 'none', padding: '6px', fontSize: '9px' }}>{t('common.removeBtn')}</button>}
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
-            <span style={{ fontSize: '10px', color: colors.textMuted, fontWeight: 'bold' }}>LOGO CATEGORÍA</span>
+            <span style={{ fontSize: '10px', color: colors.textMuted, fontWeight: 'bold' }}>{t('personalizar.categoryLogo')}</span>
             <div style={{ backgroundColor: '#000', height: '60px', borderRadius: '4px', border: `1px solid ${colors.border}`, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
-              {config.categoryLogo ? <img src={config.categoryLogo} alt="Logo" style={{ maxHeight: '50px', maxWidth: '90%', objectFit: 'contain' }} /> : <span style={{ fontSize: '10px', color: '#444' }}>VACÍO</span>}
+              {config.categoryLogo ? <img src={config.categoryLogo} alt="Logo" style={{ maxHeight: '50px', maxWidth: '90%', objectFit: 'contain' }} /> : <span style={{ fontSize: '10px', color: '#444' }}>{t('common.emptyLabel')}</span>}
             </div>
-            <button onClick={onSelectCategoryLogo} style={{ ...btnStyle(false), padding: '6px', fontSize: '9px' }}>📷 CARGAR</button>
-            {config.categoryLogo && <button onClick={onClearCategoryLogo} style={{ ...btnStyle(false), backgroundColor: '#c0392b', color: 'white', border: 'none', padding: '6px', fontSize: '9px' }}>🗑️ QUITAR</button>}
+            <button onClick={onSelectCategoryLogo} style={{ ...btnStyle(false), padding: '6px', fontSize: '9px' }}>{t('common.loadBtn')}</button>
+            {config.categoryLogo && <button onClick={onClearCategoryLogo} style={{ ...btnStyle(false), backgroundColor: '#c0392b', color: 'white', border: 'none', padding: '6px', fontSize: '9px' }}>{t('common.removeBtn')}</button>}
           </div>
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', marginBottom: '25px', backgroundColor: '#111', padding: '10px', borderRadius: '4px', border: `1px solid ${colors.border}` }}>
-          <span style={{ fontSize: '10px', color: colors.textMuted, fontWeight: 'bold' }}>CARPETA FOTOS DE PILOTOS</span>
+          <span style={{ fontSize: '10px', color: colors.textMuted, fontWeight: 'bold' }}>{t('personalizar.photosFolder')}</span>
           <div style={{ fontSize: '10px', color: config.photosPath ? colors.green : '#555', wordBreak: 'break-all', marginBottom: '5px' }}>
-            {config.photosPath ? config.photosPath : 'Ninguna carpeta seleccionada.'}
+            {config.photosPath ? config.photosPath : t('personalizar.noFolderSelected')}
           </div>
-          <button onClick={onSelectPhotosFolder} style={{ ...btnStyle(false), padding: '8px', fontSize: '10px' }}>📁 ELEGIR CARPETA</button>
-          {config.photosPath && <button onClick={onClearPhotosFolder} style={{ ...btnStyle(false), backgroundColor: '#c0392b', color: 'white', border: 'none', padding: '8px', fontSize: '10px' }}>🗑️ QUITAR CARPETA</button>}
+          <button onClick={onSelectPhotosFolder} style={{ ...btnStyle(false), padding: '8px', fontSize: '10px' }}>{t('personalizar.chooseFolderBtn')}</button>
+          {config.photosPath && <button onClick={onClearPhotosFolder} style={{ ...btnStyle(false), backgroundColor: '#c0392b', color: 'white', border: 'none', padding: '8px', fontSize: '10px' }}>{t('personalizar.removeFolderBtn')}</button>}
         </div>
 
       </div>

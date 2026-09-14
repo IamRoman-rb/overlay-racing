@@ -25,7 +25,7 @@ function getContainedImageRect(containerW, containerH, imgW, imgH) {
   return { renderW, renderH, offsetX, offsetY };
 }
 
-export default function TrackMapPanel({ config, onConfigChange, colors, inputStyle, btnStyle }) {
+export default function TrackMapPanel({ config, onConfigChange, colors, inputStyle, btnStyle, t }) {
   const [selectedCurveId, setSelectedCurveId] = useState(null);
   const dragInfo = useRef({ isDragging: false, curveId: null });
   const imgRef = useRef(null);
@@ -43,7 +43,7 @@ export default function TrackMapPanel({ config, onConfigChange, colors, inputSty
   };
 
   const handleClearImage = () => {
-    if (typeof window !== 'undefined' && !window.confirm('¿Seguro que querés quitar el mapa del circuito? Se perderán las curvas marcadas.')) {
+    if (typeof window !== 'undefined' && !window.confirm(t('circuito.confirmRemoveMap'))) {
       return;
     }
     onConfigChange?.('trackImage', null);
@@ -62,7 +62,7 @@ export default function TrackMapPanel({ config, onConfigChange, colors, inputSty
   const handleImageClick = (e) => {
     if (dragInfo.current.isDragging) return; // evita agregar curva al soltar un drag
     const { x, y } = getPercentFromEvent(e);
-    const newCurve = { id: `curve_${Date.now()}`, name: `Curva ${curves.length + 1}`, x, y };
+    const newCurve = { id: `curve_${Date.now()}`, name: t('circuito.curveDefaultName', { n: curves.length + 1 }), x, y };
     const newCurves = [...curves, newCurve];
     onConfigChange?.('trackCurves', newCurves);
     setSelectedCurveId(newCurve.id);
@@ -98,25 +98,25 @@ export default function TrackMapPanel({ config, onConfigChange, colors, inputSty
   return (
     <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
       <div style={{ width: '320px', backgroundColor: colors.bgPanel, padding: '20px', overflowY: 'auto', borderRight: `1px solid ${colors.border}` }}>
-        <h3 style={{ color: colors.yellow, marginTop: 0, marginBottom: '15px' }}>MAPA DEL CIRCUITO</h3>
+        <h3 style={{ color: colors.yellow, marginTop: 0, marginBottom: '15px' }}>{t('circuito.title')}</h3>
 
         <div style={{ display: 'flex', gap: '5px', marginBottom: '20px' }}>
-          <button onClick={handleSelectImage} style={{ ...btnStyle(false), flex: 1 }}>📷 CARGAR IMAGEN</button>
+          <button onClick={handleSelectImage} style={{ ...btnStyle(false), flex: 1 }}>{t('circuito.loadImageBtn')}</button>
           {config?.trackImage && (
-            <button onClick={handleClearImage} style={{ ...btnStyle(false), flex: 1, backgroundColor: '#c0392b', color: '#fff', border: 'none' }}>🗑️ QUITAR</button>
+            <button onClick={handleClearImage} style={{ ...btnStyle(false), flex: 1, backgroundColor: '#c0392b', color: '#fff', border: 'none' }}>{t('common.removeBtn')}</button>
           )}
         </div>
 
         {config?.trackImage && (
           <p style={{ fontSize: '11px', color: colors.textMuted, marginBottom: '15px', lineHeight: '1.5' }}>
-            Hacé click en la imagen para agregar una curva. Arrastrá un marcador para moverlo.
+            {t('circuito.instructions')}
           </p>
         )}
 
-        <h3 style={{ color: colors.yellow, marginBottom: '10px', fontSize: '14px' }}>CURVAS ({curves.length})</h3>
+        <h3 style={{ color: colors.yellow, marginBottom: '10px', fontSize: '14px' }}>{t('circuito.curvesTitle', { n: curves.length })}</h3>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
           {curves.length === 0 && (
-            <p style={{ fontSize: '11px', color: colors.textMuted, fontStyle: 'italic' }}>Todavía no hay curvas marcadas.</p>
+            <p style={{ fontSize: '11px', color: colors.textMuted, fontStyle: 'italic' }}>{t('circuito.noCurves')}</p>
           )}
           {curves.map((c, i) => (
             <div
@@ -181,7 +181,7 @@ export default function TrackMapPanel({ config, onConfigChange, colors, inputSty
           </div>
         ) : (
           <div style={{ color: colors.textMuted, textAlign: 'center' }}>
-            <p>Cargá una imagen del circuito para empezar a marcar curvas.</p>
+            <p>{t('circuito.emptyState')}</p>
           </div>
         )}
       </div>

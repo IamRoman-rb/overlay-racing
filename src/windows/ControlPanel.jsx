@@ -6,6 +6,7 @@ import DriversTable from '../windows/DriversTable';
 import TrackMapPanel from '../windows/TrackMapPanel';
 import UserManual from '../windows/UserManual';
 import banderaCuadrosImg from '../assets/bandera cuadros.jpg';
+import { createTranslator } from '../i18n/translations';
 
 let ipcRenderer = null;
 if (typeof window !== 'undefined' && typeof window.require === 'function') {
@@ -23,14 +24,14 @@ const inputStyle = { backgroundColor: colors.bgInput, border: `1px solid ${color
 const btnStyle = (isActive = false) => ({ backgroundColor: isActive ? colors.yellow : colors.bgInput, color: isActive ? '#000' : colors.textMain, border: `1px solid ${isActive ? colors.yellow : colors.border}`, padding: '12px 10px', fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', cursor: 'pointer', width: '100%', textAlign: 'center', transition: 'all 0.2s ease' });
 const sectionTitleStyle = { fontSize: '10px', color: colors.textMuted, textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '8px', marginTop: '20px' };
 
-const GraphicControl = ({ id, label, value, isActive, onChange, onBlur, onToggle }) => (<div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}> <button onClick={() => onToggle(id)} style={btnStyle(isActive)}>{label}</button> <input name={id} value={value || ''} onChange={onChange} onBlur={onBlur} style={inputStyle} placeholder={`NOMBRE...`} /> </div>);
-const SelectControl = ({ id, label, value, options, isActive, onChange, onBlur, onToggle }) => (<div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}> <button onClick={() => onToggle(id)} style={btnStyle(isActive)}>{label}</button> <select name={id} value={value || ''} onChange={onChange} onBlur={onBlur} style={inputStyle}> <option value="">SELECCIONAR...</option> {options.map((opt, i) => (<option key={i} value={opt.nombre}>{opt.nombre.toUpperCase()}</option>))} </select> </div>);
-const WeatherControl = ({ id, label, config, isActive, onToggle, setConfig }) => {
+const GraphicControl = ({ id, label, value, isActive, onChange, onBlur, onToggle, t }) => (<div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}> <button onClick={() => onToggle(id)} style={btnStyle(isActive)}>{label}</button> <input name={id} value={value || ''} onChange={onChange} onBlur={onBlur} style={inputStyle} placeholder={t('panel.namePlaceholder')} /> </div>);
+const SelectControl = ({ id, label, value, options, isActive, onChange, onBlur, onToggle, t }) => (<div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}> <button onClick={() => onToggle(id)} style={btnStyle(isActive)}>{label}</button> <select name={id} value={value || ''} onChange={onChange} onBlur={onBlur} style={inputStyle}> <option value="">{t('common.selectPlaceholder')}</option> {options.map((opt, i) => (<option key={i} value={opt.nombre}>{opt.nombre.toUpperCase()}</option>))} </select> </div>);
+const WeatherControl = ({ id, label, config, isActive, onToggle, setConfig, t }) => {
   const [loading, setLoading] = useState(false);
 
   const fetchWeather = async () => {
     const circuitoSeleccionado = circuitosData.find(c => c.nombre === config.circuito);
-    if (!circuitoSeleccionado) { alert("⚠️ Selecciona un Circuito primero."); return; }
+    if (!circuitoSeleccionado) { alert(t('panel.weatherNeedCircuit')); return; }
     setLoading(true);
     try {
       const { lat, lon } = circuitoSeleccionado;
@@ -59,7 +60,7 @@ const WeatherControl = ({ id, label, config, isActive, onToggle, setConfig }) =>
       if (ipcRenderer) await ipcRenderer.invoke('save-config', newConfig);
     } catch (error) {
       console.error(error);
-      alert("❌ No se pudo obtener el clima. Revisá la conexión a internet.");
+      alert(t('panel.weatherError'));
     }
     setLoading(false);
   };
@@ -80,7 +81,7 @@ const WeatherControl = ({ id, label, config, isActive, onToggle, setConfig }) =>
             {Math.round(wd.temp)}°C · ST {wd.feelsLike !== null ? Math.round(wd.feelsLike) + '°' : '-'} · 💨 {wd.windSpeed !== undefined ? Math.round(wd.windSpeed) : '-'}km/h · 💧 {wd.humidity !== null ? Math.round(wd.humidity) + '%' : '-'} · 🌧 {wd.precipProb !== null ? Math.round(wd.precipProb) + '%' : '-'}
           </span>
         ) : (
-          <span style={{ color: colors.textMuted, fontSize: '10px' }}>SIN DATOS DE CLIMA...</span>
+          <span style={{ color: colors.textMuted, fontSize: '10px' }}>{t('panel.weatherNoData')}</span>
         )}
       </div>
     </div>
@@ -98,20 +99,14 @@ export const defaultPositions = {
   trackAlert: { x: 1500, y: 500, scale: 1 }, penaltyAlert: { x: 1500, y: 750, scale: 1 }
 };
 
-const allGraphicsList = [
-  { id: 'relator', label: 'RELATOR' }, { id: 'comentarista', label: 'COMENTARISTA' }, { id: 'notero1', label: 'NOTERO 1' }, { id: 'notero2', label: 'NOTERO 2' },
-  { id: 'circuito', label: 'CIRCUITO' }, { id: 'clima', label: 'CLIMA' }, { id: 'ticker', label: 'TIRA INFERIOR' }, { id: 'tower', label: 'TORRE POSICIONES' },
-  { id: 'grid', label: 'GRILLA PARTIDA' }, { id: 'finalResults', label: 'RESULTADOS FINALES' }, { id: 'winner', label: 'GANADOR' },
-  { id: 'flags', label: 'BANDERAS DE ALERTA' }, { id: 'fastestLap', label: 'RECORD DE VUELTA' },
-  { id: 'driverInfo', label: 'INFO DEL PILOTO' }, { id: 'battle', label: 'BATALLA (F1)' }, { id: 'customZocalo', label: 'ZÓCALO LIBRE' },
-  { id: 'votingQR', label: 'QR DE VOTACIÓN' }, { id: 'votingResults', label: 'RESULTADOS DE VOTACIÓN' },
-  { id: 'lapCounter', label: 'CONTADOR DE VUELTAS' },
-  { id: 'virtualChamp', label: 'CAMPEONATO VIRTUAL' },
-  { id: 'startingLights', label: 'SEMÁFORO DE LARGADA' },
-  { id: 'lapTimesHistory', label: 'EVOLUCIÓN DE TIEMPOS DE VUELTA' },
-  { id: 'trackAlert', label: 'ALERTA EN CURVA' },
-  { id: 'penaltyAlert', label: 'SANCIÓN / INVESTIGACIÓN' }
+const GRAPHIC_IDS = [
+  'relator', 'comentarista', 'notero1', 'notero2', 'circuito', 'clima', 'ticker', 'tower',
+  'grid', 'finalResults', 'winner', 'flags', 'fastestLap', 'driverInfo', 'battle', 'customZocalo',
+  'votingQR', 'votingResults', 'lapCounter', 'virtualChamp', 'startingLights',
+  'lapTimesHistory', 'trackAlert', 'penaltyAlert'
 ];
+
+const TAB_IDS = ['panel', 'campeonato', 'votaciones', 'sanciones', 'cloud', 'zocalos', 'disenos', 'circuito', 'ajustes', 'personalizar', 'manual'];
 
 export default function ControlPanel() {
   const [config, setConfig] = useState({
@@ -119,13 +114,17 @@ export default function ControlPanel() {
     zocalos: Array(6).fill({ title: '', text: '' })
   });
 
+  const language = config.language || 'es';
+  const t = useMemo(() => createTranslator(language), [language]);
+  const setLanguage = (lang) => handleDirectSave('language', lang);
+
   const [showBattle, setShowBattle] = useState(false);
   const [battleTarget, setBattleTarget] = useState(1);
   const [positions, setPositions] = useState({});
   const [drivers, setDrivers] = useState([]);
   const [sessionInfo, setSessionInfo] = useState({});
 
-  const [activeTab, setActiveTab] = useState('PANEL');
+  const [activeTab, setActiveTab] = useState('panel');
   const [showTicker, setShowTicker] = useState(false);
   const [showTower, setShowTower] = useState(false);
   const [showGrid, setShowGrid] = useState(false);
@@ -301,21 +300,21 @@ export default function ControlPanel() {
     const newState = !showVotingQR;
     // Si están por ENCENDER el QR y el túnel todavía no tiene una URL válida, avisamos antes de salir al aire
     if (newState && !isTunnelReady) {
-      const proceed = window.confirm('⚠️ El túnel de votación todavía se está generando (no hay URL válida todavía). Si mostrás el QR ahora, puede no funcionar al escanearlo.\n\n¿Mostrarlo igual?');
+      const proceed = window.confirm(t('panel.confirmShowQrNoTunnel'));
       if (!proceed) return;
     }
     setShowVotingQR(newState);
     if (ipcRenderer) ipcRenderer.send('toggle-voting-qr', newState);
   };
   const handleToggleVotingResults = () => { const newState = !showVotingResults; setShowVotingResults(newState); if (ipcRenderer) ipcRenderer.send('toggle-voting-results', newState); };
-  const handleResetVotes = () => { if (window.confirm('⚠️ ¿Estás seguro de que quieres borrar todos los votos actuales?')) { if (ipcRenderer) ipcRenderer.send('reset-votes'); } };
+  const handleResetVotes = () => { if (window.confirm(t('panel.confirmResetVotes'))) { if (ipcRenderer) ipcRenderer.send('reset-votes'); } };
 
   const handleSaveBackup = async () => {
-    if (drivers.length === 0) return alert("⚠️ No hay datos en pantalla para guardar.");
+    if (drivers.length === 0) return alert(t('panel.alertNoDataToSave'));
     if (ipcRenderer) {
       const success = await ipcRenderer.invoke('save-backup', { drivers, session: sessionInfo });
-      if (success) alert("✅ Datos de la carrera guardados correctamente en memoria.");
-      else alert("❌ Error al guardar los datos.");
+      if (success) alert(t('panel.alertSaveSuccess'));
+      else alert(t('panel.alertSaveError'));
     }
   };
 
@@ -325,8 +324,8 @@ export default function ControlPanel() {
       if (data && data.drivers) {
         setAutoScrape(false); setDrivers(data.drivers); setSessionInfo(data.session);
         ipcRenderer.send('force-update-leaderboard', data);
-        alert("📂 Datos en memoria cargados. La actualización 'EN VIVO' ha sido pausada.");
-      } else alert("⚠️ No hay datos guardados previamente.");
+        alert(t('panel.alertLoadSuccess'));
+      } else alert(t('panel.alertNoSavedData'));
     }
   };
 
@@ -361,7 +360,7 @@ export default function ControlPanel() {
     }
   };
 
-  const handleResetLapTimesHistory = () => { if (window.confirm('⚠️ ¿Borrar el historial de tiempos de vuelta guardado en disco?')) { if (ipcRenderer) ipcRenderer.send('reset-lap-times-history'); } };
+  const handleResetLapTimesHistory = () => { if (window.confirm(t('panel.confirmResetLapTimes'))) { if (ipcRenderer) ipcRenderer.send('reset-lap-times-history'); } };
   const handleStartLights = () => { if (ipcRenderer) ipcRenderer.send('starting-lights-action', 'start'); };
   const handleGoLights = () => { if (ipcRenderer) ipcRenderer.send('starting-lights-action', 'go'); };
   const handleHideLights = () => { if (ipcRenderer) ipcRenderer.send('starting-lights-action', 'hide'); };
@@ -477,7 +476,7 @@ export default function ControlPanel() {
     setLoadingExcel(true);
     ipcRenderer.invoke('load-excel')
       .then(res => {
-        if (!res) alert('❌ Error al cargar Excel o acción cancelada.');
+        if (!res) alert(t('campeonato.alertExcelError'));
       })
       .finally(() => setLoadingExcel(false));
   };
@@ -500,7 +499,7 @@ export default function ControlPanel() {
 
   const handleTriggerTrackAlert = () => {
     const curve = (config.trackCurves || []).find(c => c.id === selectedCurveId);
-    if (!curve) { alert('⚠️ Seleccioná una curva primero.'); return; }
+    if (!curve) { alert(t('panel.alertSelectCurveFirst')); return; }
     if (ipcRenderer) ipcRenderer.send('trigger-track-alert', { curveId: curve.id, curveName: curve.name, type: trackAlertType });
   };
   const handleHideTrackAlert = () => { if (ipcRenderer) ipcRenderer.send('hide-track-alert'); };
@@ -508,7 +507,7 @@ export default function ControlPanel() {
   // --- NUEVO: SANCIONES / BAJO INVESTIGACIÓN ---
   const handleTriggerPenalty = () => {
     const driver = drivers.find(d => String(d.number) === String(penaltyDriverNumber));
-    if (!driver) { alert('⚠️ Seleccioná un piloto primero.'); return; }
+    if (!driver) { alert(t('sanciones.alertSelectDriverFirst')); return; }
 
     const seconds = Number(penaltyAutoHideSeconds);
     const finalSeconds = Number.isFinite(seconds) && seconds > 0 ? seconds : 10;
@@ -538,12 +537,12 @@ export default function ControlPanel() {
           setCloudSavedFlash(true);
           setTimeout(() => setCloudSavedFlash(false), 2000);
         } else {
-          alert('❌ No se pudieron guardar los tokens del servidor cloud.');
+          alert(t('cloud.alertSaveTokensError'));
         }
       }
     } catch (e) {
       console.error('Error guardando config cloud:', e);
-      alert('❌ Error guardando los tokens del servidor cloud.');
+      alert(t('cloud.alertSaveTokensCatchError'));
     }
     setCloudSaving(false);
   };
@@ -576,14 +575,14 @@ export default function ControlPanel() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 20px', borderBottom: `1px solid ${colors.border}` }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <div style={{ width: '15px', height: '15px', backgroundColor: colors.yellow }}></div>
-          <h1 style={{ fontSize: '16px', margin: 0, letterSpacing: '1px' }}>RACE DYNAMICS DASHBOARD</h1>
+          <h1 style={{ fontSize: '16px', margin: 0, letterSpacing: '1px' }}>{t('header.title')}</h1>
         </div>
         <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
 
           {fastestDriver && fastestDriver.bestLap !== '-' && (
             <div style={{ textAlign: 'right', borderRight: `1px solid ${colors.border}`, paddingRight: '20px' }}>
               <div style={{ fontSize: '9px', color: colors.textMuted, fontWeight: 'bold', letterSpacing: '1px' }}>
-                MEJOR VUELTA {newRecordAlert && '🔥'}
+                {t('header.bestLap')} {newRecordAlert && '🔥'}
               </div>
               <div style={{ fontSize: '14px', color: newRecordAlert ? colors.red : colors.yellow, fontWeight: 'bold', transition: 'color 0.3s' }}>
                 #{fastestDriver.number} {fastestDriver.name.toUpperCase()} <span style={{ color: colors.textMain, marginLeft: '5px' }}>{fastestDriver.bestLap}</span>
@@ -593,45 +592,45 @@ export default function ControlPanel() {
 
           {sessionInfo?.laps && (
             <div style={{ textAlign: 'right' }}>
-              <div style={{ fontSize: '9px', color: colors.textMuted, fontWeight: 'bold', letterSpacing: '1px' }}>VUELTAS</div>
+              <div style={{ fontSize: '9px', color: colors.textMuted, fontWeight: 'bold', letterSpacing: '1px' }}>{t('header.laps')}</div>
               <div style={{ fontSize: '14px', color: colors.textMain, fontWeight: 'bold' }}>{sessionInfo.laps}</div>
             </div>
           )}
           {sessionInfo?.totalTime && (
             <div style={{ textAlign: 'right' }}>
-              <div style={{ fontSize: '9px', color: colors.textMuted, fontWeight: 'bold', letterSpacing: '1px' }}>TIEMPO TOTAL</div>
+              <div style={{ fontSize: '9px', color: colors.textMuted, fontWeight: 'bold', letterSpacing: '1px' }}>{t('header.totalTime')}</div>
               <div style={{ fontSize: '14px', color: colors.textMain, fontWeight: 'bold' }}>{sessionInfo.totalTime}</div>
             </div>
           )}
           <div style={{ border: `1px solid ${autoScrape ? colors.green : colors.textMuted}`, color: autoScrape ? colors.green : colors.textMuted, backgroundColor: autoScrape ? 'rgba(46, 204, 113, 0.1)' : 'transparent', padding: '6px 12px', fontSize: '11px', fontWeight: 'bold', borderRadius: '4px', letterSpacing: '1px', marginLeft: '10px' }}>
-            {autoScrape ? '🟢 EN VIVO' : 'PAUSADO'}
+            {autoScrape ? t('header.live') : t('header.paused')}
           </div>
         </div>
       </div>
 
       <div style={{ display: 'flex', borderBottom: `1px solid ${colors.border}` }}>
-        {['PANEL', 'CAMPEONATO', 'VOTACIONES', 'SANCIONES', 'CLOUD', 'ZÓCALOS', 'DISEÑOS', 'CIRCUITO', 'AJUSTES', 'PERSONALIZAR', 'MANUAL'].map(tab => (
-          <div key={tab} onClick={() => setActiveTab(tab)} style={{ padding: '12px 25px', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer', borderBottom: activeTab === tab ? `3px solid ${colors.textMain}` : '3px solid transparent', color: activeTab === tab ? colors.textMain : colors.textMuted, display: 'flex', alignItems: 'center', gap: '6px' }}>
-            {tab}
-            {tab === 'SANCIONES' && penaltyAlertState.isVisible && (
+        {TAB_IDS.map(tabId => (
+          <div key={tabId} onClick={() => setActiveTab(tabId)} style={{ padding: '12px 25px', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer', borderBottom: activeTab === tabId ? `3px solid ${colors.textMain}` : '3px solid transparent', color: activeTab === tabId ? colors.textMain : colors.textMuted, display: 'flex', alignItems: 'center', gap: '6px' }}>
+            {t(`tabs.${tabId}`)}
+            {tabId === 'sanciones' && penaltyAlertState.isVisible && (
               <span style={{ width: '7px', height: '7px', borderRadius: '50%', backgroundColor: colors.red, animation: 'pulsePenaltyDot 1s infinite' }} />
             )}
-            {tab === 'CLOUD' && (
+            {tabId === 'cloud' && (
               <span style={{ width: '7px', height: '7px', borderRadius: '50%', backgroundColor: cloudConnected ? colors.green : colors.textMuted }} />
             )}
           </div>
         ))}
       </div>
 
-      {activeTab === 'PANEL' && (
+      {activeTab === 'panel' && (
         <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
           <div style={{ width: '320px', backgroundColor: colors.bgPanel, padding: '0 15px', overflowY: 'auto', borderRight: `1px solid ${colors.border}` }}>
 
-            <div style={sectionTitleStyle}>BANDERAS DE CARRERA</div>
+            <div style={sectionTitleStyle}>{t('panel.flagsSection')}</div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '5px', marginBottom: '20px' }}>
-              <button onClick={() => handleToggleFlag('red')} style={{ ...btnStyle(activeFlags.red), backgroundColor: activeFlags.red ? '#e74c3c' : colors.bgInput, color: activeFlags.red ? '#fff' : colors.textMain, borderColor: activeFlags.red ? '#c0392b' : colors.border }}>ROJA</button>
-              <button onClick={() => handleToggleFlag('tricolor')} style={{ ...btnStyle(activeFlags.tricolor), background: activeFlags.tricolor ? 'linear-gradient(90deg, #0033a0, #fff, #ff8200)' : colors.bgInput, color: activeFlags.tricolor ? '#000' : colors.textMain, textShadow: activeFlags.tricolor ? '0 0 3px #fff' : 'none' }}>TRICOLOR</button>
-              <button onClick={() => handleToggleFlag('blue')} style={{ ...btnStyle(activeFlags.blue), backgroundColor: activeFlags.blue ? '#3498db' : colors.bgInput, color: activeFlags.blue ? '#fff' : colors.textMain, borderColor: activeFlags.blue ? '#2980b9' : colors.border }}>AZUL (PASO)</button>
+              <button onClick={() => handleToggleFlag('red')} style={{ ...btnStyle(activeFlags.red), backgroundColor: activeFlags.red ? '#e74c3c' : colors.bgInput, color: activeFlags.red ? '#fff' : colors.textMain, borderColor: activeFlags.red ? '#c0392b' : colors.border }}>{t('panel.flagRed')}</button>
+              <button onClick={() => handleToggleFlag('tricolor')} style={{ ...btnStyle(activeFlags.tricolor), background: activeFlags.tricolor ? 'linear-gradient(90deg, #0033a0, #fff, #ff8200)' : colors.bgInput, color: activeFlags.tricolor ? '#000' : colors.textMain, textShadow: activeFlags.tricolor ? '0 0 3px #fff' : 'none' }}>{t('panel.flagTricolor')}</button>
+              <button onClick={() => handleToggleFlag('blue')} style={{ ...btnStyle(activeFlags.blue), backgroundColor: activeFlags.blue ? '#3498db' : colors.bgInput, color: activeFlags.blue ? '#fff' : colors.textMain, borderColor: activeFlags.blue ? '#2980b9' : colors.border }}>{t('panel.flagBlue')}</button>
               <button
                 onClick={() => handleToggleFlag('checkered')}
                 style={{
@@ -644,32 +643,32 @@ export default function ControlPanel() {
                   fontWeight: 'bold'
                 }}
               >
-                ÚLTIMA VUELTA
+                {t('panel.flagCheckered')}
               </button>
               <div style={{ display: 'flex', gap: '2px' }}>
-                <button onClick={() => handleToggleFlag('black')} style={{ ...btnStyle(activeFlags.black), flex: 1, backgroundColor: activeFlags.black ? '#111' : colors.bgInput, color: activeFlags.black ? '#fff' : colors.textMain, borderColor: activeFlags.black ? '#000' : colors.border, padding: '12px 5px' }}>NEGRA</button>
-                <input name="blackFlagNumber" value={config.blackFlagNumber || ''} onChange={(e) => handleDirectSave('blackFlagNumber', e.target.value)} style={{ ...inputStyle, width: '45px', textAlign: 'center', padding: '0', fontSize: '14px' }} placeholder="Nº" title="Escribe el número del auto a excluir" />
+                <button onClick={() => handleToggleFlag('black')} style={{ ...btnStyle(activeFlags.black), flex: 1, backgroundColor: activeFlags.black ? '#111' : colors.bgInput, color: activeFlags.black ? '#fff' : colors.textMain, borderColor: activeFlags.black ? '#000' : colors.border, padding: '12px 5px' }}>{t('panel.flagBlack')}</button>
+                <input name="blackFlagNumber" value={config.blackFlagNumber || ''} onChange={(e) => handleDirectSave('blackFlagNumber', e.target.value)} style={{ ...inputStyle, width: '45px', textAlign: 'center', padding: '0', fontSize: '14px' }} placeholder={t('panel.flagNumberPlaceholder')} title={t('panel.flagNumberTitle')} />
               </div>
             </div>
 
-            <div style={sectionTitleStyle}>PERSONAL / ENTORNO</div>
+            <div style={sectionTitleStyle}>{t('panel.personalSection')}</div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-              <GraphicControl id="relator" label="RELATOR" value={config.relator} isActive={graphics.relator} onChange={handleChange} onBlur={handleSave} onToggle={handleToggleGraphic} />
-              <GraphicControl id="comentarista" label="COMENTARISTA" value={config.comentarista} isActive={graphics.comentarista} onChange={handleChange} onBlur={handleSave} onToggle={handleToggleGraphic} />
-              <GraphicControl id="notero1" label="NOTERO 1" value={config.notero1} isActive={graphics.notero1} onChange={handleChange} onBlur={handleSave} onToggle={handleToggleGraphic} />
-              <GraphicControl id="notero2" label="NOTERO 2" value={config.notero2} isActive={graphics.notero2} onChange={handleChange} onBlur={handleSave} onToggle={handleToggleGraphic} />
-              <SelectControl id="circuito" label="CIRCUITO" value={config.circuito} options={circuitosData} isActive={graphics.circuito} onChange={handleChange} onBlur={handleSave} onToggle={handleToggleGraphic} />
-              <WeatherControl id="clima" label="CLIMA" config={config} setConfig={setConfig} isActive={graphics.clima} onToggle={handleToggleGraphic} />
+              <GraphicControl id="relator" label={t('graphics.relator')} value={config.relator} isActive={graphics.relator} onChange={handleChange} onBlur={handleSave} onToggle={handleToggleGraphic} t={t} />
+              <GraphicControl id="comentarista" label={t('graphics.comentarista')} value={config.comentarista} isActive={graphics.comentarista} onChange={handleChange} onBlur={handleSave} onToggle={handleToggleGraphic} t={t} />
+              <GraphicControl id="notero1" label={t('graphics.notero1')} value={config.notero1} isActive={graphics.notero1} onChange={handleChange} onBlur={handleSave} onToggle={handleToggleGraphic} t={t} />
+              <GraphicControl id="notero2" label={t('graphics.notero2')} value={config.notero2} isActive={graphics.notero2} onChange={handleChange} onBlur={handleSave} onToggle={handleToggleGraphic} t={t} />
+              <SelectControl id="circuito" label={t('graphics.circuito')} value={config.circuito} options={circuitosData} isActive={graphics.circuito} onChange={handleChange} onBlur={handleSave} onToggle={handleToggleGraphic} t={t} />
+              <WeatherControl id="clima" label={t('graphics.clima')} config={config} setConfig={setConfig} isActive={graphics.clima} onToggle={handleToggleGraphic} t={t} />
             </div>
 
-            <div style={sectionTitleStyle}>ALERTA EN CURVA</div>
+            <div style={sectionTitleStyle}>{t('graphics.trackAlert')}</div>
 <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', marginBottom: '20px' }}>
   <select
     value={selectedCurveId || ''}
     onChange={(e) => setSelectedCurveId(e.target.value || null)}
     style={{ ...inputStyle, padding: '10px', fontSize: '11px', cursor: 'pointer' }}
   >
-    <option value="">SELECCIONAR CURVA...</option>
+    <option value="">{t('common.selectCurvePlaceholder')}</option>
     {(config.trackCurves || []).map(c => (
       <option key={c.id} value={c.id}>{c.name}</option>
     ))}
@@ -678,42 +677,42 @@ export default function ControlPanel() {
     <button
       onClick={() => setTrackAlertType('yellow')}
       style={{ ...btnStyle(trackAlertType === 'yellow'), backgroundColor: trackAlertType === 'yellow' ? '#f1c40f' : colors.bgInput, color: trackAlertType === 'yellow' ? '#000' : colors.textMain }}
-    >⚠️ AMARILLA</button>
+    >{t('panel.trackAlertYellow')}</button>
     <button
       onClick={() => setTrackAlertType('incident')}
       style={{ ...btnStyle(trackAlertType === 'incident'), backgroundColor: trackAlertType === 'incident' ? '#e74c3c' : colors.bgInput, color: '#fff' }}
-    >🚨 INCIDENTE</button>
+    >{t('panel.trackAlertIncident')}</button>
   </div>
   <div style={{ display: 'flex', gap: '5px' }}>
     <button onClick={handleTriggerTrackAlert} style={{ ...btnStyle(false), flex: 2, backgroundColor: '#2ecc71', color: '#fff', borderColor: '#27ae60' }}>
-      🔴 EMITIR ALERTA
+      {t('panel.emitAlert')}
     </button>
     <button onClick={handleHideTrackAlert} style={{ ...btnStyle(false), flex: 1, backgroundColor: '#c0392b', color: '#fff', borderColor: '#e74c3c' }}>
-      OCULTAR
+      {t('common.hide')}
     </button>
   </div>
 </div>
 
-            <div style={sectionTitleStyle}>GRILLA</div>
+            <div style={sectionTitleStyle}>{t('panel.gridSection')}</div>
             <div style={{ display: 'flex', gap: '5px', marginBottom: '5px' }}>
-              <button onClick={() => { if (ipcRenderer) ipcRenderer.send('grid-prev'); }} style={{ ...btnStyle(), flex: 1 }}>◀ ANT</button>
-              <button onClick={handleToggleGrid} style={{ ...btnStyle(showGrid), flex: 2 }}>MOSTRAR GRILLA</button>
-              <button onClick={() => { if (ipcRenderer) ipcRenderer.send('grid-next'); }} style={{ ...btnStyle(), flex: 1 }}>SIG ▶</button>
+              <button onClick={() => { if (ipcRenderer) ipcRenderer.send('grid-prev'); }} style={{ ...btnStyle(), flex: 1 }}>{t('panel.gridPrev')}</button>
+              <button onClick={handleToggleGrid} style={{ ...btnStyle(showGrid), flex: 2 }}>{t('panel.showGrid')}</button>
+              <button onClick={() => { if (ipcRenderer) ipcRenderer.send('grid-next'); }} style={{ ...btnStyle(), flex: 1 }}>{t('panel.gridNext')}</button>
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '5px' }}>
               <button onClick={() => setAutoScrape(!autoScrape)} style={{ ...btnStyle(autoScrape), color: autoScrape ? '#000' : colors.green, borderColor: autoScrape ? colors.yellow : colors.green }}>
-                {autoScrape ? '⏹ DETENER (1s)' : '▶ AUTO-CARGA'}
+                {autoScrape ? t('panel.autoScrapeStop') : t('panel.autoScrapeStart')}
               </button>
             </div>
 
-            <div style={sectionTitleStyle}>SEMÁFORO DE LARGADA</div>
+            <div style={sectionTitleStyle}>{t('graphics.startingLights')}</div>
             <div style={{ display: 'flex', gap: '5px', marginBottom: '15px' }}>
               {startingLightsStep === 5 ? (
                 <button
                   onClick={handleGoLights}
                   style={{ ...btnStyle(true), flex: 2, backgroundColor: '#2ecc71', color: '#fff', borderColor: '#27ae60', animation: 'pulseStartingLights 0.8s infinite' }}
                 >
-                  🟢 LARGAR (DAR SALIDA)
+                  {t('panel.lightsGo')}
                 </button>
               ) : (
                 <button
@@ -727,19 +726,19 @@ export default function ControlPanel() {
                     cursor: startingLightsVisible ? 'default' : 'pointer'
                   }}
                 >
-                  {startingLightsVisible ? `🔴 ENCENDIENDO (${startingLightsStep}/5)` : '🚦 INICIAR SEMÁFORO'}
+                  {startingLightsVisible ? t('panel.lightsCounting', { step: startingLightsStep }) : t('panel.lightsStart')}
                 </button>
               )}
               <button onClick={handleHideLights} style={{ ...btnStyle(false), flex: 1, backgroundColor: '#c0392b', color: '#fff', borderColor: '#e74c3c' }}>
-                OCULTAR
+                {t('common.hide')}
               </button>
             </div>
 
-            <div style={sectionTitleStyle}>GRÁFICOS</div>
+            <div style={sectionTitleStyle}>{t('panel.graphicsSection')}</div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '5px' }}>
-              <button onClick={handleToggleTicker} style={btnStyle(showTicker)}>TIRA INFERIOR</button>
-              <button onClick={handleToggleTower} style={btnStyle(showTower)}>TORRE</button>
-              <button onClick={handleToggleLapCounter} style={btnStyle(showLapCounter)}>VUELTAS</button>
+              <button onClick={handleToggleTicker} style={btnStyle(showTicker)}>{t('graphics.ticker')}</button>
+              <button onClick={handleToggleTower} style={btnStyle(showTower)}>{t('panel.towerShort')}</button>
+              <button onClick={handleToggleLapCounter} style={btnStyle(showLapCounter)}>{t('panel.lapsShort')}</button>
               <button
                 onClick={handleToggleFastestLap}
                 style={{
@@ -747,15 +746,15 @@ export default function ControlPanel() {
                   ...(newRecordAlert ? { animation: 'pulseRecordAlert 1s infinite' } : {})
                 }}
               >
-                RECORD VUELTA
+                {t('panel.recordLapShort')}
               </button>
 
             </div>
 
-            <div style={sectionTitleStyle}>BATALLA EN PISTA</div>
+            <div style={sectionTitleStyle}>{t('panel.battleSection')}</div>
             <div style={{ display: 'flex', gap: '5px', marginBottom: '15px' }}>
               <div style={{ display: 'flex', alignItems: 'center', backgroundColor: colors.bgInput, border: `1px solid ${colors.border}`, padding: '0 10px', borderRadius: '4px' }}>
-                <span style={{ color: colors.textMuted, fontSize: '12px', marginRight: '5px' }}>POS:</span>
+                <span style={{ color: colors.textMuted, fontSize: '12px', marginRight: '5px' }}>{t('panel.posLabel')}</span>
                 <input
                   type="number" min="1" value={battleTarget}
                   onChange={(e) => setBattleTarget(e.target.value)}
@@ -763,36 +762,36 @@ export default function ControlPanel() {
                 />
               </div>
               <button onClick={handleToggleBattle} style={{ ...btnStyle(showBattle), flex: 1 }}>
-                {showBattle ? 'OCULTAR BATALLA' : 'MOSTRAR BATALLA'}
+                {showBattle ? t('panel.hideBattle') : t('panel.showBattle')}
               </button>
             </div>
 
-            <div style={sectionTitleStyle}>CAMPEONATO VIRTUAL</div>
+            <div style={sectionTitleStyle}>{t('graphics.virtualChamp')}</div>
             <div style={{ display: 'flex', gap: '5px', marginBottom: '15px' }}>
               <button onClick={handleToggleVirtualChamp} style={{ ...btnStyle(showVirtualChamp), flex: 1 }}>
-                {showVirtualChamp ? 'OCULTAR TABLA EN OVERLAY' : 'MOSTRAR TABLA EN OVERLAY'}
+                {showVirtualChamp ? t('panel.hideChampTable') : t('panel.showChampTable')}
               </button>
             </div>
             <div style={{ fontSize: '10px', color: colors.textMuted, marginTop: '-10px', marginBottom: '15px' }}>
-              Cargá el Excel y mirá la tabla completa en la pestaña <span style={{ color: colors.yellow, fontWeight: 'bold' }}>CAMPEONATO</span>.
+              {t('panel.champNote', { tab: t('tabs.campeonato') })}
             </div>
 
-            <div style={sectionTitleStyle}>EVOLUCIÓN DE TIEMPOS DE VUELTA</div>
+            <div style={sectionTitleStyle}>{t('graphics.lapTimesHistory')}</div>
             <div style={{ display: 'flex', gap: '5px', marginBottom: '15px' }}>
               <button onClick={handleToggleLapTimesHistory} style={{ ...btnStyle(showLapTimesHistory), flex: 2 }}>
-                {showLapTimesHistory ? 'OCULTAR GRÁFICO' : 'MOSTRAR GRÁFICO'}
+                {showLapTimesHistory ? t('panel.hideChart') : t('panel.showChart')}
               </button>
               <button onClick={handleResetLapTimesHistory} style={{ ...btnStyle(false), flex: 1, backgroundColor: '#c0392b', color: '#fff', borderColor: '#e74c3c' }}>
-                🗑️ REINICIAR
+                {t('panel.resetShort')}
               </button>
             </div>
             {selectedLapTimesDriver && (
               <div style={{ fontSize: '10px', color: '#00b8cc', fontWeight: 'bold', marginTop: '-8px', marginBottom: '15px' }}>
-                ⏱️ Mostrando sólo #{selectedLapTimesDriver} — click en "QUITAR" en la tabla para ver a todos
+                {t('panel.lapTimesFocusNote', { number: selectedLapTimesDriver })}
               </div>
             )}
 
-            <div style={sectionTitleStyle}>INTERACTIVIDAD (VOTOS)</div>
+            <div style={sectionTitleStyle}>{t('panel.votingSection')}</div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px' }}>
               <span style={{
                 width: '8px', height: '8px', borderRadius: '50%',
@@ -801,28 +800,28 @@ export default function ControlPanel() {
                 animation: isTunnelReady ? 'none' : 'pulseTunnelDot 1.2s infinite'
               }} />
               <span style={{ fontSize: '9px', color: colors.textMuted, fontWeight: 'bold', letterSpacing: '0.5px' }}>
-                {isTunnelReady ? 'TÚNEL LISTO PARA ESCANEAR' : 'GENERANDO TÚNEL...'}
+                {isTunnelReady ? t('panel.tunnelReady') : t('panel.tunnelGenerating')}
               </span>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', marginBottom: '20px' }}>
-              <button onClick={handleToggleVotingQR} style={btnStyle(showVotingQR)}>QR DE VOTACIÓN</button>
-              <button onClick={handleToggleVotingResults} style={btnStyle(showVotingResults)}>RESULTADOS EN VIVO</button>
+              <button onClick={handleToggleVotingQR} style={btnStyle(showVotingQR)}>{t('graphics.votingQR')}</button>
+              <button onClick={handleToggleVotingResults} style={btnStyle(showVotingResults)}>{t('panel.votingResultsLive')}</button>
             </div>
 
-            <div style={sectionTitleStyle}>MEMORIA DE CARRERA (BACKUP)</div>
+            <div style={sectionTitleStyle}>{t('panel.backupSection')}</div>
             <div style={{ display: 'flex', gap: '5px', marginBottom: '15px' }}>
               <button onClick={handleSaveBackup} style={{ ...btnStyle(), flex: 1, backgroundColor: '#8e44ad', color: '#fff', borderColor: '#9b59b6' }}>
-                💾 GUARDAR ACTUAL
+                {t('panel.saveCurrent')}
               </button>
               <button onClick={handleLoadBackup} style={{ ...btnStyle(), flex: 1, backgroundColor: '#d35400', color: '#fff', borderColor: '#e67e22' }}>
-                📂 CARGAR GUARDADA
+                {t('panel.loadSaved')}
               </button>
             </div>
 
-            <div style={sectionTitleStyle}>CIERRE (ACTIVO)</div>
+            <div style={sectionTitleStyle}>{t('panel.closingSection')}</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', marginBottom: '20px' }}>
-              <button onClick={handleToggleFinalResults} style={btnStyle(showFinalResults)}>RESULTADO FINAL</button>
-              <button onClick={handleToggleWinner} style={btnStyle(showWinner)}>MOSTRAR GANADOR</button>
+              <button onClick={handleToggleFinalResults} style={btnStyle(showFinalResults)}>{t('panel.finalResultBtn')}</button>
+              <button onClick={handleToggleWinner} style={btnStyle(showWinner)}>{t('panel.showWinnerBtn')}</button>
             </div>
           </div>
 
@@ -841,26 +840,24 @@ export default function ControlPanel() {
               onToggleInfo={handleToggleDriverInfo}
               selectedLapTimesNumber={selectedLapTimesDriver}
               onToggleLapTimesSelect={handleToggleLapTimesSelect}
+              t={t}
             />
           </div>
         </div>
       )}
 
-      {activeTab === 'CAMPEONATO' && (
+      {activeTab === 'campeonato' && (
         <div style={{ padding: '30px', flex: 1, backgroundColor: colors.bgApp, overflowY: 'auto' }}>
 
           <h2 style={{ color: colors.yellow, marginTop: 0, borderBottom: `1px solid ${colors.border}`, paddingBottom: '10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span>🏆 CAMPEONATO (EXCEL)</span>
+            <span>{t('campeonato.title')}</span>
             <span style={{ fontSize: '14px', color: colors.textMuted, fontWeight: 'normal' }}>
-              PILOTOS CARGADOS: <span style={{ color: colors.textMain, fontWeight: 'bold' }}>{championship.length}</span>
+              {t('campeonato.driversLoaded')} <span style={{ color: colors.textMain, fontWeight: 'bold' }}>{championship.length}</span>
             </span>
           </h2>
 
           <p style={{ color: colors.textMuted, fontSize: '13px', marginBottom: '20px', maxWidth: '700px' }}>
-            Cargá un Excel (.xlsx) con las columnas <span style={{ color: colors.textMain, fontWeight: 'bold' }}>Numero</span>, <span style={{ color: colors.textMain, fontWeight: 'bold' }}>Nombre</span> y{' '}
-            <span style={{ color: colors.textMain, fontWeight: 'bold' }}>Puntos</span> (puntaje base de cada piloto antes de esta carrera), más{' '}
-            <span style={{ color: colors.textMain, fontWeight: 'bold' }}>Posicion</span> y <span style={{ color: colors.textMain, fontWeight: 'bold' }}>Puntos_Escala</span> (cuántos puntos suma cada posición de llegada).
-            Los puntos de la carrera en vivo se suman automáticamente al puntaje base a medida que corre la sesión.
+            {t('campeonato.description')}
           </p>
 
           <div style={{ display: 'flex', gap: '10px', marginBottom: '25px' }}>
@@ -869,28 +866,28 @@ export default function ControlPanel() {
               disabled={loadingExcel}
               style={{ ...btnStyle(false), width: 'auto', padding: '12px 20px', backgroundColor: '#2ecc71', color: 'white', borderColor: '#27ae60', cursor: loadingExcel ? 'wait' : 'pointer', opacity: loadingExcel ? 0.7 : 1 }}
             >
-              {loadingExcel ? '⏳ CARGANDO...' : '📊 CARGAR EXCEL'}
+              {loadingExcel ? t('campeonato.loadingExcelBtn') : t('campeonato.loadExcelBtn')}
             </button>
             <button onClick={handleToggleVirtualChamp} style={{ ...btnStyle(showVirtualChamp), width: 'auto', padding: '12px 20px' }}>
-              {showVirtualChamp ? 'OCULTAR TABLA EN OVERLAY' : 'MOSTRAR TABLA EN OVERLAY'}
+              {showVirtualChamp ? t('panel.hideChampTable') : t('panel.showChampTable')}
             </button>
           </div>
 
           {championship.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '40px', color: colors.textMuted, fontStyle: 'italic', backgroundColor: colors.bgPanel, borderRadius: '8px', border: `1px solid ${colors.border}` }}>
-              Todavía no cargaste ningún Excel. Hacé clic en "CARGAR EXCEL" para ver la tabla del campeonato acá.
+              {t('campeonato.emptyState', { btn: t('campeonato.loadExcelBtn') })}
             </div>
           ) : (
             <div style={{ width: '100%', overflowX: 'auto', backgroundColor: colors.bgPanel, borderRadius: '8px', border: `1px solid ${colors.border}` }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', textAlign: 'center' }}>
                 <thead>
                   <tr style={{ backgroundColor: colors.bgInput, color: colors.textMuted, borderBottom: `2px solid ${colors.border}` }}>
-                    <th style={{ padding: '12px 10px' }}>POS</th>
-                    <th style={{ padding: '12px 10px' }}>NUM</th>
-                    <th style={{ padding: '12px 10px', textAlign: 'left' }}>PILOTO</th>
-                    <th style={{ padding: '12px 10px' }}>PUNTOS BASE</th>
-                    <th style={{ padding: '12px 10px' }}>+ ESTA CARRERA</th>
-                    <th style={{ padding: '12px 10px' }}>TOTAL</th>
+                    <th style={{ padding: '12px 10px' }}>{t('campeonato.colPos')}</th>
+                    <th style={{ padding: '12px 10px' }}>{t('campeonato.colNum')}</th>
+                    <th style={{ padding: '12px 10px', textAlign: 'left' }}>{t('campeonato.colDriver')}</th>
+                    <th style={{ padding: '12px 10px' }}>{t('campeonato.colBasePoints')}</th>
+                    <th style={{ padding: '12px 10px' }}>{t('campeonato.colThisRace')}</th>
+                    <th style={{ padding: '12px 10px' }}>{t('campeonato.colTotal')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -913,13 +910,13 @@ export default function ControlPanel() {
         </div>
       )}
 
-      {activeTab === 'VOTACIONES' && (
+      {activeTab === 'votaciones' && (
         <div style={{ padding: '30px', flex: 1, backgroundColor: colors.bgApp, overflowY: 'auto' }}>
 
           <h2 style={{ color: colors.yellow, marginTop: 0, borderBottom: `1px solid ${colors.border}`, paddingBottom: '10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span>📊 PANEL DE VOTACIONES EN VIVO</span>
+            <span>{t('votaciones.title')}</span>
             <span style={{ fontSize: '14px', color: colors.textMuted, fontWeight: 'normal' }}>
-              TOTAL VOTOS: <span style={{ color: colors.textMain, fontWeight: 'bold' }}>{Object.values(votes).reduce((a, b) => a + b, 0)}</span>
+              {t('votaciones.totalVotes')} <span style={{ color: colors.textMain, fontWeight: 'bold' }}>{Object.values(votes).reduce((a, b) => a + b, 0)}</span>
             </span>
           </h2>
 
@@ -934,18 +931,18 @@ export default function ControlPanel() {
             </span>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
               <span style={{ fontSize: '12px', fontWeight: 'bold', color: isTunnelReady ? colors.green : colors.yellow, letterSpacing: '0.5px' }}>
-                {isTunnelReady ? 'TÚNEL LISTO — EL QR YA SE PUEDE ESCANEAR' : 'GENERANDO TÚNEL... TODAVÍA NO MUESTRES EL QR EN PANTALLA'}
+                {isTunnelReady ? t('votaciones.tunnelReadyMsg') : t('votaciones.tunnelGeneratingMsg')}
               </span>
               <span style={{ fontSize: '11px', color: colors.textMuted, wordBreak: 'break-all' }}>
-                {isTunnelReady ? localIp : 'Esperando URL pública de Cloudflare, puede tardar unos segundos...'}
+                {isTunnelReady ? localIp : t('votaciones.waitingUrl')}
               </span>
             </div>
           </div>
 
           <div style={{ display: 'flex', gap: '10px', marginBottom: '30px' }}>
-            <button onClick={handleToggleVotingQR} style={{ ...btnStyle(showVotingQR), flex: 1 }}>{showVotingQR ? 'OCULTAR QR' : 'MOSTRAR QR EN PANTALLA'}</button>
-            <button onClick={handleToggleVotingResults} style={{ ...btnStyle(showVotingResults), flex: 1 }}>{showVotingResults ? 'OCULTAR RESULTADOS' : 'MOSTRAR RESULTADOS EN PANTALLA'}</button>
-            <button onClick={handleResetVotes} style={{ ...btnStyle(), backgroundColor: '#c0392b', color: '#fff', borderColor: '#e74c3c', flex: 1 }}>🗑️ REINICIAR VOTOS</button>
+            <button onClick={handleToggleVotingQR} style={{ ...btnStyle(showVotingQR), flex: 1 }}>{showVotingQR ? t('votaciones.hideQr') : t('votaciones.showQr')}</button>
+            <button onClick={handleToggleVotingResults} style={{ ...btnStyle(showVotingResults), flex: 1 }}>{showVotingResults ? t('votaciones.hideResults') : t('votaciones.showResults')}</button>
+            <button onClick={handleResetVotes} style={{ ...btnStyle(), backgroundColor: '#c0392b', color: '#fff', borderColor: '#e74c3c', flex: 1 }}>{t('votaciones.resetVotesBtn')}</button>
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
@@ -956,7 +953,7 @@ export default function ControlPanel() {
                 .sort((a, b) => (votes[b.number] || 0) - (votes[a.number] || 0));
 
               if (topDrivers.length === 0) {
-                return <div style={{ textAlign: 'center', padding: '40px', color: colors.textMuted, fontStyle: 'italic' }}>No hay votos registrados en esta sesión aún. Activa el QR para comenzar.</div>;
+                return <div style={{ textAlign: 'center', padding: '40px', color: colors.textMuted, fontStyle: 'italic' }}>{t('votaciones.noVotesYet')}</div>;
               }
 
               return topDrivers.map((driver, index) => {
@@ -987,7 +984,7 @@ export default function ControlPanel() {
                     </div>
 
                     <div style={{ width: '100px', textAlign: 'right', fontSize: '14px', color: colors.textMuted, fontWeight: 'bold' }}>
-                      {voteCount} VOTOS
+                      {voteCount} {t('votaciones.votesSuffix')}
                     </div>
 
                   </div>
@@ -998,15 +995,14 @@ export default function ControlPanel() {
         </div>
       )}
 
-      {activeTab === 'SANCIONES' && (
+      {activeTab === 'sanciones' && (
         <div style={{ padding: '30px', flex: 1, backgroundColor: colors.bgApp, overflowY: 'auto' }}>
 
           <h2 style={{ color: colors.yellow, marginTop: 0, borderBottom: `1px solid ${colors.border}`, paddingBottom: '10px' }}>
-            🚩 COMISARIOS DEPORTIVOS — SANCIONES E INVESTIGACIONES
+            {t('sanciones.title')}
           </h2>
           <p style={{ color: colors.textMuted, fontSize: '13px', marginBottom: '25px', maxWidth: '700px' }}>
-            Cargá una sanción o marcá una maniobra bajo investigación. Aparece al instante en el overlay
-            (estilo F1) y se oculta sola pasado el tiempo que definas abajo.
+            {t('sanciones.description')}
           </p>
 
           <div style={{
@@ -1030,23 +1026,21 @@ export default function ControlPanel() {
                   animation: isTunnelReady ? 'none' : 'pulseTunnelDot 1.2s infinite'
                 }} />
                 <span style={{ fontSize: '11px', fontWeight: 'bold', color: isTunnelReady ? colors.green : colors.yellow, letterSpacing: '0.5px' }}>
-                  {isTunnelReady ? 'PANEL WEB PARA COMISARIOS — LISTO' : 'GENERANDO TÚNEL...'}
+                  {isTunnelReady ? t('sanciones.stewardPanelReady') : t('sanciones.tunnelGenerating')}
                 </span>
               </div>
               <span style={{ fontSize: '12px', color: colors.textMain, wordBreak: 'break-all' }}>
-                {isTunnelReady ? stewardUrl : 'Esperando URL pública de Cloudflare...'}
+                {isTunnelReady ? stewardUrl : t('sanciones.waitingUrl')}
               </span>
               <span style={{ fontSize: '11px', color: colors.textMuted }}>
-                Compartile este link (o el QR) al comisario deportivo. Desde su celular puede cargar
-                sanciones sin pasar por este panel. También podés usar el link fijo del servidor
-                cloud en la pestaña CLOUD, que no depende de este túnel.
+                {t('sanciones.shareNote', { tab: t('tabs.cloud') })}
               </span>
               {isTunnelReady && (
                 <button
                   onClick={() => { navigator.clipboard?.writeText(stewardUrl); }}
                   style={{ ...btnStyle(false), width: 'fit-content', padding: '6px 14px', fontSize: '10px', marginTop: '4px' }}
                 >
-                  📋 COPIAR LINK
+                  {t('sanciones.copyLink')}
                 </button>
               )}
             </div>
@@ -1062,7 +1056,7 @@ export default function ControlPanel() {
               <span style={{ width: '10px', height: '10px', borderRadius: '50%', backgroundColor: colors.red, animation: 'pulsePenaltyDot 1s infinite', flexShrink: 0 }} />
               <div>
                 <div style={{ fontSize: '12px', fontWeight: 'bold', letterSpacing: '0.5px', color: penaltyAlertState.type === 'investigation' ? colors.yellow : colors.red }}>
-                  EN AIRE: #{penaltyAlertState.driverNumber} {penaltyAlertState.driverName} — {penaltyAlertState.type === 'investigation' ? 'BAJO INVESTIGACIÓN' : 'SANCIÓN'}
+                  {t('sanciones.onAir', { number: penaltyAlertState.driverNumber, name: penaltyAlertState.driverName, type: penaltyAlertState.type === 'investigation' ? t('sanciones.typeInvestigation') : t('sanciones.typePenalty') })}
                 </div>
                 {penaltyAlertState.reason && (
                   <div style={{ fontSize: '11px', color: colors.textMuted, marginTop: '3px' }}>{penaltyAlertState.reason}</div>
@@ -1073,9 +1067,9 @@ export default function ControlPanel() {
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', maxWidth: '700px', marginBottom: '15px' }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
-              <label style={{ fontSize: '10px', color: colors.textMuted, fontWeight: 'bold' }}>PILOTO</label>
+              <label style={{ fontSize: '10px', color: colors.textMuted, fontWeight: 'bold' }}>{t('sanciones.driverLabel')}</label>
               <select value={penaltyDriverNumber} onChange={(e) => setPenaltyDriverNumber(e.target.value)} style={{ ...inputStyle, padding: '10px', cursor: 'pointer' }}>
-                <option value="">SELECCIONAR PILOTO...</option>
+                <option value="">{t('common.selectDriverPlaceholder')}</option>
                 {drivers.map(d => (
                   <option key={d.number} value={d.number}>#{d.number} — {d.name}</option>
                 ))}
@@ -1083,37 +1077,37 @@ export default function ControlPanel() {
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
-              <label style={{ fontSize: '10px', color: colors.textMuted, fontWeight: 'bold' }}>TIPO</label>
+              <label style={{ fontSize: '10px', color: colors.textMuted, fontWeight: 'bold' }}>{t('sanciones.typeLabel')}</label>
               <div style={{ display: 'flex', gap: '5px' }}>
                 <button
                   onClick={() => setPenaltyType('investigation')}
                   style={{ ...btnStyle(penaltyType === 'investigation'), flex: 1, backgroundColor: penaltyType === 'investigation' ? colors.yellow : colors.bgInput, color: penaltyType === 'investigation' ? '#000' : colors.textMain }}
                 >
-                  🔎 INVESTIGACIÓN
+                  {t('sanciones.investigationBtn')}
                 </button>
                 <button
                   onClick={() => setPenaltyType('penalty')}
                   style={{ ...btnStyle(penaltyType === 'penalty'), flex: 1, backgroundColor: penaltyType === 'penalty' ? colors.red : colors.bgInput, color: '#fff', borderColor: penaltyType === 'penalty' ? '#c0392b' : colors.border }}
                 >
-                  🚫 SANCIÓN
+                  {t('sanciones.penaltyBtn')}
                 </button>
               </div>
             </div>
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', maxWidth: '700px', marginBottom: '15px' }}>
-            <label style={{ fontSize: '10px', color: colors.textMuted, fontWeight: 'bold' }}>MOTIVO (OPCIONAL)</label>
+            <label style={{ fontSize: '10px', color: colors.textMuted, fontWeight: 'bold' }}>{t('sanciones.reasonLabel')}</label>
             <textarea
               value={penaltyReason}
               onChange={(e) => setPenaltyReason(e.target.value)}
               style={{ ...inputStyle, padding: '10px', fontSize: '13px', textTransform: 'none', minHeight: '80px', resize: 'vertical' }}
-              placeholder="Ej: Contacto en curva 4 con el auto #12..."
+              placeholder={t('sanciones.reasonPlaceholder')}
             />
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', maxWidth: '700px', marginBottom: '25px' }}>
             <label style={{ fontSize: '10px', color: colors.textMuted, fontWeight: 'bold', whiteSpace: 'nowrap' }}>
-              OCULTAR AUTOMÁTICAMENTE DESPUÉS DE (SEGUNDOS)
+              {t('sanciones.autoHideLabel')}
             </label>
             <input
               type="number" min="3" max="120"
@@ -1125,20 +1119,20 @@ export default function ControlPanel() {
 
           <div style={{ display: 'flex', gap: '10px', maxWidth: '700px' }}>
             <button onClick={handleTriggerPenalty} style={{ ...btnStyle(false), flex: 2, backgroundColor: '#2ecc71', color: '#fff', borderColor: '#27ae60', padding: '14px' }}>
-              🔴 EMITIR EN PANTALLA
+              {t('sanciones.emitBtn')}
             </button>
             <button onClick={handleHidePenalty} style={{ ...btnStyle(false), flex: 1, backgroundColor: '#c0392b', color: '#fff', borderColor: '#e74c3c', padding: '14px' }}>
-              OCULTAR
+              {t('common.hide')}
             </button>
           </div>
         </div>
       )}
 
-      {activeTab === 'CLOUD' && (
+      {activeTab === 'cloud' && (
         <div style={{ padding: '30px', flex: 1, backgroundColor: colors.bgApp, overflowY: 'auto' }}>
 
           <h2 style={{ color: colors.yellow, marginTop: 0, borderBottom: `1px solid ${colors.border}`, paddingBottom: '10px' }}>
-            ☁️ SERVIDOR CLOUD — overlayracing.site
+            {t('cloud.title')}
           </h2>
           <div style={{
             display: 'flex', alignItems: 'center', gap: '10px',
@@ -1148,34 +1142,34 @@ export default function ControlPanel() {
           }}>
             <span style={{ width: '10px', height: '10px', borderRadius: '50%', backgroundColor: cloudConnected ? colors.green : colors.red, flexShrink: 0 }} />
             <span style={{ fontSize: '12px', fontWeight: 'bold', letterSpacing: '0.5px', color: cloudConnected ? colors.green : colors.red }}>
-              {cloudConnected ? 'CONECTADO AL SERVIDOR CLOUD' : 'SIN CONEXIÓN AL SERVIDOR CLOUD'}
+              {cloudConnected ? t('cloud.connected') : t('cloud.disconnected')}
             </span>
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', maxWidth: '700px' }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
               <label style={{ fontSize: '10px', color: colors.textMuted, fontWeight: 'bold' }}>
-                TOKEN DEL QR (de la URL /qr/&lt;token&gt; del evento)
+                {t('cloud.qrTokenLabel')}
               </label>
               <input
                 type="text"
                 value={cloudQrToken}
                 onChange={(e) => setCloudQrToken(e.target.value)}
                 style={{ ...inputStyle, padding: '10px', fontSize: '13px', textTransform: 'none' }}
-                placeholder="Ej: VsKOKSH7ONbr"
+                placeholder={t('cloud.qrTokenPlaceholder')}
               />
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
               <label style={{ fontSize: '10px', color: colors.textMuted, fontWeight: 'bold' }}>
-                TOKEN DEL COMISARIO (de la URL /comisario/&lt;token&gt; del evento)
+                {t('cloud.stewardTokenLabel')}
               </label>
               <input
                 type="text"
                 value={cloudComisarioToken}
                 onChange={(e) => setCloudComisarioToken(e.target.value)}
                 style={{ ...inputStyle, padding: '10px', fontSize: '13px', textTransform: 'none' }}
-                placeholder="Ej: Xz899501dFa9"
+                placeholder={t('cloud.stewardTokenPlaceholder')}
               />
             </div>
 
@@ -1185,72 +1179,73 @@ export default function ControlPanel() {
                 disabled={cloudSaving}
                 style={{ ...btnStyle(false), flex: 1, backgroundColor: '#2ecc71', color: '#fff', borderColor: '#27ae60', padding: '14px' }}
               >
-                {cloudSaving ? 'GUARDANDO...' : '💾 GUARDAR Y CONECTAR'}
+                {cloudSaving ? t('cloud.saving') : t('cloud.saveBtn')}
               </button>
               {cloudSavedFlash && (
-                <span style={{ fontSize: '12px', color: colors.green, fontWeight: 'bold' }}>✅ Guardado</span>
+                <span style={{ fontSize: '12px', color: colors.green, fontWeight: 'bold' }}>{t('cloud.savedFlash')}</span>
               )}
             </div>
           </div>
         </div>
       )}
 
-      {activeTab === 'AJUSTES' && (
-        <SettingsPanel config={config} handleDirectSave={handleDirectSave} handleScrape={handleScrape} colors={colors} inputStyle={inputStyle} btnStyle={btnStyle} />
+      {activeTab === 'ajustes' && (
+        <SettingsPanel config={config} handleDirectSave={handleDirectSave} handleScrape={handleScrape} colors={colors} inputStyle={inputStyle} btnStyle={btnStyle} t={t} language={language} setLanguage={setLanguage} />
       )}
 
-      {activeTab === 'PERSONALIZAR' && (
-        <CustomizePanel config={config} positions={positions} defaultPositions={defaultPositions} onUpdatePositions={handleUpdatePositions} onSelectLogo={handleSelectLogo} onSelectCategoryLogo={handleSelectCategoryLogo} onSelectPhotosFolder={handleSelectPhotosFolder} onClearLogo={() => handleDirectSave('logo', null)} onClearCategoryLogo={() => handleDirectSave('categoryLogo', null)} onClearPhotosFolder={() => handleDirectSave('photosPath', null)} onConfigChange={handleDirectSave} colors={colors} inputStyle={inputStyle} btnStyle={btnStyle} />
+      {activeTab === 'personalizar' && (
+        <CustomizePanel config={config} positions={positions} defaultPositions={defaultPositions} onUpdatePositions={handleUpdatePositions} onSelectLogo={handleSelectLogo} onSelectCategoryLogo={handleSelectCategoryLogo} onSelectPhotosFolder={handleSelectPhotosFolder} onClearLogo={() => handleDirectSave('logo', null)} onClearCategoryLogo={() => handleDirectSave('categoryLogo', null)} onClearPhotosFolder={() => handleDirectSave('photosPath', null)} onConfigChange={handleDirectSave} colors={colors} inputStyle={inputStyle} btnStyle={btnStyle} t={t} />
       )}
 
-      {activeTab === 'CIRCUITO' && (
-        <TrackMapPanel config={config} onConfigChange={handleDirectSave} colors={colors} inputStyle={inputStyle} btnStyle={btnStyle} />
+      {activeTab === 'circuito' && (
+        <TrackMapPanel config={config} onConfigChange={handleDirectSave} colors={colors} inputStyle={inputStyle} btnStyle={btnStyle} t={t} />
       )}
 
-      {activeTab === 'MANUAL' && (
-        <UserManual colors={colors} />
+      {activeTab === 'manual' && (
+        <UserManual colors={colors} t={t} language={language} />
       )}
 
-      {activeTab === 'ZÓCALOS' && (
+      {activeTab === 'zocalos' && (
         <div style={{ padding: '30px', display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '20px', overflowY: 'auto', flex: 1 }}>
           {currentZocalos.map((zocalo, index) => (
             <div key={index} style={{ backgroundColor: colors.bgPanel, padding: '20px', borderRadius: '8px', border: `1px solid ${activeZocaloIndex === index ? colors.red : colors.border}`, display: 'flex', flexDirection: 'column', gap: '15px', boxShadow: activeZocaloIndex === index ? `0 0 15px rgba(231, 76, 60, 0.2)` : 'none' }}>
-              <h3 style={{ margin: 0, color: colors.yellow, fontSize: '13px', borderBottom: `1px solid ${colors.border}`, paddingBottom: '10px' }}> ZÓCALO PRESETEADO {index + 1} </h3>
+              <h3 style={{ margin: 0, color: colors.yellow, fontSize: '13px', borderBottom: `1px solid ${colors.border}`, paddingBottom: '10px' }}> {t('zocalos.presetTitle', { n: index + 1 })} </h3>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
-                <label style={{ fontSize: '10px', color: colors.textMuted, fontWeight: 'bold' }}>TÍTULO (Ej: NOTICIA, ENTREVISTA)</label>
-                <input type="text" value={zocalo.title} onChange={(e) => handleZocaloChange(index, 'title', e.target.value)} onBlur={handleSave} style={{ ...inputStyle, fontSize: '12px', padding: '10px' }} placeholder="Escribe un título..." />
+                <label style={{ fontSize: '10px', color: colors.textMuted, fontWeight: 'bold' }}>{t('zocalos.titleLabel')}</label>
+                <input type="text" value={zocalo.title} onChange={(e) => handleZocaloChange(index, 'title', e.target.value)} onBlur={handleSave} style={{ ...inputStyle, fontSize: '12px', padding: '10px' }} placeholder={t('zocalos.titlePlaceholder')} />
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', flex: 1 }}>
-                <label style={{ fontSize: '10px', color: colors.textMuted, fontWeight: 'bold' }}>TEXTO PRINCIPAL</label>
-                <textarea value={zocalo.text} onChange={(e) => handleZocaloChange(index, 'text', e.target.value)} onBlur={handleSave} style={{ ...inputStyle, fontSize: '14px', padding: '10px', flex: 1, minHeight: '80px', resize: 'vertical' }} placeholder="Escribe la información..." />
+                <label style={{ fontSize: '10px', color: colors.textMuted, fontWeight: 'bold' }}>{t('zocalos.textLabel')}</label>
+                <textarea value={zocalo.text} onChange={(e) => handleZocaloChange(index, 'text', e.target.value)} onBlur={handleSave} style={{ ...inputStyle, fontSize: '14px', padding: '10px', flex: 1, minHeight: '80px', resize: 'vertical' }} placeholder={t('zocalos.textPlaceholder')} />
               </div>
               <button onClick={() => handleToggleZocalo(index)} style={{ ...btnStyle(activeZocaloIndex === index), padding: '12px', fontSize: '13px', marginTop: '5px', backgroundColor: activeZocaloIndex === index ? colors.red : colors.bgInput, color: activeZocaloIndex === index ? '#fff' : colors.textMain, borderColor: activeZocaloIndex === index ? colors.red : colors.border }}>
-                {activeZocaloIndex === index ? '🔴 QUITAR DEL AIRE' : '▶ PONER EN EL AIRE'}
+                {activeZocaloIndex === index ? t('zocalos.removeFromAir') : t('zocalos.putOnAir')}
               </button>
             </div>
           ))}
         </div>
       )}
 
-      {activeTab === 'DISEÑOS' && (
+      {activeTab === 'disenos' && (
         <div style={{ padding: '30px', overflowY: 'auto', flex: 1, backgroundColor: colors.bgApp, display: 'block' }}>
-          <h2 style={{ color: colors.yellow, marginTop: 0, borderBottom: `1px solid ${colors.border}`, paddingBottom: '10px' }}>DISEÑOS DE GRÁFICAS (PNG/SVG)</h2>
+          <h2 style={{ color: colors.yellow, marginTop: 0, borderBottom: `1px solid ${colors.border}`, paddingBottom: '10px' }}>{t('disenos.title')}</h2>
           <p style={{ color: colors.textMuted, fontSize: '13px', marginBottom: '25px' }}>
-            Carga imágenes con transparencia para reemplazar la caja clásica de colores por tu propio diseño.
+            {t('disenos.description')}
           </p>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '20px' }}>
-            {allGraphicsList.map(graphic => {
-              const configKey = `design_${graphic.id}`;
+            {GRAPHIC_IDS.map(graphicId => {
+              const graphicLabel = t(`graphics.${graphicId}`);
+              const configKey = `design_${graphicId}`;
               const hasDesign = !!config[configKey];
               return (
-                <div key={graphic.id} style={{ backgroundColor: colors.bgPanel, padding: '15px', borderRadius: '8px', border: `1px solid ${colors.border}`, display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                  <span style={{ fontSize: '12px', color: colors.textMain, fontWeight: 'bold', textAlign: 'center' }}>{graphic.label}</span>
+                <div key={graphicId} style={{ backgroundColor: colors.bgPanel, padding: '15px', borderRadius: '8px', border: `1px solid ${colors.border}`, display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  <span style={{ fontSize: '12px', color: colors.textMain, fontWeight: 'bold', textAlign: 'center' }}>{graphicLabel}</span>
                   <div style={{ backgroundColor: '#000', height: '80px', borderRadius: '4px', border: `1px dashed ${hasDesign ? colors.green : colors.border}`, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
-                    {hasDesign ? <img src={config[configKey]} alt={graphic.label} style={{ maxHeight: '70px', maxWidth: '90%', objectFit: 'contain' }} /> : <span style={{ fontSize: '10px', color: '#444' }}>DISEÑO ESTÁNDAR</span>}
+                    {hasDesign ? <img src={config[configKey]} alt={graphicLabel} style={{ maxHeight: '70px', maxWidth: '90%', objectFit: 'contain' }} /> : <span style={{ fontSize: '10px', color: '#444' }}>{t('disenos.standardDesign')}</span>}
                   </div>
                   <div style={{ display: 'flex', gap: '5px' }}>
-                    <button onClick={async () => { if (ipcRenderer) { const imgData = await ipcRenderer.invoke('select-design-image', graphic.label); if (imgData) handleDirectSave(configKey, imgData); } }} style={{ ...btnStyle(false), flex: 1, padding: '8px', fontSize: '10px' }}>📷 CARGAR PNG/SVG</button>
-                    {hasDesign && <button onClick={() => handleDirectSave(configKey, null)} style={{ ...btnStyle(false), flex: 1, backgroundColor: '#c0392b', color: 'white', border: 'none', padding: '8px', fontSize: '10px' }}>🗑️ QUITAR</button>}
+                    <button onClick={async () => { if (ipcRenderer) { const imgData = await ipcRenderer.invoke('select-design-image', graphicLabel); if (imgData) handleDirectSave(configKey, imgData); } }} style={{ ...btnStyle(false), flex: 1, padding: '8px', fontSize: '10px' }}>{t('disenos.loadBtn')}</button>
+                    {hasDesign && <button onClick={() => handleDirectSave(configKey, null)} style={{ ...btnStyle(false), flex: 1, backgroundColor: '#c0392b', color: 'white', border: 'none', padding: '8px', fontSize: '10px' }}>{t('common.removeBtn')}</button>}
                   </div>
                 </div>
               );

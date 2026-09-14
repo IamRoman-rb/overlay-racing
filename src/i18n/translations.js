@@ -1,0 +1,920 @@
+export const LANGUAGES = [
+  { value: 'es', label: 'Español' },
+  { value: 'en', label: 'English' },
+  { value: 'pt', label: 'Português' },
+  { value: 'de', label: 'Deutsch' },
+  { value: 'fr', label: 'Français' }
+];
+
+export const translations = {
+  es: {
+    common: {
+      selectPlaceholder: 'SELECCIONAR...',
+      selectCurvePlaceholder: 'SELECCIONAR CURVA...',
+      selectDriverPlaceholder: 'SELECCIONAR PILOTO...',
+      emptyLabel: 'VACÍO',
+      loadBtn: '📷 CARGAR',
+      removeBtn: '🗑️ QUITAR',
+      hide: 'OCULTAR'
+    },
+    tabs: {
+      panel: 'PANEL', campeonato: 'CAMPEONATO', votaciones: 'VOTACIONES', sanciones: 'SANCIONES',
+      cloud: 'CLOUD', zocalos: 'ZÓCALOS', disenos: 'DISEÑOS', circuito: 'CIRCUITO',
+      ajustes: 'AJUSTES', personalizar: 'PERSONALIZAR', manual: 'MANUAL'
+    },
+    graphics: {
+      relator: 'RELATOR', comentarista: 'COMENTARISTA', notero1: 'NOTERO 1', notero2: 'NOTERO 2',
+      circuito: 'CIRCUITO', clima: 'CLIMA', ticker: 'TIRA INFERIOR', tower: 'TORRE POSICIONES',
+      grid: 'GRILLA PARTIDA', finalResults: 'RESULTADOS FINALES', winner: 'GANADOR',
+      flags: 'BANDERAS DE ALERTA', fastestLap: 'RECORD DE VUELTA', driverInfo: 'INFO DEL PILOTO',
+      battle: 'BATALLA (F1)', customZocalo: 'ZÓCALO LIBRE', votingQR: 'QR DE VOTACIÓN',
+      votingResults: 'RESULTADOS DE VOTACIÓN', lapCounter: 'CONTADOR DE VUELTAS',
+      virtualChamp: 'CAMPEONATO VIRTUAL', pitStop: 'CRONÓMETRO DE BOXES',
+      startingLights: 'SEMÁFORO DE LARGADA', lapTimesHistory: 'EVOLUCIÓN DE TIEMPOS DE VUELTA',
+      trackAlert: 'ALERTA EN CURVA', penaltyAlert: 'SANCIÓN / INVESTIGACIÓN'
+    },
+    header: {
+      title: 'RACE DYNAMICS DASHBOARD', bestLap: 'MEJOR VUELTA', laps: 'VUELTAS',
+      totalTime: 'TIEMPO TOTAL', live: '🟢 EN VIVO', paused: 'PAUSADO'
+    },
+    panel: {
+      flagsSection: 'BANDERAS DE CARRERA', flagRed: 'ROJA', flagTricolor: 'TRICOLOR',
+      flagBlue: 'AZUL (PASO)', flagCheckered: 'ÚLTIMA VUELTA', flagBlack: 'NEGRA',
+      flagNumberPlaceholder: 'Nº', flagNumberTitle: 'Escribe el número del auto a excluir',
+      personalSection: 'PERSONAL / ENTORNO', namePlaceholder: 'NOMBRE...',
+      weatherNeedCircuit: '⚠️ Selecciona un Circuito primero.',
+      weatherError: '❌ No se pudo obtener el clima. Revisá la conexión a internet.',
+      weatherNoData: 'SIN DATOS DE CLIMA...',
+      trackAlertYellow: '⚠️ AMARILLA', trackAlertIncident: '🚨 INCIDENTE', emitAlert: '🔴 EMITIR ALERTA',
+      gridSection: 'GRILLA', gridPrev: '◀ ANT', showGrid: 'MOSTRAR GRILLA', gridNext: 'SIG ▶',
+      autoScrapeStop: '⏹ DETENER (1s)', autoScrapeStart: '▶ AUTO-CARGA',
+      lightsGo: '🟢 LARGAR (DAR SALIDA)', lightsCounting: '🔴 ENCENDIENDO ({step}/5)', lightsStart: '🚦 INICIAR SEMÁFORO',
+      graphicsSection: 'GRÁFICOS', towerShort: 'TORRE', lapsShort: 'VUELTAS', recordLapShort: 'RECORD VUELTA',
+      battleSection: 'BATALLA EN PISTA', posLabel: 'POS:', showBattle: 'MOSTRAR BATALLA', hideBattle: 'OCULTAR BATALLA',
+      hideChampTable: 'OCULTAR TABLA EN OVERLAY', showChampTable: 'MOSTRAR TABLA EN OVERLAY',
+      champNote: 'Cargá el Excel y mirá la tabla completa en la pestaña {tab}.',
+      hideChart: 'OCULTAR GRÁFICO', showChart: 'MOSTRAR GRÁFICO', resetShort: '🗑️ REINICIAR',
+      lapTimesFocusNote: '⏱️ Mostrando sólo #{number} — click en "QUITAR" en la tabla para ver a todos',
+      votingSection: 'INTERACTIVIDAD (VOTOS)', tunnelReady: 'TÚNEL LISTO PARA ESCANEAR', tunnelGenerating: 'GENERANDO TÚNEL...',
+      votingResultsLive: 'RESULTADOS EN VIVO',
+      backupSection: 'MEMORIA DE CARRERA (BACKUP)', saveCurrent: '💾 GUARDAR ACTUAL', loadSaved: '📂 CARGAR GUARDADA',
+      closingSection: 'CIERRE (ACTIVO)', finalResultBtn: 'RESULTADO FINAL', showWinnerBtn: 'MOSTRAR GANADOR',
+      confirmShowQrNoTunnel: '⚠️ El túnel de votación todavía se está generando (no hay URL válida todavía). Si mostrás el QR ahora, puede no funcionar al escanearlo.\n\n¿Mostrarlo igual?',
+      confirmResetVotes: '⚠️ ¿Estás seguro de que quieres borrar todos los votos actuales?',
+      alertNoDataToSave: '⚠️ No hay datos en pantalla para guardar.',
+      alertSaveSuccess: '✅ Datos de la carrera guardados correctamente en memoria.',
+      alertSaveError: '❌ Error al guardar los datos.',
+      alertLoadSuccess: "📂 Datos en memoria cargados. La actualización 'EN VIVO' ha sido pausada.",
+      alertNoSavedData: '⚠️ No hay datos guardados previamente.',
+      confirmResetLapTimes: '⚠️ ¿Borrar el historial de tiempos de vuelta guardado en disco?',
+      alertSelectCurveFirst: '⚠️ Seleccioná una curva primero.'
+    },
+    campeonato: {
+      title: '🏆 CAMPEONATO (EXCEL)', driversLoaded: 'PILOTOS CARGADOS:',
+      description: 'Cargá un Excel (.xlsx) con las columnas Numero, Nombre y Puntos (puntaje base de cada piloto antes de esta carrera), más Posicion y Puntos_Escala (cuántos puntos suma cada posición de llegada). Los puntos de la carrera en vivo se suman automáticamente al puntaje base a medida que corre la sesión.',
+      emptyState: 'Todavía no cargaste ningún Excel. Hacé clic en "{btn}" para ver la tabla del campeonato acá.',
+      loadExcelBtn: '📊 CARGAR EXCEL', loadingExcelBtn: '⏳ CARGANDO...',
+      colPos: 'POS', colNum: 'NUM', colDriver: 'PILOTO', colBasePoints: 'PUNTOS BASE',
+      colThisRace: '+ ESTA CARRERA', colTotal: 'TOTAL',
+      alertExcelError: '❌ Error al cargar Excel o acción cancelada.'
+    },
+    votaciones: {
+      title: '📊 PANEL DE VOTACIONES EN VIVO', totalVotes: 'TOTAL VOTOS:',
+      tunnelReadyMsg: 'TÚNEL LISTO — EL QR YA SE PUEDE ESCANEAR',
+      tunnelGeneratingMsg: 'GENERANDO TÚNEL... TODAVÍA NO MUESTRES EL QR EN PANTALLA',
+      waitingUrl: 'Esperando URL pública de Cloudflare, puede tardar unos segundos...',
+      hideQr: 'OCULTAR QR', showQr: 'MOSTRAR QR EN PANTALLA',
+      hideResults: 'OCULTAR RESULTADOS', showResults: 'MOSTRAR RESULTADOS EN PANTALLA',
+      resetVotesBtn: '🗑️ REINICIAR VOTOS',
+      noVotesYet: 'No hay votos registrados en esta sesión aún. Activa el QR para comenzar.',
+      votesSuffix: 'VOTOS'
+    },
+    sanciones: {
+      title: '🚩 COMISARIOS DEPORTIVOS — SANCIONES E INVESTIGACIONES',
+      description: 'Cargá una sanción o marcá una maniobra bajo investigación. Aparece al instante en el overlay (estilo F1) y se oculta sola pasado el tiempo que definas abajo.',
+      stewardPanelReady: 'PANEL WEB PARA COMISARIOS — LISTO', tunnelGenerating: 'GENERANDO TÚNEL...',
+      waitingUrl: 'Esperando URL pública de Cloudflare...',
+      shareNote: 'Compartile este link (o el QR) al comisario deportivo. Desde su celular puede cargar sanciones sin pasar por este panel. También podés usar el link fijo del servidor cloud en la pestaña {tab}, que no depende de este túnel.',
+      copyLink: '📋 COPIAR LINK',
+      onAir: 'EN AIRE: #{number} {name} — {type}',
+      typeInvestigation: 'BAJO INVESTIGACIÓN', typePenalty: 'SANCIÓN',
+      driverLabel: 'PILOTO', typeLabel: 'TIPO',
+      investigationBtn: '🔎 INVESTIGACIÓN', penaltyBtn: '🚫 SANCIÓN',
+      reasonLabel: 'MOTIVO (OPCIONAL)', reasonPlaceholder: 'Ej: Contacto en curva 4 con el auto #12...',
+      autoHideLabel: 'OCULTAR AUTOMÁTICAMENTE DESPUÉS DE (SEGUNDOS)',
+      emitBtn: '🔴 EMITIR EN PANTALLA',
+      alertSelectDriverFirst: '⚠️ Seleccioná un piloto primero.'
+    },
+    cloud: {
+      title: '☁️ SERVIDOR CLOUD — overlayracing.site',
+      connected: 'CONECTADO AL SERVIDOR CLOUD', disconnected: 'SIN CONEXIÓN AL SERVIDOR CLOUD',
+      qrTokenLabel: 'TOKEN DEL QR (de la URL /qr/<token> del evento)', qrTokenPlaceholder: 'Ej: VsKOKSH7ONbr',
+      stewardTokenLabel: 'TOKEN DEL COMISARIO (de la URL /comisario/<token> del evento)', stewardTokenPlaceholder: 'Ej: Xz899501dFa9',
+      saving: 'GUARDANDO...', saveBtn: '💾 GUARDAR Y CONECTAR', savedFlash: '✅ Guardado',
+      alertSaveTokensError: '❌ No se pudieron guardar los tokens del servidor cloud.',
+      alertSaveTokensCatchError: '❌ Error guardando los tokens del servidor cloud.'
+    },
+    zocalos: {
+      presetTitle: 'ZÓCALO PRESETEADO {n}', titleLabel: 'TÍTULO (Ej: NOTICIA, ENTREVISTA)',
+      titlePlaceholder: 'Escribe un título...', textLabel: 'TEXTO PRINCIPAL',
+      textPlaceholder: 'Escribe la información...',
+      removeFromAir: '🔴 QUITAR DEL AIRE', putOnAir: '▶ PONER EN EL AIRE'
+    },
+    disenos: {
+      title: 'DISEÑOS DE GRÁFICAS (PNG/SVG)',
+      description: 'Carga imágenes con transparencia para reemplazar la caja clásica de colores por tu propio diseño.',
+      standardDesign: 'DISEÑO ESTÁNDAR', loadBtn: '📷 CARGAR PNG/SVG'
+    },
+    ajustes: {
+      title: 'AJUSTES DEL SISTEMA', chromaLabel: 'COLOR DE FONDO (CHROMA KEY)',
+      chromaGreen: 'VERDE (CLÁSICO)', chromaBlue: 'AZUL', chromaMagenta: 'MAGENTA / ROSA',
+      chromaBlack: 'NEGRO', chromaWhite: 'BLANCO', chromaYellow: 'AMARILLO',
+      providerLabel: 'PROVEEDOR DE TIEMPOS (TIMING)', codeLabel: 'CÓDIGO DE LA CARRERA',
+      loadNowBtn: '🔄 CARGAR DATOS AHORA', languageLabel: 'IDIOMA'
+    },
+    personalizar: {
+      selectGraphic: 'SELECCIONAR GRÁFICA', themeConfig: 'CONFIGURACIÓN VISUAL (TEMA)',
+      colorBorder: 'BORDES / LÍNEAS', colorSecondary: 'CAJAS / SECUNDARIO', colorAccent: 'ACENTO / POSICIÓN',
+      colorBg: 'FONDO GENERAL', colorHeaderBg: 'FONDO ENCABEZADOS', colorTitleText: 'TEXTO TÍTULOS',
+      colorNormalText: 'TEXTO NOMBRES', colorNumberText: 'TEXTO TIEMPOS',
+      textTypography: 'TEXTO Y TIPOGRAFÍA', fontLabel: 'TIPOGRAFÍA GENERAL',
+      fontArial: 'Arial (Clásica)', fontOswald: 'Oswald (TV)', fontMontserrat: 'Montserrat (Moderna)',
+      fontTeko: 'Teko (Racing)', fontExo: 'Exo 2 (Futurista)',
+      nameFormatLabel: 'FORMATO NOMBRES', nameOriginal: 'Original', nameUppercase: 'MAYÚSCULAS',
+      nameFirstInitialLast: 'R. Borla', nameFirstLastInitial: 'Roman B.', nameLastOnly: 'Borla (Solo Apellido)',
+      formatOf: 'FORMATO DE {name}', styleOf: 'ESTILO: {name}', lowerThirdFormatLabel: 'FORMATO DE ZÓCALO',
+      borderRadiusLabel: 'BORDES (REDONDEO)', radius0: '0px (Cuadrados)', radius8: '8px (Normal)',
+      radius16: '16px (Redondeados)', radius30: '30px (Píldora)',
+      animationLabel: 'ANIMACIÓN (ENTRADA)',
+      animSlide: 'Deslizar (Slide)', animFade: 'Desvanecer (Fade)', animZoom: 'Aumentar (Zoom)',
+      animBounce: 'Rebote (Bounce)', animFlip: 'Voltear (Flip)', animRotate: 'Rotar (Rotate)',
+      skinPro: 'Broadcast Pro (Estilo F1 / MotoGP)', skinGradient: 'Degradé (Fondo con Gradiente)', skinGlass: 'Cristal (Glassmorphism, Difuminado)',
+      coordsTitle: 'COORDENADAS Y TAMAÑO', axisX: 'EJE X', axisY: 'EJE Y', scaleLabel: 'ESCALA',
+      resetPositionBtn: '🔄 RESTABLECER POSICIÓN',
+      mediaTitle: 'RECURSOS MULTIMEDIA', producerLogo: 'LOGO PRODUCTORA', categoryLogo: 'LOGO CATEGORÍA',
+      photosFolder: 'CARPETA FOTOS DE PILOTOS', noFolderSelected: 'Ninguna carpeta seleccionada.',
+      chooseFolderBtn: '📁 ELEGIR CARPETA', removeFolderBtn: '🗑️ QUITAR CARPETA',
+      previewPlaceholder: 'ÁREA DE GRÁFICA'
+    },
+    circuito: {
+      confirmRemoveMap: '¿Seguro que querés quitar el mapa del circuito? Se perderán las curvas marcadas.',
+      title: 'MAPA DEL CIRCUITO', loadImageBtn: '📷 CARGAR IMAGEN',
+      instructions: 'Hacé click en la imagen para agregar una curva. Arrastrá un marcador para moverlo.',
+      curvesTitle: 'CURVAS ({n})', noCurves: 'Todavía no hay curvas marcadas.',
+      curveDefaultName: 'Curva {n}', emptyState: 'Cargá una imagen del circuito para empezar a marcar curvas.'
+    },
+    driversTable: {
+      noData: 'No hay datos de telemetría. Conecta Speedhive o RaceMonitor para ver la tabla en vivo.',
+      colPos: 'POS', colNum: 'NUM', colDriver: 'PILOTO', colLaps: 'VUELTAS', colLastLap: 'ÚLTIMA V.',
+      colDiff: 'DIFERENCIA', colTotalTime: 'T. TOTAL', colBestLap: 'MEJOR V.', colAction: 'ACCIÓN',
+      pitBox: '⏱️ BOX', pitStop: '🛑 STOP', pitRemove: '❌ QUITAR',
+      lapTimesRemove: 'QUITAR', lapTimesShow: 'VUELTAS', lapTimesTitle: 'Ver evolución de tiempos de vuelta de este piloto',
+      infoShow: 'INFO'
+    },
+    manual: {
+      title: '📖 MANUAL DE USUARIO',
+      intro: 'Guía rápida de todas las funciones del programa. Hacé clic en cada sección para desplegarla.',
+      sections: {
+        intro: '¿Qué es este programa?', vmix: 'Cómo conectar la ventana Overlay a vMix',
+        server: 'Servidor local (puerto 8080)', cloud: 'Cómo conectarse al servidor Cloud (overlayracing.site)',
+        timing: 'Cómo conectar el timing en vivo (Speedhive / Race Monitor)',
+        excel: 'Formato del Excel para el Campeonato', photos: 'Fotos de los pilotos',
+        tabs: 'Guía rápida de cada pestaña'
+      },
+      feedbackNote: '💡 ¿Algo no coincide con cómo lo usás en la práctica, o falta explicar algo? Avisale al equipo de desarrollo para actualizar este manual.',
+      contentSpanishOnly: 'ℹ️ El contenido detallado de esta guía está disponible en español por ahora. La traducción completa está planificada como una mejora futura.'
+    }
+  },
+
+  en: {
+    common: {
+      selectPlaceholder: 'SELECT...',
+      selectCurvePlaceholder: 'SELECT CORNER...',
+      selectDriverPlaceholder: 'SELECT DRIVER...',
+      emptyLabel: 'EMPTY',
+      loadBtn: '📷 LOAD',
+      removeBtn: '🗑️ REMOVE',
+      hide: 'HIDE'
+    },
+    tabs: {
+      panel: 'PANEL', campeonato: 'STANDINGS', votaciones: 'VOTING', sanciones: 'PENALTIES',
+      cloud: 'CLOUD', zocalos: 'LOWER THIRDS', disenos: 'DESIGNS', circuito: 'TRACK',
+      ajustes: 'SETTINGS', personalizar: 'CUSTOMIZE', manual: 'MANUAL'
+    },
+    graphics: {
+      relator: 'COMMENTATOR', comentarista: 'CO-COMMENTATOR', notero1: 'REPORTER 1', notero2: 'REPORTER 2',
+      circuito: 'TRACK', clima: 'WEATHER', ticker: 'BOTTOM TICKER', tower: 'POSITION TOWER',
+      grid: 'STARTING GRID', finalResults: 'FINAL RESULTS', winner: 'WINNER',
+      flags: 'WARNING FLAGS', fastestLap: 'FASTEST LAP', driverInfo: 'DRIVER INFO',
+      battle: 'BATTLE (F1)', customZocalo: 'FREE LOWER THIRD', votingQR: 'VOTING QR',
+      votingResults: 'VOTING RESULTS', lapCounter: 'LAP COUNTER',
+      virtualChamp: 'VIRTUAL STANDINGS', pitStop: 'PIT STOP TIMER',
+      startingLights: 'STARTING LIGHTS', lapTimesHistory: 'LAP TIME EVOLUTION',
+      trackAlert: 'CORNER ALERT', penaltyAlert: 'PENALTY / INVESTIGATION'
+    },
+    header: {
+      title: 'RACE DYNAMICS DASHBOARD', bestLap: 'FASTEST LAP', laps: 'LAPS',
+      totalTime: 'TOTAL TIME', live: '🟢 LIVE', paused: 'PAUSED'
+    },
+    panel: {
+      flagsSection: 'RACE FLAGS', flagRed: 'RED', flagTricolor: 'SAFETY CAR',
+      flagBlue: 'BLUE (LET PASS)', flagCheckered: 'LAST LAP', flagBlack: 'BLACK',
+      flagNumberPlaceholder: 'No.', flagNumberTitle: 'Enter the car number to exclude',
+      personalSection: 'PEOPLE / ENVIRONMENT', namePlaceholder: 'NAME...',
+      weatherNeedCircuit: '⚠️ Select a Track first.',
+      weatherError: '❌ Could not fetch the weather. Check your internet connection.',
+      weatherNoData: 'NO WEATHER DATA...',
+      trackAlertYellow: '⚠️ YELLOW', trackAlertIncident: '🚨 INCIDENT', emitAlert: '🔴 SEND ALERT',
+      gridSection: 'STARTING GRID', gridPrev: '◀ PREV', showGrid: 'SHOW GRID', gridNext: 'NEXT ▶',
+      autoScrapeStop: '⏹ STOP (1s)', autoScrapeStart: '▶ AUTO-REFRESH',
+      lightsGo: '🟢 GO (RELEASE START)', lightsCounting: '🔴 LIGHTING UP ({step}/5)', lightsStart: '🚦 START LIGHTS SEQUENCE',
+      graphicsSection: 'GRAPHICS', towerShort: 'TOWER', lapsShort: 'LAPS', recordLapShort: 'FASTEST LAP',
+      battleSection: 'BATTLE ON TRACK', posLabel: 'POS:', showBattle: 'SHOW BATTLE', hideBattle: 'HIDE BATTLE',
+      hideChampTable: 'HIDE TABLE ON OVERLAY', showChampTable: 'SHOW TABLE ON OVERLAY',
+      champNote: 'Load the Excel and see the full table in the {tab} tab.',
+      hideChart: 'HIDE CHART', showChart: 'SHOW CHART', resetShort: '🗑️ RESET',
+      lapTimesFocusNote: '⏱️ Showing only #{number} — click "REMOVE" in the table to see everyone',
+      votingSection: 'INTERACTIVITY (VOTES)', tunnelReady: 'TUNNEL READY TO SCAN', tunnelGenerating: 'GENERATING TUNNEL...',
+      votingResultsLive: 'LIVE RESULTS',
+      backupSection: 'RACE MEMORY (BACKUP)', saveCurrent: '💾 SAVE CURRENT', loadSaved: '📂 LOAD SAVED',
+      closingSection: 'CLOSING (ON AIR)', finalResultBtn: 'FINAL RESULT', showWinnerBtn: 'SHOW WINNER',
+      confirmShowQrNoTunnel: '⚠️ The voting tunnel is still being generated (no valid URL yet). If you show the QR now, it may not work when scanned.\n\nShow it anyway?',
+      confirmResetVotes: '⚠️ Are you sure you want to clear all current votes?',
+      alertNoDataToSave: '⚠️ There is no data on screen to save.',
+      alertSaveSuccess: '✅ Race data saved successfully to memory.',
+      alertSaveError: '❌ Error saving the data.',
+      alertLoadSuccess: "📂 Saved data loaded. The 'LIVE' update has been paused.",
+      alertNoSavedData: '⚠️ There is no previously saved data.',
+      confirmResetLapTimes: '⚠️ Clear the lap time history saved on disk?',
+      alertSelectCurveFirst: '⚠️ Select a corner first.'
+    },
+    campeonato: {
+      title: '🏆 STANDINGS (EXCEL)', driversLoaded: 'DRIVERS LOADED:',
+      description: 'Load an Excel file (.xlsx) with the columns Numero, Nombre and Puntos (each driver\'s base score before this race), plus Posicion and Puntos_Escala (how many points each finishing position adds). Points from the live race are automatically added to the base score as the session runs.',
+      emptyState: 'You haven\'t loaded an Excel file yet. Click "{btn}" to see the standings table here.',
+      loadExcelBtn: '📊 LOAD EXCEL', loadingExcelBtn: '⏳ LOADING...',
+      colPos: 'POS', colNum: 'NO.', colDriver: 'DRIVER', colBasePoints: 'BASE POINTS',
+      colThisRace: '+ THIS RACE', colTotal: 'TOTAL',
+      alertExcelError: '❌ Error loading the Excel file, or the action was cancelled.'
+    },
+    votaciones: {
+      title: '📊 LIVE VOTING PANEL', totalVotes: 'TOTAL VOTES:',
+      tunnelReadyMsg: 'TUNNEL READY — THE QR CAN NOW BE SCANNED',
+      tunnelGeneratingMsg: 'GENERATING TUNNEL... DON\'T SHOW THE QR ON SCREEN YET',
+      waitingUrl: 'Waiting for the public Cloudflare URL, this may take a few seconds...',
+      hideQr: 'HIDE QR', showQr: 'SHOW QR ON SCREEN',
+      hideResults: 'HIDE RESULTS', showResults: 'SHOW RESULTS ON SCREEN',
+      resetVotesBtn: '🗑️ RESET VOTES',
+      noVotesYet: 'No votes registered in this session yet. Turn on the QR to get started.',
+      votesSuffix: 'VOTES'
+    },
+    sanciones: {
+      title: '🚩 RACE STEWARDS — PENALTIES & INVESTIGATIONS',
+      description: 'Issue a penalty or flag a maneuver under investigation. It appears instantly on the overlay (F1-style) and hides itself after the time you set below.',
+      stewardPanelReady: 'STEWARDS WEB PANEL — READY', tunnelGenerating: 'GENERATING TUNNEL...',
+      waitingUrl: 'Waiting for the public Cloudflare URL...',
+      shareNote: 'Share this link (or the QR) with the race steward. From their phone they can issue penalties without going through this panel. You can also use the fixed cloud server link on the {tab} tab, which doesn\'t depend on this tunnel.',
+      copyLink: '📋 COPY LINK',
+      onAir: 'ON AIR: #{number} {name} — {type}',
+      typeInvestigation: 'UNDER INVESTIGATION', typePenalty: 'PENALTY',
+      driverLabel: 'DRIVER', typeLabel: 'TYPE',
+      investigationBtn: '🔎 INVESTIGATION', penaltyBtn: '🚫 PENALTY',
+      reasonLabel: 'REASON (OPTIONAL)', reasonPlaceholder: 'E.g.: Contact in corner 4 with car #12...',
+      autoHideLabel: 'AUTOMATICALLY HIDE AFTER (SECONDS)',
+      emitBtn: '🔴 SEND TO SCREEN',
+      alertSelectDriverFirst: '⚠️ Select a driver first.'
+    },
+    cloud: {
+      title: '☁️ CLOUD SERVER — overlayracing.site',
+      connected: 'CONNECTED TO CLOUD SERVER', disconnected: 'NOT CONNECTED TO CLOUD SERVER',
+      qrTokenLabel: 'QR TOKEN (from the event\'s /qr/<token> URL)', qrTokenPlaceholder: 'E.g.: VsKOKSH7ONbr',
+      stewardTokenLabel: 'STEWARD TOKEN (from the event\'s /comisario/<token> URL)', stewardTokenPlaceholder: 'E.g.: Xz899501dFa9',
+      saving: 'SAVING...', saveBtn: '💾 SAVE AND CONNECT', savedFlash: '✅ Saved',
+      alertSaveTokensError: '❌ Could not save the cloud server tokens.',
+      alertSaveTokensCatchError: '❌ Error saving the cloud server tokens.'
+    },
+    zocalos: {
+      presetTitle: 'PRESET LOWER THIRD {n}', titleLabel: 'TITLE (E.g.: NEWS, INTERVIEW)',
+      titlePlaceholder: 'Type a title...', textLabel: 'MAIN TEXT',
+      textPlaceholder: 'Type the information...',
+      removeFromAir: '🔴 TAKE OFF AIR', putOnAir: '▶ PUT ON AIR'
+    },
+    disenos: {
+      title: 'GRAPHIC DESIGNS (PNG/SVG)',
+      description: 'Upload images with transparency to replace the classic color box with your own design.',
+      standardDesign: 'STANDARD DESIGN', loadBtn: '📷 LOAD PNG/SVG'
+    },
+    ajustes: {
+      title: 'SYSTEM SETTINGS', chromaLabel: 'BACKGROUND COLOR (CHROMA KEY)',
+      chromaGreen: 'GREEN (CLASSIC)', chromaBlue: 'BLUE', chromaMagenta: 'MAGENTA / PINK',
+      chromaBlack: 'BLACK', chromaWhite: 'WHITE', chromaYellow: 'YELLOW',
+      providerLabel: 'TIMING PROVIDER', codeLabel: 'RACE CODE',
+      loadNowBtn: '🔄 LOAD DATA NOW', languageLabel: 'LANGUAGE'
+    },
+    personalizar: {
+      selectGraphic: 'SELECT GRAPHIC', themeConfig: 'VISUAL SETTINGS (THEME)',
+      colorBorder: 'BORDERS / LINES', colorSecondary: 'BOXES / SECONDARY', colorAccent: 'ACCENT / POSITION',
+      colorBg: 'GENERAL BACKGROUND', colorHeaderBg: 'HEADER BACKGROUND', colorTitleText: 'TITLE TEXT',
+      colorNormalText: 'NAME TEXT', colorNumberText: 'TIME TEXT',
+      textTypography: 'TEXT & TYPOGRAPHY', fontLabel: 'GENERAL FONT',
+      fontArial: 'Arial (Classic)', fontOswald: 'Oswald (TV)', fontMontserrat: 'Montserrat (Modern)',
+      fontTeko: 'Teko (Racing)', fontExo: 'Exo 2 (Futuristic)',
+      nameFormatLabel: 'NAME FORMAT', nameOriginal: 'Original', nameUppercase: 'UPPERCASE',
+      nameFirstInitialLast: 'R. Borla', nameFirstLastInitial: 'Roman B.', nameLastOnly: 'Borla (Last Name Only)',
+      formatOf: 'FORMAT FOR {name}', styleOf: 'STYLE: {name}', lowerThirdFormatLabel: 'LOWER THIRD FORMAT',
+      borderRadiusLabel: 'BORDERS (ROUNDING)', radius0: '0px (Square)', radius8: '8px (Normal)',
+      radius16: '16px (Rounded)', radius30: '30px (Pill)',
+      animationLabel: 'ANIMATION (ENTRANCE)',
+      animSlide: 'Slide', animFade: 'Fade', animZoom: 'Zoom',
+      animBounce: 'Bounce', animFlip: 'Flip', animRotate: 'Rotate',
+      skinPro: 'Broadcast Pro (F1 / MotoGP Style)', skinGradient: 'Gradient (Gradient Background)', skinGlass: 'Glass (Glassmorphism, Blurred)',
+      coordsTitle: 'COORDINATES & SIZE', axisX: 'X AXIS', axisY: 'Y AXIS', scaleLabel: 'SCALE',
+      resetPositionBtn: '🔄 RESET POSITION',
+      mediaTitle: 'MEDIA RESOURCES', producerLogo: 'PRODUCER LOGO', categoryLogo: 'CATEGORY LOGO',
+      photosFolder: 'DRIVER PHOTOS FOLDER', noFolderSelected: 'No folder selected.',
+      chooseFolderBtn: '📁 CHOOSE FOLDER', removeFolderBtn: '🗑️ REMOVE FOLDER',
+      previewPlaceholder: 'GRAPHIC AREA'
+    },
+    circuito: {
+      confirmRemoveMap: 'Are you sure you want to remove the track map? The marked corners will be lost.',
+      title: 'TRACK MAP', loadImageBtn: '📷 LOAD IMAGE',
+      instructions: 'Click on the image to add a corner. Drag a marker to move it.',
+      curvesTitle: 'CORNERS ({n})', noCurves: 'No corners marked yet.',
+      curveDefaultName: 'Corner {n}', emptyState: 'Load a track image to start marking corners.'
+    },
+    driversTable: {
+      noData: 'No telemetry data. Connect Speedhive or RaceMonitor to see the live table.',
+      colPos: 'POS', colNum: 'NO.', colDriver: 'DRIVER', colLaps: 'LAPS', colLastLap: 'LAST LAP',
+      colDiff: 'GAP', colTotalTime: 'TOTAL T.', colBestLap: 'BEST LAP', colAction: 'ACTION',
+      pitBox: '⏱️ PIT', pitStop: '🛑 STOP', pitRemove: '❌ REMOVE',
+      lapTimesRemove: 'REMOVE', lapTimesShow: 'LAPS', lapTimesTitle: 'View this driver\'s lap time evolution',
+      infoShow: 'INFO'
+    },
+    manual: {
+      title: '📖 USER MANUAL',
+      intro: 'Quick guide to all the program\'s features. Click each section to expand it.',
+      sections: {
+        intro: 'What is this program?', vmix: 'How to connect the Overlay window to vMix',
+        server: 'Local server (port 8080)', cloud: 'How to connect to the Cloud server (overlayracing.site)',
+        timing: 'How to connect live timing (Speedhive / Race Monitor)',
+        excel: 'Excel format for the Standings', photos: 'Driver photos',
+        tabs: 'Quick guide to each tab'
+      },
+      feedbackNote: '💡 Does something not match how you use it in practice, or is something missing? Let the development team know so this manual can be updated.',
+      contentSpanishOnly: 'ℹ️ The detailed content of this guide is currently only available in Spanish. A full translation is planned as a future improvement.'
+    }
+  },
+
+  pt: {
+    common: {
+      selectPlaceholder: 'SELECIONAR...',
+      selectCurvePlaceholder: 'SELECIONAR CURVA...',
+      selectDriverPlaceholder: 'SELECIONAR PILOTO...',
+      emptyLabel: 'VAZIO',
+      loadBtn: '📷 CARREGAR',
+      removeBtn: '🗑️ REMOVER',
+      hide: 'OCULTAR'
+    },
+    tabs: {
+      panel: 'PAINEL', campeonato: 'CAMPEONATO', votaciones: 'VOTAÇÃO', sanciones: 'PUNIÇÕES',
+      cloud: 'NUVEM', zocalos: 'TARJAS', disenos: 'DESIGNS', circuito: 'CIRCUITO',
+      ajustes: 'AJUSTES', personalizar: 'PERSONALIZAR', manual: 'MANUAL'
+    },
+    graphics: {
+      relator: 'NARRADOR', comentarista: 'COMENTARISTA', notero1: 'REPÓRTER 1', notero2: 'REPÓRTER 2',
+      circuito: 'CIRCUITO', clima: 'CLIMA', ticker: 'TARJA INFERIOR', tower: 'TORRE DE POSIÇÕES',
+      grid: 'GRID DE LARGADA', finalResults: 'RESULTADOS FINAIS', winner: 'VENCEDOR',
+      flags: 'BANDEIRAS DE ALERTA', fastestLap: 'VOLTA MAIS RÁPIDA', driverInfo: 'INFO DO PILOTO',
+      battle: 'BATALHA (F1)', customZocalo: 'TARJA LIVRE', votingQR: 'QR DE VOTAÇÃO',
+      votingResults: 'RESULTADOS DA VOTAÇÃO', lapCounter: 'CONTADOR DE VOLTAS',
+      virtualChamp: 'CAMPEONATO VIRTUAL', pitStop: 'CRONÔMETRO DE BOX',
+      startingLights: 'SEMÁFORO DE LARGADA', lapTimesHistory: 'EVOLUÇÃO DOS TEMPOS DE VOLTA',
+      trackAlert: 'ALERTA DE CURVA', penaltyAlert: 'PUNIÇÃO / INVESTIGAÇÃO'
+    },
+    header: {
+      title: 'RACE DYNAMICS DASHBOARD', bestLap: 'VOLTA MAIS RÁPIDA', laps: 'VOLTAS',
+      totalTime: 'TEMPO TOTAL', live: '🟢 AO VIVO', paused: 'PAUSADO'
+    },
+    panel: {
+      flagsSection: 'BANDEIRAS DE CORRIDA', flagRed: 'VERMELHA', flagTricolor: 'SAFETY CAR',
+      flagBlue: 'AZUL (CEDER PASSAGEM)', flagCheckered: 'ÚLTIMA VOLTA', flagBlack: 'PRETA',
+      flagNumberPlaceholder: 'Nº', flagNumberTitle: 'Digite o número do carro a excluir',
+      personalSection: 'PESSOAL / AMBIENTE', namePlaceholder: 'NOME...',
+      weatherNeedCircuit: '⚠️ Selecione um Circuito primeiro.',
+      weatherError: '❌ Não foi possível obter o clima. Verifique a conexão com a internet.',
+      weatherNoData: 'SEM DADOS DO CLIMA...',
+      trackAlertYellow: '⚠️ AMARELA', trackAlertIncident: '🚨 INCIDENTE', emitAlert: '🔴 EMITIR ALERTA',
+      gridSection: 'GRID', gridPrev: '◀ ANT', showGrid: 'MOSTRAR GRID', gridNext: 'PRÓX ▶',
+      autoScrapeStop: '⏹ PARAR (1s)', autoScrapeStart: '▶ ATUALIZAÇÃO AUTOMÁTICA',
+      lightsGo: '🟢 LARGAR (DAR PARTIDA)', lightsCounting: '🔴 ACENDENDO ({step}/5)', lightsStart: '🚦 INICIAR SEMÁFORO',
+      graphicsSection: 'GRÁFICOS', towerShort: 'TORRE', lapsShort: 'VOLTAS', recordLapShort: 'VOLTA RÁPIDA',
+      battleSection: 'BATALHA NA PISTA', posLabel: 'POS:', showBattle: 'MOSTRAR BATALHA', hideBattle: 'OCULTAR BATALHA',
+      hideChampTable: 'OCULTAR TABELA NO OVERLAY', showChampTable: 'MOSTRAR TABELA NO OVERLAY',
+      champNote: 'Carregue o Excel e veja a tabela completa na aba {tab}.',
+      hideChart: 'OCULTAR GRÁFICO', showChart: 'MOSTRAR GRÁFICO', resetShort: '🗑️ REINICIAR',
+      lapTimesFocusNote: '⏱️ Mostrando apenas #{number} — clique em "REMOVER" na tabela para ver todos',
+      votingSection: 'INTERATIVIDADE (VOTOS)', tunnelReady: 'TÚNEL PRONTO PARA ESCANEAR', tunnelGenerating: 'GERANDO TÚNEL...',
+      votingResultsLive: 'RESULTADOS AO VIVO',
+      backupSection: 'MEMÓRIA DA CORRIDA (BACKUP)', saveCurrent: '💾 SALVAR ATUAL', loadSaved: '📂 CARREGAR SALVA',
+      closingSection: 'ENCERRAMENTO (AO VIVO)', finalResultBtn: 'RESULTADO FINAL', showWinnerBtn: 'MOSTRAR VENCEDOR',
+      confirmShowQrNoTunnel: '⚠️ O túnel de votação ainda está sendo gerado (ainda não há uma URL válida). Se você mostrar o QR agora, ele pode não funcionar ao escanear.\n\nMostrar mesmo assim?',
+      confirmResetVotes: '⚠️ Tem certeza de que deseja apagar todos os votos atuais?',
+      alertNoDataToSave: '⚠️ Não há dados na tela para salvar.',
+      alertSaveSuccess: '✅ Dados da corrida salvos corretamente na memória.',
+      alertSaveError: '❌ Erro ao salvar os dados.',
+      alertLoadSuccess: "📂 Dados salvos carregados. A atualização 'AO VIVO' foi pausada.",
+      alertNoSavedData: '⚠️ Não há dados salvos anteriormente.',
+      confirmResetLapTimes: '⚠️ Apagar o histórico de tempos de volta salvo no disco?',
+      alertSelectCurveFirst: '⚠️ Selecione uma curva primeiro.'
+    },
+    campeonato: {
+      title: '🏆 CAMPEONATO (EXCEL)', driversLoaded: 'PILOTOS CARREGADOS:',
+      description: 'Carregue um Excel (.xlsx) com as colunas Numero, Nombre e Puntos (pontuação base de cada piloto antes desta corrida), além de Posicion e Puntos_Escala (quantos pontos cada posição de chegada soma). Os pontos da corrida ao vivo são somados automaticamente à pontuação base conforme a sessão avança.',
+      emptyState: 'Você ainda não carregou nenhum Excel. Clique em "{btn}" para ver a tabela do campeonato aqui.',
+      loadExcelBtn: '📊 CARREGAR EXCEL', loadingExcelBtn: '⏳ CARREGANDO...',
+      colPos: 'POS', colNum: 'NÚM', colDriver: 'PILOTO', colBasePoints: 'PONTOS BASE',
+      colThisRace: '+ ESTA CORRIDA', colTotal: 'TOTAL',
+      alertExcelError: '❌ Erro ao carregar o Excel ou ação cancelada.'
+    },
+    votaciones: {
+      title: '📊 PAINEL DE VOTAÇÃO AO VIVO', totalVotes: 'TOTAL DE VOTOS:',
+      tunnelReadyMsg: 'TÚNEL PRONTO — O QR JÁ PODE SER ESCANEADO',
+      tunnelGeneratingMsg: 'GERANDO TÚNEL... AINDA NÃO MOSTRE O QR NA TELA',
+      waitingUrl: 'Aguardando URL pública da Cloudflare, pode levar alguns segundos...',
+      hideQr: 'OCULTAR QR', showQr: 'MOSTRAR QR NA TELA',
+      hideResults: 'OCULTAR RESULTADOS', showResults: 'MOSTRAR RESULTADOS NA TELA',
+      resetVotesBtn: '🗑️ REINICIAR VOTOS',
+      noVotesYet: 'Ainda não há votos registrados nesta sessão. Ative o QR para começar.',
+      votesSuffix: 'VOTOS'
+    },
+    sanciones: {
+      title: '🚩 COMISSÁRIOS ESPORTIVOS — PUNIÇÕES E INVESTIGAÇÕES',
+      description: 'Registre uma punição ou marque uma manobra sob investigação. Aparece instantaneamente no overlay (estilo F1) e se oculta sozinha após o tempo definido abaixo.',
+      stewardPanelReady: 'PAINEL WEB PARA COMISSÁRIOS — PRONTO', tunnelGenerating: 'GERANDO TÚNEL...',
+      waitingUrl: 'Aguardando URL pública da Cloudflare...',
+      shareNote: 'Compartilhe este link (ou o QR) com o comissário esportivo. Do celular dele, ele pode registrar punições sem passar por este painel. Você também pode usar o link fixo do servidor em nuvem na aba {tab}, que não depende deste túnel.',
+      copyLink: '📋 COPIAR LINK',
+      onAir: 'AO VIVO: #{number} {name} — {type}',
+      typeInvestigation: 'SOB INVESTIGAÇÃO', typePenalty: 'PUNIÇÃO',
+      driverLabel: 'PILOTO', typeLabel: 'TIPO',
+      investigationBtn: '🔎 INVESTIGAÇÃO', penaltyBtn: '🚫 PUNIÇÃO',
+      reasonLabel: 'MOTIVO (OPCIONAL)', reasonPlaceholder: 'Ex.: Contato na curva 4 com o carro #12...',
+      autoHideLabel: 'OCULTAR AUTOMATICAMENTE APÓS (SEGUNDOS)',
+      emitBtn: '🔴 EMITIR NA TELA',
+      alertSelectDriverFirst: '⚠️ Selecione um piloto primeiro.'
+    },
+    cloud: {
+      title: '☁️ SERVIDOR NA NUVEM — overlayracing.site',
+      connected: 'CONECTADO AO SERVIDOR NA NUVEM', disconnected: 'SEM CONEXÃO COM O SERVIDOR NA NUVEM',
+      qrTokenLabel: 'TOKEN DO QR (da URL /qr/<token> do evento)', qrTokenPlaceholder: 'Ex.: VsKOKSH7ONbr',
+      stewardTokenLabel: 'TOKEN DO COMISSÁRIO (da URL /comisario/<token> do evento)', stewardTokenPlaceholder: 'Ex.: Xz899501dFa9',
+      saving: 'SALVANDO...', saveBtn: '💾 SALVAR E CONECTAR', savedFlash: '✅ Salvo',
+      alertSaveTokensError: '❌ Não foi possível salvar os tokens do servidor em nuvem.',
+      alertSaveTokensCatchError: '❌ Erro ao salvar os tokens do servidor em nuvem.'
+    },
+    zocalos: {
+      presetTitle: 'TARJA PRÉ-DEFINIDA {n}', titleLabel: 'TÍTULO (Ex.: NOTÍCIA, ENTREVISTA)',
+      titlePlaceholder: 'Digite um título...', textLabel: 'TEXTO PRINCIPAL',
+      textPlaceholder: 'Digite a informação...',
+      removeFromAir: '🔴 TIRAR DO AR', putOnAir: '▶ COLOCAR NO AR'
+    },
+    disenos: {
+      title: 'DESIGNS DE GRÁFICOS (PNG/SVG)',
+      description: 'Carregue imagens com transparência para substituir a caixa clássica de cores pelo seu próprio design.',
+      standardDesign: 'DESIGN PADRÃO', loadBtn: '📷 CARREGAR PNG/SVG'
+    },
+    ajustes: {
+      title: 'AJUSTES DO SISTEMA', chromaLabel: 'COR DE FUNDO (CHROMA KEY)',
+      chromaGreen: 'VERDE (CLÁSSICO)', chromaBlue: 'AZUL', chromaMagenta: 'MAGENTA / ROSA',
+      chromaBlack: 'PRETO', chromaWhite: 'BRANCO', chromaYellow: 'AMARELO',
+      providerLabel: 'PROVEDOR DE CRONOMETRAGEM (TIMING)', codeLabel: 'CÓDIGO DA CORRIDA',
+      loadNowBtn: '🔄 CARREGAR DADOS AGORA', languageLabel: 'IDIOMA'
+    },
+    personalizar: {
+      selectGraphic: 'SELECIONAR GRÁFICO', themeConfig: 'CONFIGURAÇÃO VISUAL (TEMA)',
+      colorBorder: 'BORDAS / LINHAS', colorSecondary: 'CAIXAS / SECUNDÁRIO', colorAccent: 'DESTAQUE / POSIÇÃO',
+      colorBg: 'FUNDO GERAL', colorHeaderBg: 'FUNDO DOS CABEÇALHOS', colorTitleText: 'TEXTO DOS TÍTULOS',
+      colorNormalText: 'TEXTO DOS NOMES', colorNumberText: 'TEXTO DOS TEMPOS',
+      textTypography: 'TEXTO E TIPOGRAFIA', fontLabel: 'TIPOGRAFIA GERAL',
+      fontArial: 'Arial (Clássica)', fontOswald: 'Oswald (TV)', fontMontserrat: 'Montserrat (Moderna)',
+      fontTeko: 'Teko (Racing)', fontExo: 'Exo 2 (Futurista)',
+      nameFormatLabel: 'FORMATO DOS NOMES', nameOriginal: 'Original', nameUppercase: 'MAIÚSCULAS',
+      nameFirstInitialLast: 'R. Borla', nameFirstLastInitial: 'Roman B.', nameLastOnly: 'Borla (Só Sobrenome)',
+      formatOf: 'FORMATO DE {name}', styleOf: 'ESTILO: {name}', lowerThirdFormatLabel: 'FORMATO DA TARJA',
+      borderRadiusLabel: 'BORDAS (ARREDONDAMENTO)', radius0: '0px (Quadrado)', radius8: '8px (Normal)',
+      radius16: '16px (Arredondado)', radius30: '30px (Pílula)',
+      animationLabel: 'ANIMAÇÃO (ENTRADA)',
+      animSlide: 'Deslizar (Slide)', animFade: 'Desvanecer (Fade)', animZoom: 'Ampliar (Zoom)',
+      animBounce: 'Quicar (Bounce)', animFlip: 'Virar (Flip)', animRotate: 'Rotacionar (Rotate)',
+      skinPro: 'Broadcast Pro (Estilo F1 / MotoGP)', skinGradient: 'Degradê (Fundo em Gradiente)', skinGlass: 'Vidro (Glassmorphism, Desfocado)',
+      coordsTitle: 'COORDENADAS E TAMANHO', axisX: 'EIXO X', axisY: 'EIXO Y', scaleLabel: 'ESCALA',
+      resetPositionBtn: '🔄 RESTABELECER POSIÇÃO',
+      mediaTitle: 'RECURSOS DE MÍDIA', producerLogo: 'LOGO DA PRODUTORA', categoryLogo: 'LOGO DA CATEGORIA',
+      photosFolder: 'PASTA DE FOTOS DOS PILOTOS', noFolderSelected: 'Nenhuma pasta selecionada.',
+      chooseFolderBtn: '📁 ESCOLHER PASTA', removeFolderBtn: '🗑️ REMOVER PASTA',
+      previewPlaceholder: 'ÁREA DO GRÁFICO'
+    },
+    circuito: {
+      confirmRemoveMap: 'Tem certeza de que deseja remover o mapa do circuito? As curvas marcadas serão perdidas.',
+      title: 'MAPA DO CIRCUITO', loadImageBtn: '📷 CARREGAR IMAGEM',
+      instructions: 'Clique na imagem para adicionar uma curva. Arraste um marcador para movê-lo.',
+      curvesTitle: 'CURVAS ({n})', noCurves: 'Ainda não há curvas marcadas.',
+      curveDefaultName: 'Curva {n}', emptyState: 'Carregue uma imagem do circuito para começar a marcar curvas.'
+    },
+    driversTable: {
+      noData: 'Sem dados de telemetria. Conecte o Speedhive ou RaceMonitor para ver a tabela ao vivo.',
+      colPos: 'POS', colNum: 'NÚM', colDriver: 'PILOTO', colLaps: 'VOLTAS', colLastLap: 'ÚLT. V.',
+      colDiff: 'DIFERENÇA', colTotalTime: 'T. TOTAL', colBestLap: 'MELHOR V.', colAction: 'AÇÃO',
+      pitBox: '⏱️ BOX', pitStop: '🛑 STOP', pitRemove: '❌ REMOVER',
+      lapTimesRemove: 'REMOVER', lapTimesShow: 'VOLTAS', lapTimesTitle: 'Ver a evolução dos tempos de volta deste piloto',
+      infoShow: 'INFO'
+    },
+    manual: {
+      title: '📖 MANUAL DO USUÁRIO',
+      intro: 'Guia rápido de todas as funções do programa. Clique em cada seção para expandi-la.',
+      sections: {
+        intro: 'O que é este programa?', vmix: 'Como conectar a janela Overlay ao vMix',
+        server: 'Servidor local (porta 8080)', cloud: 'Como conectar ao servidor Cloud (overlayracing.site)',
+        timing: 'Como conectar a cronometragem ao vivo (Speedhive / Race Monitor)',
+        excel: 'Formato do Excel para o Campeonato', photos: 'Fotos dos pilotos',
+        tabs: 'Guia rápido de cada aba'
+      },
+      feedbackNote: '💡 Algo não corresponde ao uso na prática, ou falta explicar algo? Avise a equipe de desenvolvimento para atualizar este manual.',
+      contentSpanishOnly: 'ℹ️ O conteúdo detalhado deste guia está disponível somente em espanhol por enquanto. A tradução completa está planejada como uma melhoria futura.'
+    }
+  },
+
+  de: {
+    common: {
+      selectPlaceholder: 'AUSWÄHLEN...',
+      selectCurvePlaceholder: 'KURVE AUSWÄHLEN...',
+      selectDriverPlaceholder: 'FAHRER AUSWÄHLEN...',
+      emptyLabel: 'LEER',
+      loadBtn: '📷 LADEN',
+      removeBtn: '🗑️ ENTFERNEN',
+      hide: 'AUSBLENDEN'
+    },
+    tabs: {
+      panel: 'PANEL', campeonato: 'MEISTERSCHAFT', votaciones: 'ABSTIMMUNG', sanciones: 'STRAFEN',
+      cloud: 'CLOUD', zocalos: 'BAUCHBINDEN', disenos: 'DESIGNS', circuito: 'STRECKE',
+      ajustes: 'EINSTELLUNGEN', personalizar: 'ANPASSEN', manual: 'HANDBUCH'
+    },
+    graphics: {
+      relator: 'KOMMENTATOR', comentarista: 'CO-KOMMENTATOR', notero1: 'REPORTER 1', notero2: 'REPORTER 2',
+      circuito: 'STRECKE', clima: 'WETTER', ticker: 'UNTERER TICKER', tower: 'POSITIONSTURM',
+      grid: 'STARTAUFSTELLUNG', finalResults: 'ENDERGEBNIS', winner: 'SIEGER',
+      flags: 'WARNFLAGGEN', fastestLap: 'SCHNELLSTE RUNDE', driverInfo: 'FAHRERINFO',
+      battle: 'DUELL (F1)', customZocalo: 'FREIE BAUCHBINDE', votingQR: 'ABSTIMMUNGS-QR',
+      votingResults: 'ABSTIMMUNGSERGEBNIS', lapCounter: 'RUNDENZÄHLER',
+      virtualChamp: 'VIRTUELLE MEISTERSCHAFT', pitStop: 'BOXENSTOPP-UHR',
+      startingLights: 'STARTAMPEL', lapTimesHistory: 'RUNDENZEIT-VERLAUF',
+      trackAlert: 'KURVEN-ALARM', penaltyAlert: 'STRAFE / UNTERSUCHUNG'
+    },
+    header: {
+      title: 'RACE DYNAMICS DASHBOARD', bestLap: 'SCHNELLSTE RUNDE', laps: 'RUNDEN',
+      totalTime: 'GESAMTZEIT', live: '🟢 LIVE', paused: 'PAUSIERT'
+    },
+    panel: {
+      flagsSection: 'RENNFLAGGEN', flagRed: 'ROT', flagTricolor: 'SAFETY CAR',
+      flagBlue: 'BLAU (DURCHLASSEN)', flagCheckered: 'LETZTE RUNDE', flagBlack: 'SCHWARZ',
+      flagNumberPlaceholder: 'Nr.', flagNumberTitle: 'Startnummer des auszuschließenden Autos eingeben',
+      personalSection: 'PERSONAL / UMGEBUNG', namePlaceholder: 'NAME...',
+      weatherNeedCircuit: '⚠️ Wähle zuerst eine Strecke aus.',
+      weatherError: '❌ Wetterdaten konnten nicht abgerufen werden. Internetverbindung prüfen.',
+      weatherNoData: 'KEINE WETTERDATEN...',
+      trackAlertYellow: '⚠️ GELB', trackAlertIncident: '🚨 ZWISCHENFALL', emitAlert: '🔴 ALARM SENDEN',
+      gridSection: 'STARTAUFSTELLUNG', gridPrev: '◀ ZURÜCK', showGrid: 'GRID ANZEIGEN', gridNext: 'WEITER ▶',
+      autoScrapeStop: '⏹ STOPPEN (1s)', autoScrapeStart: '▶ AUTO-AKTUALISIERUNG',
+      lightsGo: '🟢 START (FREIGABE)', lightsCounting: '🔴 SCHALTET AUF ({step}/5)', lightsStart: '🚦 STARTAMPEL STARTEN',
+      graphicsSection: 'GRAFIKEN', towerShort: 'TURM', lapsShort: 'RUNDEN', recordLapShort: 'SCHNELLSTE RUNDE',
+      battleSection: 'DUELL AUF DER STRECKE', posLabel: 'POS:', showBattle: 'DUELL ANZEIGEN', hideBattle: 'DUELL AUSBLENDEN',
+      hideChampTable: 'TABELLE IM OVERLAY AUSBLENDEN', showChampTable: 'TABELLE IM OVERLAY ANZEIGEN',
+      champNote: 'Lade die Excel-Datei und sieh dir die vollständige Tabelle im Tab {tab} an.',
+      hideChart: 'DIAGRAMM AUSBLENDEN', showChart: 'DIAGRAMM ANZEIGEN', resetShort: '🗑️ ZURÜCKSETZEN',
+      lapTimesFocusNote: '⏱️ Zeigt nur #{number} — klicke in der Tabelle auf "ENTFERNEN", um alle zu sehen',
+      votingSection: 'INTERAKTIVITÄT (STIMMEN)', tunnelReady: 'TUNNEL BEREIT ZUM SCANNEN', tunnelGenerating: 'TUNNEL WIRD ERSTELLT...',
+      votingResultsLive: 'LIVE-ERGEBNISSE',
+      backupSection: 'RENNSPEICHER (BACKUP)', saveCurrent: '💾 AKTUELLES SPEICHERN', loadSaved: '📂 GESPEICHERTES LADEN',
+      closingSection: 'ABSCHLUSS (LIVE)', finalResultBtn: 'ENDERGEBNIS', showWinnerBtn: 'SIEGER ANZEIGEN',
+      confirmShowQrNoTunnel: '⚠️ Der Abstimmungstunnel wird noch erstellt (noch keine gültige URL). Wenn du den QR-Code jetzt anzeigst, funktioniert er beim Scannen möglicherweise nicht.\n\nTrotzdem anzeigen?',
+      confirmResetVotes: '⚠️ Bist du sicher, dass du alle aktuellen Stimmen löschen möchtest?',
+      alertNoDataToSave: '⚠️ Es gibt keine Daten auf dem Bildschirm zum Speichern.',
+      alertSaveSuccess: '✅ Renndaten erfolgreich im Speicher gesichert.',
+      alertSaveError: '❌ Fehler beim Speichern der Daten.',
+      alertLoadSuccess: "📂 Gespeicherte Daten geladen. Die 'LIVE'-Aktualisierung wurde pausiert.",
+      alertNoSavedData: '⚠️ Es gibt keine zuvor gespeicherten Daten.',
+      confirmResetLapTimes: '⚠️ Den auf der Festplatte gespeicherten Rundenzeit-Verlauf löschen?',
+      alertSelectCurveFirst: '⚠️ Wähle zuerst eine Kurve aus.'
+    },
+    campeonato: {
+      title: '🏆 MEISTERSCHAFT (EXCEL)', driversLoaded: 'GELADENE FAHRER:',
+      description: 'Lade eine Excel-Datei (.xlsx) mit den Spalten Numero, Nombre und Puntos (Basispunktzahl jedes Fahrers vor diesem Rennen) sowie Posicion und Puntos_Escala (wie viele Punkte jede Zielposition bringt). Die Punkte des Live-Rennens werden während der Session automatisch zur Basispunktzahl addiert.',
+      emptyState: 'Du hast noch keine Excel-Datei geladen. Klicke auf "{btn}", um die Meisterschaftstabelle hier zu sehen.',
+      loadExcelBtn: '📊 EXCEL LADEN', loadingExcelBtn: '⏳ WIRD GELADEN...',
+      colPos: 'POS', colNum: 'NR.', colDriver: 'FAHRER', colBasePoints: 'BASISPUNKTE',
+      colThisRace: '+ DIESES RENNEN', colTotal: 'GESAMT',
+      alertExcelError: '❌ Fehler beim Laden der Excel-Datei oder Aktion abgebrochen.'
+    },
+    votaciones: {
+      title: '📊 LIVE-ABSTIMMUNGSPANEL', totalVotes: 'STIMMEN GESAMT:',
+      tunnelReadyMsg: 'TUNNEL BEREIT — DER QR-CODE KANN JETZT GESCANNT WERDEN',
+      tunnelGeneratingMsg: 'TUNNEL WIRD ERSTELLT... QR-CODE NOCH NICHT ANZEIGEN',
+      waitingUrl: 'Warte auf die öffentliche Cloudflare-URL, das kann ein paar Sekunden dauern...',
+      hideQr: 'QR AUSBLENDEN', showQr: 'QR AUF BILDSCHIRM ANZEIGEN',
+      hideResults: 'ERGEBNISSE AUSBLENDEN', showResults: 'ERGEBNISSE AUF BILDSCHIRM ANZEIGEN',
+      resetVotesBtn: '🗑️ STIMMEN ZURÜCKSETZEN',
+      noVotesYet: 'In dieser Session sind noch keine Stimmen registriert. Aktiviere den QR-Code, um zu starten.',
+      votesSuffix: 'STIMMEN'
+    },
+    sanciones: {
+      title: '🚩 SPORTKOMMISSARE — STRAFEN UND UNTERSUCHUNGEN',
+      description: 'Verhänge eine Strafe oder markiere ein Manöver als unter Untersuchung. Es erscheint sofort im Overlay (im F1-Stil) und blendet sich nach der unten festgelegten Zeit automatisch aus.',
+      stewardPanelReady: 'WEB-PANEL FÜR KOMMISSARE — BEREIT', tunnelGenerating: 'TUNNEL WIRD ERSTELLT...',
+      waitingUrl: 'Warte auf die öffentliche Cloudflare-URL...',
+      shareNote: 'Teile diesen Link (oder den QR-Code) mit dem Sportkommissar. Von seinem Handy aus kann er Strafen verhängen, ohne dieses Panel zu nutzen. Du kannst auch den festen Cloud-Server-Link im Tab {tab} verwenden, der nicht von diesem Tunnel abhängt.',
+      copyLink: '📋 LINK KOPIEREN',
+      onAir: 'LIVE: #{number} {name} — {type}',
+      typeInvestigation: 'UNTER UNTERSUCHUNG', typePenalty: 'STRAFE',
+      driverLabel: 'FAHRER', typeLabel: 'TYP',
+      investigationBtn: '🔎 UNTERSUCHUNG', penaltyBtn: '🚫 STRAFE',
+      reasonLabel: 'GRUND (OPTIONAL)', reasonPlaceholder: 'Z. B.: Kontakt in Kurve 4 mit Auto #12...',
+      autoHideLabel: 'AUTOMATISCH AUSBLENDEN NACH (SEKUNDEN)',
+      emitBtn: '🔴 AUF BILDSCHIRM SENDEN',
+      alertSelectDriverFirst: '⚠️ Wähle zuerst einen Fahrer aus.'
+    },
+    cloud: {
+      title: '☁️ CLOUD-SERVER — overlayracing.site',
+      connected: 'MIT CLOUD-SERVER VERBUNDEN', disconnected: 'KEINE VERBINDUNG ZUM CLOUD-SERVER',
+      qrTokenLabel: 'QR-TOKEN (aus der /qr/<token>-URL des Events)', qrTokenPlaceholder: 'Z. B.: VsKOKSH7ONbr',
+      stewardTokenLabel: 'KOMMISSAR-TOKEN (aus der /comisario/<token>-URL des Events)', stewardTokenPlaceholder: 'Z. B.: Xz899501dFa9',
+      saving: 'WIRD GESPEICHERT...', saveBtn: '💾 SPEICHERN UND VERBINDEN', savedFlash: '✅ Gespeichert',
+      alertSaveTokensError: '❌ Die Cloud-Server-Tokens konnten nicht gespeichert werden.',
+      alertSaveTokensCatchError: '❌ Fehler beim Speichern der Cloud-Server-Tokens.'
+    },
+    zocalos: {
+      presetTitle: 'VOREINGESTELLTE BAUCHBINDE {n}', titleLabel: 'TITEL (z. B.: NACHRICHT, INTERVIEW)',
+      titlePlaceholder: 'Titel eingeben...', textLabel: 'HAUPTTEXT',
+      textPlaceholder: 'Information eingeben...',
+      removeFromAir: '🔴 AUS DEM PROGRAMM NEHMEN', putOnAir: '▶ IN DAS PROGRAMM EINBLENDEN'
+    },
+    disenos: {
+      title: 'GRAFIK-DESIGNS (PNG/SVG)',
+      description: 'Lade Bilder mit Transparenz hoch, um die klassische Farbbox durch dein eigenes Design zu ersetzen.',
+      standardDesign: 'STANDARDDESIGN', loadBtn: '📷 PNG/SVG LADEN'
+    },
+    ajustes: {
+      title: 'SYSTEMEINSTELLUNGEN', chromaLabel: 'HINTERGRUNDFARBE (CHROMA KEY)',
+      chromaGreen: 'GRÜN (KLASSISCH)', chromaBlue: 'BLAU', chromaMagenta: 'MAGENTA / PINK',
+      chromaBlack: 'SCHWARZ', chromaWhite: 'WEISS', chromaYellow: 'GELB',
+      providerLabel: 'ZEITMESSUNGS-ANBIETER', codeLabel: 'RENNCODE',
+      loadNowBtn: '🔄 DATEN JETZT LADEN', languageLabel: 'SPRACHE'
+    },
+    personalizar: {
+      selectGraphic: 'GRAFIK AUSWÄHLEN', themeConfig: 'VISUELLE EINSTELLUNGEN (THEMA)',
+      colorBorder: 'RÄNDER / LINIEN', colorSecondary: 'BOXEN / SEKUNDÄR', colorAccent: 'AKZENT / POSITION',
+      colorBg: 'ALLGEMEINER HINTERGRUND', colorHeaderBg: 'HINTERGRUND KOPFZEILEN', colorTitleText: 'TEXT DER TITEL',
+      colorNormalText: 'TEXT DER NAMEN', colorNumberText: 'TEXT DER ZEITEN',
+      textTypography: 'TEXT & TYPOGRAFIE', fontLabel: 'ALLGEMEINE SCHRIFTART',
+      fontArial: 'Arial (Klassisch)', fontOswald: 'Oswald (TV)', fontMontserrat: 'Montserrat (Modern)',
+      fontTeko: 'Teko (Racing)', fontExo: 'Exo 2 (Futuristisch)',
+      nameFormatLabel: 'NAMENSFORMAT', nameOriginal: 'Original', nameUppercase: 'GROSSBUCHSTABEN',
+      nameFirstInitialLast: 'R. Borla', nameFirstLastInitial: 'Roman B.', nameLastOnly: 'Borla (Nur Nachname)',
+      formatOf: 'FORMAT FÜR {name}', styleOf: 'STIL: {name}', lowerThirdFormatLabel: 'FORMAT DER BAUCHBINDE',
+      borderRadiusLabel: 'RÄNDER (RUNDUNG)', radius0: '0px (Eckig)', radius8: '8px (Normal)',
+      radius16: '16px (Abgerundet)', radius30: '30px (Pillenform)',
+      animationLabel: 'ANIMATION (EINBLENDEN)',
+      animSlide: 'Schieben (Slide)', animFade: 'Überblenden (Fade)', animZoom: 'Vergrößern (Zoom)',
+      animBounce: 'Abprallen (Bounce)', animFlip: 'Umdrehen (Flip)', animRotate: 'Drehen (Rotate)',
+      skinPro: 'Broadcast Pro (F1 / MotoGP-Stil)', skinGradient: 'Verlauf (Farbverlauf-Hintergrund)', skinGlass: 'Glas (Glassmorphism, Unscharf)',
+      coordsTitle: 'KOORDINATEN & GRÖSSE', axisX: 'X-ACHSE', axisY: 'Y-ACHSE', scaleLabel: 'SKALIERUNG',
+      resetPositionBtn: '🔄 POSITION ZURÜCKSETZEN',
+      mediaTitle: 'MEDIENRESSOURCEN', producerLogo: 'LOGO DER PRODUKTION', categoryLogo: 'LOGO DER KATEGORIE',
+      photosFolder: 'ORDNER MIT FAHRERFOTOS', noFolderSelected: 'Kein Ordner ausgewählt.',
+      chooseFolderBtn: '📁 ORDNER WÄHLEN', removeFolderBtn: '🗑️ ORDNER ENTFERNEN',
+      previewPlaceholder: 'GRAFIKBEREICH'
+    },
+    circuito: {
+      confirmRemoveMap: 'Bist du sicher, dass du die Streckenkarte entfernen möchtest? Die markierten Kurven gehen dabei verloren.',
+      title: 'STRECKENKARTE', loadImageBtn: '📷 BILD LADEN',
+      instructions: 'Klicke auf das Bild, um eine Kurve hinzuzufügen. Ziehe einen Marker, um ihn zu verschieben.',
+      curvesTitle: 'KURVEN ({n})', noCurves: 'Noch keine Kurven markiert.',
+      curveDefaultName: 'Kurve {n}', emptyState: 'Lade ein Streckenbild, um mit dem Markieren von Kurven zu beginnen.'
+    },
+    driversTable: {
+      noData: 'Keine Telemetriedaten. Verbinde Speedhive oder RaceMonitor, um die Live-Tabelle zu sehen.',
+      colPos: 'POS', colNum: 'NR.', colDriver: 'FAHRER', colLaps: 'RUNDEN', colLastLap: 'LETZTE R.',
+      colDiff: 'ABSTAND', colTotalTime: 'GESAMTZEIT', colBestLap: 'BESTE R.', colAction: 'AKTION',
+      pitBox: '⏱️ BOX', pitStop: '🛑 STOPP', pitRemove: '❌ ENTFERNEN',
+      lapTimesRemove: 'ENTFERNEN', lapTimesShow: 'RUNDEN', lapTimesTitle: 'Rundenzeit-Verlauf dieses Fahrers anzeigen',
+      infoShow: 'INFO'
+    },
+    manual: {
+      title: '📖 BENUTZERHANDBUCH',
+      intro: 'Kurzanleitung zu allen Funktionen des Programms. Klicke auf einen Abschnitt, um ihn aufzuklappen.',
+      sections: {
+        intro: 'Was ist dieses Programm?', vmix: 'So verbindest du das Overlay-Fenster mit vMix',
+        server: 'Lokaler Server (Port 8080)', cloud: 'So verbindest du dich mit dem Cloud-Server (overlayracing.site)',
+        timing: 'So verbindest du die Live-Zeitmessung (Speedhive / Race Monitor)',
+        excel: 'Excel-Format für die Meisterschaft', photos: 'Fahrerfotos',
+        tabs: 'Kurzanleitung zu jedem Tab'
+      },
+      feedbackNote: '💡 Stimmt etwas nicht mit der Praxis überein, oder fehlt eine Erklärung? Informiere das Entwicklungsteam, damit dieses Handbuch aktualisiert werden kann.',
+      contentSpanishOnly: 'ℹ️ Der ausführliche Inhalt dieser Anleitung ist derzeit nur auf Spanisch verfügbar. Eine vollständige Übersetzung ist als zukünftige Verbesserung geplant.'
+    }
+  },
+
+  fr: {
+    common: {
+      selectPlaceholder: 'SÉLECTIONNER...',
+      selectCurvePlaceholder: 'SÉLECTIONNER UN VIRAGE...',
+      selectDriverPlaceholder: 'SÉLECTIONNER UN PILOTE...',
+      emptyLabel: 'VIDE',
+      loadBtn: '📷 CHARGER',
+      removeBtn: '🗑️ RETIRER',
+      hide: 'MASQUER'
+    },
+    tabs: {
+      panel: 'PANNEAU', campeonato: 'CHAMPIONNAT', votaciones: 'VOTE', sanciones: 'SANCTIONS',
+      cloud: 'CLOUD', zocalos: 'BANDEAUX', disenos: 'DESIGNS', circuito: 'CIRCUIT',
+      ajustes: 'RÉGLAGES', personalizar: 'PERSONNALISER', manual: 'MANUEL'
+    },
+    graphics: {
+      relator: 'COMMENTATEUR', comentarista: 'CONSULTANT', notero1: 'JOURNALISTE 1', notero2: 'JOURNALISTE 2',
+      circuito: 'CIRCUIT', clima: 'MÉTÉO', ticker: 'BANDEAU DÉFILANT', tower: 'TOUR DES POSITIONS',
+      grid: 'GRILLE DE DÉPART', finalResults: 'RÉSULTATS FINAUX', winner: 'VAINQUEUR',
+      flags: 'DRAPEAUX D\'ALERTE', fastestLap: 'MEILLEUR TOUR', driverInfo: 'INFOS PILOTE',
+      battle: 'DUEL (F1)', customZocalo: 'BANDEAU LIBRE', votingQR: 'QR DE VOTE',
+      votingResults: 'RÉSULTATS DU VOTE', lapCounter: 'COMPTEUR DE TOURS',
+      virtualChamp: 'CHAMPIONNAT VIRTUEL', pitStop: 'CHRONO DES STANDS',
+      startingLights: 'FEUX DE DÉPART', lapTimesHistory: 'ÉVOLUTION DES TEMPS AU TOUR',
+      trackAlert: 'ALERTE VIRAGE', penaltyAlert: 'SANCTION / ENQUÊTE'
+    },
+    header: {
+      title: 'RACE DYNAMICS DASHBOARD', bestLap: 'MEILLEUR TOUR', laps: 'TOURS',
+      totalTime: 'TEMPS TOTAL', live: '🟢 EN DIRECT', paused: 'EN PAUSE'
+    },
+    panel: {
+      flagsSection: 'DRAPEAUX DE COURSE', flagRed: 'ROUGE', flagTricolor: 'VOITURE DE SÉCURITÉ',
+      flagBlue: 'BLEU (LAISSER PASSER)', flagCheckered: 'DERNIER TOUR', flagBlack: 'NOIR',
+      flagNumberPlaceholder: 'N°', flagNumberTitle: 'Indiquez le numéro de la voiture à exclure',
+      personalSection: 'PERSONNEL / ENVIRONNEMENT', namePlaceholder: 'NOM...',
+      weatherNeedCircuit: '⚠️ Sélectionnez d\'abord un circuit.',
+      weatherError: '❌ Impossible de récupérer la météo. Vérifiez la connexion internet.',
+      weatherNoData: 'AUCUNE DONNÉE MÉTÉO...',
+      trackAlertYellow: '⚠️ JAUNE', trackAlertIncident: '🚨 INCIDENT', emitAlert: '🔴 ENVOYER L\'ALERTE',
+      gridSection: 'GRILLE', gridPrev: '◀ PRÉC', showGrid: 'AFFICHER LA GRILLE', gridNext: 'SUIV ▶',
+      autoScrapeStop: '⏹ ARRÊTER (1s)', autoScrapeStart: '▶ ACTUALISATION AUTO',
+      lightsGo: '🟢 DÉPART (LANCER)', lightsCounting: '🔴 ALLUMAGE ({step}/5)', lightsStart: '🚦 DÉMARRER LES FEUX',
+      graphicsSection: 'GRAPHIQUES', towerShort: 'TOUR', lapsShort: 'TOURS', recordLapShort: 'MEILLEUR TOUR',
+      battleSection: 'DUEL SUR PISTE', posLabel: 'POS :', showBattle: 'AFFICHER LE DUEL', hideBattle: 'MASQUER LE DUEL',
+      hideChampTable: 'MASQUER LE TABLEAU SUR L\'OVERLAY', showChampTable: 'AFFICHER LE TABLEAU SUR L\'OVERLAY',
+      champNote: 'Chargez le fichier Excel et consultez le tableau complet dans l\'onglet {tab}.',
+      hideChart: 'MASQUER LE GRAPHIQUE', showChart: 'AFFICHER LE GRAPHIQUE', resetShort: '🗑️ RÉINITIALISER',
+      lapTimesFocusNote: '⏱️ Affiche uniquement #{number} — cliquez sur "RETIRER" dans le tableau pour voir tout le monde',
+      votingSection: 'INTERACTIVITÉ (VOTES)', tunnelReady: 'TUNNEL PRÊT À SCANNER', tunnelGenerating: 'GÉNÉRATION DU TUNNEL...',
+      votingResultsLive: 'RÉSULTATS EN DIRECT',
+      backupSection: 'MÉMOIRE DE COURSE (SAUVEGARDE)', saveCurrent: '💾 ENREGISTRER L\'ACTUEL', loadSaved: '📂 CHARGER LA SAUVEGARDE',
+      closingSection: 'CLÔTURE (EN DIRECT)', finalResultBtn: 'RÉSULTAT FINAL', showWinnerBtn: 'AFFICHER LE VAINQUEUR',
+      confirmShowQrNoTunnel: '⚠️ Le tunnel de vote est encore en cours de génération (pas encore d\'URL valide). Si vous affichez le QR maintenant, il pourrait ne pas fonctionner au scan.\n\nL\'afficher quand même ?',
+      confirmResetVotes: '⚠️ Êtes-vous sûr de vouloir effacer tous les votes actuels ?',
+      alertNoDataToSave: '⚠️ Il n\'y a aucune donnée à l\'écran à enregistrer.',
+      alertSaveSuccess: '✅ Données de course enregistrées avec succès en mémoire.',
+      alertSaveError: '❌ Erreur lors de l\'enregistrement des données.',
+      alertLoadSuccess: "📂 Données sauvegardées chargées. La mise à jour 'EN DIRECT' a été mise en pause.",
+      alertNoSavedData: '⚠️ Aucune donnée sauvegardée précédemment.',
+      confirmResetLapTimes: '⚠️ Effacer l\'historique des temps au tour enregistré sur le disque ?',
+      alertSelectCurveFirst: '⚠️ Sélectionnez d\'abord un virage.'
+    },
+    campeonato: {
+      title: '🏆 CHAMPIONNAT (EXCEL)', driversLoaded: 'PILOTES CHARGÉS :',
+      description: 'Chargez un fichier Excel (.xlsx) avec les colonnes Numero, Nombre et Puntos (score de base de chaque pilote avant cette course), ainsi que Posicion et Puntos_Escala (combien de points chaque position d\'arrivée rapporte). Les points de la course en direct s\'ajoutent automatiquement au score de base pendant le déroulement de la session.',
+      emptyState: 'Vous n\'avez pas encore chargé de fichier Excel. Cliquez sur « {btn} » pour voir le tableau du championnat ici.',
+      loadExcelBtn: '📊 CHARGER EXCEL', loadingExcelBtn: '⏳ CHARGEMENT...',
+      colPos: 'POS', colNum: 'N°', colDriver: 'PILOTE', colBasePoints: 'POINTS DE BASE',
+      colThisRace: '+ CETTE COURSE', colTotal: 'TOTAL',
+      alertExcelError: '❌ Erreur lors du chargement du fichier Excel, ou action annulée.'
+    },
+    votaciones: {
+      title: '📊 PANNEAU DE VOTE EN DIRECT', totalVotes: 'TOTAL DES VOTES :',
+      tunnelReadyMsg: 'TUNNEL PRÊT — LE QR PEUT MAINTENANT ÊTRE SCANNÉ',
+      tunnelGeneratingMsg: 'GÉNÉRATION DU TUNNEL... N\'AFFICHEZ PAS ENCORE LE QR À L\'ÉCRAN',
+      waitingUrl: 'En attente de l\'URL publique Cloudflare, cela peut prendre quelques secondes...',
+      hideQr: 'MASQUER LE QR', showQr: 'AFFICHER LE QR À L\'ÉCRAN',
+      hideResults: 'MASQUER LES RÉSULTATS', showResults: 'AFFICHER LES RÉSULTATS À L\'ÉCRAN',
+      resetVotesBtn: '🗑️ RÉINITIALISER LES VOTES',
+      noVotesYet: 'Aucun vote enregistré dans cette session pour l\'instant. Activez le QR pour commencer.',
+      votesSuffix: 'VOTES'
+    },
+    sanciones: {
+      title: '🚩 COMMISSAIRES SPORTIFS — SANCTIONS ET ENQUÊTES',
+      description: 'Enregistrez une sanction ou signalez une manœuvre sous enquête. Elle apparaît instantanément sur l\'overlay (style F1) et se masque automatiquement après le délai que vous définissez ci-dessous.',
+      stewardPanelReady: 'PANNEAU WEB DES COMMISSAIRES — PRÊT', tunnelGenerating: 'GÉNÉRATION DU TUNNEL...',
+      waitingUrl: 'En attente de l\'URL publique Cloudflare...',
+      shareNote: 'Partagez ce lien (ou le QR) avec le commissaire sportif. Depuis son téléphone, il peut enregistrer des sanctions sans passer par ce panneau. Vous pouvez aussi utiliser le lien fixe du serveur cloud dans l\'onglet {tab}, qui ne dépend pas de ce tunnel.',
+      copyLink: '📋 COPIER LE LIEN',
+      onAir: 'À L\'ANTENNE : #{number} {name} — {type}',
+      typeInvestigation: 'SOUS ENQUÊTE', typePenalty: 'SANCTION',
+      driverLabel: 'PILOTE', typeLabel: 'TYPE',
+      investigationBtn: '🔎 ENQUÊTE', penaltyBtn: '🚫 SANCTION',
+      reasonLabel: 'MOTIF (FACULTATIF)', reasonPlaceholder: 'Ex. : Contact au virage 4 avec la voiture #12...',
+      autoHideLabel: 'MASQUER AUTOMATIQUEMENT APRÈS (SECONDES)',
+      emitBtn: '🔴 ENVOYER À L\'ÉCRAN',
+      alertSelectDriverFirst: '⚠️ Sélectionnez d\'abord un pilote.'
+    },
+    cloud: {
+      title: '☁️ SERVEUR CLOUD — overlayracing.site',
+      connected: 'CONNECTÉ AU SERVEUR CLOUD', disconnected: 'AUCUNE CONNEXION AU SERVEUR CLOUD',
+      qrTokenLabel: 'JETON DU QR (depuis l\'URL /qr/<token> de l\'événement)', qrTokenPlaceholder: 'Ex. : VsKOKSH7ONbr',
+      stewardTokenLabel: 'JETON DU COMMISSAIRE (depuis l\'URL /comisario/<token> de l\'événement)', stewardTokenPlaceholder: 'Ex. : Xz899501dFa9',
+      saving: 'ENREGISTREMENT...', saveBtn: '💾 ENREGISTRER ET CONNECTER', savedFlash: '✅ Enregistré',
+      alertSaveTokensError: '❌ Impossible d\'enregistrer les jetons du serveur cloud.',
+      alertSaveTokensCatchError: '❌ Erreur lors de l\'enregistrement des jetons du serveur cloud.'
+    },
+    zocalos: {
+      presetTitle: 'BANDEAU PRÉDÉFINI {n}', titleLabel: 'TITRE (Ex. : ACTUALITÉ, INTERVIEW)',
+      titlePlaceholder: 'Saisissez un titre...', textLabel: 'TEXTE PRINCIPAL',
+      textPlaceholder: 'Saisissez l\'information...',
+      removeFromAir: '🔴 RETIRER DE L\'ANTENNE', putOnAir: '▶ METTRE À L\'ANTENNE'
+    },
+    disenos: {
+      title: 'DESIGNS DES GRAPHIQUES (PNG/SVG)',
+      description: 'Chargez des images avec transparence pour remplacer la boîte de couleur classique par votre propre design.',
+      standardDesign: 'DESIGN STANDARD', loadBtn: '📷 CHARGER PNG/SVG'
+    },
+    ajustes: {
+      title: 'RÉGLAGES SYSTÈME', chromaLabel: 'COULEUR DE FOND (CHROMA KEY)',
+      chromaGreen: 'VERT (CLASSIQUE)', chromaBlue: 'BLEU', chromaMagenta: 'MAGENTA / ROSE',
+      chromaBlack: 'NOIR', chromaWhite: 'BLANC', chromaYellow: 'JAUNE',
+      providerLabel: 'FOURNISSEUR DE CHRONOMÉTRAGE', codeLabel: 'CODE DE LA COURSE',
+      loadNowBtn: '🔄 CHARGER LES DONNÉES MAINTENANT', languageLabel: 'LANGUE'
+    },
+    personalizar: {
+      selectGraphic: 'SÉLECTIONNER UN GRAPHIQUE', themeConfig: 'CONFIGURATION VISUELLE (THÈME)',
+      colorBorder: 'BORDURES / LIGNES', colorSecondary: 'BOÎTES / SECONDAIRE', colorAccent: 'ACCENT / POSITION',
+      colorBg: 'FOND GÉNÉRAL', colorHeaderBg: 'FOND DES EN-TÊTES', colorTitleText: 'TEXTE DES TITRES',
+      colorNormalText: 'TEXTE DES NOMS', colorNumberText: 'TEXTE DES TEMPS',
+      textTypography: 'TEXTE ET TYPOGRAPHIE', fontLabel: 'POLICE GÉNÉRALE',
+      fontArial: 'Arial (Classique)', fontOswald: 'Oswald (TV)', fontMontserrat: 'Montserrat (Moderne)',
+      fontTeko: 'Teko (Racing)', fontExo: 'Exo 2 (Futuriste)',
+      nameFormatLabel: 'FORMAT DES NOMS', nameOriginal: 'Original', nameUppercase: 'MAJUSCULES',
+      nameFirstInitialLast: 'R. Borla', nameFirstLastInitial: 'Roman B.', nameLastOnly: 'Borla (Nom Seul)',
+      formatOf: 'FORMAT DE {name}', styleOf: 'STYLE : {name}', lowerThirdFormatLabel: 'FORMAT DU BANDEAU',
+      borderRadiusLabel: 'BORDURES (ARRONDI)', radius0: '0px (Carré)', radius8: '8px (Normal)',
+      radius16: '16px (Arrondi)', radius30: '30px (Pilule)',
+      animationLabel: 'ANIMATION (ENTRÉE)',
+      animSlide: 'Glissement (Slide)', animFade: 'Fondu (Fade)', animZoom: 'Zoom',
+      animBounce: 'Rebond (Bounce)', animFlip: 'Retournement (Flip)', animRotate: 'Rotation (Rotate)',
+      skinPro: 'Broadcast Pro (Style F1 / MotoGP)', skinGradient: 'Dégradé (Fond en Dégradé)', skinGlass: 'Verre (Glassmorphism, Flouté)',
+      coordsTitle: 'COORDONNÉES ET TAILLE', axisX: 'AXE X', axisY: 'AXE Y', scaleLabel: 'ÉCHELLE',
+      resetPositionBtn: '🔄 RÉINITIALISER LA POSITION',
+      mediaTitle: 'RESSOURCES MULTIMÉDIAS', producerLogo: 'LOGO DE LA PRODUCTION', categoryLogo: 'LOGO DE LA CATÉGORIE',
+      photosFolder: 'DOSSIER DES PHOTOS DES PILOTES', noFolderSelected: 'Aucun dossier sélectionné.',
+      chooseFolderBtn: '📁 CHOISIR UN DOSSIER', removeFolderBtn: '🗑️ RETIRER LE DOSSIER',
+      previewPlaceholder: 'ZONE DU GRAPHIQUE'
+    },
+    circuito: {
+      confirmRemoveMap: 'Êtes-vous sûr de vouloir retirer le plan du circuit ? Les virages marqués seront perdus.',
+      title: 'PLAN DU CIRCUIT', loadImageBtn: '📷 CHARGER UNE IMAGE',
+      instructions: 'Cliquez sur l\'image pour ajouter un virage. Faites glisser un repère pour le déplacer.',
+      curvesTitle: 'VIRAGES ({n})', noCurves: 'Aucun virage marqué pour l\'instant.',
+      curveDefaultName: 'Virage {n}', emptyState: 'Chargez une image du circuit pour commencer à marquer des virages.'
+    },
+    driversTable: {
+      noData: 'Aucune donnée de télémétrie. Connectez Speedhive ou RaceMonitor pour voir le tableau en direct.',
+      colPos: 'POS', colNum: 'N°', colDriver: 'PILOTE', colLaps: 'TOURS', colLastLap: 'DERNIER T.',
+      colDiff: 'ÉCART', colTotalTime: 'T. TOTAL', colBestLap: 'MEILLEUR T.', colAction: 'ACTION',
+      pitBox: '⏱️ STAND', pitStop: '🛑 STOP', pitRemove: '❌ RETIRER',
+      lapTimesRemove: 'RETIRER', lapTimesShow: 'TOURS', lapTimesTitle: 'Voir l\'évolution des temps au tour de ce pilote',
+      infoShow: 'INFOS'
+    },
+    manual: {
+      title: '📖 MANUEL DE L\'UTILISATEUR',
+      intro: 'Guide rapide de toutes les fonctions du programme. Cliquez sur chaque section pour la déplier.',
+      sections: {
+        intro: 'Qu\'est-ce que ce programme ?', vmix: 'Comment connecter la fenêtre Overlay à vMix',
+        server: 'Serveur local (port 8080)', cloud: 'Comment se connecter au serveur Cloud (overlayracing.site)',
+        timing: 'Comment connecter le chronométrage en direct (Speedhive / Race Monitor)',
+        excel: 'Format du fichier Excel pour le Championnat', photos: 'Photos des pilotes',
+        tabs: 'Guide rapide de chaque onglet'
+      },
+      feedbackNote: '💡 Quelque chose ne correspond pas à l\'usage réel, ou manque d\'explication ? Prévenez l\'équipe de développement pour mettre à jour ce manuel.',
+      contentSpanishOnly: 'ℹ️ Le contenu détaillé de ce guide n\'est actuellement disponible qu\'en espagnol. Une traduction complète est prévue comme amélioration future.'
+    }
+  }
+};
+
+export function createTranslator(language) {
+  const dict = translations[language] || translations.es;
+  return function t(key, vars) {
+    const parts = key.split('.');
+    let val = parts.reduce((acc, k) => (acc && acc[k] !== undefined ? acc[k] : undefined), dict);
+    if (val === undefined) {
+      val = parts.reduce((acc, k) => (acc && acc[k] !== undefined ? acc[k] : undefined), translations.es);
+    }
+    if (val === undefined) return key;
+    if (vars) {
+      Object.keys(vars).forEach(k => { val = val.replaceAll(`{${k}}`, vars[k]); });
+    }
+    return val;
+  };
+}
