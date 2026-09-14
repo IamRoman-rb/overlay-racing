@@ -39,7 +39,7 @@ export default function Flags({ activeFlags, config, id = 'flags' }) {
     },
     checkered: {
       bg: '#000000', image: banderaCuadrosImg,
-      text: 'BANDERA A CUADROS - ÚLTIMA VUELTA', color: '#ffffff', textBoxBg: 'rgba(0,0,0,0.65)'
+      text: 'ÚLTIMA VUELTA', color: '#ffffff', textShadow: '0px 0px 8px rgba(0,0,0,1)'
     }
   };
 
