@@ -1,5 +1,6 @@
 // src/graphics/PitStopTimer.jsx
 import { useState, useEffect, useRef } from 'react';
+import { getSkinStyle } from '../utils/skinStyles';
 
 export default function PitStopTimer({ isVisible, config, pitState, id = 'pitStop' }) {
   const pos = config?.positions?.[id] || { x: 50, y: 750, scale: 1 };
@@ -16,6 +17,7 @@ export default function PitStopTimer({ isVisible, config, pitState, id = 'pitSto
   const bRad = config[`borderRadius_${id}`] || '8px';
   const animStyle = config[`animationStyle_${id}`] || 'slide';
   const pitStopFormat = config?.pitStopFormat || 'standard';
+  const skin = getSkinStyle(pitStopFormat, { themeMain, themeAccent });
 
   const [timeMs, setTimeMs] = useState(0);
   const intervalRef = useRef();
@@ -133,13 +135,15 @@ export default function PitStopTimer({ isVisible, config, pitState, id = 'pitSto
     <div style={{
       ...wrapperStyle,
       display: 'flex', flexDirection: 'column', width: '380px',
-      backgroundColor: customBg ? 'transparent' : themeBg,
+      backgroundColor: skin ? skin.background : (customBg ? 'transparent' : themeBg),
       backgroundImage: customBg ? `url(${customBg})` : 'none', backgroundSize: '100% 100%',
-      borderRadius: bRad, boxShadow: customBg ? 'none' : '0 10px 30px rgba(0,0,0,0.8)', overflow: 'hidden',
-      borderLeft: customBg ? 'none' : `5px solid ${themeMain}`
+      border: skin ? skin.border : 'none',
+      borderRadius: bRad, boxShadow: skin ? skin.boxShadow : (customBg ? 'none' : '0 10px 30px rgba(0,0,0,0.8)'),
+      backdropFilter: skin?.backdropFilter, overflow: 'hidden',
+      borderLeft: skin ? skin.border : (customBg ? 'none' : `5px solid ${themeMain}`)
     }}>
       {/* HEADER UNIFICADO AL TEMA */}
-      <div style={{ backgroundColor: customBg ? 'transparent' : themeMain, padding: '6px', textAlign: 'center' }}>
+      <div style={{ backgroundColor: skin ? 'transparent' : (customBg ? 'transparent' : themeMain), padding: '6px', textAlign: 'center' }}>
         <span style={{ color: themeTitleText, fontSize: '16px', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '2px' }}>
           PIT STOP
         </span>

@@ -1,4 +1,9 @@
 import { useState, useRef } from 'react';
+import { SKIN_OPTIONS } from '../utils/skinStyles';
+
+const renderSkinOptions = () => SKIN_OPTIONS.map(opt => (
+  <option key={opt.value} value={opt.value}>{opt.label}</option>
+));
 
 export default function CustomizePanel({ config, positions, defaultPositions, onUpdatePositions, onSelectLogo, onSelectCategoryLogo, onSelectPhotosFolder, onClearLogo, onClearCategoryLogo, onClearPhotosFolder, onConfigChange, colors, inputStyle, btnStyle }) {
   const [selectedGraphic, setSelectedGraphic] = useState('relator');
@@ -164,6 +169,7 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
               <option value="standard">Clásica (Cajas Pequeñas)</option>
               <option value="photos">Fila x Fila (Fotos Gigantes F1)</option>
               <option value="cinematic">Cinematic (Grilla + Foto Central + Info)</option>
+              {renderSkinOptions()}
             </select>
           </div>
         )}
@@ -180,6 +186,7 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
               <option value="minimal">Minimalista (Solo Línea)</option>
               <option value="boxed">Con Marco (Badge + Caja)</option>
               <option value="broadcast">Broadcast (Bloques Bicolor)</option>
+              {renderSkinOptions()}
             </select>
           </div>
         )}
@@ -196,6 +203,7 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
               <option value="compact">Compacto (Una Línea)</option>
               <option value="stopwatch">Cronómetro (Tiempo Protagonista)</option>
               <option value="minimal">Minimalista (Sin Caja)</option>
+              {renderSkinOptions()}
             </select>
           </div>
         )}
@@ -212,6 +220,7 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
               <option value="towers">Torres (Columnas Estilo F1)</option>
               <option value="countdown">Cuenta Regresiva (Número Gigante)</option>
               <option value="minimal">Minimalista (Luces Chicas)</option>
+              {renderSkinOptions()}
             </select>
           </div>
         )}
@@ -228,6 +237,7 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
               <option value="labeled">Con Etiqueta (Barra "VUELTA")</option>
               <option value="circle">Círculo (Insignia Redonda)</option>
               <option value="minimal">Minimalista (Sin Caja)</option>
+              {renderSkinOptions()}
             </select>
           </div>
         )}
@@ -244,6 +254,7 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
               <option value="compact">Compacto (Top 15, Filas Angostas)</option>
               <option value="podium">Podio (Colores Oro/Plata/Bronce)</option>
               <option value="minimal">Minimalista (Sin Header)</option>
+              {renderSkinOptions()}
             </select>
           </div>
         )}
@@ -260,6 +271,7 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
               <option value="compact">Compacto (QR Chico + Texto al Lado)</option>
               <option value="banner">Banner (Ancho, QR a la Izquierda)</option>
               <option value="minimal">Minimalista (Solo QR)</option>
+              {renderSkinOptions()}
             </select>
           </div>
         )}
@@ -276,6 +288,7 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
               <option value="compact">Compacto (Sin Header ni Total)</option>
               <option value="podium">Podio (Colores Oro/Plata/Bronce)</option>
               <option value="minimal">Minimalista (Sin Caja)</option>
+              {renderSkinOptions()}
             </select>
           </div>
         )}
@@ -292,6 +305,7 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
               <option value="compact">Compacto (Sin Leyenda, Más Chico)</option>
               <option value="large">Grande (Gráfico Ampliado)</option>
               <option value="minimal">Minimalista (Sin Caja)</option>
+              {renderSkinOptions()}
             </select>
           </div>
         )}
@@ -308,6 +322,7 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
               <option value="compact">Compacto (Una Línea, Sin Mapa)</option>
               <option value="banner">Banner (Barra Completa)</option>
               <option value="minimal">Minimalista (Sin Caja)</option>
+              {renderSkinOptions()}
             </select>
           </div>
         )}
@@ -324,6 +339,7 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
               <option value="banner">Banner (Barra Completa)</option>
               <option value="boxed">Con Marco (Badge + Caja)</option>
               <option value="minimal">Minimalista (Sin Caja)</option>
+              {renderSkinOptions()}
             </select>
           </div>
         )}
@@ -340,6 +356,7 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
               <option value="photo">Foto (Retrato + Datos)</option>
               <option value="compact">Compacto (Una Línea)</option>
               <option value="minimal">Minimalista (Sin Caja)</option>
+              {renderSkinOptions()}
             </select>
           </div>
         )}
@@ -356,6 +373,7 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
               <option value="photo">Foto (Retrato Grande)</option>
               <option value="podium">Podio (Tarjeta Campeón)</option>
               <option value="minimal">Minimalista (Sin Caja)</option>
+              {renderSkinOptions()}
             </select>
           </div>
         )}
@@ -372,6 +390,7 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
               <option value="compact">Compacto (Una Línea)</option>
               <option value="spotlight">Spotlight (Tiempo Protagonista)</option>
               <option value="minimal">Minimalista (Sin Caja)</option>
+              {renderSkinOptions()}
             </select>
           </div>
         )}
@@ -388,6 +407,7 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
               <option value="compact">Compacto (Sin Vueltas/Mejor V., Más Filas)</option>
               <option value="podium">Podio (Colores Oro/Plata/Bronce)</option>
               <option value="minimal">Minimalista (Sin Caja ni Header)</option>
+              {renderSkinOptions()}
             </select>
           </div>
         )}
@@ -404,6 +424,7 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
               <option value="compact">Compacto (Solo Ícono y Temp.)</option>
               <option value="vertical">Vertical (Columna Angosta)</option>
               <option value="minimal">Minimalista (Sin Caja)</option>
+              {renderSkinOptions()}
             </select>
           </div>
         )}
@@ -420,6 +441,7 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
               <option value="banner">Banner (Barra Completa)</option>
               <option value="corner">Esquina (Banderín Compacto)</option>
               <option value="stacked">Apilada (Franja + Caja)</option>
+              {renderSkinOptions()}
             </select>
           </div>
         )}
@@ -436,6 +458,7 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
               <option value="compact">Compacta (Sin Tendencia ni Tiempo)</option>
               <option value="podium">Podio (Colores Oro/Plata/Bronce)</option>
               <option value="minimal">Minimalista (Filas Cebra, Sin Header)</option>
+              {renderSkinOptions()}
             </select>
           </div>
         )}
@@ -452,6 +475,7 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
               <option value="compact">Compacta (Sin Tiempo, Más Pilotos)</option>
               <option value="podium">Podio (Colores Oro/Plata/Bronce)</option>
               <option value="spotlight">Spotlight (Un Piloto a la Vez)</option>
+              {renderSkinOptions()}
             </select>
           </div>
         )}
@@ -469,6 +493,7 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
               <option value="compact">Compacta (Filas Angostas)</option>
               <option value="duel">Duelo (1 vs 1 con "VS")</option>
               <option value="minimal">Minimalista (Sin Caja)</option>
+              {renderSkinOptions()}
             </select>
           </div>
         )}
@@ -485,6 +510,7 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
               <option value="f1bar">Barra F1 (Fina, Horizontal, Superior)</option>
               <option value="corner">Esquina (Franja Lateral Compacta)</option>
               <option value="minimal">Minimalista (Sin Caja)</option>
+              {renderSkinOptions()}
             </select>
           </div>
         )}

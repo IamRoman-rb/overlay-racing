@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import pilotoAnonimo from '../assets/piloto_anonimo.png';
+import { getSkinStyle } from '../utils/skinStyles';
 
 export default function WinnerGraphic({ driver, isVisible, config, id = 'winner' }) {
   const pos = config?.positions?.[id] || { x: 440, y: 550, scale: 1 };
@@ -16,6 +17,7 @@ export default function WinnerGraphic({ driver, isVisible, config, id = 'winner'
   const bRad = config[`borderRadius_${id}`] || '8px';
   const animStyle = config[`animationStyle_${id}`] || 'slide'
   const winnerFormat = config?.winnerFormat || 'standard';
+  const skin = getSkinStyle(winnerFormat, { themeMain, themeAccent });
 
   // Animación de entrada (Slide desde abajo, como la gráfica principal)
   let transformHidden = `scale(${pos.scale}) translateY(40px)`;
@@ -123,14 +125,15 @@ export default function WinnerGraphic({ driver, isVisible, config, id = 'winner'
   return (
     <div style={{
       ...wrapperStyle,
-      backgroundColor: hasCustomBg ? 'transparent' : themeBg,
+      backgroundColor: skin ? skin.background : (hasCustomBg ? 'transparent' : themeBg),
       backgroundImage: hasCustomBg ? `url(${customBg})` : 'none',
       backgroundSize: '100% 100%', backgroundRepeat: 'no-repeat', backgroundPosition: 'center',
       padding: '20px 40px',
       borderRadius: bRad, // <-- APLICADO BORDE DINÁMICO
-      border: hasCustomBg ? 'none' : `4px solid ${themeMain}`,
+      border: skin ? skin.border : (hasCustomBg ? 'none' : `4px solid ${themeMain}`),
       display: 'flex', alignItems: 'center', gap: '30px',
-      boxShadow: hasCustomBg ? 'none' : '0 10px 30px rgba(0,0,0,0.5)',
+      boxShadow: skin ? skin.boxShadow : (hasCustomBg ? 'none' : '0 10px 30px rgba(0,0,0,0.5)'),
+      backdropFilter: skin?.backdropFilter,
     }}>
        <div style={{ display: 'flex', flexDirection: 'column' }}>
           <span style={{ fontSize: '14px', fontWeight: 'bold', color: themeAccent, opacity: 0.8 }}>

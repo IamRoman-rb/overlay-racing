@@ -83,6 +83,8 @@ function getWindDirLabel(deg) {
   return dirs[Math.round(deg / 45) % 8];
 }
 
+import { getSkinStyle } from '../utils/skinStyles';
+
 export default function Weather({ data, isVisible, config, id = 'clima' }) {
   const pos = config?.positions?.[id] || { x: 20, y: 160, scale: 1 };
   const themeBg = config?.themeBg || 'rgba(0,0,0,0.85)';
@@ -96,6 +98,7 @@ export default function Weather({ data, isVisible, config, id = 'clima' }) {
   const bRad = config?.[`borderRadius_${id}`] || '8px';
   const animStyle = config?.[`animationStyle_${id}`] || 'slide';
   const climaFormat = config?.climaFormat || 'standard';
+  const skin = getSkinStyle(climaFormat, { themeMain, themeAccent });
 
   let transformHidden = `scale(${pos.scale}) translateX(-40px)`;
   if (animStyle === 'fade') transformHidden = `scale(${pos.scale})`;
@@ -200,17 +203,19 @@ export default function Weather({ data, isVisible, config, id = 'clima' }) {
     <div style={wrapperStyle}>
       <div style={{
         width: '340px',
-        backgroundColor: customBg ? 'transparent' : themeBg,
+        backgroundColor: skin ? skin.background : (customBg ? 'transparent' : themeBg),
         backgroundImage: customBg ? `url(${customBg})` : 'none',
         backgroundSize: '100% 100%', backgroundRepeat: 'no-repeat', backgroundPosition: 'center',
-        borderLeft: customBg ? 'none' : `4px solid ${themeMain}`,
+        border: skin ? skin.border : 'none',
+        borderLeft: skin ? skin.border : (customBg ? 'none' : `4px solid ${themeMain}`),
         borderRadius: bRad,
-        boxShadow: customBg ? 'none' : '2px 2px 10px rgba(0,0,0,0.5)',
+        boxShadow: skin ? skin.boxShadow : (customBg ? 'none' : '2px 2px 10px rgba(0,0,0,0.5)'),
+        backdropFilter: skin?.backdropFilter,
         overflow: 'hidden'
       }}>
         <div style={{
-          backgroundColor: customBg ? 'transparent' : themeHeaderBg,
-          padding: '6px 15px', borderBottom: customBg ? 'none' : `2px solid ${themeMain}`
+          backgroundColor: skin ? 'transparent' : (customBg ? 'transparent' : themeHeaderBg),
+          padding: '6px 15px', borderBottom: skin ? `1px solid ${themeAccent}44` : (customBg ? 'none' : `2px solid ${themeMain}`)
         }}>
           <span style={{ color: themeAccent, fontSize: '11px', fontWeight: '900', letterSpacing: '1px', textTransform: 'uppercase' }}>
             CLIMA {config?.circuito ? `— ${config.circuito}` : ''}

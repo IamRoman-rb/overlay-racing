@@ -1,3 +1,5 @@
+import { getSkinStyle } from '../utils/skinStyles';
+
 export default function VotingResults({ isVisible, drivers, votes, config, id = 'votingResults' }) {
   const pos = config?.positions?.[id] || { x: 1550, y: 50, scale: 1 };
   const themeBg = config?.themeBg || '#1a1a1a';
@@ -14,6 +16,7 @@ export default function VotingResults({ isVisible, drivers, votes, config, id = 
   const isCompact = resultsFormat === 'compact';
   const isPodium = resultsFormat === 'podium';
   const isMinimal = resultsFormat === 'minimal';
+  const skin = getSkinStyle(resultsFormat, { themeMain, themeAccent });
   const transparent = hasCustomBg || isMinimal;
 
   // Animación de entrada (Slide desde la derecha)
@@ -40,19 +43,21 @@ export default function VotingResults({ isVisible, drivers, votes, config, id = 
       transform: isVisible ? `scale(${pos.scale}) translateX(0)` : transformHidden,
       width: '320px',
 
-      backgroundColor: transparent ? 'transparent' : themeBg,
+      backgroundColor: skin ? skin.background : (transparent ? 'transparent' : themeBg),
       backgroundImage: hasCustomBg ? `url(${customBg})` : 'none',
       backgroundSize: '100% 100%', backgroundRepeat: 'no-repeat', backgroundPosition: 'center',
 
       borderRadius: bRad, // <-- APLICADO BORDE DINÁMICO
-      boxShadow: transparent ? 'none' : '0 10px 30px rgba(0,0,0,0.8)',
+      border: skin ? skin.border : 'none',
+      boxShadow: skin ? skin.boxShadow : (transparent ? 'none' : '0 10px 30px rgba(0,0,0,0.8)'),
+      backdropFilter: skin?.backdropFilter,
       overflow: 'hidden',
-      borderLeft: transparent ? 'none' : `4px solid ${themeMain}`,
+      borderLeft: skin ? skin.border : (transparent ? 'none' : `4px solid ${themeMain}`),
       padding: hasCustomBg ? '10px' : (isMinimal ? '5px' : '0')
     }}>
       {!isMinimal && (
         <div style={{
-          backgroundColor: hasCustomBg ? 'transparent' : themeHeaderBg,
+          backgroundColor: skin ? 'transparent' : (hasCustomBg ? 'transparent' : themeHeaderBg),
           padding: isCompact ? '8px' : '15px', textAlign: 'center',
           borderBottom: hasCustomBg ? 'none' : `2px solid ${themeMain}`
         }}>

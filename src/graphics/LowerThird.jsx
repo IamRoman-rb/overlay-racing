@@ -1,3 +1,5 @@
+import { getSkinStyle } from '../utils/skinStyles';
+
 export default function LowerThird({ role, name, isVisible, config, id }) {
   const pos = config?.positions?.[id] || { x: 20, y: 100, scale: 1 };
   const themeBg = config?.themeBg || 'rgba(0,0,0,0.85)';
@@ -13,6 +15,7 @@ export default function LowerThird({ role, name, isVisible, config, id }) {
   const bRad = config[`borderRadius_${id}`] || '8px';
   const animStyle = config[`animationStyle_${id}`] || 'slide'
   const format = config[`lowerThirdFormat_${id}`] || 'standard';
+  const skin = getSkinStyle(format, { themeMain, themeAccent });
 
   // CÁLCULO DE LA ANIMACIÓN DE ENTRADA
   let transformHidden = `scale(${pos.scale}) translateX(-40px)`;
@@ -110,10 +113,12 @@ export default function LowerThird({ role, name, isVisible, config, id }) {
       borderRadius: bRad // <-- APLICAMOS EL BORDE AQUÍ TAMBIÉN
     }}>
       <div style={{
-        backgroundColor: customBg ? 'transparent' : themeBg,
-        borderLeft: customBg ? 'none' : `4px solid ${themeMain}`,
+        backgroundColor: skin ? skin.background : (customBg ? 'transparent' : themeBg),
+        border: skin ? skin.border : 'none',
+        borderLeft: skin ? skin.border : (customBg ? 'none' : `4px solid ${themeMain}`),
         display: 'flex', alignItems: 'center', height: '100%',
-        boxShadow: customBg ? 'none' : '2px 2px 10px rgba(0,0,0,0.5)',
+        boxShadow: skin ? skin.boxShadow : (customBg ? 'none' : '2px 2px 10px rgba(0,0,0,0.5)'),
+        backdropFilter: skin?.backdropFilter,
         overflow: 'hidden',
         borderRadius: bRad // <-- APLICAMOS EL BORDE
       }}>

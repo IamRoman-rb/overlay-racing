@@ -1,3 +1,5 @@
+import { getSkinStyle } from '../utils/skinStyles';
+
 export default function VotingQR({ isVisible, config, localIp, id = 'votingQR' }) {
   const pos = config?.positions?.[id] || { x: 20, y: 700, scale: 1 };
   const themeBg = config?.themeBg || '#1a1a1a';
@@ -11,6 +13,7 @@ export default function VotingQR({ isVisible, config, localIp, id = 'votingQR' }
   const bRad = config?.[`borderRadius_${id}`] || '8px';
   const animStyle = config?.[`animationStyle_${id}`] || 'slide';
   const qrFormat = config?.votingQRFormat || 'standard';
+  const skin = getSkinStyle(qrFormat, { themeMain, themeAccent });
 
   let transformHidden = `scale(${pos.scale}) translateY(30px)`;
   if (animStyle === 'fade') transformHidden = `scale(${pos.scale})`;
@@ -104,15 +107,17 @@ export default function VotingQR({ isVisible, config, localIp, id = 'votingQR' }
     <div style={{
       ...wrapperStyle,
       display: 'flex', flexDirection: 'column', width: '250px',
-      backgroundColor: hasCustomBg ? 'transparent' : themeBg,
+      backgroundColor: skin ? skin.background : (hasCustomBg ? 'transparent' : themeBg),
       backgroundImage: hasCustomBg ? `url(${customBg})` : 'none',
       backgroundSize: '100% 100%', backgroundRepeat: 'no-repeat', backgroundPosition: 'center',
       borderRadius: bRad,
-      boxShadow: hasCustomBg ? 'none' : '0 10px 30px rgba(0,0,0,0.8)',
-      overflow: 'hidden', borderLeft: hasCustomBg ? 'none' : `4px solid ${themeMain}`,
+      border: skin ? skin.border : 'none',
+      boxShadow: skin ? skin.boxShadow : (hasCustomBg ? 'none' : '0 10px 30px rgba(0,0,0,0.8)'),
+      backdropFilter: skin?.backdropFilter,
+      overflow: 'hidden', borderLeft: skin ? skin.border : (hasCustomBg ? 'none' : `4px solid ${themeMain}`),
       padding: hasCustomBg ? '10px' : '0'
     }}>
-      <div style={{ backgroundColor: hasCustomBg ? 'transparent' : themeHeaderBg, padding: '10px', textAlign: 'center', borderBottom: hasCustomBg ? 'none' : `2px solid ${themeMain}` }}>
+      <div style={{ backgroundColor: skin ? 'transparent' : (hasCustomBg ? 'transparent' : themeHeaderBg), padding: '10px', textAlign: 'center', borderBottom: skin ? `1px solid ${themeAccent}44` : (hasCustomBg ? 'none' : `2px solid ${themeMain}`) }}>
         <span style={{ color: themeAccent, fontSize: '14px', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '1px' }}>
           PILOTO DEL DÍA
         </span>

@@ -1,3 +1,5 @@
+import { getSkinStyle } from '../utils/skinStyles';
+
 export default function TrackAlert({ alert, config, id = 'trackAlert' }) {
   const pos = config?.positions?.[id] || { x: 1500, y: 500, scale: 1 };
   const themeHeaderBg = config?.themeHeaderBg || '#000000';
@@ -17,6 +19,7 @@ export default function TrackAlert({ alert, config, id = 'trackAlert' }) {
   const alertTitle = isIncident ? 'INCIDENTE EN PISTA' : 'BANDERA AMARILLA';
   const alertIcon = isIncident ? '🚨' : '⚠️';
   const curveLabel = alert?.curveName || curve?.name || 'CURVA';
+  const skin = getSkinStyle(alertFormat, { themeMain: '#000000', themeAccent: accentColor });
 
   const sharedStyles = `
     @keyframes trackAlertPulse { 0%, 100% { box-shadow: 0 0 0 0 ${accentColor}66; } 50% { box-shadow: 0 0 0 12px ${accentColor}00; } }
@@ -91,18 +94,21 @@ export default function TrackAlert({ alert, config, id = 'trackAlert' }) {
       <style>{sharedStyles}</style>
 
       <div style={{
-        width: '340px', backgroundColor: 'rgba(0,0,0,0.9)', borderRadius: bRad,
-        border: `3px solid ${accentColor}`, overflow: 'hidden',
-        boxShadow: '0 10px 30px rgba(0,0,0,0.7)'
+        width: '340px', backgroundColor: skin ? skin.background : 'rgba(0,0,0,0.9)', borderRadius: bRad,
+        border: skin ? skin.border : `3px solid ${accentColor}`, overflow: 'hidden',
+        boxShadow: skin ? skin.boxShadow : '0 10px 30px rgba(0,0,0,0.7)',
+        backdropFilter: skin?.backdropFilter
       }}>
         <div style={{
-          backgroundColor: accentColor, padding: '8px 15px',
+          backgroundColor: skin ? 'transparent' : accentColor,
+          borderBottom: skin ? `2px solid ${accentColor}` : 'none',
+          padding: '8px 15px',
           display: 'flex', alignItems: 'center', gap: '8px'
         }}>
           <span style={{ fontSize: '18px', animation: 'trackAlertBlink 1s infinite' }}>
             {alertIcon}
           </span>
-          <span style={{ color: '#000', fontWeight: '900', fontSize: '14px', letterSpacing: '1px', textTransform: 'uppercase' }}>
+          <span style={{ color: skin ? accentColor : '#000', fontWeight: '900', fontSize: '14px', letterSpacing: '1px', textTransform: 'uppercase' }}>
             {alertTitle}
           </span>
         </div>

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { getSkinStyle } from '../utils/skinStyles';
 
 const PODIUM_COLORS = { 1: '#ffd700', 2: '#c0c0c0', 3: '#cd7f32' };
 
@@ -26,6 +27,7 @@ export default function Ticker({ drivers, isVisible, config, id = 'ticker', sess
   const isCompact = tickerFormat === 'compact';
   const isPodium = tickerFormat === 'podium';
   const isSpotlight = tickerFormat === 'spotlight';
+  const skin = getSkinStyle(tickerFormat, { themeMain, themeAccent });
   const barHeight = isSpotlight ? '110px' : (isCompact ? '46px' : (hasCustomBg ? '80px' : '60px'));
 
   // Rotación automática para el formato "Spotlight" (un piloto a la vez, en grande)
@@ -70,8 +72,11 @@ export default function Ticker({ drivers, isVisible, config, id = 'ticker', sess
 
       <div style={{
         width: '100%', height: '100%',
-        backgroundColor: hasCustomBg ? 'transparent' : themeBg,
-        borderTop: hasCustomBg ? 'none' : `4px solid ${themeMain}`,
+        backgroundColor: skin ? skin.background : (hasCustomBg ? 'transparent' : themeBg),
+        border: skin ? skin.border : 'none',
+        borderTop: skin ? skin.border : (hasCustomBg ? 'none' : `4px solid ${themeMain}`),
+        boxShadow: skin ? skin.boxShadow : 'none',
+        backdropFilter: skin?.backdropFilter,
         borderRadius: bRad, // <-- APLICADO BORDE REDONDEADO AL CONTENEDOR INTERNO
         display: 'flex', alignItems: 'center', boxSizing: 'border-box', overflow: 'hidden'
       }}>

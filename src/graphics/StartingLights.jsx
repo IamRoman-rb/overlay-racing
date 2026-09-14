@@ -1,3 +1,5 @@
+import { getSkinStyle } from '../utils/skinStyles';
+
 export default function StartingLights({ isVisible, step = 0, config }) {
   if (!isVisible) return null;
 
@@ -7,6 +9,7 @@ export default function StartingLights({ isVisible, step = 0, config }) {
   const bRad = config?.[`borderRadius_${id}`] || '12px';
   const animStyle = config?.[`animationStyle_${id}`] || 'slide';
   const lightsFormat = config?.startingLightsFormat || 'classic';
+  const skin = getSkinStyle(lightsFormat, { themeMain: config?.themeMain || '#e74c3c', themeAccent: config?.themeAccent || '#f39c12' });
 
   const lightsCount = 5;
   const isGo = step >= 6;
@@ -93,11 +96,12 @@ export default function StartingLights({ isVisible, step = 0, config }) {
           })}
         </div>
       ) : (
-        // FORMATO CLÁSICO: una sola fila de 5 luces
+        // FORMATO CLÁSICO (+ skins neón/degradé/cristal en la caja): una sola fila de 5 luces
         <div style={{
-          display: 'flex', gap: '14px', backgroundColor: '#111',
-          padding: '20px 30px', borderRadius: bRad, border: '4px solid #000',
-          boxShadow: '0 8px 25px rgba(0,0,0,0.6)'
+          display: 'flex', gap: '14px', backgroundColor: skin ? skin.background : '#111',
+          padding: '20px 30px', borderRadius: bRad, border: skin ? skin.border : '4px solid #000',
+          boxShadow: skin ? skin.boxShadow : '0 8px 25px rgba(0,0,0,0.6)',
+          backdropFilter: skin?.backdropFilter
         }}>
           {Array.from({ length: lightsCount }).map((_, i) => {
             const litIndex = i + 1;

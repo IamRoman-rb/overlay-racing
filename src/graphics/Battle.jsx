@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { getSkinStyle } from '../utils/skinStyles';
 
 // Componente que mide si el texto entra en su contenedor.
 // Si entra: texto quieto. Si no entra: desliza en loop (marquee) para mostrarlo completo.
@@ -70,6 +71,7 @@ export default function Battle({ drivers, config, isVisible, battleFocusPos = 1,
   const isCompact = battleFormat === 'compact';
   const isDuel = battleFormat === 'duel';
   const isMinimal = battleFormat === 'minimal';
+  const skin = getSkinStyle(battleFormat, { themeMain, themeAccent });
 
   const containerWidth = isHorizontal ? '880px' : (isCompact ? '360px' : '460px');
 
@@ -181,23 +183,26 @@ export default function Battle({ drivers, config, isVisible, battleFocusPos = 1,
     }}>
 
       <div style={{
-        backgroundColor: customBg ? 'transparent' : themeMain,
+        backgroundColor: skin ? skin.background : (customBg ? 'transparent' : themeMain),
         padding: isHorizontal ? '8px 15px' : (isCompact ? '5px 12px' : '6px 15px'),
         borderTopLeftRadius: bRad, borderTopRightRadius: bRad,
+        border: skin ? skin.border : 'none', borderBottom: 'none',
         display: 'flex', alignItems: 'center',
         justifyContent: isHorizontal ? 'center' : 'flex-start',
-        boxShadow: customBg ? 'none' : '0 5px 15px rgba(0,0,0,0.5)', zIndex: 2
+        boxShadow: skin ? skin.boxShadow : (customBg ? 'none' : '0 5px 15px rgba(0,0,0,0.5)'), zIndex: 2
       }}>
-        <span style={{ color: customBg ? themeNormalText : '#fff', fontWeight: '900', fontStyle: 'italic', fontSize: isCompact ? '13px' : '16px', letterSpacing: '1px', textTransform: 'uppercase' }}>
+        <span style={{ color: (customBg || skin) ? themeNormalText : '#fff', fontWeight: '900', fontStyle: 'italic', fontSize: isCompact ? '13px' : '16px', letterSpacing: '1px', textTransform: 'uppercase', textShadow: skin?.textShadow }}>
           BATALLA POR LA POSICIÓN {battleDrivers[0]?.pos}
         </span>
       </div>
 
       <div style={{
-        backgroundColor: customBg ? 'transparent' : themeBg,
-        borderBottom: customBg ? 'none' : `4px solid ${themeMain}`,
+        backgroundColor: skin ? skin.background : (customBg ? 'transparent' : themeBg),
+        borderBottom: skin ? skin.border : (customBg ? 'none' : `4px solid ${themeMain}`),
+        borderLeft: skin ? skin.border : 'none', borderRight: skin ? skin.border : 'none',
         borderBottomLeftRadius: bRad, borderBottomRightRadius: bRad,
-        boxShadow: customBg ? 'none' : '0 10px 20px rgba(0,0,0,0.5)',
+        boxShadow: skin ? skin.boxShadow : (customBg ? 'none' : '0 10px 20px rgba(0,0,0,0.5)'),
+        backdropFilter: skin?.backdropFilter,
         display: 'flex',
         flexDirection: isHorizontal ? 'row' : 'column',
         overflow: 'hidden'
