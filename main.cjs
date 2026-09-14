@@ -717,6 +717,61 @@ ipcMain.handle('save-positions', (event, data) => {
 ipcMain.handle('save-backup', (event, data) => {
   try { fs.writeFileSync(backupPath, JSON.stringify(data, null, 2)); return true; } catch (e) { return false; }
 });
+
+// --- COPIA DE SEGURIDAD DE LA CONFIGURACIÓN (database.json + posiciones.json) ---
+// Permite al usuario guardar/restaurar su configuración manualmente, por ejemplo antes de
+// actualizar el programa a una versión nueva, para no perder colores, textos, formatos ni posiciones.
+ipcMain.handle('export-settings', async () => {
+  const result = await dialog.showOpenDialog(controlWindow, {
+    title: 'Elegí una carpeta para guardar la copia de seguridad',
+    properties: ['openDirectory', 'createDirectory']
+  });
+  if (result.canceled || result.filePaths.length === 0) return false;
+  try {
+    const destDir = result.filePaths[0];
+    let exportedAny = false;
+    if (fs.existsSync(dbPath)) { fs.copyFileSync(dbPath, path.join(destDir, 'database.json')); exportedAny = true; }
+    if (fs.existsSync(posPath)) { fs.copyFileSync(posPath, path.join(destDir, 'posiciones.json')); exportedAny = true; }
+    return exportedAny;
+  } catch (e) { return false; }
+});
+
+ipcMain.handle('import-settings', async () => {
+  const result = await dialog.showOpenDialog(controlWindow, {
+    title: 'Elegí la carpeta con database.json y/o posiciones.json',
+    properties: ['openDirectory']
+  });
+  if (result.canceled || result.filePaths.length === 0) return null;
+
+  const srcDir = result.filePaths[0];
+  const imported = { config: false, positions: false };
+  let configData = null;
+  let positionsData = null;
+
+  try {
+    const srcDbPath = path.join(srcDir, 'database.json');
+    if (fs.existsSync(srcDbPath)) {
+      configData = JSON.parse(fs.readFileSync(srcDbPath, 'utf-8'));
+      fs.writeFileSync(dbPath, JSON.stringify(configData, null, 2));
+      broadcast('update-config', configData);
+      imported.config = true;
+    }
+  } catch (e) {}
+
+  try {
+    const srcPosPath = path.join(srcDir, 'posiciones.json');
+    if (fs.existsSync(srcPosPath)) {
+      const rawPositions = JSON.parse(fs.readFileSync(srcPosPath, 'utf-8'));
+      positionsData = { ...defaultPositions, ...rawPositions };
+      fs.writeFileSync(posPath, JSON.stringify(rawPositions, null, 2));
+      broadcast('update-positions', positionsData);
+      imported.positions = true;
+    }
+  } catch (e) {}
+
+  if (!imported.config && !imported.positions) return null;
+  return { imported, config: configData, positions: positionsData };
+});
 ipcMain.handle('load-backup', () => {
   try {
     if (fs.existsSync(backupPath)) {

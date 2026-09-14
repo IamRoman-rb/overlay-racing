@@ -130,7 +130,17 @@ export const translations = {
       chromaGreen: 'VERDE (CLÁSICO)', chromaBlue: 'AZUL', chromaMagenta: 'MAGENTA / ROSA',
       chromaBlack: 'NEGRO', chromaWhite: 'BLANCO', chromaYellow: 'AMARILLO',
       providerLabel: 'PROVEEDOR DE TIEMPOS (TIMING)', codeLabel: 'CÓDIGO DE LA CARRERA',
-      loadNowBtn: '🔄 CARGAR DATOS AHORA', languageLabel: 'IDIOMA'
+      loadNowBtn: '🔄 CARGAR DATOS AHORA', languageLabel: 'IDIOMA',
+      backupSection: 'COPIA DE SEGURIDAD DE LA CONFIGURACIÓN',
+      backupDescription: 'Guardá una copia de tu configuración (colores, textos, formatos, posición de cada gráfica) antes de actualizar el programa, para no perderla. Se guardan los archivos database.json y posiciones.json.',
+      exportSettingsBtn: '💾 GUARDAR CONFIGURACIÓN', importSettingsBtn: '📂 CARGAR CONFIGURACIÓN',
+      confirmImportSettings: '⚠️ Esto va a reemplazar tu configuración actual (colores, textos, formatos y posiciones) por la del backup que elijas. ¿Continuar?',
+      alertExportSuccess: '✅ Configuración guardada correctamente.',
+      alertExportError: '⚠️ No se guardó la configuración (cancelado o sin datos para exportar).',
+      alertImportNothing: '⚠️ No se encontró database.json ni posiciones.json en esa carpeta.',
+      alertImportBoth: '✅ Se restauró la configuración general y las posiciones.',
+      alertImportConfigOnly: '✅ Se restauró la configuración general (no se encontró posiciones.json en esa carpeta).',
+      alertImportPositionsOnly: '✅ Se restauraron las posiciones (no se encontró database.json en esa carpeta).'
     },
     personalizar: {
       selectGraphic: 'SELECCIONAR GRÁFICA', themeConfig: 'CONFIGURACIÓN VISUAL (TEMA)',
@@ -179,6 +189,7 @@ export const translations = {
         server: 'Servidor local (puerto 8080)', cloud: 'Cómo conectarse al servidor Cloud (overlayracing.site)',
         timing: 'Cómo conectar el timing en vivo (Speedhive / Race Monitor)',
         excel: 'Formato del Excel para el Campeonato', photos: 'Fotos de los pilotos',
+        backup: 'Copia de seguridad de la configuración',
         tabs: 'Guía rápida de cada pestaña'
       },
       feedbackNote: '💡 ¿Algo no coincide con cómo lo usás en la práctica, o falta explicar algo? Avisale al equipo de desarrollo para actualizar este manual.',
@@ -309,7 +320,17 @@ export const translations = {
       chromaGreen: 'GREEN (CLASSIC)', chromaBlue: 'BLUE', chromaMagenta: 'MAGENTA / PINK',
       chromaBlack: 'BLACK', chromaWhite: 'WHITE', chromaYellow: 'YELLOW',
       providerLabel: 'TIMING PROVIDER', codeLabel: 'RACE CODE',
-      loadNowBtn: '🔄 LOAD DATA NOW', languageLabel: 'LANGUAGE'
+      loadNowBtn: '🔄 LOAD DATA NOW', languageLabel: 'LANGUAGE',
+      backupSection: 'CONFIGURATION BACKUP',
+      backupDescription: "Save a copy of your configuration (colors, text, formats, each graphic's position) before updating the program, so you don't lose it. This saves the database.json and posiciones.json files.",
+      exportSettingsBtn: '💾 SAVE CONFIGURATION', importSettingsBtn: '📂 LOAD CONFIGURATION',
+      confirmImportSettings: '⚠️ This will replace your current configuration (colors, text, formats and positions) with the one from the backup you choose. Continue?',
+      alertExportSuccess: '✅ Configuration saved successfully.',
+      alertExportError: '⚠️ The configuration was not saved (cancelled, or there was no data to export).',
+      alertImportNothing: '⚠️ Neither database.json nor posiciones.json was found in that folder.',
+      alertImportBoth: '✅ General configuration and positions were restored.',
+      alertImportConfigOnly: '✅ General configuration was restored (posiciones.json was not found in that folder).',
+      alertImportPositionsOnly: '✅ Positions were restored (database.json was not found in that folder).'
     },
     personalizar: {
       selectGraphic: 'SELECT GRAPHIC', themeConfig: 'VISUAL SETTINGS (THEME)',
@@ -358,6 +379,7 @@ export const translations = {
         server: 'Local server (port 8080)', cloud: 'How to connect to the Cloud server (overlayracing.site)',
         timing: 'How to connect live timing (Speedhive / Race Monitor)',
         excel: 'Excel format for the Standings', photos: 'Driver photos',
+        backup: 'Configuration backup',
         tabs: 'Quick guide to each tab'
       },
       feedbackNote: '💡 Does something not match how you use it in practice, or is something missing? Let the development team know so this manual can be updated.',
@@ -488,7 +510,17 @@ export const translations = {
       chromaGreen: 'VERDE (CLÁSSICO)', chromaBlue: 'AZUL', chromaMagenta: 'MAGENTA / ROSA',
       chromaBlack: 'PRETO', chromaWhite: 'BRANCO', chromaYellow: 'AMARELO',
       providerLabel: 'PROVEDOR DE CRONOMETRAGEM (TIMING)', codeLabel: 'CÓDIGO DA CORRIDA',
-      loadNowBtn: '🔄 CARREGAR DADOS AGORA', languageLabel: 'IDIOMA'
+      loadNowBtn: '🔄 CARREGAR DADOS AGORA', languageLabel: 'IDIOMA',
+      backupSection: 'BACKUP DA CONFIGURAÇÃO',
+      backupDescription: 'Salve uma cópia da sua configuração (cores, textos, formatos, posição de cada gráfico) antes de atualizar o programa, para não perdê-la. Isso salva os arquivos database.json e posiciones.json.',
+      exportSettingsBtn: '💾 SALVAR CONFIGURAÇÃO', importSettingsBtn: '📂 CARREGAR CONFIGURAÇÃO',
+      confirmImportSettings: '⚠️ Isso vai substituir sua configuração atual (cores, textos, formatos e posições) pela do backup que você escolher. Continuar?',
+      alertExportSuccess: '✅ Configuração salva com sucesso.',
+      alertExportError: '⚠️ A configuração não foi salva (cancelado, ou não havia dados para exportar).',
+      alertImportNothing: '⚠️ Não foi encontrado database.json nem posiciones.json nessa pasta.',
+      alertImportBoth: '✅ A configuração geral e as posições foram restauradas.',
+      alertImportConfigOnly: '✅ A configuração geral foi restaurada (posiciones.json não foi encontrado nessa pasta).',
+      alertImportPositionsOnly: '✅ As posições foram restauradas (database.json não foi encontrado nessa pasta).'
     },
     personalizar: {
       selectGraphic: 'SELECIONAR GRÁFICO', themeConfig: 'CONFIGURAÇÃO VISUAL (TEMA)',
@@ -537,6 +569,7 @@ export const translations = {
         server: 'Servidor local (porta 8080)', cloud: 'Como conectar ao servidor Cloud (overlayracing.site)',
         timing: 'Como conectar a cronometragem ao vivo (Speedhive / Race Monitor)',
         excel: 'Formato do Excel para o Campeonato', photos: 'Fotos dos pilotos',
+        backup: 'Backup da configuração',
         tabs: 'Guia rápido de cada aba'
       },
       feedbackNote: '💡 Algo não corresponde ao uso na prática, ou falta explicar algo? Avise a equipe de desenvolvimento para atualizar este manual.',
@@ -667,7 +700,17 @@ export const translations = {
       chromaGreen: 'GRÜN (KLASSISCH)', chromaBlue: 'BLAU', chromaMagenta: 'MAGENTA / PINK',
       chromaBlack: 'SCHWARZ', chromaWhite: 'WEISS', chromaYellow: 'GELB',
       providerLabel: 'ZEITMESSUNGS-ANBIETER', codeLabel: 'RENNCODE',
-      loadNowBtn: '🔄 DATEN JETZT LADEN', languageLabel: 'SPRACHE'
+      loadNowBtn: '🔄 DATEN JETZT LADEN', languageLabel: 'SPRACHE',
+      backupSection: 'KONFIGURATIONS-SICHERUNG',
+      backupDescription: 'Speichere eine Kopie deiner Konfiguration (Farben, Texte, Formate, Position jeder Grafik), bevor du das Programm aktualisierst, damit du sie nicht verlierst. Dabei werden die Dateien database.json und posiciones.json gespeichert.',
+      exportSettingsBtn: '💾 KONFIGURATION SPEICHERN', importSettingsBtn: '📂 KONFIGURATION LADEN',
+      confirmImportSettings: '⚠️ Dadurch wird deine aktuelle Konfiguration (Farben, Texte, Formate und Positionen) durch die des gewählten Backups ersetzt. Fortfahren?',
+      alertExportSuccess: '✅ Konfiguration erfolgreich gespeichert.',
+      alertExportError: '⚠️ Die Konfiguration wurde nicht gespeichert (abgebrochen oder keine Daten zum Exportieren).',
+      alertImportNothing: '⚠️ In diesem Ordner wurde weder database.json noch posiciones.json gefunden.',
+      alertImportBoth: '✅ Die allgemeine Konfiguration und die Positionen wurden wiederhergestellt.',
+      alertImportConfigOnly: '✅ Die allgemeine Konfiguration wurde wiederhergestellt (posiciones.json wurde in diesem Ordner nicht gefunden).',
+      alertImportPositionsOnly: '✅ Die Positionen wurden wiederhergestellt (database.json wurde in diesem Ordner nicht gefunden).'
     },
     personalizar: {
       selectGraphic: 'GRAFIK AUSWÄHLEN', themeConfig: 'VISUELLE EINSTELLUNGEN (THEMA)',
@@ -716,6 +759,7 @@ export const translations = {
         server: 'Lokaler Server (Port 8080)', cloud: 'So verbindest du dich mit dem Cloud-Server (overlayracing.site)',
         timing: 'So verbindest du die Live-Zeitmessung (Speedhive / Race Monitor)',
         excel: 'Excel-Format für die Meisterschaft', photos: 'Fahrerfotos',
+        backup: 'Konfigurations-Sicherung',
         tabs: 'Kurzanleitung zu jedem Tab'
       },
       feedbackNote: '💡 Stimmt etwas nicht mit der Praxis überein, oder fehlt eine Erklärung? Informiere das Entwicklungsteam, damit dieses Handbuch aktualisiert werden kann.',
@@ -846,7 +890,17 @@ export const translations = {
       chromaGreen: 'VERT (CLASSIQUE)', chromaBlue: 'BLEU', chromaMagenta: 'MAGENTA / ROSE',
       chromaBlack: 'NOIR', chromaWhite: 'BLANC', chromaYellow: 'JAUNE',
       providerLabel: 'FOURNISSEUR DE CHRONOMÉTRAGE', codeLabel: 'CODE DE LA COURSE',
-      loadNowBtn: '🔄 CHARGER LES DONNÉES MAINTENANT', languageLabel: 'LANGUE'
+      loadNowBtn: '🔄 CHARGER LES DONNÉES MAINTENANT', languageLabel: 'LANGUE',
+      backupSection: 'SAUVEGARDE DE LA CONFIGURATION',
+      backupDescription: 'Enregistrez une copie de votre configuration (couleurs, textes, formats, position de chaque graphique) avant de mettre à jour le programme, pour ne pas la perdre. Cela enregistre les fichiers database.json et posiciones.json.',
+      exportSettingsBtn: '💾 ENREGISTRER LA CONFIGURATION', importSettingsBtn: '📂 CHARGER LA CONFIGURATION',
+      confirmImportSettings: '⚠️ Cela va remplacer votre configuration actuelle (couleurs, textes, formats et positions) par celle de la sauvegarde choisie. Continuer ?',
+      alertExportSuccess: '✅ Configuration enregistrée avec succès.',
+      alertExportError: "⚠️ La configuration n'a pas été enregistrée (annulé, ou aucune donnée à exporter).",
+      alertImportNothing: "⚠️ Ni database.json ni posiciones.json n'ont été trouvés dans ce dossier.",
+      alertImportBoth: '✅ La configuration générale et les positions ont été restaurées.',
+      alertImportConfigOnly: '✅ La configuration générale a été restaurée (posiciones.json introuvable dans ce dossier).',
+      alertImportPositionsOnly: '✅ Les positions ont été restaurées (database.json introuvable dans ce dossier).'
     },
     personalizar: {
       selectGraphic: 'SÉLECTIONNER UN GRAPHIQUE', themeConfig: 'CONFIGURATION VISUELLE (THÈME)',
@@ -895,6 +949,7 @@ export const translations = {
         server: 'Serveur local (port 8080)', cloud: 'Comment se connecter au serveur Cloud (overlayracing.site)',
         timing: 'Comment connecter le chronométrage en direct (Speedhive / Race Monitor)',
         excel: 'Format du fichier Excel pour le Championnat', photos: 'Photos des pilotes',
+        backup: 'Sauvegarde de la configuration',
         tabs: 'Guide rapide de chaque onglet'
       },
       feedbackNote: '💡 Quelque chose ne correspond pas à l\'usage réel, ou manque d\'explication ? Prévenez l\'équipe de développement pour mettre à jour ce manuel.',

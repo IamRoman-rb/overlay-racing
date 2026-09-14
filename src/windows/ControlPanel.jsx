@@ -524,6 +524,27 @@ export default function ControlPanel() {
   };
   const handleHidePenalty = () => { if (ipcRenderer) ipcRenderer.send('hide-penalty'); };
 
+  // --- NUEVO: COPIA DE SEGURIDAD DE LA CONFIGURACIÓN (database.json + posiciones.json) ---
+  const handleExportSettings = async () => {
+    if (!ipcRenderer) return;
+    const ok = await ipcRenderer.invoke('export-settings');
+    alert(ok ? t('ajustes.alertExportSuccess') : t('ajustes.alertExportError'));
+  };
+
+  const handleImportSettings = async () => {
+    if (!ipcRenderer) return;
+    if (!window.confirm(t('ajustes.confirmImportSettings'))) return;
+    const result = await ipcRenderer.invoke('import-settings');
+    if (!result) { alert(t('ajustes.alertImportNothing')); return; }
+
+    if (result.config) setConfig({ chromaColor: '#00FF00', zocalos: Array(6).fill({ title: '', text: '' }), ...result.config });
+    if (result.positions) setPositions(result.positions);
+
+    if (result.imported.config && result.imported.positions) alert(t('ajustes.alertImportBoth'));
+    else if (result.imported.config) alert(t('ajustes.alertImportConfigOnly'));
+    else alert(t('ajustes.alertImportPositionsOnly'));
+  };
+
   // --- NUEVO: GUARDAR TOKENS DEL SERVIDOR CLOUD ---
   const handleSaveCloudConfig = async () => {
     setCloudSaving(true);
@@ -1190,7 +1211,7 @@ export default function ControlPanel() {
       )}
 
       {activeTab === 'ajustes' && (
-        <SettingsPanel config={config} handleDirectSave={handleDirectSave} handleScrape={handleScrape} colors={colors} inputStyle={inputStyle} btnStyle={btnStyle} t={t} language={language} setLanguage={setLanguage} />
+        <SettingsPanel config={config} handleDirectSave={handleDirectSave} handleScrape={handleScrape} colors={colors} inputStyle={inputStyle} btnStyle={btnStyle} t={t} language={language} setLanguage={setLanguage} onExportSettings={handleExportSettings} onImportSettings={handleImportSettings} />
       )}
 
       {activeTab === 'personalizar' && (

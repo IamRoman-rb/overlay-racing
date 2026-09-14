@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { LANGUAGES } from '../i18n/translations';
 
-export default function SettingsPanel({ config, handleDirectSave, handleScrape, colors, inputStyle, btnStyle, t, language, setLanguage }) {
+export default function SettingsPanel({ config, handleDirectSave, handleScrape, colors, inputStyle, btnStyle, t, language, setLanguage, onExportSettings, onImportSettings }) {
 
   const chromaColors = [
     { label: t('ajustes.chromaGreen'), value: '#00FF00' },
@@ -106,6 +106,24 @@ export default function SettingsPanel({ config, handleDirectSave, handleScrape, 
           </button>
         </div>
 
+      </div>
+
+      {/* SECCIÓN 3: COPIA DE SEGURIDAD DE LA CONFIGURACIÓN */}
+      <div style={{ marginTop: '20px', backgroundColor: colors.bgPanel, padding: '20px', borderRadius: '8px', border: `1px solid ${colors.border}` }}>
+        <label style={{ display: 'block', marginBottom: '10px', fontSize: '12px', fontWeight: 'bold', color: colors.textMuted }}>
+          {t('ajustes.backupSection')}
+        </label>
+        <p style={{ fontSize: '12px', color: colors.textMuted, lineHeight: '1.6', marginTop: 0, marginBottom: '15px', maxWidth: '700px' }}>
+          {t('ajustes.backupDescription')}
+        </p>
+        <div style={{ display: 'flex', gap: '10px' }}>
+          <button onClick={onExportSettings} style={{ ...btnStyle(false), width: 'auto', padding: '10px 20px', backgroundColor: '#2ecc71', color: '#fff', borderColor: '#27ae60' }}>
+            {t('ajustes.exportSettingsBtn')}
+          </button>
+          <button onClick={onImportSettings} style={{ ...btnStyle(false), width: 'auto', padding: '10px 20px', backgroundColor: '#d35400', color: '#fff', borderColor: '#e67e22' }}>
+            {t('ajustes.importSettingsBtn')}
+          </button>
+        </div>
       </div>
     </div>
   );

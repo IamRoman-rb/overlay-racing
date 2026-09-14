@@ -171,6 +171,23 @@ export default function UserManual({ colors, t, language }) {
         </p>
       </Section>
 
+      <Section id="backup" icon="💾" title={t('manual.sections.backup')} {...sectionProps}>
+        <p>
+          Antes de actualizar el programa a una versión nueva, conviene guardar una copia de tu configuración
+          actual para no perderla: colores, textos, formatos de cada gráfica, y las posiciones/tamaños que
+          ajustaste en PERSONALIZAR.
+        </p>
+        <ol style={ol}>
+          <li style={li}>Andá a la pestaña <b>AJUSTES</b>, sección "COPIA DE SEGURIDAD DE LA CONFIGURACIÓN", y tocá "GUARDAR CONFIGURACIÓN".</li>
+          <li style={li}>Elegí una carpeta <b>fuera</b> de la carpeta del programa (por ejemplo, tu Escritorio o Documentos). Ahí se copian los archivos <span style={code}>database.json</span> y <span style={code}>posiciones.json</span>.</li>
+          <li style={li}>Actualizá el programa normalmente.</li>
+          <li style={li}>Si al abrir la nueva versión no ves tu configuración anterior, volvé a AJUSTES, tocá "CARGAR CONFIGURACIÓN" y elegí esa misma carpeta.</li>
+        </ol>
+        <div style={note}>
+          ⚠️ Cargar una configuración reemplaza la actual por completo (colores, textos, formatos y posiciones). No afecta los datos de la carrera en vivo (tabla de pilotos, tiempos), que vienen de Speedhive/Race Monitor.
+        </div>
+      </Section>
+
       <Section id="tabs" icon="🗂️" title={t('manual.sections.tabs')} {...sectionProps}>
         <table style={table}>
           <tbody>
@@ -182,7 +199,7 @@ export default function UserManual({ colors, t, language }) {
             <tr><td style={{ ...td, fontWeight: 'bold' }}>ZÓCALOS</td><td style={td}>Seis zócalos de texto libre preseteados (título + texto), para poner al aire cuando haga falta.</td></tr>
             <tr><td style={{ ...td, fontWeight: 'bold' }}>DISEÑOS</td><td style={td}>Subir una imagen propia (PNG/SVG) que reemplace el diseño estándar de cualquier gráfica, gráfica por gráfica.</td></tr>
             <tr><td style={{ ...td, fontWeight: 'bold' }}>CIRCUITO</td><td style={td}>Cargar la imagen del circuito y marcar las curvas (arrastrando puntos), para usarlas en las alertas de curva del PANEL.</td></tr>
-            <tr><td style={{ ...td, fontWeight: 'bold' }}>AJUSTES</td><td style={td}>Color de Chroma Key para vMix, y configuración del proveedor de timing en vivo (Speedhive/Race Monitor).</td></tr>
+            <tr><td style={{ ...td, fontWeight: 'bold' }}>AJUSTES</td><td style={td}>Idioma del programa, color de Chroma Key para vMix, configuración del proveedor de timing en vivo (Speedhive/Race Monitor), y copia de seguridad de la configuración (database.json + posiciones.json).</td></tr>
             <tr><td style={{ ...td, fontWeight: 'bold' }}>PERSONALIZAR</td><td style={td}>Colores del tema, tipografía, formato visual de cada gráfica, bordes, animaciones de entrada, posición/escala con vista previa arrastrable, logos y carpeta de fotos.</td></tr>
           </tbody>
         </table>
