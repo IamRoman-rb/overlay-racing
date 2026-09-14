@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { LANGUAGES } from '../i18n/translations';
 
-export default function SettingsPanel({ config, handleDirectSave, handleScrape, colors, inputStyle, btnStyle, t, language, setLanguage, onExportSettings, onImportSettings }) {
+export default function SettingsPanel({ config, handleDirectSave, handleScrape, colors, inputStyle, btnStyle, t, language, setLanguage, onExportSettings, onImportSettings, onResetAllPositions }) {
 
   const chromaColors = [
     { label: t('ajustes.chromaGreen'), value: '#00FF00' },
@@ -124,6 +124,19 @@ export default function SettingsPanel({ config, handleDirectSave, handleScrape, 
             {t('ajustes.importSettingsBtn')}
           </button>
         </div>
+      </div>
+
+      {/* SECCIÓN 4: RESTABLECER POSICIONES AL LAYOUT PRECONFIGURADO */}
+      <div style={{ marginTop: '20px', backgroundColor: colors.bgPanel, padding: '20px', borderRadius: '8px', border: `1px solid ${colors.border}` }}>
+        <label style={{ display: 'block', marginBottom: '10px', fontSize: '12px', fontWeight: 'bold', color: colors.textMuted }}>
+          {t('ajustes.resetPositionsSection')}
+        </label>
+        <p style={{ fontSize: '12px', color: colors.textMuted, lineHeight: '1.6', marginTop: 0, marginBottom: '15px', maxWidth: '700px' }}>
+          {t('ajustes.resetPositionsDescription')}
+        </p>
+        <button onClick={onResetAllPositions} style={{ ...btnStyle(false), width: 'auto', padding: '10px 20px', backgroundColor: '#c0392b', color: '#fff', borderColor: '#e74c3c' }}>
+          {t('ajustes.resetAllPositionsBtn')}
+        </button>
       </div>
     </div>
   );

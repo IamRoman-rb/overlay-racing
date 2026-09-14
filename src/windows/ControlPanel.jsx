@@ -88,15 +88,19 @@ const WeatherControl = ({ id, label, config, isActive, onToggle, setConfig, t })
   );
 };
 
+// Debe quedar idéntico al defaultPositions de main.cjs (ahí vive la copia que se usa
+// para sembrar posiciones.json en el primer arranque).
 export const defaultPositions = {
-  relator: { x: 20, y: 560, scale: 1 }, comentarista: { x: 20, y: 480, scale: 1 }, notero1: { x: 20, y: 400, scale: 1 },
-  notero2: { x: 20, y: 320, scale: 1 }, circuito: { x: 20, y: 240, scale: 1 }, clima: { x: 20, y: 160, scale: 1 },
-  ticker: { x: 0, y: 660, scale: 1 }, grid: { x: 0, y: 0, scale: 1 }, finalResults: { x: 240, y: 40, scale: 1 },
-  tower: { x: 20, y: 20, scale: 1 }, winner: { x: 440, y: 550, scale: 1 }, flags: { x: 320, y: 50, scale: 1 },
-  fastestLap: { x: 440, y: 150, scale: 1 }, battle: { x: 50, y: 50, scale: 1 }, customZocalo: { x: 20, y: 580, scale: 1 },
-  votingQR: { x: 20, y: 700, scale: 1 }, votingResults: { x: 1550, y: 50, scale: 1 }, lapCounter: { x: 1700, y: 40, scale: 1 },
-  virtualChamp: { x: 1400, y: 150, scale: 1 }, startingLights: { x: 700, y: 400, scale: 1 }, lapTimesHistory: { x: 100, y: 500, scale: 1 },
-  trackAlert: { x: 1500, y: 500, scale: 1 }, penaltyAlert: { x: 1500, y: 750, scale: 1 }
+  relator: { x: 380, y: 935, scale: 1 }, comentarista: { x: 380, y: 860, scale: 1 }, notero1: { x: 380, y: 785, scale: 1 },
+  notero2: { x: 380, y: 710, scale: 1 }, circuito: { x: 380, y: 635, scale: 1 }, clima: { x: 380, y: 520, scale: 1 },
+  ticker: { x: 0, y: 1020, scale: 1 }, grid: { x: 320, y: 180, scale: 1 }, finalResults: { x: 395, y: 190, scale: 1 },
+  tower: { x: 20, y: 20, scale: 1 }, winner: { x: 680, y: 800, scale: 1 }, flags: { x: 640, y: 30, scale: 1 },
+  fastestLap: { x: 1440, y: 110, scale: 1 }, battle: { x: 730, y: 140, scale: 1 }, customZocalo: { x: 380, y: 420, scale: 1 },
+  votingQR: { x: 20, y: 745, scale: 1 }, votingResults: { x: 1440, y: 655, scale: 1 }, lapCounter: { x: 1740, y: 20, scale: 1 },
+  virtualChamp: { x: 1440, y: 235, scale: 1 }, pitStop: { x: 850, y: 900, scale: 1 },
+  startingLights: { x: 775, y: 470, scale: 1 }, lapTimesHistory: { x: 950, y: 350, scale: 1 },
+  trackAlert: { x: 950, y: 610, scale: 1 }, penaltyAlert: { x: 950, y: 500, scale: 1 },
+  driverInfo: { x: 380, y: 335, scale: 1 }
 };
 
 const GRAPHIC_IDS = [
@@ -523,6 +527,13 @@ export default function ControlPanel() {
     }
   };
   const handleHidePenalty = () => { if (ipcRenderer) ipcRenderer.send('hide-penalty'); };
+
+  // --- NUEVO: RESTABLECER TODAS LAS POSICIONES AL LAYOUT PRECONFIGURADO ---
+  const handleResetAllPositions = () => {
+    if (!window.confirm(t('ajustes.confirmResetAllPositions'))) return;
+    handleUpdatePositions(defaultPositions, true);
+    alert(t('ajustes.alertPositionsReset'));
+  };
 
   // --- NUEVO: COPIA DE SEGURIDAD DE LA CONFIGURACIÓN (database.json + posiciones.json) ---
   const handleExportSettings = async () => {
@@ -1211,7 +1222,7 @@ export default function ControlPanel() {
       )}
 
       {activeTab === 'ajustes' && (
-        <SettingsPanel config={config} handleDirectSave={handleDirectSave} handleScrape={handleScrape} colors={colors} inputStyle={inputStyle} btnStyle={btnStyle} t={t} language={language} setLanguage={setLanguage} onExportSettings={handleExportSettings} onImportSettings={handleImportSettings} />
+        <SettingsPanel config={config} handleDirectSave={handleDirectSave} handleScrape={handleScrape} colors={colors} inputStyle={inputStyle} btnStyle={btnStyle} t={t} language={language} setLanguage={setLanguage} onExportSettings={handleExportSettings} onImportSettings={handleImportSettings} onResetAllPositions={handleResetAllPositions} />
       )}
 
       {activeTab === 'personalizar' && (

@@ -3,7 +3,7 @@ import pilotoAnonimo from '../assets/piloto_anonimo.png';
 import { getSkinStyle } from '../utils/skinStyles';
 
 export default function DriverInfo({ driver, config, isVisible, id = 'driverInfo' }) {
-  const pos = config?.positions?.[id] || { x: 80, y: 480, scale: 1 };
+  const pos = config?.positions?.[id] || { x: 380, y: 335, scale: 1 };
 
   const themeBg = config?.themeBg || 'rgba(0,0,0,0.85)';
   const themeHeaderBg = config?.themeHeaderBg || '#000000';

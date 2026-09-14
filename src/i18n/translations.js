@@ -140,7 +140,12 @@ export const translations = {
       alertImportNothing: '⚠️ No se encontró database.json ni posiciones.json en esa carpeta.',
       alertImportBoth: '✅ Se restauró la configuración general y las posiciones.',
       alertImportConfigOnly: '✅ Se restauró la configuración general (no se encontró posiciones.json en esa carpeta).',
-      alertImportPositionsOnly: '✅ Se restauraron las posiciones (no se encontró database.json en esa carpeta).'
+      alertImportPositionsOnly: '✅ Se restauraron las posiciones (no se encontró database.json en esa carpeta).',
+      resetPositionsSection: 'RESTABLECER POSICIONES',
+      resetPositionsDescription: 'Vuelve a ubicar todas las gráficas en el layout preconfigurado de fábrica (pensado para que no se pisen entre sí). Se pierden las posiciones y tamaños que hayas ajustado a mano en PERSONALIZAR.',
+      resetAllPositionsBtn: '🔄 RESTABLECER TODAS LAS POSICIONES',
+      confirmResetAllPositions: '⚠️ Esto va a mover TODAS las gráficas a sus posiciones preconfiguradas de fábrica, perdiendo cualquier ajuste manual que hayas hecho en PERSONALIZAR. ¿Continuar?',
+      alertPositionsReset: '✅ Se restablecieron todas las posiciones al layout preconfigurado.'
     },
     personalizar: {
       selectGraphic: 'SELECCIONAR GRÁFICA', themeConfig: 'CONFIGURACIÓN VISUAL (TEMA)',
@@ -330,7 +335,12 @@ export const translations = {
       alertImportNothing: '⚠️ Neither database.json nor posiciones.json was found in that folder.',
       alertImportBoth: '✅ General configuration and positions were restored.',
       alertImportConfigOnly: '✅ General configuration was restored (posiciones.json was not found in that folder).',
-      alertImportPositionsOnly: '✅ Positions were restored (database.json was not found in that folder).'
+      alertImportPositionsOnly: '✅ Positions were restored (database.json was not found in that folder).',
+      resetPositionsSection: 'RESET POSITIONS',
+      resetPositionsDescription: "Moves every graphic back to the factory-preset layout (designed so they don't overlap each other). Any position or size you adjusted by hand in CUSTOMIZE will be lost.",
+      resetAllPositionsBtn: '🔄 RESET ALL POSITIONS',
+      confirmResetAllPositions: '⚠️ This will move ALL graphics to their factory-preset positions, losing any manual adjustments you made in CUSTOMIZE. Continue?',
+      alertPositionsReset: '✅ All positions were reset to the preset layout.'
     },
     personalizar: {
       selectGraphic: 'SELECT GRAPHIC', themeConfig: 'VISUAL SETTINGS (THEME)',
@@ -520,7 +530,12 @@ export const translations = {
       alertImportNothing: '⚠️ Não foi encontrado database.json nem posiciones.json nessa pasta.',
       alertImportBoth: '✅ A configuração geral e as posições foram restauradas.',
       alertImportConfigOnly: '✅ A configuração geral foi restaurada (posiciones.json não foi encontrado nessa pasta).',
-      alertImportPositionsOnly: '✅ As posições foram restauradas (database.json não foi encontrado nessa pasta).'
+      alertImportPositionsOnly: '✅ As posições foram restauradas (database.json não foi encontrado nessa pasta).',
+      resetPositionsSection: 'RESTABELECER POSIÇÕES',
+      resetPositionsDescription: 'Volta a posicionar todos os gráficos no layout pré-configurado de fábrica (pensado para que não se sobreponham). As posições e tamanhos que você ajustou manualmente em PERSONALIZAR serão perdidos.',
+      resetAllPositionsBtn: '🔄 RESTABELECER TODAS AS POSIÇÕES',
+      confirmResetAllPositions: '⚠️ Isso vai mover TODOS os gráficos para suas posições pré-configuradas de fábrica, perdendo qualquer ajuste manual feito em PERSONALIZAR. Continuar?',
+      alertPositionsReset: '✅ Todas as posições foram restabelecidas para o layout pré-configurado.'
     },
     personalizar: {
       selectGraphic: 'SELECIONAR GRÁFICO', themeConfig: 'CONFIGURAÇÃO VISUAL (TEMA)',
@@ -710,7 +725,12 @@ export const translations = {
       alertImportNothing: '⚠️ In diesem Ordner wurde weder database.json noch posiciones.json gefunden.',
       alertImportBoth: '✅ Die allgemeine Konfiguration und die Positionen wurden wiederhergestellt.',
       alertImportConfigOnly: '✅ Die allgemeine Konfiguration wurde wiederhergestellt (posiciones.json wurde in diesem Ordner nicht gefunden).',
-      alertImportPositionsOnly: '✅ Die Positionen wurden wiederhergestellt (database.json wurde in diesem Ordner nicht gefunden).'
+      alertImportPositionsOnly: '✅ Die Positionen wurden wiederhergestellt (database.json wurde in diesem Ordner nicht gefunden).',
+      resetPositionsSection: 'POSITIONEN ZURÜCKSETZEN',
+      resetPositionsDescription: 'Setzt alle Grafiken zurück auf das werkseitig voreingestellte Layout (so konzipiert, dass sie sich nicht überlappen). Positionen und Größen, die du in ANPASSEN manuell angepasst hast, gehen dabei verloren.',
+      resetAllPositionsBtn: '🔄 ALLE POSITIONEN ZURÜCKSETZEN',
+      confirmResetAllPositions: '⚠️ Dadurch werden ALLE Grafiken auf ihre werkseitig voreingestellten Positionen verschoben, wodurch alle manuellen Anpassungen in ANPASSEN verloren gehen. Fortfahren?',
+      alertPositionsReset: '✅ Alle Positionen wurden auf das voreingestellte Layout zurückgesetzt.'
     },
     personalizar: {
       selectGraphic: 'GRAFIK AUSWÄHLEN', themeConfig: 'VISUELLE EINSTELLUNGEN (THEMA)',
@@ -900,7 +920,12 @@ export const translations = {
       alertImportNothing: "⚠️ Ni database.json ni posiciones.json n'ont été trouvés dans ce dossier.",
       alertImportBoth: '✅ La configuration générale et les positions ont été restaurées.',
       alertImportConfigOnly: '✅ La configuration générale a été restaurée (posiciones.json introuvable dans ce dossier).',
-      alertImportPositionsOnly: '✅ Les positions ont été restaurées (database.json introuvable dans ce dossier).'
+      alertImportPositionsOnly: '✅ Les positions ont été restaurées (database.json introuvable dans ce dossier).',
+      resetPositionsSection: 'RÉINITIALISER LES POSITIONS',
+      resetPositionsDescription: "Replace tous les graphiques dans la disposition préconfigurée d'usine (conçue pour qu'ils ne se chevauchent pas). Les positions et tailles que vous avez ajustées à la main dans PERSONNALISER seront perdues.",
+      resetAllPositionsBtn: '🔄 RÉINITIALISER TOUTES LES POSITIONS',
+      confirmResetAllPositions: '⚠️ Cela va déplacer TOUS les graphiques vers leurs positions préconfigurées d\'usine, ce qui annulera tout ajustement manuel effectué dans PERSONNALISER. Continuer ?',
+      alertPositionsReset: '✅ Toutes les positions ont été réinitialisées à la disposition préconfigurée.'
     },
     personalizar: {
       selectGraphic: 'SÉLECTIONNER UN GRAPHIQUE', themeConfig: 'CONFIGURATION VISUELLE (THÈME)',

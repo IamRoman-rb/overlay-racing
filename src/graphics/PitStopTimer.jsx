@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from 'react';
 import { getSkinStyle } from '../utils/skinStyles';
 
 export default function PitStopTimer({ isVisible, config, pitState, id = 'pitStop' }) {
-  const pos = config?.positions?.[id] || { x: 50, y: 750, scale: 1 };
+  const pos = config?.positions?.[id] || { x: 850, y: 900, scale: 1 };
 
   const themeBg = config?.themeBg || 'rgba(0, 0, 0, 0.85)';
   const themeHeaderBg = config?.themeHeaderBg || '#000000';

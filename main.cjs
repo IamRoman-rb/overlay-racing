@@ -27,18 +27,25 @@ const posPath = path.join(userDataPath, 'posiciones.json');
 const backupPath = path.join(userDataPath, 'last_race.json');
 const lapTimesPath = path.join(userDataPath, 'lap_times.json');
 
+// Layout pensado para un lienzo de 1920x1080: torre de posiciones arriba a la izquierda,
+// zócalos (relator/comentarista/noteros/circuito/clima) apilados abajo a la izquierda pero
+// corridos a la derecha de la torre (que puede crecer mucho en altura con muchos pilotos),
+// tira inferior a todo lo ancho, columna de gráficas de posiciones/vueltas arriba a la
+// derecha, y el resto de gráficas de alerta/interactividad distribuidas en el centro sin
+// pisarse entre sí en los combos más comunes (ver detalle de cálculo en el commit).
 const defaultPositions = {
-  relator: { x: 20, y: 560, scale: 1 }, comentarista: { x: 20, y: 480, scale: 1 }, notero1: { x: 20, y: 400, scale: 1 },
-  notero2: { x: 20, y: 320, scale: 1 }, circuito: { x: 20, y: 240, scale: 1 }, clima: { x: 20, y: 160, scale: 1 },
-  ticker: { x: 0, y: 660, scale: 1 }, grid: { x: 0, y: 0, scale: 1 }, finalResults: { x: 240, y: 40, scale: 1 },
-  tower: { x: 20, y: 20, scale: 1 }, winner: { x: 440, y: 550, scale: 1 }, flags: { x: 320, y: 50, scale: 1 },
-  fastestLap: { x: 440, y: 150, scale: 1 }, battle: { x: 50, y: 50, scale: 1 }, customZocalo: { x: 20, y: 580, scale: 1 },
-  votingQR: { x: 20, y: 700, scale: 1 }, votingResults: { x: 1550, y: 50, scale: 1 }, lapCounter: { x: 1700, y: 40, scale: 1 },
-  virtualChamp: { x: 1400, y: 150, scale: 1 }, pitStop: { x: 50, y: 700, scale: 1 },
-  startingLights: { x: 700, y: 400, scale: 1 },
-  lapTimesHistory: { x: 100, y: 500, scale: 1 },
-  trackAlert: { x: 1500, y: 500, scale: 1 },
-  penaltyAlert: { x: 1500, y: 750, scale: 1 }
+  relator: { x: 380, y: 935, scale: 1 }, comentarista: { x: 380, y: 860, scale: 1 }, notero1: { x: 380, y: 785, scale: 1 },
+  notero2: { x: 380, y: 710, scale: 1 }, circuito: { x: 380, y: 635, scale: 1 }, clima: { x: 380, y: 520, scale: 1 },
+  ticker: { x: 0, y: 1020, scale: 1 }, grid: { x: 320, y: 180, scale: 1 }, finalResults: { x: 395, y: 190, scale: 1 },
+  tower: { x: 20, y: 20, scale: 1 }, winner: { x: 680, y: 800, scale: 1 }, flags: { x: 640, y: 30, scale: 1 },
+  fastestLap: { x: 1440, y: 110, scale: 1 }, battle: { x: 730, y: 140, scale: 1 }, customZocalo: { x: 380, y: 420, scale: 1 },
+  votingQR: { x: 20, y: 745, scale: 1 }, votingResults: { x: 1440, y: 655, scale: 1 }, lapCounter: { x: 1740, y: 20, scale: 1 },
+  virtualChamp: { x: 1440, y: 235, scale: 1 }, pitStop: { x: 850, y: 900, scale: 1 },
+  startingLights: { x: 775, y: 470, scale: 1 },
+  lapTimesHistory: { x: 950, y: 350, scale: 1 },
+  trackAlert: { x: 950, y: 610, scale: 1 },
+  penaltyAlert: { x: 950, y: 500, scale: 1 },
+  driverInfo: { x: 380, y: 335, scale: 1 }
 };
 
 if (!fs.existsSync(posPath)) fs.writeFileSync(posPath, JSON.stringify(defaultPositions, null, 2));
