@@ -1055,12 +1055,6 @@ export default function ControlPanel() {
           <h2 style={{ color: colors.yellow, marginTop: 0, borderBottom: `1px solid ${colors.border}`, paddingBottom: '10px' }}>
             ☁️ SERVIDOR CLOUD — overlayracing.site
           </h2>
-          <p style={{ color: colors.textMuted, fontSize: '13px', marginBottom: '25px', maxWidth: '700px' }}>
-            Conectá este software al servidor propio (sin depender de Cloudflare). Creá el evento en{' '}
-            <span style={{ color: colors.textMain, fontWeight: 'bold' }}>overlayracing.site/dashboard</span>, copiá
-            los dos tokens que aparecen ahí (de la URL del QR y de la URL del comisario) y pegalos acá abajo.
-          </p>
-
           <div style={{
             display: 'flex', alignItems: 'center', gap: '10px',
             backgroundColor: cloudConnected ? 'rgba(46, 204, 113, 0.1)' : 'rgba(231, 76, 60, 0.1)',
@@ -1112,12 +1106,6 @@ export default function ControlPanel() {
                 <span style={{ fontSize: '12px', color: colors.green, fontWeight: 'bold' }}>✅ Guardado</span>
               )}
             </div>
-
-            <p style={{ color: colors.textMuted, fontSize: '11px', marginTop: '10px' }}>
-              Una vez guardado, la lista de pilotos se empuja automáticamente al QR de votación cada vez que
-              se actualiza el timing, y las sanciones que emitas en la pestaña SANCIONES aparecen en vivo en{' '}
-              <span style={{ color: colors.textMain }}>overlayracing.site/comisario/&lt;token&gt;</span>.
-            </p>
           </div>
         </div>
       )}
