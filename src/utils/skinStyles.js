@@ -1,14 +1,18 @@
 // Tres "skins" visuales reutilizables que se pueden sumar como formato extra
 // a cualquier gráfica ya existente, sin tener que rediseñar su layout interno.
-export const SKIN_FORMATS = ['neon', 'gradient', 'glass'];
+export const SKIN_FORMATS = ['pro', 'gradient', 'glass'];
 
 export function getSkinStyle(format, { themeMain, themeAccent }) {
-  if (format === 'neon') {
+  if (format === 'pro') {
+    // Estilo "Broadcast Pro": panel oscuro con degradé sutil, borde de acento
+    // nítido (no brillo) y sombra marcada — el lenguaje visual de gráficas de
+    // TV de automovilismo profesional (F1, MotoGP, TC/ACTC, Carburando):
+    // paneles planos y prolijos, alto contraste, sin efectos "gamer".
     return {
-      background: 'rgba(5,5,5,0.92)',
+      background: 'linear-gradient(180deg, #1b1f27 0%, #05070a 100%)',
       border: `2px solid ${themeAccent}`,
-      boxShadow: `0 0 6px ${themeAccent}, 0 0 22px ${themeAccent}99, 0 0 44px ${themeAccent}44`,
-      textShadow: `0 0 8px ${themeAccent}bb`,
+      boxShadow: '0 14px 30px rgba(0,0,0,0.65), inset 0 1px 0 rgba(255,255,255,0.08)',
+      textShadow: '0px 2px 3px rgba(0,0,0,0.85)',
       backdropFilter: 'none'
     };
   }
@@ -34,7 +38,7 @@ export function getSkinStyle(format, { themeMain, themeAccent }) {
 }
 
 export const SKIN_OPTIONS = [
-  { value: 'neon', label: 'Neón (Brillo + Borde Luminoso)' },
+  { value: 'pro', label: 'Broadcast Pro (Estilo F1 / MotoGP)' },
   { value: 'gradient', label: 'Degradé (Fondo con Gradiente)' },
   { value: 'glass', label: 'Cristal (Glassmorphism, Difuminado)' }
 ];

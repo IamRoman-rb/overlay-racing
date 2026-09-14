@@ -26,7 +26,7 @@ export default function StartingGrid({ drivers, config, isVisible, id = 'grid' }
   const bRad = config[`borderRadius_${id}`] || '8px';
   const animStyle = config[`animationStyle_${id}`] || 'slide';
 
-  // TIPO DE GRILLA: 'standard', 'photos', 'cinematic' o un skin (neon/gradient/glass, que reusan el layout estándar)
+  // TIPO DE GRILLA: 'standard', 'photos', 'cinematic' o un skin (pro/gradient/glass, que reusan el layout estándar)
   const gridFormat = config?.gridFormat || 'standard';
   const gridSkin = getSkinStyle(gridFormat, { themeMain, themeAccent });
   // 'cinematic' avanza piloto por piloto (1 a la vez); el resto sigue de a 2 por página.

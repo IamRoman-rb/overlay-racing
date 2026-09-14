@@ -50,7 +50,7 @@ export default function Flags({ activeFlags, config, id = 'flags' }) {
   const useImageBg = !!bgUrl;
   const bgSize = customBg ? '100% 100%' : 'cover';
 
-  // Skins (neón/degradé/cristal): el brillo usa el color propio de cada bandera para no perder su significado
+  // Skins (broadcast pro/degradé/cristal): el acento usa el color propio de cada bandera para no perder su significado
   const flagGlowColor = FLAG_GLOW_COLOR[activeFlagType] || themeAccent;
   const skin = getSkinStyle(flagsFormat, { themeMain: '#000000', themeAccent: flagGlowColor });
 
