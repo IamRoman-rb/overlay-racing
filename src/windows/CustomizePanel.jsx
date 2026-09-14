@@ -184,6 +184,38 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
           </div>
         )}
 
+        {selectedGraphic === 'lapCounter' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', marginBottom: '30px', backgroundColor: '#111', padding: '15px', borderRadius: '8px', border: `1px solid ${colors.border}` }}>
+            <label style={{ fontSize: '10px', color: colors.textMuted, fontWeight: 'bold' }}>FORMATO DE CONTADOR DE VUELTAS</label>
+            <select
+              value={config.lapCounterFormat || 'standard'}
+              onChange={(e) => onConfigChange('lapCounterFormat', e.target.value)}
+              style={{ ...inputStyle, padding: '10px', fontSize: '11px', cursor: 'pointer', border: `1px solid ${colors.border}` }}
+            >
+              <option value="standard">Clásico (Solo Número)</option>
+              <option value="labeled">Con Etiqueta (Barra "VUELTA")</option>
+              <option value="circle">Círculo (Insignia Redonda)</option>
+              <option value="minimal">Minimalista (Sin Caja)</option>
+            </select>
+          </div>
+        )}
+
+        {selectedGraphic === 'virtualChamp' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', marginBottom: '30px', backgroundColor: '#111', padding: '15px', borderRadius: '8px', border: `1px solid ${colors.border}` }}>
+            <label style={{ fontSize: '10px', color: colors.textMuted, fontWeight: 'bold' }}>FORMATO DE CAMPEONATO VIRTUAL</label>
+            <select
+              value={config.virtualChampFormat || 'standard'}
+              onChange={(e) => onConfigChange('virtualChampFormat', e.target.value)}
+              style={{ ...inputStyle, padding: '10px', fontSize: '11px', cursor: 'pointer', border: `1px solid ${colors.border}` }}
+            >
+              <option value="standard">Clásico (Top 10 con Puntos Sumados)</option>
+              <option value="compact">Compacto (Top 15, Filas Angostas)</option>
+              <option value="podium">Podio (Colores Oro/Plata/Bronce)</option>
+              <option value="minimal">Minimalista (Sin Header)</option>
+            </select>
+          </div>
+        )}
+
         {selectedGraphic === 'votingQR' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', marginBottom: '30px', backgroundColor: '#111', padding: '15px', borderRadius: '8px', border: `1px solid ${colors.border}` }}>
             <label style={{ fontSize: '10px', color: colors.textMuted, fontWeight: 'bold' }}>FORMATO DE QR DE VOTACIÓN</label>
