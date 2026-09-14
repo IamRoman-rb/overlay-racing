@@ -136,6 +136,8 @@ export default function ControlPanel() {
   const [graphics, setGraphics] = useState({ relator: false, comentarista: false, notero1: false, notero2: false, circuito: false, clima: false });
   const [showLapCounter, setShowLapCounter] = useState(false);
   const [showVirtualChamp, setShowVirtualChamp] = useState(false);
+  const [championship, setChampionship] = useState([]);
+  const [loadingExcel, setLoadingExcel] = useState(false);
   const [activeZocaloIndex, setActiveZocaloIndex] = useState(null);
   const [showLapTimesHistory, setShowLapTimesHistory] = useState(false);
   const [selectedCurveId, setSelectedCurveId] = useState(null);
@@ -194,6 +196,7 @@ export default function ControlPanel() {
       });
       ipcRenderer.invoke('get-local-ip').then(setLocalIp);
       ipcRenderer.invoke('get-votes').then(v => { if (v) setVotes(v) }).catch(() => { });
+      ipcRenderer.invoke('get-championship').then(data => { if (data) setChampionship(data); }).catch(() => { });
 
       // Restaura si el semáforo o una sanción ya estaban corriendo al abrir/reabrir el panel
       ipcRenderer.invoke('get-initial-state').then(state => {
@@ -217,12 +220,14 @@ export default function ControlPanel() {
       };
       const handleUpdatePenalty = (event, data) => { if (data) setPenaltyAlertState(data); };
       const handleCloudStatus = (event, data) => { if (data) setCloudConnected(!!data.connected); };
+      const handleUpdateChampionship = (event, data) => { if (data) setChampionship(data); };
 
       ipcRenderer.on('update-votes', handleUpdateVotes);
       ipcRenderer.on('update-ip', handleUpdateIp);
       ipcRenderer.on('update-starting-lights', handleStartingLights);
       ipcRenderer.on('update-penalty', handleUpdatePenalty);
       ipcRenderer.on('cloud-status', handleCloudStatus);
+      ipcRenderer.on('update-championship', handleUpdateChampionship);
 
       return () => {
         ipcRenderer.removeListener('update-votes', handleUpdateVotes);
@@ -230,6 +235,7 @@ export default function ControlPanel() {
         ipcRenderer.removeListener('update-starting-lights', handleStartingLights);
         ipcRenderer.removeListener('update-penalty', handleUpdatePenalty);
         ipcRenderer.removeListener('cloud-status', handleCloudStatus);
+        ipcRenderer.removeListener('update-championship', handleUpdateChampionship);
       }
     }
   }, []);
@@ -465,6 +471,16 @@ export default function ControlPanel() {
     if (ipcRenderer) ipcRenderer.send('toggle-fastest-lap', !showFastestLap);
   };
   const handleToggleLapCounter = () => { setShowLapCounter(!showLapCounter); if (ipcRenderer) ipcRenderer.send('toggle-lap-counter', !showLapCounter); };
+  const handleLoadExcel = () => {
+    if (!ipcRenderer) return;
+    setLoadingExcel(true);
+    ipcRenderer.invoke('load-excel')
+      .then(res => {
+        if (!res) alert('❌ Error al cargar Excel o acción cancelada.');
+      })
+      .finally(() => setLoadingExcel(false));
+  };
+
   const handleToggleFlag = (type) => {
     const newFlags = { red: false, tricolor: false, black: false, blue: false, checkered: false };
     if (!activeFlags[type]) newFlags[type] = true;
@@ -593,7 +609,7 @@ export default function ControlPanel() {
       </div>
 
       <div style={{ display: 'flex', borderBottom: `1px solid ${colors.border}` }}>
-        {['PANEL', 'VOTACIONES', 'SANCIONES', 'CLOUD', 'ZÓCALOS', 'DISEÑOS', 'CIRCUITO', 'AJUSTES', 'PERSONALIZAR'].map(tab => (
+        {['PANEL', 'CAMPEONATO', 'VOTACIONES', 'SANCIONES', 'CLOUD', 'ZÓCALOS', 'DISEÑOS', 'CIRCUITO', 'AJUSTES', 'PERSONALIZAR'].map(tab => (
           <div key={tab} onClick={() => setActiveTab(tab)} style={{ padding: '12px 25px', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer', borderBottom: activeTab === tab ? `3px solid ${colors.textMain}` : '3px solid transparent', color: activeTab === tab ? colors.textMain : colors.textMuted, display: 'flex', alignItems: 'center', gap: '6px' }}>
             {tab}
             {tab === 'SANCIONES' && penaltyAlertState.isVisible && (
@@ -752,12 +768,12 @@ export default function ControlPanel() {
 
             <div style={sectionTitleStyle}>CAMPEONATO VIRTUAL</div>
             <div style={{ display: 'flex', gap: '5px', marginBottom: '15px' }}>
-              <button onClick={() => ipcRenderer && ipcRenderer.invoke('load-excel').then(res => alert(res ? "✅ Excel cargado con éxito. ¡Los puntos se calcularán automáticamente!" : "❌ Error al cargar Excel o acción cancelada."))} style={{ ...btnStyle(false), flex: 1, backgroundColor: '#2ecc71', color: 'white', borderColor: '#27ae60' }}>
-                📊 CARGAR EXCEL
-              </button>
               <button onClick={handleToggleVirtualChamp} style={{ ...btnStyle(showVirtualChamp), flex: 1 }}>
-                {showVirtualChamp ? 'OCULTAR TABLA' : 'MOSTRAR TABLA'}
+                {showVirtualChamp ? 'OCULTAR TABLA EN OVERLAY' : 'MOSTRAR TABLA EN OVERLAY'}
               </button>
+            </div>
+            <div style={{ fontSize: '10px', color: colors.textMuted, marginTop: '-10px', marginBottom: '15px' }}>
+              Cargá el Excel y mirá la tabla completa en la pestaña <span style={{ color: colors.yellow, fontWeight: 'bold' }}>CAMPEONATO</span>.
             </div>
 
             <div style={sectionTitleStyle}>EVOLUCIÓN DE TIEMPOS DE VUELTA</div>
@@ -826,6 +842,73 @@ export default function ControlPanel() {
               onToggleLapTimesSelect={handleToggleLapTimesSelect}
             />
           </div>
+        </div>
+      )}
+
+      {activeTab === 'CAMPEONATO' && (
+        <div style={{ padding: '30px', flex: 1, backgroundColor: colors.bgApp, overflowY: 'auto' }}>
+
+          <h2 style={{ color: colors.yellow, marginTop: 0, borderBottom: `1px solid ${colors.border}`, paddingBottom: '10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span>🏆 CAMPEONATO (EXCEL)</span>
+            <span style={{ fontSize: '14px', color: colors.textMuted, fontWeight: 'normal' }}>
+              PILOTOS CARGADOS: <span style={{ color: colors.textMain, fontWeight: 'bold' }}>{championship.length}</span>
+            </span>
+          </h2>
+
+          <p style={{ color: colors.textMuted, fontSize: '13px', marginBottom: '20px', maxWidth: '700px' }}>
+            Cargá un Excel (.xlsx) con las columnas <span style={{ color: colors.textMain, fontWeight: 'bold' }}>Numero</span>, <span style={{ color: colors.textMain, fontWeight: 'bold' }}>Nombre</span> y{' '}
+            <span style={{ color: colors.textMain, fontWeight: 'bold' }}>Puntos</span> (puntaje base de cada piloto antes de esta carrera), más{' '}
+            <span style={{ color: colors.textMain, fontWeight: 'bold' }}>Posicion</span> y <span style={{ color: colors.textMain, fontWeight: 'bold' }}>Puntos_Escala</span> (cuántos puntos suma cada posición de llegada).
+            Los puntos de la carrera en vivo se suman automáticamente al puntaje base a medida que corre la sesión.
+          </p>
+
+          <div style={{ display: 'flex', gap: '10px', marginBottom: '25px' }}>
+            <button
+              onClick={handleLoadExcel}
+              disabled={loadingExcel}
+              style={{ ...btnStyle(false), width: 'auto', padding: '12px 20px', backgroundColor: '#2ecc71', color: 'white', borderColor: '#27ae60', cursor: loadingExcel ? 'wait' : 'pointer', opacity: loadingExcel ? 0.7 : 1 }}
+            >
+              {loadingExcel ? '⏳ CARGANDO...' : '📊 CARGAR EXCEL'}
+            </button>
+            <button onClick={handleToggleVirtualChamp} style={{ ...btnStyle(showVirtualChamp), width: 'auto', padding: '12px 20px' }}>
+              {showVirtualChamp ? 'OCULTAR TABLA EN OVERLAY' : 'MOSTRAR TABLA EN OVERLAY'}
+            </button>
+          </div>
+
+          {championship.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '40px', color: colors.textMuted, fontStyle: 'italic', backgroundColor: colors.bgPanel, borderRadius: '8px', border: `1px solid ${colors.border}` }}>
+              Todavía no cargaste ningún Excel. Hacé clic en "CARGAR EXCEL" para ver la tabla del campeonato acá.
+            </div>
+          ) : (
+            <div style={{ width: '100%', overflowX: 'auto', backgroundColor: colors.bgPanel, borderRadius: '8px', border: `1px solid ${colors.border}` }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', textAlign: 'center' }}>
+                <thead>
+                  <tr style={{ backgroundColor: colors.bgInput, color: colors.textMuted, borderBottom: `2px solid ${colors.border}` }}>
+                    <th style={{ padding: '12px 10px' }}>POS</th>
+                    <th style={{ padding: '12px 10px' }}>NUM</th>
+                    <th style={{ padding: '12px 10px', textAlign: 'left' }}>PILOTO</th>
+                    <th style={{ padding: '12px 10px' }}>PUNTOS BASE</th>
+                    <th style={{ padding: '12px 10px' }}>+ ESTA CARRERA</th>
+                    <th style={{ padding: '12px 10px' }}>TOTAL</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {championship.map((d, index) => (
+                    <tr key={d.number || index} style={{ borderBottom: `1px solid ${colors.border}`, backgroundColor: index === 0 ? 'rgba(243, 156, 18, 0.1)' : 'transparent' }}>
+                      <td style={{ padding: '10px', fontWeight: 'bold', color: index === 0 ? colors.yellow : colors.textMain }}>{d.livePos}</td>
+                      <td style={{ padding: '10px', color: colors.textMuted }}>{d.number}</td>
+                      <td style={{ padding: '10px', textAlign: 'left', fontWeight: 'bold', color: colors.textMain, textTransform: 'uppercase' }}>{d.name}</td>
+                      <td style={{ padding: '10px', color: colors.textMuted }}>{d.basePoints}</td>
+                      <td style={{ padding: '10px', color: d.added > 0 ? colors.green : colors.textMuted, fontWeight: d.added > 0 ? 'bold' : 'normal' }}>
+                        {d.added > 0 ? `+${d.added}` : '-'}
+                      </td>
+                      <td style={{ padding: '10px', color: colors.textMain, fontWeight: 'bold', fontSize: '14px' }}>{d.livePoints}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       )}
 

@@ -668,6 +668,7 @@ ipcMain.on('starting-lights-action', (e, action) => {
 });
 
 ipcMain.handle('get-pitstop', () => broadcastState.pitStop);
+ipcMain.handle('get-championship', () => liveChampionship);
 ipcMain.handle('load-excel', async () => {
   const result = await dialog.showOpenDialog(controlWindow, {
     title: 'Cargar Campeonato (Excel)', properties: ['openFile'], filters: [{ name: 'Excel', extensions: ['xlsx', 'xls'] }]
