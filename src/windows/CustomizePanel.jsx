@@ -184,6 +184,38 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
           </div>
         )}
 
+        {selectedGraphic === 'pitStop' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', marginBottom: '30px', backgroundColor: '#111', padding: '15px', borderRadius: '8px', border: `1px solid ${colors.border}` }}>
+            <label style={{ fontSize: '10px', color: colors.textMuted, fontWeight: 'bold' }}>FORMATO DE CRONÓMETRO DE BOXES</label>
+            <select
+              value={config.pitStopFormat || 'standard'}
+              onChange={(e) => onConfigChange('pitStopFormat', e.target.value)}
+              style={{ ...inputStyle, padding: '10px', fontSize: '11px', cursor: 'pointer', border: `1px solid ${colors.border}` }}
+            >
+              <option value="standard">Clásico (Header + Fila)</option>
+              <option value="compact">Compacto (Una Línea)</option>
+              <option value="stopwatch">Cronómetro (Tiempo Protagonista)</option>
+              <option value="minimal">Minimalista (Sin Caja)</option>
+            </select>
+          </div>
+        )}
+
+        {selectedGraphic === 'startingLights' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', marginBottom: '30px', backgroundColor: '#111', padding: '15px', borderRadius: '8px', border: `1px solid ${colors.border}` }}>
+            <label style={{ fontSize: '10px', color: colors.textMuted, fontWeight: 'bold' }}>FORMATO DE SEMÁFORO DE LARGADA</label>
+            <select
+              value={config.startingLightsFormat || 'classic'}
+              onChange={(e) => onConfigChange('startingLightsFormat', e.target.value)}
+              style={{ ...inputStyle, padding: '10px', fontSize: '11px', cursor: 'pointer', border: `1px solid ${colors.border}` }}
+            >
+              <option value="classic">Clásico (Fila de 5 Luces)</option>
+              <option value="towers">Torres (Columnas Estilo F1)</option>
+              <option value="countdown">Cuenta Regresiva (Número Gigante)</option>
+              <option value="minimal">Minimalista (Luces Chicas)</option>
+            </select>
+          </div>
+        )}
+
         {selectedGraphic === 'lapCounter' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', marginBottom: '30px', backgroundColor: '#111', padding: '15px', borderRadius: '8px', border: `1px solid ${colors.border}` }}>
             <label style={{ fontSize: '10px', color: colors.textMuted, fontWeight: 'bold' }}>FORMATO DE CONTADOR DE VUELTAS</label>
