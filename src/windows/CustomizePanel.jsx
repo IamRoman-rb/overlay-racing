@@ -184,6 +184,38 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
           </div>
         )}
 
+        {selectedGraphic === 'votingQR' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', marginBottom: '30px', backgroundColor: '#111', padding: '15px', borderRadius: '8px', border: `1px solid ${colors.border}` }}>
+            <label style={{ fontSize: '10px', color: colors.textMuted, fontWeight: 'bold' }}>FORMATO DE QR DE VOTACIÓN</label>
+            <select
+              value={config.votingQRFormat || 'standard'}
+              onChange={(e) => onConfigChange('votingQRFormat', e.target.value)}
+              style={{ ...inputStyle, padding: '10px', fontSize: '11px', cursor: 'pointer', border: `1px solid ${colors.border}` }}
+            >
+              <option value="standard">Clásico (Header + QR + Texto)</option>
+              <option value="compact">Compacto (QR Chico + Texto al Lado)</option>
+              <option value="banner">Banner (Ancho, QR a la Izquierda)</option>
+              <option value="minimal">Minimalista (Solo QR)</option>
+            </select>
+          </div>
+        )}
+
+        {selectedGraphic === 'votingResults' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', marginBottom: '30px', backgroundColor: '#111', padding: '15px', borderRadius: '8px', border: `1px solid ${colors.border}` }}>
+            <label style={{ fontSize: '10px', color: colors.textMuted, fontWeight: 'bold' }}>FORMATO DE RESULTADOS DE VOTACIÓN</label>
+            <select
+              value={config.votingResultsFormat || 'standard'}
+              onChange={(e) => onConfigChange('votingResultsFormat', e.target.value)}
+              style={{ ...inputStyle, padding: '10px', fontSize: '11px', cursor: 'pointer', border: `1px solid ${colors.border}` }}
+            >
+              <option value="standard">Clásico (Header + Barras + Total)</option>
+              <option value="compact">Compacto (Sin Header ni Total)</option>
+              <option value="podium">Podio (Colores Oro/Plata/Bronce)</option>
+              <option value="minimal">Minimalista (Sin Caja)</option>
+            </select>
+          </div>
+        )}
+
         {selectedGraphic === 'customZocalo' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', marginBottom: '30px', backgroundColor: '#111', padding: '15px', borderRadius: '8px', border: `1px solid ${colors.border}` }}>
             <label style={{ fontSize: '10px', color: colors.textMuted, fontWeight: 'bold' }}>FORMATO DE ZÓCALO LIBRE</label>
