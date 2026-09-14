@@ -1,3 +1,5 @@
+import { getSkinStyle } from '../utils/skinStyles';
+
 export default function LapTimeEvolution({ history, drivers, config, isVisible, focusDriver, id = 'lapTimesHistory' }) {
   const pos = config?.positions?.[id] || { x: 100, y: 500, scale: 1 };
   const themeBg = config?.themeBg || 'rgba(0, 0, 0, 0.88)';
@@ -14,6 +16,7 @@ export default function LapTimeEvolution({ history, drivers, config, isVisible, 
   const isCompact = chartFormat === 'compact';
   const isLarge = chartFormat === 'large';
   const isMinimal = chartFormat === 'minimal';
+  const skin = getSkinStyle(chartFormat, { themeMain, themeAccent });
   const transparent = !!customBg || isMinimal;
 
   // --- CAJA RECTANGULAR ANCHA Y BAJA (el tamaño varía según el formato) ---
@@ -93,19 +96,21 @@ export default function LapTimeEvolution({ history, drivers, config, isVisible, 
       )}
       <div style={{
         width: `${W}px`,
-        backgroundColor: transparent ? 'transparent' : themeBg,
+        backgroundColor: skin ? skin.background : (transparent ? 'transparent' : themeBg),
         backgroundImage: customBg ? `url(${customBg})` : 'none',
         backgroundSize: '100% 100%', backgroundRepeat: 'no-repeat', backgroundPosition: 'center',
-        borderTop: transparent ? 'none' : `3px solid ${isFocusMode ? '#00e5ff' : themeMain}`,
+        border: skin ? skin.border : 'none',
+        borderTop: skin ? skin.border : (transparent ? 'none' : `3px solid ${isFocusMode ? '#00e5ff' : themeMain}`),
         borderRadius: bRad,
-        boxShadow: transparent ? 'none' : '0 6px 18px rgba(0,0,0,0.6)',
+        boxShadow: skin ? skin.boxShadow : (transparent ? 'none' : '0 6px 18px rgba(0,0,0,0.6)'),
+        backdropFilter: skin?.backdropFilter,
         overflow: 'hidden',
         display: 'flex',
         flexDirection: 'column'
       }}>
         {!isMinimal && (
           <div style={{
-            backgroundColor: customBg ? 'transparent' : themeHeaderBg,
+            backgroundColor: skin ? 'transparent' : (customBg ? 'transparent' : themeHeaderBg),
             padding: isCompact ? '4px 10px' : '6px 12px', borderBottom: customBg ? 'none' : `1px solid ${isFocusMode ? '#00e5ff' : themeMain}`,
             display: 'flex', justifyContent: 'space-between', alignItems: 'center'
           }}>

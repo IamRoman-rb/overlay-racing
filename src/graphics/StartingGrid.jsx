@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import pilotoAnonimo from '../assets/piloto_anonimo.png';
+import { getSkinStyle } from '../utils/skinStyles';
 
 let ipcRenderer = null;
 if (typeof window !== 'undefined' && typeof window.require === 'function') {
@@ -25,8 +26,9 @@ export default function StartingGrid({ drivers, config, isVisible, id = 'grid' }
   const bRad = config[`borderRadius_${id}`] || '8px';
   const animStyle = config[`animationStyle_${id}`] || 'slide';
 
-  // TIPO DE GRILLA: 'standard', 'photos' o 'cinematic'
+  // TIPO DE GRILLA: 'standard', 'photos', 'cinematic' o un skin (neon/gradient/glass, que reusan el layout estándar)
   const gridFormat = config?.gridFormat || 'standard';
+  const gridSkin = getSkinStyle(gridFormat, { themeMain, themeAccent });
   // 'cinematic' avanza piloto por piloto (1 a la vez); el resto sigue de a 2 por página.
   const itemsPerPage = gridFormat === 'cinematic' ? 1 : 2;
 
@@ -91,14 +93,17 @@ export default function StartingGrid({ drivers, config, isVisible, id = 'grid' }
         @keyframes cinematicFade { 0% { opacity: 0; transform: translateY(20px); } 100% { opacity: 1; transform: translateY(0); } }
       `}</style>
 
-      {/* RENDERIZADO CONDICIONAL: ESTÁNDAR VS FOTOS VS CINEMATIC */}
-      {gridFormat === 'standard' && (
+      {/* RENDERIZADO CONDICIONAL: ESTÁNDAR (+ SKINS) VS FOTOS VS CINEMATIC */}
+      {(gridFormat === 'standard' || gridSkin) && (
         <>
           <div style={{
             position: 'absolute', top: '50px', left: '10%',
-            backgroundColor: themeHeaderBg, color: themeTitleText, padding: '15px 40px',
+            backgroundColor: gridSkin ? gridSkin.background : themeHeaderBg, color: themeTitleText, padding: '15px 40px',
             fontSize: '32px', fontWeight: '900', textTransform: 'uppercase',
-            borderBottom: `6px solid ${themeMain}`, boxShadow: '0 10px 20px rgba(0,0,0,0.5)',
+            border: gridSkin ? gridSkin.border : 'none',
+            borderBottom: gridSkin ? gridSkin.border : `6px solid ${themeMain}`,
+            boxShadow: gridSkin ? gridSkin.boxShadow : '0 10px 20px rgba(0,0,0,0.5)',
+            backdropFilter: gridSkin?.backdropFilter,
             display: 'flex', alignItems: 'center', gap: '20px', borderRadius: bRad
           }}>
             {(config?.logo || config?.categoryLogo) && (
@@ -108,13 +113,13 @@ export default function StartingGrid({ drivers, config, isVisible, id = 'grid' }
                 {config?.categoryLogo && <img src={config.categoryLogo} alt="Categoría" style={{ height: '45px', maxWidth: '100px', objectFit: 'contain' }} />}
               </div>
             )}
-            <span>Ordenamiento de partida - {config?.campeonato || 'CARRERA'}</span>
+            <span style={{ textShadow: gridSkin?.textShadow }}>Ordenamiento de partida - {config?.campeonato || 'CARRERA'}</span>
           </div>
 
           <div key={`std-${page}`} className="grid-page" style={{ marginTop: '150px' }}>
             {currentDrivers.map((driver) => (
               <DriverCardStandard
-                key={driver.pos} driver={driver} config={config} customBg={customBg} bRad={bRad}
+                key={driver.pos} driver={driver} config={config} customBg={customBg} bRad={bRad} skin={gridSkin}
                 themeBg={themeBg} themeHeaderBg={themeHeaderBg} themeSecondary={themeSecondary}
                 themeAccent={themeAccent} themeNormalText={themeNormalText} themeNumberText={themeNumberText}
               />
@@ -184,7 +189,7 @@ export default function StartingGrid({ drivers, config, isVisible, id = 'grid' }
 // ----------------------------------------------------------------------------------
 // TARJETA MODO ESTÁNDAR (La que ya tenías)
 // ----------------------------------------------------------------------------------
-function DriverCardStandard({ driver, config, customBg, bRad, themeBg, themeHeaderBg, themeSecondary, themeAccent, themeNormalText, themeNumberText }) {
+function DriverCardStandard({ driver, config, customBg, bRad, themeBg, themeHeaderBg, themeSecondary, themeAccent, themeNormalText, themeNumberText, skin }) {
   const [imgSrc, setImgSrc] = useState(pilotoAnonimo);
   const hasCustomBg = !!customBg;
 
@@ -201,12 +206,14 @@ function DriverCardStandard({ driver, config, customBg, bRad, themeBg, themeHead
   return (
     <div style={{
       display: 'flex', alignItems: 'center',
-      backgroundColor: hasCustomBg ? 'transparent' : themeBg,
+      backgroundColor: skin ? skin.background : (hasCustomBg ? 'transparent' : themeBg),
       backgroundImage: hasCustomBg ? `url(${customBg})` : 'none',
       backgroundSize: '100% 100%', backgroundRepeat: 'no-repeat', backgroundPosition: 'center',
-      borderLeft: hasCustomBg ? 'none' : `8px solid ${themeSecondary}`,
+      border: skin ? skin.border : 'none',
+      borderLeft: skin ? skin.border : (hasCustomBg ? 'none' : `8px solid ${themeSecondary}`),
       borderRadius: bRad, width: '450px', height: '110px',
-      boxShadow: hasCustomBg ? 'none' : '10px 15px 30px rgba(0,0,0,0.8)',
+      boxShadow: skin ? skin.boxShadow : (hasCustomBg ? 'none' : '10px 15px 30px rgba(0,0,0,0.8)'),
+      backdropFilter: skin?.backdropFilter,
       position: 'relative', overflow: 'visible'
     }}>
       <div style={{ width: '90px', backgroundColor: hasCustomBg ? 'transparent' : themeHeaderBg, height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '48px', fontWeight: '900', color: themeNumberText, borderTopLeftRadius: bRad, borderBottomLeftRadius: bRad, zIndex: 2 }}>

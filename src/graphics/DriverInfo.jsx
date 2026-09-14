@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import pilotoAnonimo from '../assets/piloto_anonimo.png';
+import { getSkinStyle } from '../utils/skinStyles';
 
 export default function DriverInfo({ driver, config, isVisible, id = 'driverInfo' }) {
   const pos = config?.positions?.[id] || { x: 80, y: 480, scale: 1 };
@@ -19,6 +20,7 @@ export default function DriverInfo({ driver, config, isVisible, id = 'driverInfo
   const bRad = config[`borderRadius_${id}`] || '8px';
   const animStyle = config[`animationStyle_${id}`] || 'slide';
   const driverInfoFormat = config?.driverInfoFormat || 'standard';
+  const skin = getSkinStyle(driverInfoFormat, { themeMain, themeAccent });
 
   // CÁLCULO DE LA ANIMACIÓN DE ENTRADA
   let transformHidden = `scale(${pos.scale}) translateX(-40px)`; // Slide
@@ -133,36 +135,38 @@ export default function DriverInfo({ driver, config, isVisible, id = 'driverInfo
     <div style={wrapperStyle}>
       <div style={{
         display: 'flex', width: '480px',
-        backgroundColor: hasCustomBg ? 'transparent' : themeBg,
-        borderTop: hasCustomBg ? 'none' : `4px solid ${themeMain}`,
+        backgroundColor: skin ? skin.background : (hasCustomBg ? 'transparent' : themeBg),
+        border: skin ? skin.border : 'none',
+        borderTop: skin ? skin.border : (hasCustomBg ? 'none' : `4px solid ${themeMain}`),
         backgroundImage: hasCustomBg ? `url(${customBg})` : 'none',
         backgroundSize: '100% 100%', backgroundRepeat: 'no-repeat', backgroundPosition: 'center',
-        boxShadow: hasCustomBg ? 'none' : '0 10px 30px rgba(0,0,0,0.6)',
+        boxShadow: skin ? skin.boxShadow : (hasCustomBg ? 'none' : '0 10px 30px rgba(0,0,0,0.6)'),
+        backdropFilter: skin?.backdropFilter,
         borderRadius: bRad,
         overflow: 'hidden'
       }}>
         {/* POS: bloque propio, chico, separado del número */}
         <div style={{
-          backgroundColor: hasCustomBg ? 'transparent' : themeMain,
+          backgroundColor: skin ? 'transparent' : (hasCustomBg ? 'transparent' : themeMain),
           display: 'flex', flexDirection: 'column',
           justifyContent: 'center', alignItems: 'center',
           padding: '15px 12px', minWidth: '55px',
-          borderRight: hasCustomBg ? 'none' : `2px solid rgba(0,0,0,0.3)`
+          borderRight: skin ? `2px solid ${themeAccent}` : (hasCustomBg ? 'none' : `2px solid rgba(0,0,0,0.3)`)
         }}>
-          <span style={{ fontSize: '10px', fontWeight: '900', color: '#fff', letterSpacing: '1px', opacity: 0.85 }}>POS</span>
-          <span style={{ fontSize: '30px', fontWeight: '900', color: '#fff', lineHeight: '1' }}>{driver.pos}</span>
+          <span style={{ fontSize: '10px', fontWeight: '900', color: skin ? themeAccent : '#fff', letterSpacing: '1px', opacity: 0.85 }}>POS</span>
+          <span style={{ fontSize: '30px', fontWeight: '900', color: skin ? themeNormalText : '#fff', lineHeight: '1' }}>{driver.pos}</span>
         </div>
 
         {/* NÚMERO: bloque propio, con el color de acento del tema */}
         <div style={{
-          backgroundColor: hasCustomBg ? 'transparent' : themeAccent,
+          backgroundColor: skin ? 'transparent' : (hasCustomBg ? 'transparent' : themeAccent),
           display: 'flex', flexDirection: 'column',
           justifyContent: 'center', alignItems: 'center',
           padding: '15px 20px',
-          borderRight: hasCustomBg ? 'none' : `3px solid ${themeMain}`
+          borderRight: skin ? `2px solid ${themeAccent}` : (hasCustomBg ? 'none' : `3px solid ${themeMain}`)
         }}>
-          <span style={{ fontSize: '10px', fontWeight: '900', color: '#000', letterSpacing: '1px', opacity: 0.75 }}>Nº</span>
-          <span style={{ fontSize: '38px', fontWeight: '900', color: '#000', lineHeight: '1' }}>{driver.number}</span>
+          <span style={{ fontSize: '10px', fontWeight: '900', color: skin ? themeAccent : '#000', letterSpacing: '1px', opacity: 0.75 }}>Nº</span>
+          <span style={{ fontSize: '38px', fontWeight: '900', color: skin ? themeNormalText : '#000', lineHeight: '1' }}>{driver.number}</span>
         </div>
 
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '15px 25px' }}>

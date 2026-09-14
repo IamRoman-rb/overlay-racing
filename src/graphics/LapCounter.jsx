@@ -1,4 +1,6 @@
 // src/graphics/LapCounter.jsx
+import { getSkinStyle } from '../utils/skinStyles';
+
 export default function LapCounter({ isVisible, config, sessionInfo, id = 'lapCounter' }) {
   const pos = config?.positions?.[id] || { x: 1700, y: 40, scale: 1 };
   
@@ -15,6 +17,7 @@ export default function LapCounter({ isVisible, config, sessionInfo, id = 'lapCo
   const bRad = config[`borderRadius_${id}`] !== undefined ? config[`borderRadius_${id}`] : '8px';
   const animStyle = config[`animationStyle_${id}`] || 'slide';
   const lapCounterFormat = config?.lapCounterFormat || 'standard';
+  const skin = getSkinStyle(lapCounterFormat, { themeMain, themeAccent });
 
   // Animación que viene desde arriba por estar en la parte superior
   let transformHidden = `scale(${pos.scale}) translateY(-30px)`;
@@ -92,12 +95,14 @@ export default function LapCounter({ isVisible, config, sessionInfo, id = 'lapCo
     <div style={{
       ...wrapperStyle,
       display: 'flex', flexDirection: 'column', minWidth: '160px',
-      backgroundColor: hasCustomBg ? 'transparent' : themeBg,
+      backgroundColor: skin ? skin.background : (hasCustomBg ? 'transparent' : themeBg),
       backgroundImage: hasCustomBg ? `url(${customBg})` : 'none',
       backgroundSize: '100% 100%', backgroundRepeat: 'no-repeat', backgroundPosition: 'center',
       borderRadius: bRad,
-      boxShadow: hasCustomBg ? 'none' : '0 10px 30px rgba(0,0,0,0.8)',
-      overflow: 'hidden', borderTop: hasCustomBg ? 'none' : `5px solid ${themeMain}`,
+      border: skin ? skin.border : 'none',
+      boxShadow: skin ? skin.boxShadow : (hasCustomBg ? 'none' : '0 10px 30px rgba(0,0,0,0.8)'),
+      backdropFilter: skin?.backdropFilter,
+      overflow: 'hidden', borderTop: skin ? skin.border : (hasCustomBg ? 'none' : `5px solid ${themeMain}`),
     }}>
       <div style={{ padding: '8px 20px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
         <span style={{ color: themeNumberText, fontSize: '38px', fontWeight: '900', textShadow: '2px 2px 4px rgba(0,0,0,0.5)' }}>

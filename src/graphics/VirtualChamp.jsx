@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { io } from 'socket.io-client';
+import { getSkinStyle } from '../utils/skinStyles';
 
 const PODIUM_COLORS = { 0: '#ffd700', 1: '#c0c0c0', 2: '#cd7f32' };
 
@@ -11,6 +12,7 @@ export default function VirtualChamp({ config, isVisible, id = 'virtualChamp' })
   const themeHeaderBg = config?.themeHeaderBg || '#000000';
   const themeMain = config?.themeMain || '#e74c3c';
   const themeSecondary = config?.themeSecondary || '#3498db';
+  const themeAccent = config?.themeAccent || '#f39c12';
   const themeNormalText = config?.themeNormalText || '#ffffff';
 
   const customBg = config[`design_${id}`];
@@ -20,6 +22,7 @@ export default function VirtualChamp({ config, isVisible, id = 'virtualChamp' })
   const isCompact = champFormat === 'compact';
   const isPodium = champFormat === 'podium';
   const isMinimal = champFormat === 'minimal';
+  const skin = getSkinStyle(champFormat, { themeMain, themeAccent });
   const transparent = !!customBg || isMinimal;
 
   let transformHidden = `scale(${pos.scale}) translateX(40px)`;
@@ -44,12 +47,14 @@ export default function VirtualChamp({ config, isVisible, id = 'virtualChamp' })
       zIndex: 40, transition: 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
       opacity: isVisible ? 1 : 0, transform: isVisible ? `scale(${pos.scale}) translateX(0)` : transformHidden,
       display: 'flex', flexDirection: 'column', width: isCompact ? '340px' : '400px',
-      backgroundColor: transparent ? 'transparent' : themeBg,
+      backgroundColor: skin ? skin.background : (transparent ? 'transparent' : themeBg),
       backgroundImage: customBg ? `url(${customBg})` : 'none', backgroundSize: '100% 100%',
-      borderRadius: bRad, boxShadow: transparent ? 'none' : '0 10px 30px rgba(0,0,0,0.8)', overflow: 'hidden'
+      border: skin ? skin.border : 'none',
+      borderRadius: bRad, boxShadow: skin ? skin.boxShadow : (transparent ? 'none' : '0 10px 30px rgba(0,0,0,0.8)'),
+      backdropFilter: skin?.backdropFilter, overflow: 'hidden'
     }}>
       {!isMinimal && (
-        <div style={{ backgroundColor: customBg ? 'transparent' : themeHeaderBg, padding: isCompact ? '8px' : '12px', textAlign: 'center', borderBottom: customBg ? 'none' : `4px solid ${themeMain}` }}>
+        <div style={{ backgroundColor: skin ? 'transparent' : (customBg ? 'transparent' : themeHeaderBg), padding: isCompact ? '8px' : '12px', textAlign: 'center', borderBottom: skin ? `1px solid ${themeAccent}44` : (customBg ? 'none' : `4px solid ${themeMain}`) }}>
           <span style={{ color: themeMain, fontSize: isCompact ? '14px' : '18px', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '1px' }}>
             CAMPEONATO EN VIVO
           </span>

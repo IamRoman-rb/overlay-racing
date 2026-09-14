@@ -1,3 +1,5 @@
+import { getSkinStyle } from '../utils/skinStyles';
+
 export default function CustomZocalo({ isVisible, title, text, config, id = 'customZocalo' }) {
   const pos = config?.positions?.[id] || { x: 20, y: 550, scale: 1 };
 
@@ -13,6 +15,7 @@ export default function CustomZocalo({ isVisible, title, text, config, id = 'cus
   const bRad = config?.[`borderRadius_${id}`] || '4px';
   const animStyle = config?.[`animationStyle_${id}`] || 'slide';
   const zocaloFormat = config?.customZocaloFormat || 'standard';
+  const skin = getSkinStyle(zocaloFormat, { themeMain, themeAccent });
 
   let transformHidden = `scale(${pos.scale}) translateX(-40px)`;
   if (animStyle === 'fade') transformHidden = `scale(${pos.scale})`;
@@ -105,10 +108,13 @@ export default function CustomZocalo({ isVisible, title, text, config, id = 'cus
   return (
     <div style={{ ...wrapperStyle, display: 'flex', boxShadow: hasCustomBg ? 'none' : '0 10px 30px rgba(0,0,0,0.6)' }}>
       <div style={{
-        backgroundColor: hasCustomBg ? 'transparent' : themeBg,
+        backgroundColor: skin ? skin.background : (hasCustomBg ? 'transparent' : themeBg),
         backgroundImage: hasCustomBg ? `url(${customBg})` : 'none',
         backgroundSize: '100% 100%', backgroundRepeat: 'no-repeat', backgroundPosition: 'center',
-        borderLeft: hasCustomBg ? 'none' : `4px solid ${themeMain}`,
+        border: skin ? skin.border : 'none',
+        borderLeft: skin ? skin.border : (hasCustomBg ? 'none' : `4px solid ${themeMain}`),
+        boxShadow: skin?.boxShadow,
+        backdropFilter: skin?.backdropFilter,
         display: 'flex', alignItems: 'stretch', overflow: 'hidden', borderRadius: bRad
       }}>
 

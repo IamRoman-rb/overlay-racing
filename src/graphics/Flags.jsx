@@ -1,4 +1,7 @@
 import banderaCuadrosImg from '../assets/bandera cuadros.jpg';
+import { getSkinStyle } from '../utils/skinStyles';
+
+const FLAG_GLOW_COLOR = { red: '#e74c3c', black: '#ffcc00', blue: '#3498db', tricolor: '#ffffff', checkered: '#ffffff' };
 
 export default function Flags({ activeFlags, config, id = 'flags' }) {
   let activeFlagType = null;
@@ -46,6 +49,10 @@ export default function Flags({ activeFlags, config, id = 'flags' }) {
   const bgUrl = customBg || currentStyle.image || null;
   const useImageBg = !!bgUrl;
   const bgSize = customBg ? '100% 100%' : 'cover';
+
+  // Skins (neón/degradé/cristal): el brillo usa el color propio de cada bandera para no perder su significado
+  const flagGlowColor = FLAG_GLOW_COLOR[activeFlagType] || themeAccent;
+  const skin = getSkinStyle(flagsFormat, { themeMain: '#000000', themeAccent: flagGlowColor });
 
   // Animación de entrada (Las banderas suelen caer de arriba)
   let transformHidden = 'translateY(-150%) scale(1)';
@@ -152,12 +159,14 @@ export default function Flags({ activeFlags, config, id = 'flags' }) {
       zIndex: 60, pointerEvents: 'none', width: '640px', display: 'flex', justifyContent: 'center'
     }}>
       <div style={{
-         background: useImageBg ? 'transparent' : currentStyle.bg,
-         backgroundImage: useImageBg ? `url(${bgUrl})` : 'none',
+         background: skin ? skin.background : (useImageBg ? 'transparent' : currentStyle.bg),
+         backgroundImage: skin ? 'none' : (useImageBg ? `url(${bgUrl})` : 'none'),
          backgroundSize: bgSize, backgroundRepeat: 'no-repeat', backgroundPosition: 'center',
          padding: '10px 30px',
+         border: skin ? skin.border : 'none',
          borderRadius: bRad, // <-- BORDE INDIVIDUAL
-         boxShadow: useImageBg ? 'none' : '0 5px 15px rgba(0,0,0,0.5)',
+         boxShadow: skin ? skin.boxShadow : (useImageBg ? 'none' : '0 5px 15px rgba(0,0,0,0.5)'),
+         backdropFilter: skin?.backdropFilter,
          textAlign: 'center', width: '100%',
          transform: isVisible ? 'translateY(0) scale(1)' : transformHidden,
          opacity: isVisible ? 1 : 0,

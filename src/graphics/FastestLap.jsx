@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { getSkinStyle } from '../utils/skinStyles';
 
 export default function FastestLap({ drivers, config, isVisible, id = 'fastestLap' }) {
   const pos = config?.positions?.[id] || { x: 440, y: 150, scale: 1 };
@@ -17,6 +18,7 @@ export default function FastestLap({ drivers, config, isVisible, id = 'fastestLa
   const bRad = config[`borderRadius_${id}`] || '8px';
   const animStyle = config[`animationStyle_${id}`] || 'slide';
   const fastestLapFormat = config?.fastestLapFormat || 'standard';
+  const skin = getSkinStyle(fastestLapFormat, { themeMain, themeAccent });
 
   // Animación de entrada
   let transformHidden = 'translateY(-20px)';
@@ -145,10 +147,12 @@ export default function FastestLap({ drivers, config, isVisible, id = 'fastestLa
     <div style={wrapperStyle}>
        <div style={{
          display: 'flex', flexDirection: 'column', width: '450px',
-         backgroundColor: hasCustomBg ? 'transparent' : themeBg,
+         backgroundColor: skin ? skin.background : (hasCustomBg ? 'transparent' : themeBg),
          backgroundImage: hasCustomBg ? `url(${customBg})` : 'none',
          backgroundSize: '100% 100%', backgroundRepeat: 'no-repeat', backgroundPosition: 'center',
-         boxShadow: hasCustomBg ? 'none' : '0 10px 30px rgba(0,0,0,0.6)',
+         border: skin ? skin.border : 'none',
+         boxShadow: skin ? skin.boxShadow : (hasCustomBg ? 'none' : '0 10px 30px rgba(0,0,0,0.6)'),
+         backdropFilter: skin?.backdropFilter,
          borderRadius: bRad,
          overflow: 'hidden',
          transform: isVisible ? 'translateY(0) scale(1)' : transformHidden,
@@ -157,8 +161,8 @@ export default function FastestLap({ drivers, config, isVisible, id = 'fastestLa
        }}>
          {/* ENCABEZADO */}
          <div style={{
-           backgroundColor: hasCustomBg ? 'transparent' : themeHeaderBg,
-           borderBottom: hasCustomBg ? 'none' : `3px solid ${themeMain}`,
+           backgroundColor: skin ? 'transparent' : (hasCustomBg ? 'transparent' : themeHeaderBg),
+           borderBottom: skin ? `1px solid ${skin.border !== 'none' ? themeAccent : 'rgba(255,255,255,0.2)'}` : (hasCustomBg ? 'none' : `3px solid ${themeMain}`),
            display: 'flex', alignItems: 'center', padding: '8px 15px'
          }}>
             <span style={{ color: themeTitleText, fontWeight: '900', fontSize: '16px', fontStyle: 'italic', letterSpacing: '1px' }}>

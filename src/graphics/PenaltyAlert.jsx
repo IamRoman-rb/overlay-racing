@@ -1,10 +1,13 @@
-function CardFormat({ alert, config, pos }) {
+import { getSkinStyle, SKIN_FORMATS } from '../utils/skinStyles';
+
+function CardFormat({ alert, config, pos, skinFormat }) {
   const isInvestigation = alert?.type === 'investigation';
   const bgColor = isInvestigation ? '#111111' : '#8b0000';
   const borderColor = isInvestigation ? '#ffcc00' : '#e74c3c';
   const badgeText = isInvestigation ? 'BAJO INVESTIGACIÓN' : 'SANCIÓN';
   const badgeIcon = isInvestigation ? '🔎' : '🚫';
   const radius = config?.[`borderRadius_penaltyAlert`] || '6px';
+  const skin = skinFormat ? getSkinStyle(skinFormat, { themeMain: '#000000', themeAccent: borderColor }) : null;
 
   return (
     <div
@@ -16,10 +19,11 @@ function CardFormat({ alert, config, pos }) {
         transformOrigin: 'top left',
         minWidth: '340px',
         maxWidth: '420px',
-        backgroundColor: bgColor,
-        border: `2px solid ${borderColor}`,
+        backgroundColor: skin ? skin.background : bgColor,
+        border: skin ? skin.border : `2px solid ${borderColor}`,
         borderRadius: radius,
-        boxShadow: '0 4px 20px rgba(0,0,0,0.6)',
+        boxShadow: skin ? skin.boxShadow : '0 4px 20px rgba(0,0,0,0.6)',
+        backdropFilter: skin?.backdropFilter,
         color: '#ffffff',
         fontFamily: config?.fontFamily || 'Arial, sans-serif',
         overflow: 'hidden',
@@ -28,8 +32,9 @@ function CardFormat({ alert, config, pos }) {
     >
       <div
         style={{
-          backgroundColor: borderColor,
-          color: isInvestigation ? '#000000' : '#ffffff',
+          backgroundColor: skin ? 'transparent' : borderColor,
+          borderBottom: skin ? `1px solid ${borderColor}` : 'none',
+          color: skin ? borderColor : (isInvestigation ? '#000000' : '#ffffff'),
           padding: '6px 14px',
           fontSize: '13px',
           fontWeight: 900,
@@ -215,7 +220,7 @@ function CornerFormat({ alert, config, pos }) {
 export default function PenaltyAlert({ alert, config }) {
   if (!alert?.isVisible) return null;
 
-  const validFormats = ['card', 'f1bar', 'minimal', 'corner'];
+  const validFormats = ['card', 'f1bar', 'minimal', 'corner', ...SKIN_FORMATS];
   const format = validFormats.includes(config?.penaltyAlertFormat) ? config.penaltyAlertFormat : 'card';
   const defaultPos = format === 'f1bar' ? { x: 500, y: 30, scale: 1 } : { x: 1500, y: 750, scale: 1 };
   const pos = config?.positions?.penaltyAlert || defaultPos;
@@ -228,6 +233,9 @@ export default function PenaltyAlert({ alert, config }) {
   }
   if (format === 'corner') {
     return <CornerFormat alert={alert} config={config} pos={pos} />;
+  }
+  if (SKIN_FORMATS.includes(format)) {
+    return <CardFormat alert={alert} config={config} pos={pos} skinFormat={format} />;
   }
   return <CardFormat alert={alert} config={config} pos={pos} />;
 }

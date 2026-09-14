@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { getSkinStyle } from '../utils/skinStyles';
 
 const PODIUM_COLORS = { 1: '#ffd700', 2: '#c0c0c0', 3: '#cd7f32' };
 
@@ -22,6 +23,7 @@ export default function TimingTower({ drivers, config, isVisible, id = 'tower', 
   const themeTitleText = config?.themeTitleText || '#ffcc00';
   const themeNormalText = config?.themeNormalText || '#ffffff';
   const themeNumberText = config?.themeNumberText || '#3498db';
+  const skin = getSkinStyle(towerFormat, { themeMain, themeAccent });
 
   // MAGIA DE DISEÑO, BORDES Y ANIMACIÓN
   const customBg = config[`design_${id}`];
@@ -67,11 +69,13 @@ export default function TimingTower({ drivers, config, isVisible, id = 'tower', 
       position: 'absolute', left: `${pos.x}px`, top: `${pos.y}px`, transformOrigin: 'top left',
       width: '320px', height: '650px',
 
-      backgroundColor: (hasCustomBg || isMinimal) ? 'transparent' : themeBg,
-      borderTop: (hasCustomBg || isMinimal) ? 'none' : `4px solid ${themeMain}`,
+      backgroundColor: skin ? skin.background : ((hasCustomBg || isMinimal) ? 'transparent' : themeBg),
+      border: skin ? skin.border : 'none',
+      borderTop: skin ? skin.border : ((hasCustomBg || isMinimal) ? 'none' : `4px solid ${themeMain}`),
       backgroundImage: hasCustomBg ? `url(${customBg})` : 'none',
       backgroundSize: '100% 100%', backgroundRepeat: 'no-repeat', backgroundPosition: 'center',
-      boxShadow: (hasCustomBg || isMinimal) ? 'none' : '0 10px 30px rgba(0,0,0,0.5)',
+      boxShadow: skin ? skin.boxShadow : ((hasCustomBg || isMinimal) ? 'none' : '0 10px 30px rgba(0,0,0,0.5)'),
+      backdropFilter: skin?.backdropFilter,
 
       borderRadius: bRad,
       display: 'flex', flexDirection: 'column', zIndex: 10,

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { getSkinStyle } from '../utils/skinStyles';
 
 const PODIUM_COLORS = { 1: '#ffd700', 2: '#c0c0c0', 3: '#cd7f32' };
 
@@ -23,6 +24,7 @@ export default function FinalResults({ drivers, config, isVisible, id = 'finalRe
   const isCompact = resultsFormat === 'compact';
   const isPodium = resultsFormat === 'podium';
   const isMinimal = resultsFormat === 'minimal';
+  const skin = getSkinStyle(resultsFormat, { themeMain, themeAccent });
   const transparent = hasCustomBg || isMinimal;
 
   const [page, setPage] = useState(0);
@@ -65,12 +67,13 @@ export default function FinalResults({ drivers, config, isVisible, id = 'finalRe
          `}</style>
 
          <div style={{
-             backgroundColor: transparent ? 'transparent' : themeBg,
+             backgroundColor: skin ? skin.background : (transparent ? 'transparent' : themeBg),
              backgroundImage: hasCustomBg ? `url(${customBg})` : 'none',
              backgroundSize: '100% 100%', backgroundRepeat: 'no-repeat', backgroundPosition: 'center',
              padding: isMinimal ? '10px' : '40px', display: 'flex', flexDirection: 'column',
-             alignItems: 'center', boxShadow: transparent ? 'none' : '0 15px 50px rgba(0,0,0,0.8)',
-             border: transparent ? 'none' : `2px solid ${themeMain}`,
+             alignItems: 'center', boxShadow: skin ? skin.boxShadow : (transparent ? 'none' : '0 15px 50px rgba(0,0,0,0.8)'),
+             border: skin ? skin.border : (transparent ? 'none' : `2px solid ${themeMain}`),
+             backdropFilter: skin?.backdropFilter,
              borderRadius: bRad
          }}>
 
@@ -89,9 +92,9 @@ export default function FinalResults({ drivers, config, isVisible, id = 'finalRe
 
              {/* CONTENEDOR DE LA TABLA */}
              <div style={{
-               width: '1050px', backgroundColor: transparent ? 'transparent' : themeHeaderBg,
+               width: '1050px', backgroundColor: (skin || transparent) ? 'transparent' : themeHeaderBg,
                borderRadius: bRad,
-               padding: '10px 20px 20px 20px', border: transparent ? 'none' : '1px solid rgba(255,255,255,0.1)', position: 'relative'
+               padding: '10px 20px 20px 20px', border: (skin || transparent) ? 'none' : '1px solid rgba(255,255,255,0.1)', position: 'relative'
              }}>
 
                 {/* ENCABEZADO DE LA TABLA */}
