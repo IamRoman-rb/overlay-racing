@@ -95,6 +95,7 @@ export default function Weather({ data, isVisible, config, id = 'clima' }) {
   const customBg = config?.[`design_${id}`];
   const bRad = config?.[`borderRadius_${id}`] || '8px';
   const animStyle = config?.[`animationStyle_${id}`] || 'slide';
+  const climaFormat = config?.climaFormat || 'standard';
 
   let transformHidden = `scale(${pos.scale}) translateX(-40px)`;
   if (animStyle === 'fade') transformHidden = `scale(${pos.scale})`;
@@ -104,14 +105,99 @@ export default function Weather({ data, isVisible, config, id = 'clima' }) {
 
   const { label, category } = getWeatherVisual(data.weathercode);
 
+  const wrapperStyle = {
+    position: 'absolute', left: `${pos.x}px`, top: `${pos.y}px`,
+    transformOrigin: 'top left', zIndex: 15,
+    transition: 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+    opacity: isVisible ? 1 : 0, pointerEvents: 'none',
+    transform: isVisible ? `scale(${pos.scale}) translateX(0)` : transformHidden
+  };
+
+  // FORMATO COMPACTO: una sola fila, sin encabezado ni estadísticas de viento/humedad/lluvia
+  if (climaFormat === 'compact') {
+    return (
+      <div style={wrapperStyle}>
+        <div style={{
+          width: '220px', display: 'flex', alignItems: 'center', gap: '10px', padding: '8px 14px',
+          backgroundColor: customBg ? 'transparent' : themeBg,
+          backgroundImage: customBg ? `url(${customBg})` : 'none',
+          backgroundSize: '100% 100%', backgroundRepeat: 'no-repeat', backgroundPosition: 'center',
+          borderLeft: customBg ? 'none' : `4px solid ${themeMain}`,
+          borderRadius: bRad,
+          boxShadow: customBg ? 'none' : '2px 2px 10px rgba(0,0,0,0.5)'
+        }}>
+          <WeatherIcon category={category} color={themeAccent} size={32} />
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+            <span style={{ color: themeNormalText, fontSize: '22px', fontWeight: '900', lineHeight: 1 }}>
+              {Math.round(data.temp)}°C
+            </span>
+            <span style={{ color: themeNumberText, fontSize: '10px', fontWeight: 'bold', textTransform: 'uppercase' }}>
+              {label}
+            </span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // FORMATO VERTICAL: columna angosta, todo centrado, ideal para ubicar apilado con otras gráficas
+  if (climaFormat === 'vertical') {
+    return (
+      <div style={wrapperStyle}>
+        <div style={{
+          width: '160px', textAlign: 'center', overflow: 'hidden',
+          backgroundColor: customBg ? 'transparent' : themeBg,
+          backgroundImage: customBg ? `url(${customBg})` : 'none',
+          backgroundSize: '100% 100%', backgroundRepeat: 'no-repeat', backgroundPosition: 'center',
+          borderTop: customBg ? 'none' : `4px solid ${themeMain}`,
+          borderRadius: bRad,
+          boxShadow: customBg ? 'none' : '2px 2px 10px rgba(0,0,0,0.5)'
+        }}>
+          <div style={{ backgroundColor: customBg ? 'transparent' : themeHeaderBg, padding: '6px 0', borderBottom: customBg ? 'none' : `2px solid ${themeMain}` }}>
+            <span style={{ color: themeAccent, fontSize: '10px', fontWeight: '900', letterSpacing: '1px' }}>CLIMA</span>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '12px 10px', gap: '4px' }}>
+            <WeatherIcon category={category} color={themeAccent} size={40} />
+            <span style={{ color: themeNormalText, fontSize: '26px', fontWeight: '900', lineHeight: 1 }}>{Math.round(data.temp)}°C</span>
+            <span style={{ color: themeNumberText, fontSize: '10px', fontWeight: 'bold', textTransform: 'uppercase' }}>{label}</span>
+            {data.windSpeed !== undefined && (
+              <span style={{ color: themeNumberText, fontSize: '10px', marginTop: '6px' }}>
+                💨 {Math.round(data.windSpeed)} km/h {getWindDirLabel(data.windDir)}
+              </span>
+            )}
+            {data.precipProb !== undefined && data.precipProb !== null && (
+              <span style={{ color: data.precipProb >= 50 ? '#3498db' : themeNumberText, fontSize: '10px' }}>
+                💧 {Math.round(data.precipProb)}%
+              </span>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // FORMATO MINIMALISTA: sin caja, sin fondo, solo ícono + temperatura sobre el video
+  if (climaFormat === 'minimal') {
+    return (
+      <div style={wrapperStyle}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <WeatherIcon category={category} color={themeAccent} size={38} />
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+            <span style={{ color: themeNormalText, fontSize: '28px', fontWeight: '900', lineHeight: 1, textShadow: '2px 2px 6px rgba(0,0,0,0.9)' }}>
+              {Math.round(data.temp)}°C
+            </span>
+            <span style={{ color: themeAccent, fontSize: '11px', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '1px', textShadow: '2px 2px 6px rgba(0,0,0,0.9)' }}>
+              {label}
+            </span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // FORMATO ESTÁNDAR (comportamiento original)
   return (
-    <div style={{
-      position: 'absolute', left: `${pos.x}px`, top: `${pos.y}px`,
-      transformOrigin: 'top left', zIndex: 15,
-      transition: 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
-      opacity: isVisible ? 1 : 0, pointerEvents: 'none',
-      transform: isVisible ? `scale(${pos.scale}) translateX(0)` : transformHidden
-    }}>
+    <div style={wrapperStyle}>
       <div style={{
         width: '340px',
         backgroundColor: customBg ? 'transparent' : themeBg,
