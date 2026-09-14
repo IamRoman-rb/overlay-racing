@@ -29,7 +29,7 @@
   "campeonato": "",
   "relator": "JUAN LEIVA",
   "comentarista": "PABLO NARCISI",
-  "speedhiveCode": "MRQRNDLQ-2147484053",
+  "speedhiveCode": "169870",
   "borderRadius_ticker": "0px",
   "gridFormat": "standard",
   "circuito": "Autódromo Oscar y Juan Gálvez",
@@ -41,7 +41,7 @@
   "nameFormat": "original",
   "photosPath": "C:\\Users\\USER\\Downloads\\Pilotos",
   "borderRadius_lapCounter": "0px",
-  "timingProvider": "speedhive",
+  "timingProvider": "racemonitor",
   "weatherData": {
     "temp": 13.4,
     "windSpeed": 5.2,
@@ -96,5 +96,6 @@
       "y": 95.28386518005895
     }
   ],
-  "animationStyle_trackAlert": "zoom"
+  "animationStyle_trackAlert": "zoom",
+  "tickerFormat": "standard"
 }
