@@ -8,22 +8,112 @@ export default function CustomZocalo({ isVisible, title, text, config, id = 'cus
   const themeAccent = config?.themeAccent || '#f39c12';
   const themeNormalText = config?.themeNormalText || '#ffffff';
 
+  const customBg = config?.[`design_${id}`];
+  const hasCustomBg = !!customBg;
+  const bRad = config?.[`borderRadius_${id}`] || '4px';
+  const animStyle = config?.[`animationStyle_${id}`] || 'slide';
+  const zocaloFormat = config?.customZocaloFormat || 'standard';
+
+  let transformHidden = `scale(${pos.scale}) translateX(-40px)`;
+  if (animStyle === 'fade') transformHidden = `scale(${pos.scale})`;
+  if (animStyle === 'zoom') transformHidden = `scale(${pos.scale * 0.9})`;
+
+  const wrapperStyle = {
+    position: 'absolute', left: `${pos.x}px`, top: `${pos.y}px`,
+    transformOrigin: 'top left',
+    zIndex: 50, transition: 'opacity 0.4s ease-in-out, transform 0.4s ease-in-out',
+    opacity: isVisible ? 1 : 0,
+    transform: isVisible ? `scale(${pos.scale}) translateX(0)` : transformHidden,
+    pointerEvents: 'none'
+  };
+
+  // FORMATO BANNER: barra completa de ancho de pantalla, texto centrado
+  if (zocaloFormat === 'banner') {
+    return (
+      <div style={{ ...wrapperStyle, width: '1920px' }}>
+        <div style={{
+          backgroundColor: hasCustomBg ? 'transparent' : themeBg,
+          backgroundImage: hasCustomBg ? `url(${customBg})` : 'none',
+          backgroundSize: '100% 100%', backgroundRepeat: 'no-repeat', backgroundPosition: 'center',
+          borderTop: hasCustomBg ? 'none' : `4px solid ${themeMain}`,
+          padding: '14px 0', textAlign: 'center', width: '100%',
+          boxShadow: hasCustomBg ? 'none' : '0 10px 30px rgba(0,0,0,0.6)', borderRadius: bRad
+        }}>
+          {title && (
+            <span style={{ color: themeAccent, fontSize: '13px', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '2px', marginRight: '12px' }}>
+              {title}
+            </span>
+          )}
+          <span style={{ color: themeNormalText, fontSize: '26px', fontWeight: 'bold', textTransform: 'uppercase' }}>
+            {text || '...'}
+          </span>
+        </div>
+      </div>
+    );
+  }
+
+  // FORMATO CON MARCO: badge de título arriba + caja con borde para el texto
+  if (zocaloFormat === 'boxed') {
+    return (
+      <div style={wrapperStyle}>
+        <div style={{ display: 'inline-flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+          {title && (
+            <div style={{
+              backgroundColor: themeAccent, color: '#000', fontSize: '12px', fontWeight: '900',
+              padding: '5px 16px', borderRadius: `${bRad} ${bRad} 0 0`, textTransform: 'uppercase', letterSpacing: '1px'
+            }}>
+              {title}
+            </div>
+          )}
+          <div style={{
+            backgroundColor: hasCustomBg ? 'transparent' : themeBg,
+            backgroundImage: hasCustomBg ? `url(${customBg})` : 'none',
+            backgroundSize: '100% 100%', backgroundRepeat: 'no-repeat', backgroundPosition: 'center',
+            border: hasCustomBg ? 'none' : `2px solid ${themeMain}`,
+            padding: '12px 22px', minWidth: '300px',
+            borderRadius: title ? `0 ${bRad} ${bRad} ${bRad}` : bRad,
+            boxShadow: hasCustomBg ? 'none' : '0 10px 30px rgba(0,0,0,0.6)'
+          }}>
+            <span style={{ color: themeNormalText, fontSize: '24px', fontWeight: 'bold', textTransform: 'uppercase', lineHeight: '1.1' }}>
+              {text || '...'}
+            </span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // FORMATO MINIMALISTA: sin caja, solo texto flotando sobre el video
+  if (zocaloFormat === 'minimal') {
+    return (
+      <div style={wrapperStyle}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+          {title && (
+            <span style={{ color: themeAccent, fontSize: '13px', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '1px', textShadow: '2px 2px 6px rgba(0,0,0,0.9)' }}>
+              {title}
+            </span>
+          )}
+          <span style={{ color: themeNormalText, fontSize: '30px', fontWeight: '900', textTransform: 'uppercase', textShadow: '2px 2px 6px rgba(0,0,0,0.9)' }}>
+            {text || '...'}
+          </span>
+        </div>
+      </div>
+    );
+  }
+
+  // FORMATO ESTÁNDAR (comportamiento original)
   return (
-    <div style={{
-      position: 'absolute', left: `${pos.x}px`, top: `${pos.y}px`,
-      transform: `scale(${pos.scale})`, transformOrigin: 'top left', 
-      zIndex: 50, transition: 'opacity 0.4s ease-in-out, transform 0.4s ease-in-out',
-      opacity: isVisible ? 1 : 0, 
-      transform: isVisible ? `scale(${pos.scale}) translateX(0)` : `scale(${pos.scale}) translateX(-40px)`,
-      pointerEvents: 'none', display: 'flex', boxShadow: '0 10px 30px rgba(0,0,0,0.6)'
-    }}>
+    <div style={{ ...wrapperStyle, display: 'flex', boxShadow: hasCustomBg ? 'none' : '0 10px 30px rgba(0,0,0,0.6)' }}>
       <div style={{
-        backgroundColor: themeBg, borderLeft: `4px solid ${themeMain}`, 
-        display: 'flex', alignItems: 'stretch', overflow: 'hidden', borderRadius: '4px'
+        backgroundColor: hasCustomBg ? 'transparent' : themeBg,
+        backgroundImage: hasCustomBg ? `url(${customBg})` : 'none',
+        backgroundSize: '100% 100%', backgroundRepeat: 'no-repeat', backgroundPosition: 'center',
+        borderLeft: hasCustomBg ? 'none' : `4px solid ${themeMain}`,
+        display: 'flex', alignItems: 'stretch', overflow: 'hidden', borderRadius: bRad
       }}>
-        
+
         {/* ZONA DE LOGOS */}
-        {(config?.logo || config?.categoryLogo) && (
+        {!hasCustomBg && (config?.logo || config?.categoryLogo) && (
           <div style={{
             backgroundColor: themeHeaderBg, padding: '10px 15px',
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '15px',
@@ -46,7 +136,7 @@ export default function CustomZocalo({ isVisible, title, text, config, id = 'cus
             {text || '...'}
           </span>
         </div>
-        
+
       </div>
     </div>
   );

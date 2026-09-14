@@ -184,6 +184,22 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
           </div>
         )}
 
+        {selectedGraphic === 'customZocalo' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', marginBottom: '30px', backgroundColor: '#111', padding: '15px', borderRadius: '8px', border: `1px solid ${colors.border}` }}>
+            <label style={{ fontSize: '10px', color: colors.textMuted, fontWeight: 'bold' }}>FORMATO DE ZÓCALO LIBRE</label>
+            <select
+              value={config.customZocaloFormat || 'standard'}
+              onChange={(e) => onConfigChange('customZocaloFormat', e.target.value)}
+              style={{ ...inputStyle, padding: '10px', fontSize: '11px', cursor: 'pointer', border: `1px solid ${colors.border}` }}
+            >
+              <option value="standard">Clásico (Logos + Texto)</option>
+              <option value="banner">Banner (Barra Completa)</option>
+              <option value="boxed">Con Marco (Badge + Caja)</option>
+              <option value="minimal">Minimalista (Sin Caja)</option>
+            </select>
+          </div>
+        )}
+
         {selectedGraphic === 'driverInfo' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', marginBottom: '30px', backgroundColor: '#111', padding: '15px', borderRadius: '8px', border: `1px solid ${colors.border}` }}>
             <label style={{ fontSize: '10px', color: colors.textMuted, fontWeight: 'bold' }}>FORMATO DE INFO DEL PILOTO</label>
