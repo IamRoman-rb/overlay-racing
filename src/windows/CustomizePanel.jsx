@@ -184,6 +184,22 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
           </div>
         )}
 
+        {selectedGraphic === 'flags' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', marginBottom: '30px', backgroundColor: '#111', padding: '15px', borderRadius: '8px', border: `1px solid ${colors.border}` }}>
+            <label style={{ fontSize: '10px', color: colors.textMuted, fontWeight: 'bold' }}>FORMATO DE BANDERAS DE ALERTA</label>
+            <select
+              value={config.flagsFormat || 'standard'}
+              onChange={(e) => onConfigChange('flagsFormat', e.target.value)}
+              style={{ ...inputStyle, padding: '10px', fontSize: '11px', cursor: 'pointer', border: `1px solid ${colors.border}` }}
+            >
+              <option value="standard">Clásica (Cartel Centrado)</option>
+              <option value="banner">Banner (Barra Completa)</option>
+              <option value="corner">Esquina (Banderín Compacto)</option>
+              <option value="stacked">Apilada (Franja + Caja)</option>
+            </select>
+          </div>
+        )}
+
         {selectedGraphic === 'tower' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', marginBottom: '30px', backgroundColor: '#111', padding: '15px', borderRadius: '8px', border: `1px solid ${colors.border}` }}>
             <label style={{ fontSize: '10px', color: colors.textMuted, fontWeight: 'bold' }}>FORMATO DE TORRE DE POSICIONES</label>

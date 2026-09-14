@@ -131,7 +131,7 @@ export default function ControlPanel() {
   const [activeDriverInfo, setActiveDriverInfo] = useState(null);
   const [showWinner, setShowWinner] = useState(false);
   const [showFastestLap, setShowFastestLap] = useState(false);
-  const [activeFlags, setActiveFlags] = useState({ red: false, tricolor: false, black: false, blue: false });
+  const [activeFlags, setActiveFlags] = useState({ red: false, tricolor: false, black: false, blue: false, checkered: false });
   const [graphics, setGraphics] = useState({ relator: false, comentarista: false, notero1: false, notero2: false, circuito: false, clima: false });
   const [showLapCounter, setShowLapCounter] = useState(false);
   const [showVirtualChamp, setShowVirtualChamp] = useState(false);
@@ -465,7 +465,7 @@ export default function ControlPanel() {
   };
   const handleToggleLapCounter = () => { setShowLapCounter(!showLapCounter); if (ipcRenderer) ipcRenderer.send('toggle-lap-counter', !showLapCounter); };
   const handleToggleFlag = (type) => {
-    const newFlags = { red: false, tricolor: false, black: false, blue: false };
+    const newFlags = { red: false, tricolor: false, black: false, blue: false, checkered: false };
     if (!activeFlags[type]) newFlags[type] = true;
     setActiveFlags(newFlags);
     if (ipcRenderer) ipcRenderer.send('toggle-flag', newFlags);
@@ -614,6 +614,20 @@ export default function ControlPanel() {
               <button onClick={() => handleToggleFlag('red')} style={{ ...btnStyle(activeFlags.red), backgroundColor: activeFlags.red ? '#e74c3c' : colors.bgInput, color: activeFlags.red ? '#fff' : colors.textMain, borderColor: activeFlags.red ? '#c0392b' : colors.border }}>ROJA</button>
               <button onClick={() => handleToggleFlag('tricolor')} style={{ ...btnStyle(activeFlags.tricolor), background: activeFlags.tricolor ? 'linear-gradient(90deg, #0033a0, #fff, #ff8200)' : colors.bgInput, color: activeFlags.tricolor ? '#000' : colors.textMain, textShadow: activeFlags.tricolor ? '0 0 3px #fff' : 'none' }}>TRICOLOR</button>
               <button onClick={() => handleToggleFlag('blue')} style={{ ...btnStyle(activeFlags.blue), backgroundColor: activeFlags.blue ? '#3498db' : colors.bgInput, color: activeFlags.blue ? '#fff' : colors.textMain, borderColor: activeFlags.blue ? '#2980b9' : colors.border }}>AZUL (PASO)</button>
+              <button
+                onClick={() => handleToggleFlag('checkered')}
+                style={{
+                  ...btnStyle(activeFlags.checkered),
+                  background: activeFlags.checkered
+                    ? 'repeating-conic-gradient(#000 0% 25%, #fff 0% 50%) 0 0 / 16px 16px'
+                    : colors.bgInput,
+                  color: activeFlags.checkered ? '#000' : colors.textMain,
+                  textShadow: activeFlags.checkered ? '0 0 4px #fff, 0 0 2px #fff' : 'none',
+                  fontWeight: 'bold'
+                }}
+              >
+                ÚLTIMA VUELTA
+              </button>
               <div style={{ display: 'flex', gap: '2px' }}>
                 <button onClick={() => handleToggleFlag('black')} style={{ ...btnStyle(activeFlags.black), flex: 1, backgroundColor: activeFlags.black ? '#111' : colors.bgInput, color: activeFlags.black ? '#fff' : colors.textMain, borderColor: activeFlags.black ? '#000' : colors.border, padding: '12px 5px' }}>NEGRA</button>
                 <input name="blackFlagNumber" value={config.blackFlagNumber || ''} onChange={(e) => handleDirectSave('blackFlagNumber', e.target.value)} style={{ ...inputStyle, width: '45px', textAlign: 'center', padding: '0', fontSize: '14px' }} placeholder="Nº" title="Escribe el número del auto a excluir" />

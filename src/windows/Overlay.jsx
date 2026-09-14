@@ -119,7 +119,7 @@ export default function Overlay() {
   const [isTowerVisible, setIsTowerVisible] = useState(false);
   const [graphics, setGraphics] = useState({});
   const [isGridVisible, setIsGridVisible] = useState(false);
-  const [activeFlags, setActiveFlags] = useState({ red: false, tricolor: false, black: false, blue: false });
+  const [activeFlags, setActiveFlags] = useState({ red: false, tricolor: false, black: false, blue: false, checkered: false });
   const [isFastestLapVisible, setIsFastestLapVisible] = useState(false);
   const [isDriverInfoVisible, setIsDriverInfoVisible] = useState(false);
   const [driverInfoData, setDriverInfoData] = useState(null);
