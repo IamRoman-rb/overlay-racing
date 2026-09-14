@@ -58,6 +58,9 @@ export default function Flags({ activeFlags, config, id = 'flags' }) {
   let transformHidden = 'translateY(-150%) scale(1)';
   if (animStyle === 'fade') transformHidden = 'translateY(0) scale(1)';
   if (animStyle === 'zoom') transformHidden = 'translateY(0) scale(0.8)';
+  if (animStyle === 'bounce') transformHidden = 'translateY(0) scale(0.3)';
+  if (animStyle === 'flip') transformHidden = 'translateY(0) scaleY(0.05)';
+  if (animStyle === 'rotate') transformHidden = 'translateY(0) scale(0.85) rotate(-15deg)';
 
   // Envuelve el texto en una placa de fondo cuando el estilo lo pide (p. ej. cuadros, para legibilidad)
   const label = currentStyle.textBoxBg ? (

@@ -61,6 +61,9 @@ export default function PitStopTimer({ isVisible, config, pitState, id = 'pitSto
   let transformHidden = `scale(${pos.scale}) translateX(-40px)`; 
   if (animStyle === 'fade') transformHidden = `scale(${pos.scale})`; 
   if (animStyle === 'zoom') transformHidden = `scale(${pos.scale * 0.9})`;
+  if (animStyle === 'bounce') transformHidden = `scale(${pos.scale * 0.3})`;
+  if (animStyle === 'flip') transformHidden = `scale(${pos.scale}) scaleY(0.05)`;
+  if (animStyle === 'rotate') transformHidden = `scale(${pos.scale * 0.85}) rotate(-15deg)`;
 
   if (!pitState?.driver) return null;
 

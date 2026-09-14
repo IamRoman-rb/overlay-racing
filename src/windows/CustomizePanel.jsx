@@ -542,6 +542,9 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
               <option value="slide">Deslizar (Slide)</option>
               <option value="fade">Desvanecer (Fade)</option>
               <option value="zoom">Aumentar (Zoom)</option>
+              <option value="bounce">Rebote (Bounce)</option>
+              <option value="flip">Voltear (Flip)</option>
+              <option value="rotate">Rotar (Rotate)</option>
             </select>
           </div>
         </div>

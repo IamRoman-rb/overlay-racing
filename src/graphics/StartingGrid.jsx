@@ -35,6 +35,9 @@ export default function StartingGrid({ drivers, config, isVisible, id = 'grid' }
   let transformHidden = `scale(${config?.positions?.[id]?.scale || 1}) translateY(40px)`;
   if (animStyle === 'fade') transformHidden = `scale(${config?.positions?.[id]?.scale || 1})`;
   if (animStyle === 'zoom') transformHidden = `scale(${(config?.positions?.[id]?.scale || 1) * 0.9})`;
+  if (animStyle === 'bounce') transformHidden = `scale(${(config?.positions?.[id]?.scale || 1) * 0.3})`;
+  if (animStyle === 'flip') transformHidden = `scale(${config?.positions?.[id]?.scale || 1}) scaleY(0.05)`;
+  if (animStyle === 'rotate') transformHidden = `scale(${(config?.positions?.[id]?.scale || 1) * 0.85}) rotate(-15deg)`;
 
   useEffect(() => {
     if (!isVisible || drivers.length === 0) { setPage(0); return; }

@@ -24,6 +24,9 @@ export default function FastestLap({ drivers, config, isVisible, id = 'fastestLa
   let transformHidden = 'translateY(-20px)';
   if (animStyle === 'fade') transformHidden = 'scale(1)';
   if (animStyle === 'zoom') transformHidden = 'scale(0.9)';
+  if (animStyle === 'bounce') transformHidden = 'scale(0.3)';
+  if (animStyle === 'flip') transformHidden = 'scaleY(0.05)';
+  if (animStyle === 'rotate') transformHidden = 'scale(0.85) rotate(-15deg)';
 
   const fastestDriver = useMemo(() => {
     if (!drivers || drivers.length === 0) return null;

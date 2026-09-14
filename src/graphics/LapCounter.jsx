@@ -23,6 +23,9 @@ export default function LapCounter({ isVisible, config, sessionInfo, id = 'lapCo
   let transformHidden = `scale(${pos.scale}) translateY(-30px)`;
   if (animStyle === 'fade') transformHidden = `scale(${pos.scale})`;
   if (animStyle === 'zoom') transformHidden = `scale(${pos.scale * 0.9})`;
+  if (animStyle === 'bounce') transformHidden = `scale(${pos.scale * 0.3})`;
+  if (animStyle === 'flip') transformHidden = `scale(${pos.scale}) scaleY(0.05)`;
+  if (animStyle === 'rotate') transformHidden = `scale(${pos.scale * 0.85}) rotate(-15deg)`;
 
   const wrapperStyle = {
     position: 'absolute', left: `${pos.x}px`, top: `${pos.y}px`, transformOrigin: 'top right',

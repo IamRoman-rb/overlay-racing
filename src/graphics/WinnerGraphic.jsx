@@ -23,6 +23,9 @@ export default function WinnerGraphic({ driver, isVisible, config, id = 'winner'
   let transformHidden = `scale(${pos.scale}) translateY(40px)`;
   if (animStyle === 'fade') transformHidden = `scale(${pos.scale})`;
   if (animStyle === 'zoom') transformHidden = `scale(${pos.scale * 0.9})`;
+  if (animStyle === 'bounce') transformHidden = `scale(${pos.scale * 0.3})`;
+  if (animStyle === 'flip') transformHidden = `scale(${pos.scale}) scaleY(0.05)`;
+  if (animStyle === 'rotate') transformHidden = `scale(${pos.scale * 0.85}) rotate(-15deg)`;
 
   const [imgSrc, setImgSrc] = useState(pilotoAnonimo);
 
