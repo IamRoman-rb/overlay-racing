@@ -163,7 +163,6 @@ export default function StartingGrid({ drivers, config, isVisible, id = 'grid' }
           {/* MODO FOTOS: INFO CIRCUITO (Bottom Left) */}
           <div style={{ position: 'absolute', bottom: '60px', left: '60px', display: 'flex', flexDirection: 'column', gap: '5px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <span style={{ fontSize: '28px' }}>📍</span>
               <span style={{ fontSize: '24px', fontWeight: '400', fontStyle: 'italic', textTransform: 'uppercase', textShadow: '2px 2px 4px rgba(0,0,0,0.8)' }}>{config?.circuito || 'CIRCUITO'}</span>
             </div>
           </div>

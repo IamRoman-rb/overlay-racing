@@ -20,7 +20,6 @@ export default function TrackAlert({ alert, config, id = 'trackAlert' }) {
 
   const accentColor = isIncident ? '#e74c3c' : '#f1c40f';
   const alertTitle = isIncident ? 'INCIDENTE EN PISTA' : 'BANDERA AMARILLA';
-  const alertIcon = isIncident ? '🚨' : '⚠️';
   const curveLabel = alert?.curveName || curve?.name || 'CURVA';
   const skin = getSkinStyle(alertFormat, { themeMain: '#000000', themeAccent: accentColor });
 
@@ -47,8 +46,7 @@ export default function TrackAlert({ alert, config, id = 'trackAlert' }) {
           backgroundColor: 'rgba(0,0,0,0.9)', borderRadius: bRad, borderLeft: `5px solid ${accentColor}`,
           boxShadow: '0 10px 30px rgba(0,0,0,0.7)'
         }}>
-          <span style={{ fontSize: '18px', animation: 'trackAlertBlink 1s infinite', flexShrink: 0 }}>{alertIcon}</span>
-          <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0, animation: 'trackAlertBlink 1s infinite' }}>
             <span style={{ color: accentColor, fontWeight: '900', fontSize: '11px', letterSpacing: '1px', textTransform: 'uppercase' }}>{alertTitle}</span>
             <span style={{ color: '#fff', fontSize: '17px', fontWeight: '900', textTransform: 'uppercase', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{curveLabel}</span>
           </div>
@@ -66,8 +64,7 @@ export default function TrackAlert({ alert, config, id = 'trackAlert' }) {
           backgroundColor: accentColor, padding: '12px 0', textAlign: 'center', width: '100%',
           boxShadow: '0 6px 20px rgba(0,0,0,0.6)'
         }}>
-          <span style={{ fontSize: '20px', animation: 'trackAlertBlink 1s infinite', marginRight: '10px' }}>{alertIcon}</span>
-          <span style={{ color: '#000', fontWeight: '900', fontSize: '18px', letterSpacing: '2px', textTransform: 'uppercase' }}>
+          <span style={{ color: '#000', fontWeight: '900', fontSize: '18px', letterSpacing: '2px', textTransform: 'uppercase', animation: 'trackAlertBlink 1s infinite' }}>
             {alertTitle} — {curveLabel}
           </span>
         </div>
@@ -81,8 +78,7 @@ export default function TrackAlert({ alert, config, id = 'trackAlert' }) {
       <div style={wrapperStyle}>
         <style>{sharedStyles}</style>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <span style={{ fontSize: '18px', animation: 'trackAlertBlink 1s infinite' }}>{alertIcon}</span>
-          <div style={{ display: 'flex', flexDirection: 'column' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', animation: 'trackAlertBlink 1s infinite' }}>
             <span style={{ color: accentColor, fontWeight: '900', fontSize: '12px', letterSpacing: '1px', textTransform: 'uppercase', textShadow: '2px 2px 6px rgba(0,0,0,0.9)' }}>{alertTitle}</span>
             <span style={{ color: '#fff', fontSize: '24px', fontWeight: '900', textTransform: 'uppercase', textShadow: '2px 2px 6px rgba(0,0,0,0.9)' }}>{curveLabel}</span>
           </div>
@@ -108,10 +104,7 @@ export default function TrackAlert({ alert, config, id = 'trackAlert' }) {
           padding: '8px 15px',
           display: 'flex', alignItems: 'center', gap: '8px'
         }}>
-          <span style={{ fontSize: '18px', animation: 'trackAlertBlink 1s infinite' }}>
-            {alertIcon}
-          </span>
-          <span style={{ color: skin ? accentColor : '#000', fontWeight: '900', fontSize: '14px', letterSpacing: '1px', textTransform: 'uppercase' }}>
+          <span style={{ color: skin ? accentColor : '#000', fontWeight: '900', fontSize: '14px', letterSpacing: '1px', textTransform: 'uppercase', animation: 'trackAlertBlink 1s infinite' }}>
             {alertTitle}
           </span>
         </div>

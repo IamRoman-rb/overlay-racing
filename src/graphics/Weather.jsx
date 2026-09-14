@@ -167,13 +167,13 @@ export default function Weather({ data, isVisible, config, id = 'clima' }) {
             <span style={{ color: themeNormalText, fontSize: '26px', fontWeight: '900', lineHeight: 1 }}>{Math.round(data.temp)}°C</span>
             <span style={{ color: themeNumberText, fontSize: '10px', fontWeight: 'bold', textTransform: 'uppercase' }}>{label}</span>
             {data.windSpeed !== undefined && (
-              <span style={{ color: themeNumberText, fontSize: '10px', marginTop: '6px' }}>
-                💨 {Math.round(data.windSpeed)} km/h {getWindDirLabel(data.windDir)}
+              <span style={{ color: themeNumberText, fontSize: '10px', marginTop: '6px', letterSpacing: '0.5px' }}>
+                VIENTO {Math.round(data.windSpeed)} km/h {getWindDirLabel(data.windDir)}
               </span>
             )}
             {data.precipProb !== undefined && data.precipProb !== null && (
-              <span style={{ color: data.precipProb >= 50 ? '#3498db' : themeNumberText, fontSize: '10px' }}>
-                💧 {Math.round(data.precipProb)}%
+              <span style={{ color: data.precipProb >= 50 ? '#3498db' : themeNumberText, fontSize: '10px', letterSpacing: '0.5px' }}>
+                LLUVIA {Math.round(data.precipProb)}%
               </span>
             )}
           </div>

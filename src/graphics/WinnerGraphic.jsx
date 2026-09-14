@@ -70,7 +70,7 @@ export default function WinnerGraphic({ driver, isVisible, config, id = 'winner'
           borderRadius: `0 0 ${bRad} ${bRad}`
         }}>
           <span style={{ fontSize: '13px', fontWeight: 'bold', color: themeAccent, letterSpacing: '2px' }}>
-            🏆 GANADOR — {config.campeonato || 'CARRERA'}
+            GANADOR — {config.campeonato || 'CARRERA'}
           </span><br />
           <span style={{ fontSize: '26px', fontWeight: '900', color: themeNormalText, textTransform: 'uppercase' }}>
             #{driver.number} {driver.name}
@@ -92,8 +92,7 @@ export default function WinnerGraphic({ driver, isVisible, config, id = 'winner'
           border: hasCustomBg ? 'none' : `4px solid ${themeAccent}`,
           borderRadius: bRad, boxShadow: hasCustomBg ? 'none' : '0 10px 30px rgba(0,0,0,0.5)'
         }}>
-          <span style={{ fontSize: '46px', lineHeight: 1 }}>🏆</span>
-          <span style={{ fontSize: '13px', fontWeight: 'bold', color: themeAccent, letterSpacing: '2px', marginTop: '8px' }}>
+          <span style={{ fontSize: '13px', fontWeight: 'bold', color: themeAccent, letterSpacing: '2px' }}>
             GANADOR
           </span>
           <span style={{ fontSize: '30px', fontWeight: '900', color: themeNormalText, textTransform: 'uppercase', marginTop: '4px' }}>
@@ -114,7 +113,7 @@ export default function WinnerGraphic({ driver, isVisible, config, id = 'winner'
       <div style={wrapperStyle}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
           <span style={{ fontSize: '13px', fontWeight: 'bold', color: themeAccent, letterSpacing: '2px', textShadow: '2px 2px 6px rgba(0,0,0,0.9)' }}>
-            🏆 GANADOR — {config.campeonato || 'CARRERA'}
+            GANADOR — {config.campeonato || 'CARRERA'}
           </span>
           <span style={{ fontSize: '38px', fontWeight: '900', color: themeNormalText, textTransform: 'uppercase', textShadow: '2px 2px 6px rgba(0,0,0,0.9)' }}>
             #{driver.number} {driver.name}

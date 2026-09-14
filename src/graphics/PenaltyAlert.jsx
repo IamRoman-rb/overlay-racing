@@ -5,7 +5,6 @@ function CardFormat({ alert, config, pos, skinFormat }) {
   const bgColor = isInvestigation ? '#111111' : '#8b0000';
   const borderColor = isInvestigation ? '#ffcc00' : '#e74c3c';
   const badgeText = isInvestigation ? 'BAJO INVESTIGACIÓN' : 'SANCIÓN';
-  const badgeIcon = isInvestigation ? '🔎' : '🚫';
   const radius = config?.[`borderRadius_penaltyAlert`] || '6px';
   const skin = skinFormat ? getSkinStyle(skinFormat, { themeMain: '#000000', themeAccent: borderColor }) : null;
 
@@ -45,7 +44,6 @@ function CardFormat({ alert, config, pos, skinFormat }) {
           gap: '8px'
         }}
       >
-        <span>{badgeIcon}</span>
         <span>{badgeText}</span>
       </div>
 
@@ -142,7 +140,6 @@ function MinimalFormat({ alert, config, pos }) {
   const isInvestigation = alert?.type === 'investigation';
   const accentColor = isInvestigation ? '#ffcc00' : '#e74c3c';
   const badgeText = isInvestigation ? 'BAJO INVESTIGACIÓN' : 'SANCIÓN';
-  const badgeIcon = isInvestigation ? '🔎' : '🚫';
 
   return (
     <div
@@ -158,7 +155,7 @@ function MinimalFormat({ alert, config, pos }) {
     >
       <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
         <span style={{ color: accentColor, fontWeight: '900', fontSize: '13px', letterSpacing: '1px', textTransform: 'uppercase', textShadow: '2px 2px 6px rgba(0,0,0,0.9)' }}>
-          {badgeIcon} {badgeText}
+          {badgeText}
         </span>
         <span style={{ color: '#fff', fontSize: '24px', fontWeight: '900', textShadow: '2px 2px 6px rgba(0,0,0,0.9)' }}>
           {alert?.driverNumber ? `#${alert.driverNumber} ` : ''}{alert?.driverName || 'PILOTO'}
@@ -177,7 +174,6 @@ function CornerFormat({ alert, config, pos }) {
   const isInvestigation = alert?.type === 'investigation';
   const accentColor = isInvestigation ? '#ffcc00' : '#e10600';
   const badgeText = isInvestigation ? 'BAJO INVESTIGACIÓN' : 'SANCIÓN';
-  const badgeIcon = isInvestigation ? '🔎' : '🚫';
   const radius = config?.[`borderRadius_penaltyAlert`] || '0 8px 8px 0';
 
   return (
@@ -202,7 +198,7 @@ function CornerFormat({ alert, config, pos }) {
     >
       <div style={{ padding: '10px 18px' }}>
         <span style={{ color: accentColor, fontWeight: '900', fontSize: '11px', letterSpacing: '1px', textTransform: 'uppercase' }}>
-          {badgeIcon} {badgeText}
+          {badgeText}
         </span><br />
         <span style={{ fontSize: '18px', fontWeight: '900' }}>
           {alert?.driverNumber ? `#${alert.driverNumber} ` : ''}{alert?.driverName || 'PILOTO'}

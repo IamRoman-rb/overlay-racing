@@ -33,8 +33,9 @@ export default function VotingQR({ isVisible, config, localIp, id = 'votingQR' }
         <img src={qrUrl} alt="QR Code" style={{ width: `${size - 10}px`, height: `${size - 10}px`, display: 'block' }} />
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '5px' }}>
-          <span style={{ fontSize: size > 100 ? '24px' : '16px' }}>⏳</span>
-          {size > 100 && <span style={{ color: '#000', fontSize: '10px', fontWeight: '900', textAlign: 'center', letterSpacing: '1px' }}>GENERANDO<br/>TÚNEL...</span>}
+          <span style={{ color: '#000', fontSize: size > 100 ? '10px' : '9px', fontWeight: '900', textAlign: 'center', letterSpacing: '1px' }}>
+            {size > 100 ? <>GENERANDO<br/>TÚNEL...</> : 'GENERANDO...'}
+          </span>
         </div>
       )}
     </div>
