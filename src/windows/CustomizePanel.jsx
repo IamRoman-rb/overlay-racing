@@ -322,6 +322,9 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
             >
               <option value="vertical">Vertical (Clásica / Apilados)</option>
               <option value="horizontal">Horizontal (Lado a Lado / WEC)</option>
+              <option value="compact">Compacta (Filas Angostas)</option>
+              <option value="duel">Duelo (1 vs 1 con "VS")</option>
+              <option value="minimal">Minimalista (Sin Caja)</option>
             </select>
           </div>
         )}
