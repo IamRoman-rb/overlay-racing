@@ -122,16 +122,6 @@ export default function ControlPanel() {
   const t = useMemo(() => createTranslator(language), [language]);
   const setLanguage = (lang) => handleDirectSave('language', lang);
 
-  const scrapeErrorKeys = {
-    SCRAPER_NO_BROWSER: 'panel.scrapeErrNoBrowser',
-    SCRAPER_LAUNCH_FAILED: 'panel.scrapeErrLaunchFailed',
-    SCRAPER_NAV_FAILED: 'panel.scrapeErrNavFailed',
-    NO_DRIVERS: 'panel.scrapeErrNoDrivers'
-  };
-  const scrapeErrorText = scrapeError
-    ? t(scrapeErrorKeys[scrapeError.code] || 'panel.scrapeErrGeneric') + (scrapeError.message && scrapeError.code !== 'NO_DRIVERS' ? ` (${scrapeError.message})` : '')
-    : '';
-
   const [showBattle, setShowBattle] = useState(false);
   const [battleTarget, setBattleTarget] = useState(1);
   const [positions, setPositions] = useState({});
@@ -160,6 +150,15 @@ export default function ControlPanel() {
   const [autoScrape, setAutoScrape] = useState(false);
   const [scrapeProgress, setScrapeProgress] = useState(0);
   const [scrapeError, setScrapeError] = useState(null);
+  const scrapeErrorKeys = {
+    SCRAPER_NO_BROWSER: 'panel.scrapeErrNoBrowser',
+    SCRAPER_LAUNCH_FAILED: 'panel.scrapeErrLaunchFailed',
+    SCRAPER_NAV_FAILED: 'panel.scrapeErrNavFailed',
+    NO_DRIVERS: 'panel.scrapeErrNoDrivers'
+  };
+  const scrapeErrorText = scrapeError
+    ? t(scrapeErrorKeys[scrapeError.code] || 'panel.scrapeErrGeneric') + (scrapeError.message && scrapeError.code !== 'NO_DRIVERS' ? ` (${scrapeError.message})` : '')
+    : '';
   const configRef = useRef(config);
   const isScrapingRef = useRef(false);
 

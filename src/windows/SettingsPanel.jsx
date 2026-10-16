@@ -36,8 +36,12 @@ export default function SettingsPanel({ config, handleDirectSave, handleScrape, 
       await new Promise(resolve => setTimeout(resolve, 60));
     }
 
+    // Duración mínima del estado "cargando": si los datos llegan casi al instante, igual se ve la animación
+    const startedAt = Date.now();
     const status = await handleScrape();
-    const next = status === 'ok' ? 'ok' : (status === 'error' ? 'error' : 'idle');
+    const elapsed = Date.now() - startedAt;
+    if (elapsed < 1000) await new Promise(resolve => setTimeout(resolve, 1000 - elapsed));
+    const next = status === 'ok' ? 'ok' : (status === 'busy' ? 'idle' : 'error');
     setLoadState(next);
     if (next !== 'idle') {
       loadResetTimer.current = setTimeout(() => setLoadState('idle'), 2500);
@@ -146,7 +150,9 @@ export default function SettingsPanel({ config, handleDirectSave, handleScrape, 
             @keyframes loadBtnPop { 0% { transform: scale(0.85); } 60% { transform: scale(1.1); } 100% { transform: scale(1); } }
             @keyframes loadBtnShake { 0%, 100% { transform: translateX(0); } 20%, 60% { transform: translateX(-6px); } 40%, 80% { transform: translateX(6px); } }
             .load-now-btn { position: relative; overflow: hidden; display: inline-flex; align-items: center; justify-content: center; gap: 10px; min-width: 240px; transition: background-color 0.25s ease, border-color 0.25s ease, transform 0.15s ease; }
-            .load-now-btn:hover:not(:disabled) { transform: translateY(-2px); }
+            .load-now-btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(255, 204, 0, 0.35); }
+            .load-now-btn.is-idle::after { content: ''; position: absolute; top: 0; bottom: 0; left: -60px; width: 40px; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.45), transparent); transform: skewX(-20deg); transition: left 0.5s ease; }
+            .load-now-btn.is-idle:hover::after { left: calc(100% + 20px); }
             .load-now-btn:active:not(:disabled) { transform: translateY(0) scale(0.97); }
             .load-now-btn.is-loading { cursor: wait; animation: loadBtnPulse 1.2s ease-in-out infinite; }
             .load-now-btn.is-loading::after { content: ''; position: absolute; inset: 0; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.35), transparent); background-size: 200px 100%; background-repeat: no-repeat; animation: loadBtnShimmer 1.1s linear infinite; }
