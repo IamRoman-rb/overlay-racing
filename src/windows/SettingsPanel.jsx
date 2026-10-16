@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { LANGUAGES } from '../i18n/translations';
 
-export default function SettingsPanel({ config, handleDirectSave, handleScrape, colors, inputStyle, btnStyle, t, language, setLanguage, onExportSettings, onImportSettings, onResetAllPositions }) {
+export default function SettingsPanel({ config, handleDirectSave, handleScrape, colors, inputStyle, btnStyle, t, language, setLanguage, onExportSettings, onImportSettings, onResetAllPositions, scrapeErrorText }) {
 
   const chromaColors = [
     { label: t('ajustes.chromaGreen'), value: '#00FF00' },
@@ -105,6 +105,11 @@ export default function SettingsPanel({ config, handleDirectSave, handleScrape, 
             {t('ajustes.loadNowBtn')}
           </button>
         </div>
+        {scrapeErrorText && (
+          <div style={{ marginTop: '15px', backgroundColor: 'rgba(231, 76, 60, 0.1)', border: `1px solid ${colors.red}`, borderRadius: '6px', padding: '12px 16px', color: colors.red, fontSize: '12px', fontWeight: 'bold', lineHeight: '1.5', wordBreak: 'break-word' }}>
+            ⚠️ {scrapeErrorText}
+          </div>
+        )}
 
       </div>
 

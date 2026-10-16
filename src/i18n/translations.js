@@ -67,7 +67,13 @@ export const translations = {
       alertLoadSuccess: "📂 Datos en memoria cargados. La actualización 'EN VIVO' ha sido pausada.",
       alertNoSavedData: '⚠️ No hay datos guardados previamente.',
       confirmResetLapTimes: '⚠️ ¿Borrar el historial de tiempos de vuelta guardado en disco?',
-      alertSelectCurveFirst: '⚠️ Seleccioná una curva primero.'
+      alertSelectCurveFirst: '⚠️ Seleccioná una curva primero.',
+      alertNoRaceCode: '⚠️ Ingresa el código de la carrera en la pestaña AJUSTES primero.',
+      scrapeErrNoBrowser: 'No se encontró Chrome ni Edge en esta PC, y el programa los necesita para traer los datos de timing. Instalá Google Chrome (o actualizá Microsoft Edge) y volvé a intentar.',
+      scrapeErrLaunchFailed: 'No se pudo abrir el navegador interno que trae los datos de timing. Probá cerrar y reabrir el programa; si sigue igual, puede ser el antivirus bloqueándolo.',
+      scrapeErrNavFailed: 'No se pudo conectar a la página de timing. Revisá la conexión a internet de esta PC y que el firewall/antivirus no bloquee el acceso.',
+      scrapeErrNoDrivers: 'Conectó, pero no hay pilotos para mostrar. Revisá que el código de la carrera sea correcto, que el proveedor (Speedhive / Race Monitor) sea el que corresponde y que la sesión esté activa.',
+      scrapeErrGeneric: 'Error al traer los datos de timing.'
     },
     campeonato: {
       title: '🏆 CAMPEONATO (EXCEL)', driversLoaded: 'PILOTOS CARGADOS:',
@@ -262,7 +268,13 @@ export const translations = {
       alertLoadSuccess: "📂 Saved data loaded. The 'LIVE' update has been paused.",
       alertNoSavedData: '⚠️ There is no previously saved data.',
       confirmResetLapTimes: '⚠️ Clear the lap time history saved on disk?',
-      alertSelectCurveFirst: '⚠️ Select a corner first.'
+      alertSelectCurveFirst: '⚠️ Select a corner first.',
+      alertNoRaceCode: '⚠️ Enter the race code in the SETTINGS tab first.',
+      scrapeErrNoBrowser: 'Chrome or Edge was not found on this PC, and the program needs one of them to fetch the timing data. Install Google Chrome (or update Microsoft Edge) and try again.',
+      scrapeErrLaunchFailed: "Couldn't open the internal browser that fetches the timing data. Try closing and reopening the program; if it persists, an antivirus may be blocking it.",
+      scrapeErrNavFailed: "Couldn't connect to the timing page. Check this PC's internet connection and that no firewall/antivirus is blocking access.",
+      scrapeErrNoDrivers: 'Connected, but there are no drivers to show. Check that the race code is correct, that the provider (Speedhive / Race Monitor) is the right one, and that the session is active.',
+      scrapeErrGeneric: 'Error fetching the timing data.'
     },
     campeonato: {
       title: '🏆 STANDINGS (EXCEL)', driversLoaded: 'DRIVERS LOADED:',
@@ -457,7 +469,13 @@ export const translations = {
       alertLoadSuccess: "📂 Dados salvos carregados. A atualização 'AO VIVO' foi pausada.",
       alertNoSavedData: '⚠️ Não há dados salvos anteriormente.',
       confirmResetLapTimes: '⚠️ Apagar o histórico de tempos de volta salvo no disco?',
-      alertSelectCurveFirst: '⚠️ Selecione uma curva primeiro.'
+      alertSelectCurveFirst: '⚠️ Selecione uma curva primeiro.',
+      alertNoRaceCode: '⚠️ Digite o código da corrida na aba AJUSTES primeiro.',
+      scrapeErrNoBrowser: 'Chrome ou Edge não foi encontrado neste PC, e o programa precisa de um deles para buscar os dados de cronometragem. Instale o Google Chrome (ou atualize o Microsoft Edge) e tente novamente.',
+      scrapeErrLaunchFailed: 'Não foi possível abrir o navegador interno que busca os dados de cronometragem. Tente fechar e reabrir o programa; se persistir, pode ser o antivírus bloqueando.',
+      scrapeErrNavFailed: 'Não foi possível conectar à página de cronometragem. Verifique a conexão com a internet deste PC e se o firewall/antivírus não está bloqueando o acesso.',
+      scrapeErrNoDrivers: 'Conectou, mas não há pilotos para mostrar. Verifique se o código da corrida está correto, se o provedor (Speedhive / Race Monitor) é o certo e se a sessão está ativa.',
+      scrapeErrGeneric: 'Erro ao buscar os dados de cronometragem.'
     },
     campeonato: {
       title: '🏆 CAMPEONATO (EXCEL)', driversLoaded: 'PILOTOS CARREGADOS:',
@@ -652,7 +670,13 @@ export const translations = {
       alertLoadSuccess: "📂 Gespeicherte Daten geladen. Die 'LIVE'-Aktualisierung wurde pausiert.",
       alertNoSavedData: '⚠️ Es gibt keine zuvor gespeicherten Daten.',
       confirmResetLapTimes: '⚠️ Den auf der Festplatte gespeicherten Rundenzeit-Verlauf löschen?',
-      alertSelectCurveFirst: '⚠️ Wähle zuerst eine Kurve aus.'
+      alertSelectCurveFirst: '⚠️ Wähle zuerst eine Kurve aus.',
+      alertNoRaceCode: '⚠️ Gib zuerst den Renncode im Tab EINSTELLUNGEN ein.',
+      scrapeErrNoBrowser: 'Auf diesem PC wurde weder Chrome noch Edge gefunden, das Programm benötigt einen davon, um die Zeitmessdaten abzurufen. Installiere Google Chrome (oder aktualisiere Microsoft Edge) und versuche es erneut.',
+      scrapeErrLaunchFailed: 'Der interne Browser zum Abrufen der Zeitmessdaten konnte nicht geöffnet werden. Schließe das Programm und öffne es erneut; falls es weiterhin nicht klappt, blockiert eventuell ein Virenscanner.',
+      scrapeErrNavFailed: 'Die Zeitmessungsseite konnte nicht erreicht werden. Prüfe die Internetverbindung dieses PCs und ob keine Firewall/kein Virenscanner den Zugriff blockiert.',
+      scrapeErrNoDrivers: 'Verbunden, aber es gibt keine Fahrer zum Anzeigen. Prüfe, ob der Renncode stimmt, ob der Anbieter (Speedhive / Race Monitor) der richtige ist und ob die Session aktiv ist.',
+      scrapeErrGeneric: 'Fehler beim Abrufen der Zeitmessdaten.'
     },
     campeonato: {
       title: '🏆 MEISTERSCHAFT (EXCEL)', driversLoaded: 'GELADENE FAHRER:',
@@ -847,7 +871,13 @@ export const translations = {
       alertLoadSuccess: "📂 Données sauvegardées chargées. La mise à jour 'EN DIRECT' a été mise en pause.",
       alertNoSavedData: '⚠️ Aucune donnée sauvegardée précédemment.',
       confirmResetLapTimes: '⚠️ Effacer l\'historique des temps au tour enregistré sur le disque ?',
-      alertSelectCurveFirst: '⚠️ Sélectionnez d\'abord un virage.'
+      alertSelectCurveFirst: '⚠️ Sélectionnez d\'abord un virage.',
+      alertNoRaceCode: '⚠️ Saisissez d\'abord le code de la course dans l\'onglet RÉGLAGES.',
+      scrapeErrNoBrowser: "Chrome ou Edge est introuvable sur ce PC, et le programme en a besoin pour récupérer les données de chronométrage. Installez Google Chrome (ou mettez à jour Microsoft Edge) puis réessayez.",
+      scrapeErrLaunchFailed: "Impossible d'ouvrir le navigateur interne qui récupère les données de chronométrage. Fermez puis rouvrez le programme ; si le problème persiste, un antivirus peut le bloquer.",
+      scrapeErrNavFailed: "Impossible de se connecter à la page de chronométrage. Vérifiez la connexion internet de ce PC et qu'aucun pare-feu/antivirus ne bloque l'accès.",
+      scrapeErrNoDrivers: "Connecté, mais aucun pilote à afficher. Vérifiez que le code de la course est correct, que le fournisseur (Speedhive / Race Monitor) est le bon et que la session est active.",
+      scrapeErrGeneric: 'Erreur lors de la récupération des données de chronométrage.'
     },
     campeonato: {
       title: '🏆 CHAMPIONNAT (EXCEL)', driversLoaded: 'PILOTES CHARGÉS :',

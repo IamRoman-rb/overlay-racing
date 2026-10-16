@@ -1,9 +1,55 @@
 const puppeteer = require('puppeteer');
+const fs = require('fs');
+const path = require('path');
 
 let browser = null;
 let page = null;
 let pageJustNavigated = false;
-let raceMonitorFrame = null; 
+let raceMonitorFrame = null;
+let navError = null;
+
+// Busca un navegador Chromium para el scraper: primero el que descarga Puppeteer (existe en la
+// PC de desarrollo pero NO en la de un cliente con la app portable), y si no está, usa el
+// Chrome o Edge instalado en el sistema (Edge viene con todo Windows 10/11).
+function findBrowserExecutable() {
+  const fromEnv = process.env.PUPPETEER_EXECUTABLE_PATH;
+  if (fromEnv && fs.existsSync(fromEnv)) return fromEnv;
+
+  try {
+    const bundled = puppeteer.executablePath();
+    if (bundled && fs.existsSync(bundled)) return bundled;
+  } catch (e) { /* Puppeteer sin Chromium descargado */ }
+
+  const candidates = [];
+  if (process.platform === 'win32') {
+    const roots = [process.env['PROGRAMFILES'], process.env['PROGRAMFILES(X86)'], process.env['LOCALAPPDATA']].filter(Boolean);
+    for (const root of roots) {
+      candidates.push(
+        path.join(root, 'Google', 'Chrome', 'Application', 'chrome.exe'),
+        path.join(root, 'Microsoft', 'Edge', 'Application', 'msedge.exe')
+      );
+    }
+  } else if (process.platform === 'darwin') {
+    candidates.push(
+      '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+      '/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge'
+    );
+  } else {
+    candidates.push('/usr/bin/google-chrome', '/usr/bin/chromium', '/usr/bin/chromium-browser', '/usr/bin/microsoft-edge');
+  }
+  return candidates.find(p => fs.existsSync(p)) || null;
+}
+
+function scraperError(code, message) {
+  const err = new Error(message);
+  err.code = code;
+  return err;
+}
+
+function toErrorObject(e) {
+  return { code: e?.code && typeof e.code === 'string' && e.code.startsWith('SCRAPER_') ? e.code : 'SCRAPER_ERROR', message: e?.message || '' };
+}
+
 async function initBrowser() {
 
   if (!browser) {
@@ -12,7 +58,16 @@ async function initBrowser() {
       `🚀 Abriendo motor de Scrapping en segundo plano...`
     );
 
+    const executablePath = findBrowserExecutable();
+    if (!executablePath) {
+      throw scraperError('SCRAPER_NO_BROWSER', 'No se encontró Chrome, Edge ni Chromium en esta PC.');
+    }
+    console.log(`🧭 Navegador del scraper: ${executablePath}`);
+
+    try {
     browser = await puppeteer.launch({
+
+      executablePath,
 
       headless: true,
 
@@ -22,6 +77,10 @@ async function initBrowser() {
         '--disable-blink-features=AutomationControlled'
       ]
     });
+    } catch (e) {
+      browser = null;
+      throw scraperError('SCRAPER_LAUNCH_FAILED', e.message);
+    }
 
     page = await browser.newPage();
 
@@ -72,11 +131,13 @@ async function scrapeSpeedhive(inputCode) {
         `⏳ Conectando a Speedhive: ${url}`
       );
 
+      navError = null;
       await p.goto(url, {
         waitUntil: 'domcontentloaded',
         timeout: 60000
       }).catch(err => {
 
+        navError = err.message;
         console.log(
           `⚠️ goto Speedhive: ${err.message}`
         );
@@ -292,6 +353,9 @@ async function scrapeSpeedhive(inputCode) {
       attempt <= maxAttempts;
       attempt++
     ) {
+      // Si la navegación ya falló (sin internet, sitio bloqueado), no tiene sentido esperar 30s
+      if (navError && attempt >= 3) break;
+
       if (
         attempt === 1 ||
         attempt === 5 ||
@@ -388,7 +452,8 @@ async function scrapeSpeedhive(inputCode) {
           totalTime: '-',
           laps: '-'
         },
-        drivers: []
+        drivers: [],
+        ...(navError ? { error: { code: 'SCRAPER_NAV_FAILED', message: navError } } : {})
       };
     }
     const result =
@@ -674,7 +739,8 @@ async function scrapeSpeedhive(inputCode) {
 
     return {
       session: {},
-      drivers: []
+      drivers: [],
+      error: toErrorObject(e)
     };
   }
 }
@@ -697,7 +763,8 @@ async function scrapeRaceMonitor(inputCode) {
     const p = await initBrowser();
     if (p.url() !== url && p.url() !== url + '/') {
       console.log(`⏳ Conectando a Race Monitor: ${url}`);
-      await p.goto(url, { waitUntil: 'domcontentloaded', timeout: 45000 }).catch(() => { });
+      navError = null;
+      await p.goto(url, { waitUntil: 'domcontentloaded', timeout: 45000 }).catch(err => { navError = err.message; });
       await new Promise(r => setTimeout(r, 2000));
       raceMonitorFrame = null; // navegamos a una carrera nueva: hay que rebuscar el frame
     }
@@ -781,6 +848,9 @@ async function scrapeRaceMonitor(inputCode) {
     }
 
     console.log(`✅ [1s Tick] Race Monitor - "${finalResult.session.name}" | Pilotos: ${finalResult.drivers.length}`);
+    if (finalResult.drivers.length === 0 && navError) {
+      return { ...finalResult, error: { code: 'SCRAPER_NAV_FAILED', message: navError } };
+    }
     return finalResult;
   } catch (e) {
     console.error(`⚠️ Error Race Monitor:`, e.message);
@@ -788,7 +858,7 @@ async function scrapeRaceMonitor(inputCode) {
     if (browser && (e.message.includes('Execution context') || e.message.includes('Target closed'))) {
       await browser.close().catch(() => { }); browser = null; page = null;
     }
-    return { session: {}, drivers: [] };
+    return { session: {}, drivers: [], error: toErrorObject(e) };
   }
 }
 

@@ -122,6 +122,16 @@ export default function ControlPanel() {
   const t = useMemo(() => createTranslator(language), [language]);
   const setLanguage = (lang) => handleDirectSave('language', lang);
 
+  const scrapeErrorKeys = {
+    SCRAPER_NO_BROWSER: 'panel.scrapeErrNoBrowser',
+    SCRAPER_LAUNCH_FAILED: 'panel.scrapeErrLaunchFailed',
+    SCRAPER_NAV_FAILED: 'panel.scrapeErrNavFailed',
+    NO_DRIVERS: 'panel.scrapeErrNoDrivers'
+  };
+  const scrapeErrorText = scrapeError
+    ? t(scrapeErrorKeys[scrapeError.code] || 'panel.scrapeErrGeneric') + (scrapeError.message && scrapeError.code !== 'NO_DRIVERS' ? ` (${scrapeError.message})` : '')
+    : '';
+
   const [showBattle, setShowBattle] = useState(false);
   const [battleTarget, setBattleTarget] = useState(1);
   const [positions, setPositions] = useState({});
@@ -149,6 +159,7 @@ export default function ControlPanel() {
   const [selectedLapTimesDriver, setSelectedLapTimesDriver] = useState(null);
   const [autoScrape, setAutoScrape] = useState(false);
   const [scrapeProgress, setScrapeProgress] = useState(0);
+  const [scrapeError, setScrapeError] = useState(null);
   const configRef = useRef(config);
   const isScrapingRef = useRef(false);
 
@@ -394,7 +405,7 @@ export default function ControlPanel() {
     rawCode = rawCode.trim();
     const provider = configRef.current.timingProvider || 'speedhive';
 
-    if (!rawCode) { alert("⚠️ Ingresa el código de la carrera en la pestaña AJUSTES primero."); setAutoScrape(false); return; }
+    if (!rawCode) { alert(t('panel.alertNoRaceCode')); setAutoScrape(false); return; }
 
     let finalCode = rawCode;
     if (provider === 'speedhive') {
@@ -414,9 +425,19 @@ export default function ControlPanel() {
     try {
       if (ipcRenderer) {
         const data = await ipcRenderer.invoke('scrape-timing', { provider, code: finalCode });
-        if (data && data.drivers) { setDrivers(data.drivers); if (data.session) setSessionInfo(data.session); }
+        if (data?.error) {
+          // Se conservan los últimos datos buenos en pantalla; solo se avisa del problema
+          setScrapeError(data.error);
+        } else if (data && data.drivers) {
+          setDrivers(data.drivers);
+          if (data.session) setSessionInfo(data.session);
+          setScrapeError(data.drivers.length === 0 ? { code: 'NO_DRIVERS' } : null);
+        }
       }
-    } catch (e) { console.error("Error scrapeando:", e); }
+    } catch (e) {
+      console.error("Error scrapeando:", e);
+      setScrapeError({ code: 'SCRAPER_ERROR', message: e?.message || '' });
+    }
     isScrapingRef.current = false;
   };
 
@@ -865,6 +886,11 @@ export default function ControlPanel() {
                 boxShadow: `0 0 10px ${colors.green}`, transition: scrapeProgress === 0 ? 'none' : 'width 10ms linear', zIndex: 10
               }} />
             )}
+            {scrapeError && (
+              <div style={{ backgroundColor: 'rgba(231, 76, 60, 0.1)', border: `1px solid ${colors.red}`, borderRadius: '6px', padding: '12px 16px', marginBottom: '15px', color: colors.red, fontSize: '12px', fontWeight: 'bold', lineHeight: '1.5', wordBreak: 'break-word' }}>
+                ⚠️ {scrapeErrorText}
+              </div>
+            )}
             <DriversTable
               drivers={drivers}
               colors={colors}
@@ -1222,7 +1248,7 @@ export default function ControlPanel() {
       )}
 
       {activeTab === 'ajustes' && (
-        <SettingsPanel config={config} handleDirectSave={handleDirectSave} handleScrape={handleScrape} colors={colors} inputStyle={inputStyle} btnStyle={btnStyle} t={t} language={language} setLanguage={setLanguage} onExportSettings={handleExportSettings} onImportSettings={handleImportSettings} onResetAllPositions={handleResetAllPositions} />
+        <SettingsPanel config={config} handleDirectSave={handleDirectSave} handleScrape={handleScrape} colors={colors} inputStyle={inputStyle} btnStyle={btnStyle} t={t} language={language} setLanguage={setLanguage} onExportSettings={handleExportSettings} onImportSettings={handleImportSettings} onResetAllPositions={handleResetAllPositions} scrapeErrorText={scrapeErrorText} />
       )}
 
       {activeTab === 'personalizar' && (

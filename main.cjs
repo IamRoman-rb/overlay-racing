@@ -790,15 +790,24 @@ ipcMain.handle('load-backup', () => {
 });
 
 ipcMain.handle('scrape-timing', async (event, { provider, code }) => {
-  let leaderboard = provider === 'racemonitor' ? await scrapeRaceMonitor(code) : await scrapeSpeedhive(code);
+  let leaderboard;
+  try {
+    leaderboard = provider === 'racemonitor' ? await scrapeRaceMonitor(code) : await scrapeSpeedhive(code);
+  } catch (e) {
+    console.error('Error en scrape-timing:', e);
+    return { session: {}, drivers: [], error: { code: 'SCRAPER_ERROR', message: e?.message || '' } };
+  }
   if (leaderboard && leaderboard.drivers && leaderboard.drivers.length > 0) {
     currentDriversForVote = leaderboard.drivers;
     pushDriversToCloud();
   }
+  // Si el scraper falló (sin navegador, sin internet, error puntual), no pisamos los últimos datos
+  // buenos: así un corte momentáneo no deja vacías las gráficas que están al aire.
+  if (leaderboard?.error) return leaderboard;
   lastLeaderboard = leaderboard;
   broadcast('update-leaderboard', leaderboard);
   calculateLiveChampionship();
-  updateLapTimesHistory(leaderboard); 
+  updateLapTimesHistory(leaderboard);
   return leaderboard;
 });
 
