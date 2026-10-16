@@ -1,9 +1,9 @@
-const { app, BrowserWindow, ipcMain, dialog } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog, shell } = require('electron');
 const { getVotingHtml } = require('./src/scripts/votingHtml.cjs');
 const { getPenaltyHtml } = require('./src/scripts/penaltyHtml.cjs');
 const fs = require('fs');
 const path = require('path');
-const { scrapeSpeedhive, scrapeRaceMonitor } = require('./src/scripts/scraper.cjs');
+const { scrapeSpeedhive, scrapeRaceMonitor, getBrowserInfo } = require('./src/scripts/scraper.cjs');
 const { networkInterfaces } = require('os');
 const express = require('express');
 const http = require('http');
@@ -26,6 +26,25 @@ const dbPath = path.join(userDataPath, 'database.json');
 const posPath = path.join(userDataPath, 'posiciones.json');
 const backupPath = path.join(userDataPath, 'last_race.json');
 const lapTimesPath = path.join(userDataPath, 'lap_times.json');
+
+// --- LOG A ARCHIVO: en la app instalada no hay consola, así que todo console.log/warn/error se copia
+// a un archivo para poder diagnosticar problemas en PCs de clientes (ver AJUSTES > DIAGNÓSTICO). ---
+const logDir = app.getPath('userData');
+const logPath = path.join(logDir, 'race-dynamics.log');
+try {
+  fs.mkdirSync(logDir, { recursive: true });
+  if (fs.existsSync(logPath) && fs.statSync(logPath).size > 1024 * 1024) fs.renameSync(logPath, logPath + '.old');
+} catch (e) {}
+for (const level of ['log', 'warn', 'error']) {
+  const original = console[level].bind(console);
+  console[level] = (...args) => {
+    original(...args);
+    try {
+      const text = args.map(a => (typeof a === 'string' ? a : require('util').inspect(a, { depth: 3 }))).join(' ');
+      fs.appendFileSync(logPath, `[${new Date().toISOString()}] ${level.toUpperCase()} ${text}\n`);
+    } catch (e) {}
+  };
+}
 
 // Layout pensado para un lienzo de 1920x1080: torre de posiciones arriba a la izquierda,
 // zócalos (relator/comentarista/noteros/circuito/clima) apilados abajo a la izquierda pero
@@ -792,6 +811,26 @@ ipcMain.handle('load-backup', () => {
     }
   } catch (e) {} return null;
 });
+
+ipcMain.handle('get-diagnostics', () => {
+  let logTail = '';
+  try {
+    const lines = fs.readFileSync(logPath, 'utf-8').split('\n').filter(Boolean);
+    logTail = lines.slice(-40).join('\n');
+  } catch (e) { logTail = '(sin log todavía)'; }
+  let browserInfo = {};
+  try { browserInfo = getBrowserInfo(); } catch (e) { browserInfo = { error: e.message }; }
+  return {
+    version: app.getVersion(),
+    packaged: app.isPackaged,
+    platform: `${os.platform()} ${os.release()} ${os.arch()}`,
+    resourcesPath: process.resourcesPath,
+    browser: browserInfo,
+    logPath,
+    logTail
+  };
+});
+ipcMain.handle('open-logs-folder', () => shell.showItemInFolder(fs.existsSync(logPath) ? logPath : logDir));
 
 ipcMain.handle('scrape-timing', async (event, { provider, code }) => {
   let leaderboard;

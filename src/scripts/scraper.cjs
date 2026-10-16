@@ -7,6 +7,7 @@ let page = null;
 let pageJustNavigated = false;
 let raceMonitorFrame = null;
 let navError = null;
+let rmNotLive = { code: null, at: 0, url: '' };
 
 // Busca un navegador Chromium para el scraper: primero el que descarga Puppeteer (existe en la
 // PC de desarrollo pero NO en la de un cliente con la app portable), y si no está, usa el
@@ -794,12 +795,28 @@ async function scrapeRaceMonitor(inputCode) {
 
   try {
     const p = await initBrowser();
+    let justNavigated = false;
+
+    // Si Race Monitor ya nos redirigió a "Resultados" (la carrera terminó / no está en vivo), no
+    // volvemos a navegar cada segundo: reintentamos cada 20s por si la sesión arranca.
+    const notLiveRecently = rmNotLive.code === code && Date.now() - rmNotLive.at < 20000;
+    if (notLiveRecently) {
+      return { session: {}, drivers: [], error: { code: 'SCRAPER_RACE_NOT_LIVE', message: rmNotLive.url } };
+    }
+
     if (p.url() !== url && p.url() !== url + '/') {
       console.log(`⏳ Conectando a Race Monitor: ${url}`);
       navError = null;
       await p.goto(url, { waitUntil: 'domcontentloaded', timeout: 45000 }).catch(err => { navError = err.message; });
       await new Promise(r => setTimeout(r, 2000));
       raceMonitorFrame = null; // navegamos a una carrera nueva: hay que rebuscar el frame
+      justNavigated = true;
+
+      if (/\/Results\//i.test(p.url())) {
+        console.log(`ℹ️ Race Monitor redirigió a Resultados (${p.url()}): la carrera no está en vivo.`);
+        rmNotLive = { code, at: Date.now(), url: p.url() };
+        return { session: {}, drivers: [], error: { code: 'SCRAPER_RACE_NOT_LIVE', message: p.url() } };
+      }
     }
 
     const evalFrame = async (frame) => {
@@ -866,18 +883,21 @@ async function scrapeRaceMonitor(inputCode) {
     }
 
     // --- CAMINO LENTO: buscar el frame correcto entre todos los iframes (sólo cuando hace falta) ---
-    await p.waitForSelector('.racerRowWide, .racerRow, .racerRowStacked', { timeout: 3000 }).catch(() => { });
-
-    const frames = p.frames();
-    for (const frame of frames) {
-      try {
-        const frameData = await evalFrame(frame);
-        if (frameData && frameData.drivers.length > 0) {
-          finalResult = frameData;
-          raceMonitorFrame = frame; // cachear para los próximos ticks
-          break;
-        }
-      } catch (e) {}
+    // Tras una navegación nueva se espera hasta 25s a que cargue la tabla (PCs lentas o conexiones
+    // lentas tardan más que la PC de desarrollo); en los ticks siguientes, solo 3s.
+    const maxSeconds = justNavigated ? 25 : 3;
+    for (let sec = 0; sec < maxSeconds && finalResult.drivers.length === 0; sec++) {
+      for (const frame of p.frames()) {
+        try {
+          const frameData = await evalFrame(frame);
+          if (frameData && frameData.drivers.length > 0) {
+            finalResult = frameData;
+            raceMonitorFrame = frame; // cachear para los próximos ticks
+            break;
+          }
+        } catch (e) {}
+      }
+      if (finalResult.drivers.length === 0 && sec < maxSeconds - 1) await new Promise(r => setTimeout(r, 1000));
     }
 
     console.log(`✅ [1s Tick] Race Monitor - "${finalResult.session.name}" | Pilotos: ${finalResult.drivers.length}`);
@@ -895,4 +915,15 @@ async function scrapeRaceMonitor(inputCode) {
   }
 }
 
-module.exports = { scrapeSpeedhive, scrapeRaceMonitor };
+// Datos para el panel de diagnóstico: qué navegador se va a usar y de dónde sale.
+function getBrowserInfo() {
+  const executablePath = findBrowserExecutable();
+  const bundledDir = process.resourcesPath ? path.join(process.resourcesPath, 'chromium') : '';
+  return {
+    executablePath,
+    bundledPresent: !!(bundledDir && fs.existsSync(bundledDir) && findChromiumIn(bundledDir)),
+    browserRunning: !!browser
+  };
+}
+
+module.exports = { scrapeSpeedhive, scrapeRaceMonitor, getBrowserInfo };

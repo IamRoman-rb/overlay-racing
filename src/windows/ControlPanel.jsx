@@ -154,6 +154,7 @@ export default function ControlPanel() {
     SCRAPER_NO_BROWSER: 'panel.scrapeErrNoBrowser',
     SCRAPER_LAUNCH_FAILED: 'panel.scrapeErrLaunchFailed',
     SCRAPER_NAV_FAILED: 'panel.scrapeErrNavFailed',
+    SCRAPER_RACE_NOT_LIVE: 'panel.scrapeErrRaceNotLive',
     NO_DRIVERS: 'panel.scrapeErrNoDrivers'
   };
   const scrapeErrorText = scrapeError
@@ -553,6 +554,10 @@ export default function ControlPanel() {
     }
   };
   const handleHidePenalty = () => { if (ipcRenderer) ipcRenderer.send('hide-penalty'); };
+
+  // --- DIAGNÓSTICO (AJUSTES): información del scraper y log para PCs de clientes ---
+  const handleGetDiagnostics = async () => (ipcRenderer ? ipcRenderer.invoke('get-diagnostics') : null);
+  const handleOpenLogs = () => { if (ipcRenderer) ipcRenderer.invoke('open-logs-folder'); };
 
   // --- NUEVO: RESTABLECER TODAS LAS POSICIONES AL LAYOUT PRECONFIGURADO ---
   const handleResetAllPositions = () => {
@@ -1253,7 +1258,7 @@ export default function ControlPanel() {
       )}
 
       {activeTab === 'ajustes' && (
-        <SettingsPanel config={config} handleDirectSave={handleDirectSave} handleScrape={handleScrape} colors={colors} inputStyle={inputStyle} btnStyle={btnStyle} t={t} language={language} setLanguage={setLanguage} onExportSettings={handleExportSettings} onImportSettings={handleImportSettings} onResetAllPositions={handleResetAllPositions} scrapeErrorText={scrapeErrorText} />
+        <SettingsPanel config={config} handleDirectSave={handleDirectSave} handleScrape={handleScrape} colors={colors} inputStyle={inputStyle} btnStyle={btnStyle} t={t} language={language} setLanguage={setLanguage} onExportSettings={handleExportSettings} onImportSettings={handleImportSettings} onResetAllPositions={handleResetAllPositions} scrapeErrorText={scrapeErrorText} onGetDiagnostics={handleGetDiagnostics} onOpenLogs={handleOpenLogs} />
       )}
 
       {activeTab === 'personalizar' && (

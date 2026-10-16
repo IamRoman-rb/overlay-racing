@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { LANGUAGES } from '../i18n/translations';
 
-export default function SettingsPanel({ config, handleDirectSave, handleScrape, colors, inputStyle, btnStyle, t, language, setLanguage, onExportSettings, onImportSettings, onResetAllPositions, scrapeErrorText }) {
+export default function SettingsPanel({ config, handleDirectSave, handleScrape, colors, inputStyle, btnStyle, t, language, setLanguage, onExportSettings, onImportSettings, onResetAllPositions, scrapeErrorText, onGetDiagnostics, onOpenLogs }) {
 
   const chromaColors = [
     { label: t('ajustes.chromaGreen'), value: '#00FF00' },
@@ -46,6 +46,26 @@ export default function SettingsPanel({ config, handleDirectSave, handleScrape, 
     if (next !== 'idle') {
       loadResetTimer.current = setTimeout(() => setLoadState('idle'), 2500);
     }
+  };
+
+  // Panel de diagnóstico: muestra qué navegador usa el scraper y las últimas líneas del log
+  const [diagText, setDiagText] = useState('');
+  const [diagCopied, setDiagCopied] = useState(false);
+  const handleShowDiagnostics = async () => {
+    const d = await onGetDiagnostics?.();
+    if (!d) { setDiagText(t('ajustes.diagUnavailable')); return; }
+    setDiagText([
+      `Race Dynamics v${d.version} (${d.packaged ? 'instalada' : 'desarrollo'})`,
+      `Sistema: ${d.platform}`,
+      `Navegador del scraper: ${d.browser?.executablePath || 'NO ENCONTRADO'}`,
+      `Chromium incluido en la app: ${d.browser?.bundledPresent ? 'sí' : 'no'}`,
+      `Archivo de log: ${d.logPath}`,
+      '--- ' + t('ajustes.diagLogTitle') + ' ---',
+      d.logTail
+    ].join('\n'));
+  };
+  const handleCopyDiagnostics = async () => {
+    try { await navigator.clipboard.writeText(diagText); setDiagCopied(true); setTimeout(() => setDiagCopied(false), 2000); } catch (e) { console.warn('No se pudo copiar al portapapeles:', e); }
   };
 
   const loadBtnColors = {
@@ -209,6 +229,23 @@ export default function SettingsPanel({ config, handleDirectSave, handleScrape, 
         <button onClick={onResetAllPositions} style={{ ...btnStyle(false), width: 'auto', padding: '10px 20px', backgroundColor: '#c0392b', color: '#fff', borderColor: '#e74c3c' }}>
           {t('ajustes.resetAllPositionsBtn')}
         </button>
+      </div>
+      {/* SECCIÓN 5: DIAGNÓSTICO */}
+      <div style={{ marginTop: '20px', backgroundColor: colors.bgPanel, padding: '20px', borderRadius: '8px', border: `1px solid ${colors.border}` }}>
+        <label style={{ display: 'block', marginBottom: '10px', fontSize: '12px', fontWeight: 'bold', color: colors.textMuted }}>
+          {t('ajustes.diagSection')}
+        </label>
+        <p style={{ fontSize: '12px', color: colors.textMuted, lineHeight: '1.6', marginTop: 0, marginBottom: '15px', maxWidth: '700px' }}>
+          {t('ajustes.diagDescription')}
+        </p>
+        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+          <button onClick={handleShowDiagnostics} style={{ ...btnStyle(false), width: 'auto', padding: '10px 20px' }}>{t('ajustes.diagShowBtn')}</button>
+          {diagText && <button onClick={handleCopyDiagnostics} style={{ ...btnStyle(false), width: 'auto', padding: '10px 20px' }}>{diagCopied ? t('ajustes.diagCopied') : t('ajustes.diagCopyBtn')}</button>}
+          <button onClick={onOpenLogs} style={{ ...btnStyle(false), width: 'auto', padding: '10px 20px' }}>{t('ajustes.diagOpenBtn')}</button>
+        </div>
+        {diagText && (
+          <pre style={{ marginTop: '15px', padding: '12px', backgroundColor: colors.bgApp, border: `1px solid ${colors.border}`, borderRadius: '6px', color: colors.textMain, fontSize: '11px', lineHeight: '1.5', whiteSpace: 'pre-wrap', wordBreak: 'break-all', maxHeight: '300px', overflowY: 'auto' }}>{diagText}</pre>
+        )}
       </div>
     </div>
   );
