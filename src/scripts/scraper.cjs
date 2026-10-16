@@ -15,8 +15,8 @@ let rmNotLive = { code: null, at: 0, url: '' };
 // Busca un ejecutable de Chromium dentro de una carpeta (hasta 4 niveles de profundidad).
 function findChromiumIn(dir, depth = 0) {
   const names = process.platform === 'win32'
-    ? ['chrome-headless-shell.exe', 'chrome.exe']
-    : ['chrome-headless-shell', 'chrome'];
+    ? ['chrome.exe']
+    : ['chrome'];
   let entries;
   try { entries = fs.readdirSync(dir, { withFileTypes: true }); } catch (e) { return null; }
   for (const name of names) {
