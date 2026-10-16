@@ -11,7 +11,8 @@
     "preview": "vite preview",
     "electron:dev": "wait-on http://localhost:5173 && electron .",
     "start": "concurrently -k \"npm run dev\" \"npm run electron:dev\"",
-    "dist": "npm run build && node scripts/bundle-chromium.cjs && electron-builder"
+    "dist": "npm run build && node scripts/bundle-chromium.cjs && electron-builder --win nsis",
+    "dist:portable": "npm run build && node scripts/bundle-chromium.cjs && electron-builder --win portable"
   },
   "dependencies": {
     "express": "^5.2.1",
@@ -47,8 +48,10 @@
       "output": "release"
     },
     "win": {
-      "target": "portable",
-      "icon": "src/assets/icon.ico"
+      "target": "nsis",
+      "icon": "src/assets/icon.ico",
+      "requestedExecutionLevel": "asInvoker",
+      "legalTrademarks": "Race Dynamics"
     },
     "asarUnpack": [
       "**/node_modules/puppeteer/**/*",
@@ -59,6 +62,23 @@
         "from": "chromium",
         "to": "chromium"
       }
-    ]
+    ],
+    "copyright": "Copyright © Race Dynamics",
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "deleteAppDataOnUninstall": false,
+      "artifactName": "Race-Dynamics-Setup-${version}.${ext}"
+    },
+    "portable": {
+      "artifactName": "Race-Dynamics-Portable-${version}.${ext}"
+    }
+  },
+  "description": "Race Dynamics: overlay y panel de control para transmisiones de automovilismo",
+  "author": {
+    "name": "Race Dynamics"
   }
 }
