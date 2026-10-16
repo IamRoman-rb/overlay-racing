@@ -19,6 +19,18 @@ let controlWindow;
 let overlayWindow;
 let loginWindow;
 
+// Una sola copia del programa a la vez: si se abre una segunda (por ejemplo, el instalador la lanza
+// al terminar y ya había una abierta), la nueva se cierra y se trae al frente la que ya estaba.
+const gotSingleInstanceLock = app.requestSingleInstanceLock();
+if (!gotSingleInstanceLock) {
+  app.exit(0);
+} else {
+  app.on('second-instance', () => {
+    const win = controlWindow || loginWindow;
+    if (win) { if (win.isMinimized()) win.restore(); win.focus(); }
+  });
+}
+
 const isDev = !app.isPackaged;
 const userDataPath = isDev ? __dirname : app.getPath('userData');
 
@@ -538,7 +550,21 @@ expressApp.get('/photo/:number', (req, res) => {
   }
 });
 
-server.listen(8080, '0.0.0.0', async () => {
+// Si el puerto 8080 ya está ocupado (otra copia del programa abierta, una versión anterior o
+// cualquier otra aplicación), antes salía un error técnico de Node. Ahora se explica y se cierra.
+server.on('error', (err) => {
+  console.error('Error del servidor local:', err);
+  const fatal = () => {
+    const message = err.code === 'EADDRINUSE'
+      ? 'No se pudo iniciar porque el puerto 8080 ya está en uso.\n\nCerrá otras ventanas de Race Dynamics (o versiones anteriores del programa) y volvé a abrirlo. Si el problema sigue, reiniciá la computadora.'
+      : `No se pudo iniciar el servidor local:\n\n${err.message}`;
+    dialog.showErrorBox('Race Dynamics', message);
+    app.exit(1);
+  };
+  if (app.isReady()) fatal(); else app.once('ready', fatal);
+});
+
+if (gotSingleInstanceLock) server.listen(8080, '0.0.0.0', async () => {
   await createPublicTunnel();
   loadCloudConfig();
   connectToCloud();
@@ -943,5 +969,5 @@ function createWindows() {
   controlWindow.on('closed', () => app.quit());
 }
 
-app.whenReady().then(createLoginWindow);
+if (gotSingleInstanceLock) app.whenReady().then(createLoginWindow);
 app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(); });
