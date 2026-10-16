@@ -83,7 +83,7 @@ export const translations = {
       loadExcelBtn: '📊 CARGAR EXCEL', loadingExcelBtn: '⏳ CARGANDO...',
       colPos: 'POS', colNum: 'NUM', colDriver: 'PILOTO', colBasePoints: 'PUNTOS BASE',
       colThisRace: '+ ESTA CARRERA', colTotal: 'TOTAL',
-      alertExcelError: '❌ Error al cargar Excel o acción cancelada.'
+      templateBtn: '📄 DESCARGAR PLANTILLA EXCEL', alertTemplateError: '❌ No se pudo guardar la plantilla de Excel.', alertExcelError: '❌ Error al cargar Excel o acción cancelada.'
     },
     votaciones: {
       title: '📊 PANEL DE VOTACIONES EN VIVO', totalVotes: 'TOTAL VOTOS:',
@@ -285,7 +285,7 @@ export const translations = {
       loadExcelBtn: '📊 LOAD EXCEL', loadingExcelBtn: '⏳ LOADING...',
       colPos: 'POS', colNum: 'NO.', colDriver: 'DRIVER', colBasePoints: 'BASE POINTS',
       colThisRace: '+ THIS RACE', colTotal: 'TOTAL',
-      alertExcelError: '❌ Error loading the Excel file, or the action was cancelled.'
+      templateBtn: '📄 DOWNLOAD EXCEL TEMPLATE', alertTemplateError: '❌ Could not save the Excel template.', alertExcelError: '❌ Error loading the Excel file, or the action was cancelled.'
     },
     votaciones: {
       title: '📊 LIVE VOTING PANEL', totalVotes: 'TOTAL VOTES:',
@@ -487,7 +487,7 @@ export const translations = {
       loadExcelBtn: '📊 CARREGAR EXCEL', loadingExcelBtn: '⏳ CARREGANDO...',
       colPos: 'POS', colNum: 'NÚM', colDriver: 'PILOTO', colBasePoints: 'PONTOS BASE',
       colThisRace: '+ ESTA CORRIDA', colTotal: 'TOTAL',
-      alertExcelError: '❌ Erro ao carregar o Excel ou ação cancelada.'
+      templateBtn: '📄 BAIXAR MODELO DE EXCEL', alertTemplateError: '❌ Não foi possível salvar o modelo de Excel.', alertExcelError: '❌ Erro ao carregar o Excel ou ação cancelada.'
     },
     votaciones: {
       title: '📊 PAINEL DE VOTAÇÃO AO VIVO', totalVotes: 'TOTAL DE VOTOS:',
@@ -689,7 +689,7 @@ export const translations = {
       loadExcelBtn: '📊 EXCEL LADEN', loadingExcelBtn: '⏳ WIRD GELADEN...',
       colPos: 'POS', colNum: 'NR.', colDriver: 'FAHRER', colBasePoints: 'BASISPUNKTE',
       colThisRace: '+ DIESES RENNEN', colTotal: 'GESAMT',
-      alertExcelError: '❌ Fehler beim Laden der Excel-Datei oder Aktion abgebrochen.'
+      templateBtn: '📄 EXCEL-VORLAGE HERUNTERLADEN', alertTemplateError: '❌ Die Excel-Vorlage konnte nicht gespeichert werden.', alertExcelError: '❌ Fehler beim Laden der Excel-Datei oder Aktion abgebrochen.'
     },
     votaciones: {
       title: '📊 LIVE-ABSTIMMUNGSPANEL', totalVotes: 'STIMMEN GESAMT:',
@@ -891,7 +891,7 @@ export const translations = {
       loadExcelBtn: '📊 CHARGER EXCEL', loadingExcelBtn: '⏳ CHARGEMENT...',
       colPos: 'POS', colNum: 'N°', colDriver: 'PILOTE', colBasePoints: 'POINTS DE BASE',
       colThisRace: '+ CETTE COURSE', colTotal: 'TOTAL',
-      alertExcelError: '❌ Erreur lors du chargement du fichier Excel, ou action annulée.'
+      templateBtn: '📄 TÉLÉCHARGER LE MODÈLE EXCEL', alertTemplateError: "❌ Impossible d'enregistrer le modèle Excel.", alertExcelError: '❌ Erreur lors du chargement du fichier Excel, ou action annulée.'
     },
     votaciones: {
       title: '📊 PANNEAU DE VOTE EN DIRECT', totalVotes: 'TOTAL DES VOTES :',

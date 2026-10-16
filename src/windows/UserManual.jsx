@@ -149,6 +149,10 @@ export default function UserManual({ colors, t, language }) {
           la sesión, el programa suma automáticamente al puntaje base los puntos que le corresponden a cada piloto
           según la posición en la que va llegando, y recalcula la tabla en vivo.
         </p>
+        <div style={note}>
+          💡 No hace falta armar el archivo de cero: en la pestaña <b>CAMPEONATO</b>, el botón "DESCARGAR PLANTILLA EXCEL" guarda un
+          <span style={code}>.xlsx</span> con las columnas correctas, datos de ejemplo y una hoja de instrucciones. Completalo y cargalo con "CARGAR EXCEL".
+        </div>
         <p style={{ color: colors.textMuted, fontStyle: 'italic' }}>
           Ejemplo de filas válidas: una fila con <span style={code}>Numero=12, Nombre=Juan Pérez, Puntos=45</span>{' '}
           y, en cualquier otra fila, <span style={code}>Posicion=1, Puntos_Escala=25</span>.

@@ -512,6 +512,12 @@ export default function ControlPanel() {
       .finally(() => setLoadingExcel(false));
   };
 
+  const handleSaveExcelTemplate = async () => {
+    if (!ipcRenderer) return;
+    const saved = await ipcRenderer.invoke('save-excel-template', language);
+    if (saved === false) alert(t('campeonato.alertTemplateError'));
+  };
+
   const handleToggleFlag = (type) => {
     const newFlags = { red: false, tricolor: false, black: false, blue: false, checkered: false };
     if (!activeFlags[type]) newFlags[type] = true;
@@ -935,6 +941,9 @@ export default function ControlPanel() {
               style={{ ...btnStyle(false), width: 'auto', padding: '12px 20px', backgroundColor: '#2ecc71', color: 'white', borderColor: '#27ae60', cursor: loadingExcel ? 'wait' : 'pointer', opacity: loadingExcel ? 0.7 : 1 }}
             >
               {loadingExcel ? t('campeonato.loadingExcelBtn') : t('campeonato.loadExcelBtn')}
+            </button>
+            <button onClick={handleSaveExcelTemplate} style={{ ...btnStyle(false), width: 'auto', padding: '12px 20px' }}>
+              {t('campeonato.templateBtn')}
             </button>
             <button onClick={handleToggleVirtualChamp} style={{ ...btnStyle(showVirtualChamp), width: 'auto', padding: '12px 20px' }}>
               {showVirtualChamp ? t('panel.hideChampTable') : t('panel.showChampTable')}

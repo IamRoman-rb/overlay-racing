@@ -746,6 +746,47 @@ ipcMain.handle('load-excel', async () => {
   return false;
 });
 
+// Genera una plantilla .xlsx lista para completar con el formato que espera 'load-excel'
+// (solo lee la primera hoja; las instrucciones van en una segunda hoja para no interferir).
+ipcMain.handle('save-excel-template', async (event, language) => {
+  const instructions = {
+    es: ['INSTRUCCIONES', 'Completá la hoja "Campeonato". No cambies los nombres de las columnas (Numero, Nombre, Puntos, Posicion, Puntos_Escala).', 'Numero / Nombre / Puntos: un piloto por fila. Puntos es el puntaje que ya trae antes de esta carrera.', 'Posicion / Puntos_Escala: cuántos puntos da cada posición de llegada (1°, 2°, 3°...). Pueden estar en filas distintas a las de los pilotos.', 'Los datos de ejemplo se pueden borrar o reemplazar. Solo se lee la primera hoja.'],
+    en: ['INSTRUCTIONS', 'Fill in the "Campeonato" sheet. Do not change the column names (Numero, Nombre, Puntos, Posicion, Puntos_Escala).', 'Numero / Nombre / Puntos: one driver per row. Puntos is the score the driver already has before this race.', 'Posicion / Puntos_Escala: how many points each finishing position gives (1st, 2nd, 3rd...). They can be on different rows than the drivers.', 'The sample data can be deleted or replaced. Only the first sheet is read.'],
+    pt: ['INSTRUÇÕES', 'Preencha a planilha "Campeonato". Não altere os nomes das colunas (Numero, Nombre, Puntos, Posicion, Puntos_Escala).', 'Numero / Nombre / Puntos: um piloto por linha. Puntos é a pontuação que o piloto já tem antes desta corrida.', 'Posicion / Puntos_Escala: quantos pontos cada posição de chegada dá (1º, 2º, 3º...). Podem estar em linhas diferentes das dos pilotos.', 'Os dados de exemplo podem ser apagados ou substituídos. Apenas a primeira planilha é lida.'],
+    de: ['ANLEITUNG', 'Fülle das Blatt "Campeonato" aus. Ändere die Spaltennamen nicht (Numero, Nombre, Puntos, Posicion, Puntos_Escala).', 'Numero / Nombre / Puntos: ein Fahrer pro Zeile. Puntos ist die Punktzahl, die der Fahrer vor diesem Rennen bereits hat.', 'Posicion / Puntos_Escala: wie viele Punkte jede Zielposition bringt (1., 2., 3. ...). Sie können in anderen Zeilen stehen als die Fahrer.', 'Die Beispieldaten können gelöscht oder ersetzt werden. Nur das erste Blatt wird gelesen.'],
+    fr: ['INSTRUCTIONS', 'Remplissez la feuille "Campeonato". Ne changez pas les noms des colonnes (Numero, Nombre, Puntos, Posicion, Puntos_Escala).', 'Numero / Nombre / Puntos : un pilote par ligne. Puntos est le score que le pilote a déjà avant cette course.', 'Posicion / Puntos_Escala : combien de points rapporte chaque position d\'arrivée (1er, 2e, 3e...). Elles peuvent être sur d\'autres lignes que les pilotes.', 'Les données d\'exemple peuvent être supprimées ou remplacées. Seule la première feuille est lue.']
+  };
+  const result = await dialog.showSaveDialog(controlWindow, {
+    title: 'Guardar plantilla de campeonato',
+    defaultPath: 'plantilla-campeonato.xlsx',
+    filters: [{ name: 'Excel', extensions: ['xlsx'] }]
+  });
+  if (result.canceled || !result.filePath) return null;
+  try {
+    const scale = [25, 18, 15, 12, 10, 8, 6, 4, 2, 1];
+    const sampleDrivers = [[12, 'Piloto Ejemplo 1', 45], [7, 'Piloto Ejemplo 2', 38], [21, 'Piloto Ejemplo 3', 30], [5, 'Piloto Ejemplo 4', 22], [33, 'Piloto Ejemplo 5', 15]];
+    // Las celdas vacías se omiten (no '' ), porque load-excel trata cualquier fila con Numero definido como piloto
+    const rows = scale.map((points, i) => {
+      const d = sampleDrivers[i];
+      return { ...(d ? { Numero: d[0], Nombre: d[1], Puntos: d[2] } : {}), Posicion: i + 1, Puntos_Escala: points };
+    });
+    const sheet = xlsx.utils.json_to_sheet(rows, { header: ['Numero', 'Nombre', 'Puntos', 'Posicion', 'Puntos_Escala'] });
+    sheet['!cols'] = [{ wch: 10 }, { wch: 28 }, { wch: 10 }, { wch: 10 }, { wch: 15 }];
+    const lines = instructions[language] || instructions.es;
+    const help = xlsx.utils.aoa_to_sheet(lines.map(line => [line]));
+    help['!cols'] = [{ wch: 120 }];
+    const book = xlsx.utils.book_new();
+    xlsx.utils.book_append_sheet(book, sheet, 'Campeonato');
+    xlsx.utils.book_append_sheet(book, help, lines[0]);
+    xlsx.writeFile(book, result.filePath);
+    shell.showItemInFolder(result.filePath);
+    return result.filePath;
+  } catch (e) {
+    console.error('Error generando la plantilla de Excel:', e);
+    return false;
+  }
+});
+
 ipcMain.handle('get-local-ip', () => getVotingUrl());
 ipcMain.handle('get-steward-url', () => getStewardUrl());
 ipcMain.handle('get-votes', () => votesData);
