@@ -23,3 +23,5 @@ dist-ssr
 *.sln
 *.sw?
 release/
+# Chromium empaquetado para el scraper (lo genera scripts/bundle-chromium.cjs)
+chromium/

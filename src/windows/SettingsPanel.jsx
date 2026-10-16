@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { LANGUAGES } from '../i18n/translations';
 
 export default function SettingsPanel({ config, handleDirectSave, handleScrape, colors, inputStyle, btnStyle, t, language, setLanguage, onExportSettings, onImportSettings, onResetAllPositions, scrapeErrorText }) {
@@ -18,6 +18,44 @@ export default function SettingsPanel({ config, handleDirectSave, handleScrape, 
   useEffect(() => {
     setLocalCode(config.speedhiveCode || '');
   }, [config.speedhiveCode]);
+
+  // Estado del botón "CARGAR DATOS AHORA": idle -> loading -> ok | error -> idle
+  const [loadState, setLoadState] = useState('idle');
+  const loadResetTimer = useRef(null);
+  useEffect(() => () => { if (loadResetTimer.current) clearTimeout(loadResetTimer.current); }, []);
+
+  const handleLoadNow = async () => {
+    if (loadState === 'loading') return;
+    if (loadResetTimer.current) clearTimeout(loadResetTimer.current);
+    setLoadState('loading');
+
+    // Si se escribió el código y se hizo clic directo en el botón, el guardado por onBlur puede no
+    // haberse aplicado todavía: se guarda primero para que el scraper use el código nuevo.
+    if (localCode.trim() !== (config.speedhiveCode || '')) {
+      await handleDirectSave('speedhiveCode', localCode.trim());
+      await new Promise(resolve => setTimeout(resolve, 60));
+    }
+
+    const status = await handleScrape();
+    const next = status === 'ok' ? 'ok' : (status === 'error' ? 'error' : 'idle');
+    setLoadState(next);
+    if (next !== 'idle') {
+      loadResetTimer.current = setTimeout(() => setLoadState('idle'), 2500);
+    }
+  };
+
+  const loadBtnColors = {
+    idle: { bg: colors.yellow, fg: '#000', border: colors.yellow },
+    loading: { bg: '#b8960a', fg: '#000', border: colors.yellow },
+    ok: { bg: '#2ecc71', fg: '#fff', border: '#27ae60' },
+    error: { bg: '#e74c3c', fg: '#fff', border: '#c0392b' }
+  }[loadState];
+  const loadBtnLabel = {
+    idle: t('ajustes.loadNowBtn'),
+    loading: t('ajustes.loadingBtn'),
+    ok: t('ajustes.loadedBtn'),
+    error: t('ajustes.loadErrorBtn')
+  }[loadState];
 
   return (
     <div style={{ flex: 1, padding: '30px', backgroundColor: colors.bgApp, overflowY: 'auto' }}>
@@ -101,8 +139,31 @@ export default function SettingsPanel({ config, handleDirectSave, handleScrape, 
 
         {/* Botón rápido para testear */}
         <div style={{ marginTop: '15px' }}>
-          <button onClick={handleScrape} style={{ ...btnStyle(true), width: 'auto', padding: '10px 30px' }}>
-            {t('ajustes.loadNowBtn')}
+          <style>{`
+            @keyframes loadBtnSpin { to { transform: rotate(360deg); } }
+            @keyframes loadBtnPulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(255, 204, 0, 0.55); } 50% { box-shadow: 0 0 0 10px rgba(255, 204, 0, 0); } }
+            @keyframes loadBtnShimmer { 0% { background-position: -200px 0; } 100% { background-position: 200px 0; } }
+            @keyframes loadBtnPop { 0% { transform: scale(0.85); } 60% { transform: scale(1.1); } 100% { transform: scale(1); } }
+            @keyframes loadBtnShake { 0%, 100% { transform: translateX(0); } 20%, 60% { transform: translateX(-6px); } 40%, 80% { transform: translateX(6px); } }
+            .load-now-btn { position: relative; overflow: hidden; display: inline-flex; align-items: center; justify-content: center; gap: 10px; min-width: 240px; transition: background-color 0.25s ease, border-color 0.25s ease, transform 0.15s ease; }
+            .load-now-btn:hover:not(:disabled) { transform: translateY(-2px); }
+            .load-now-btn:active:not(:disabled) { transform: translateY(0) scale(0.97); }
+            .load-now-btn.is-loading { cursor: wait; animation: loadBtnPulse 1.2s ease-in-out infinite; }
+            .load-now-btn.is-loading::after { content: ''; position: absolute; inset: 0; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.35), transparent); background-size: 200px 100%; background-repeat: no-repeat; animation: loadBtnShimmer 1.1s linear infinite; }
+            .load-now-btn.is-ok { animation: loadBtnPop 0.4s ease; }
+            .load-now-btn.is-error { animation: loadBtnShake 0.45s ease; }
+            .load-now-spinner { width: 14px; height: 14px; border: 3px solid rgba(0,0,0,0.25); border-top-color: #000; border-radius: 50%; animation: loadBtnSpin 0.7s linear infinite; }
+          `}</style>
+          <button
+            onClick={handleLoadNow}
+            disabled={loadState === 'loading'}
+            className={`load-now-btn is-${loadState}`}
+            style={{ ...btnStyle(true), width: 'auto', padding: '10px 30px', backgroundColor: loadBtnColors.bg, color: loadBtnColors.fg, borderColor: loadBtnColors.border }}
+          >
+            {loadState === 'loading' && <span className="load-now-spinner" />}
+            {loadState === 'ok' && <span style={{ fontSize: '15px', lineHeight: 1 }}>✓</span>}
+            {loadState === 'error' && <span style={{ fontSize: '15px', lineHeight: 1 }}>✕</span>}
+            <span>{loadBtnLabel}</span>
           </button>
         </div>
         {scrapeErrorText && (

@@ -11,9 +11,42 @@ let navError = null;
 // Busca un navegador Chromium para el scraper: primero el que descarga Puppeteer (existe en la
 // PC de desarrollo pero NO en la de un cliente con la app portable), y si no está, usa el
 // Chrome o Edge instalado en el sistema (Edge viene con todo Windows 10/11).
+// Busca un ejecutable de Chromium dentro de una carpeta (hasta 4 niveles de profundidad).
+function findChromiumIn(dir, depth = 0) {
+  const names = process.platform === 'win32'
+    ? ['chrome-headless-shell.exe', 'chrome.exe']
+    : ['chrome-headless-shell', 'chrome'];
+  let entries;
+  try { entries = fs.readdirSync(dir, { withFileTypes: true }); } catch (e) { return null; }
+  for (const name of names) {
+    const hit = entries.find(en => en.isFile() && en.name === name);
+    if (hit) return path.join(dir, hit.name);
+  }
+  if (depth >= 4) return null;
+  for (const en of entries) {
+    if (en.isDirectory()) {
+      const found = findChromiumIn(path.join(dir, en.name), depth + 1);
+      if (found) return found;
+    }
+  }
+  return null;
+}
+
 function findBrowserExecutable() {
   const fromEnv = process.env.PUPPETEER_EXECUTABLE_PATH;
   if (fromEnv && fs.existsSync(fromEnv)) return fromEnv;
+
+  // Chromium que se empaqueta junto con la app (carpeta "chromium" en los recursos del .exe):
+  // así el programa funciona aunque la PC no tenga Chrome, Edge ni ninguna otra dependencia.
+  const bundledRoots = [];
+  if (process.resourcesPath) bundledRoots.push(path.join(process.resourcesPath, 'chromium'));
+  bundledRoots.push(path.join(__dirname, '..', '..', 'chromium'));
+  for (const root of bundledRoots) {
+    if (fs.existsSync(root)) {
+      const found = findChromiumIn(root);
+      if (found) return found;
+    }
+  }
 
   try {
     const bundled = puppeteer.executablePath();

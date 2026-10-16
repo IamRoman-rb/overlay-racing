@@ -177,7 +177,11 @@ async function createPublicTunnel() {
     broadcast('update-ip', null);
 
     const { startTunnel } = await import('untun');
-    publicTunnel = await startTunnel({ port: 8080 });
+    // acceptCloudflareNotice: sin esto, en una PC donde todavía no está descargado el binario de
+    // cloudflared, untun intenta preguntar por consola (que en la app empaquetada no existe), cancela
+    // el túnel y el QR de votación nunca funciona. Con la opción, lo descarga solo la primera vez.
+    publicTunnel = await startTunnel({ port: 8080, acceptCloudflareNotice: true });
+    if (!publicTunnel) throw new Error('No se pudo iniciar el túnel de Cloudflare');
     const tunnelUrl = await publicTunnel.getURL();
 
     if (!tunnelUrl) throw new Error('Cloudflare no devolvió una URL pública');

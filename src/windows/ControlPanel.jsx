@@ -400,12 +400,13 @@ export default function ControlPanel() {
   };
 
   const handleScrape = async () => {
-    if (isScrapingRef.current) return;
+    // Devuelve 'ok' | 'error' | 'busy' | 'nocode' para que el botón de AJUSTES pueda animar el resultado
+    if (isScrapingRef.current) return 'busy';
     let rawCode = configRef.current.speedhiveCode || '';
     rawCode = rawCode.trim();
     const provider = configRef.current.timingProvider || 'speedhive';
 
-    if (!rawCode) { alert(t('panel.alertNoRaceCode')); setAutoScrape(false); return; }
+    if (!rawCode) { alert(t('panel.alertNoRaceCode')); setAutoScrape(false); return 'nocode'; }
 
     let finalCode = rawCode;
     if (provider === 'speedhive') {
@@ -422,23 +423,28 @@ export default function ControlPanel() {
     }
 
     isScrapingRef.current = true;
+    let status = 'ok';
     try {
       if (ipcRenderer) {
         const data = await ipcRenderer.invoke('scrape-timing', { provider, code: finalCode });
         if (data?.error) {
           // Se conservan los últimos datos buenos en pantalla; solo se avisa del problema
           setScrapeError(data.error);
+          status = 'error';
         } else if (data && data.drivers) {
           setDrivers(data.drivers);
           if (data.session) setSessionInfo(data.session);
           setScrapeError(data.drivers.length === 0 ? { code: 'NO_DRIVERS' } : null);
+          if (data.drivers.length === 0) status = 'error';
         }
       }
     } catch (e) {
       console.error("Error scrapeando:", e);
       setScrapeError({ code: 'SCRAPER_ERROR', message: e?.message || '' });
+      status = 'error';
     }
     isScrapingRef.current = false;
+    return status;
   };
 
   const handleSelectCategoryLogo = async () => {
