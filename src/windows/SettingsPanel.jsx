@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { LANGUAGES } from '../i18n/translations';
 
-export default function SettingsPanel({ config, handleDirectSave, handleScrape, colors, inputStyle, btnStyle, t, language, setLanguage, onExportSettings, onImportSettings, onResetAllPositions, scrapeErrorText, onGetDiagnostics, onOpenLogs }) {
+export default function SettingsPanel({ config, handleDirectSave, handleScrape, colors, inputStyle, btnStyle, t, language, setLanguage, onExportSettings, onImportSettings, onResetAllPositions, scrapeErrorText, onGetDiagnostics, onOpenLogs, onGetNetworkUrls }) {
 
   const chromaColors = [
     { label: t('ajustes.chromaGreen'), value: '#00FF00' },
@@ -46,6 +46,18 @@ export default function SettingsPanel({ config, handleDirectSave, handleScrape, 
     if (next !== 'idle') {
       loadResetTimer.current = setTimeout(() => setLoadState('idle'), 2500);
     }
+  };
+
+  // Direcciones para conectar vMix desde otra PC de la red
+  const [networkUrls, setNetworkUrls] = useState([]);
+  const [copiedUrl, setCopiedUrl] = useState('');
+  useEffect(() => {
+    let cancelled = false;
+    Promise.resolve(onGetNetworkUrls?.()).then(list => { if (!cancelled) setNetworkUrls(list || []); }).catch(() => {});
+    return () => { cancelled = true; };
+  }, [onGetNetworkUrls]);
+  const handleCopyUrl = async (url) => {
+    try { await navigator.clipboard.writeText(url); setCopiedUrl(url); setTimeout(() => setCopiedUrl(''), 2000); } catch (e) { console.warn('No se pudo copiar al portapapeles:', e); }
   };
 
   // Panel de diagnóstico: muestra qué navegador usa el scraper y las últimas líneas del log
@@ -230,6 +242,31 @@ export default function SettingsPanel({ config, handleDirectSave, handleScrape, 
           {t('ajustes.resetAllPositionsBtn')}
         </button>
       </div>
+      {/* SECCIÓN: CONEXIÓN CON VMIX DESDE OTRA PC */}
+      <div style={{ marginTop: '20px', backgroundColor: colors.bgPanel, padding: '20px', borderRadius: '8px', border: `1px solid ${colors.border}` }}>
+        <label style={{ display: 'block', marginBottom: '10px', fontSize: '12px', fontWeight: 'bold', color: colors.textMuted }}>
+          {t('ajustes.vmixSection')}
+        </label>
+        <p style={{ fontSize: '12px', color: colors.textMuted, lineHeight: '1.6', marginTop: 0, marginBottom: '15px', maxWidth: '760px' }}>
+          {t('ajustes.vmixDescription')}
+        </p>
+        {networkUrls.length === 0 ? (
+          <div style={{ fontSize: '12px', color: colors.yellow, fontWeight: 'bold' }}>{t('ajustes.vmixNoNetwork')}</div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            {networkUrls.map(item => (
+              <div key={item.url} style={{ display: 'flex', alignItems: 'center', gap: '10px', backgroundColor: colors.bgApp, border: `1px solid ${colors.border}`, borderRadius: '6px', padding: '8px 12px' }}>
+                <span style={{ fontSize: '10px', color: colors.textMuted, minWidth: '110px' }}>{item.adapter}</span>
+                <span style={{ fontFamily: 'monospace', fontSize: '14px', color: colors.yellow, flex: 1, wordBreak: 'break-all' }}>{item.url}</span>
+                <button onClick={() => handleCopyUrl(item.url)} style={{ ...btnStyle(false), width: 'auto', padding: '6px 14px', fontSize: '10px' }}>
+                  {copiedUrl === item.url ? t('ajustes.vmixCopied') : t('ajustes.vmixCopy')}
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
       {/* SECCIÓN 5: DIAGNÓSTICO */}
       <div style={{ marginTop: '20px', backgroundColor: colors.bgPanel, padding: '20px', borderRadius: '8px', border: `1px solid ${colors.border}` }}>
         <label style={{ display: 'block', marginBottom: '10px', fontSize: '12px', fontWeight: 'bold', color: colors.textMuted }}>

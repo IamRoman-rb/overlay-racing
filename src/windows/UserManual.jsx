@@ -75,6 +75,13 @@ export default function UserManual({ colors, t, language }) {
           <li style={li}>Como URL usá: <span style={code}>http://localhost:8080/#/overlay</span> (si vMix está en esta misma PC) o{' '}
             <span style={code}>http://[IP-de-esta-PC]:8080/#/overlay</span> (si vMix está en otra PC de la misma red).</li>
         </ol>
+        <div style={{ ...note, backgroundColor: 'rgba(52, 152, 219, 0.1)', borderColor: '#3498db' }}>
+          🖧 <b>¿vMix está en otra PC?</b> (por ejemplo, conectadas por cable de red RJ45): <b>no se puede usar localhost</b>, porque ahí
+          "localhost" es la PC de vMix y no esta. Usá la dirección con la IP de esta PC, que figura lista para copiar en la pestaña
+          <b> AJUSTES</b>, sección "CONEXIÓN CON VMIX" (por ejemplo <span style={code}>http://192.168.1.10:8080/#/overlay</span>). Ambas PC
+          tienen que estar en la misma red; si las conectás con un cable directo, asignale una IP fija a cada una (por ejemplo 192.168.1.10 y
+          192.168.1.11, máscara 255.255.255.0). Si no conecta, permití Race Dynamics en el Firewall de Windows para redes privadas.
+        </div>
         <div style={note}>
           ⚠️ La Opción B solo funciona con el programa ya instalado (el .exe empaquetado), no mientras se está
           ejecutando en modo desarrollo. Ahí sí es transparente de verdad y no necesita Chroma Key. Si tenés dudas

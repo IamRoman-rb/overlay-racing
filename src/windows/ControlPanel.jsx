@@ -562,6 +562,7 @@ export default function ControlPanel() {
   const handleHidePenalty = () => { if (ipcRenderer) ipcRenderer.send('hide-penalty'); };
 
   // --- DIAGNÓSTICO (AJUSTES): información del scraper y log para PCs de clientes ---
+  const handleGetNetworkUrls = async () => (ipcRenderer ? ipcRenderer.invoke('get-network-urls') : []);
   const handleGetDiagnostics = async () => (ipcRenderer ? ipcRenderer.invoke('get-diagnostics') : null);
   const handleOpenLogs = () => { if (ipcRenderer) ipcRenderer.invoke('open-logs-folder'); };
 
@@ -1267,7 +1268,7 @@ export default function ControlPanel() {
       )}
 
       {activeTab === 'ajustes' && (
-        <SettingsPanel config={config} handleDirectSave={handleDirectSave} handleScrape={handleScrape} colors={colors} inputStyle={inputStyle} btnStyle={btnStyle} t={t} language={language} setLanguage={setLanguage} onExportSettings={handleExportSettings} onImportSettings={handleImportSettings} onResetAllPositions={handleResetAllPositions} scrapeErrorText={scrapeErrorText} onGetDiagnostics={handleGetDiagnostics} onOpenLogs={handleOpenLogs} />
+        <SettingsPanel config={config} handleDirectSave={handleDirectSave} handleScrape={handleScrape} colors={colors} inputStyle={inputStyle} btnStyle={btnStyle} t={t} language={language} setLanguage={setLanguage} onExportSettings={handleExportSettings} onImportSettings={handleImportSettings} onResetAllPositions={handleResetAllPositions} scrapeErrorText={scrapeErrorText} onGetNetworkUrls={handleGetNetworkUrls} onGetDiagnostics={handleGetDiagnostics} onOpenLogs={handleOpenLogs} />
       )}
 
       {activeTab === 'personalizar' && (

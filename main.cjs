@@ -787,6 +787,20 @@ ipcMain.handle('save-excel-template', async (event, language) => {
   }
 });
 
+// Direcciones por las que otra PC de la red (por ejemplo la que corre vMix) puede abrir el overlay.
+ipcMain.handle('get-network-urls', () => {
+  const urls = [];
+  const nets = networkInterfaces();
+  for (const name of Object.keys(nets)) {
+    for (const net of nets[name]) {
+      if (net.family === 'IPv4' && !net.internal) {
+        urls.push({ adapter: name, address: net.address, url: `http://${net.address}:8080/#/overlay` });
+      }
+    }
+  }
+  return urls;
+});
+
 ipcMain.handle('get-local-ip', () => getVotingUrl());
 ipcMain.handle('get-steward-url', () => getStewardUrl());
 ipcMain.handle('get-votes', () => votesData);
