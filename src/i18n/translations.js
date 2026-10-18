@@ -1028,7 +1028,7 @@ export function createTranslator(language) {
     }
     if (val === undefined) return key;
     if (vars) {
-      Object.keys(vars).forEach(k => { val = val.replaceAll(`{${k}}`, vars[k]); });
+      Object.keys(vars).forEach(k => { val = val.split(`{${k}}`).join(vars[k]); });
     }
     return val;
   };
