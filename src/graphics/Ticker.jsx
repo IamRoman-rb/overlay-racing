@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { getSkinStyle } from '../utils/skinStyles';
+import MarqueeText from './MarqueeText';
 
 const PODIUM_COLORS = { 1: '#ffd700', 2: '#c0c0c0', 3: '#cd7f32' };
 
@@ -29,6 +30,8 @@ export default function Ticker({ drivers, isVisible, config, id = 'ticker', sess
   const isSpotlight = tickerFormat === 'spotlight';
   const isBoard = tickerFormat === 'board';
   const skin = getSkinStyle(tickerFormat, { themeMain, themeAccent });
+  // Nombre del evento / sesión (si es largo, se desplaza dentro de su placa)
+  const eventName = config?.eventName || config?.campeonato || '';
   const barHeight = isSpotlight ? '110px' : (isCompact ? '46px' : (hasCustomBg ? '80px' : '60px'));
 
   // Rotación automática para el formato "Spotlight" (un piloto a la vez, en grande)
@@ -95,9 +98,10 @@ export default function Ticker({ drivers, isVisible, config, id = 'ticker', sess
               flex: 1, backgroundColor: hasCustomBg ? 'rgba(0,0,0,0.4)' : themeMain,
               display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 10px'
             }}>
-              <span style={{ color: '#fff', fontWeight: '900', fontSize: '20px', textAlign: 'center', textTransform: 'uppercase', lineHeight: '1.15' }}>
-                {config?.eventName || config?.campeonato || 'CATEGORÍA'}
-              </span>
+              <MarqueeText
+                text={eventName || 'CATEGORÍA'} align="center"
+                style={{ color: '#fff', fontWeight: '900', fontSize: '20px', textTransform: 'uppercase', lineHeight: '1.3' }}
+              />
             </div>
             <div style={{
               flex: 1, backgroundColor: hasCustomBg ? 'rgba(0,0,0,0.6)' : themeHeaderBg,
@@ -108,7 +112,7 @@ export default function Ticker({ drivers, isVisible, config, id = 'ticker', sess
                 {sessionInfo?.laps || '-'}
               </span>
               <span style={{ color: themeTitleText, fontWeight: 'bold', fontSize: '11px', letterSpacing: '1px', marginTop: '2px' }}>
-                {sessionInfo?.name || 'VUELTA'}
+                VUELTAS
               </span>
             </div>
           </div>
@@ -212,6 +216,19 @@ export default function Ticker({ drivers, isVisible, config, id = 'ticker', sess
             {config?.logo && <img src={config.logo} alt="Productora" style={{ height: '45px', maxWidth: '120px', objectFit: 'contain' }} />}
             {config?.logo && config?.categoryLogo && <div style={{ height: '35px', width: '2px', backgroundColor: 'rgba(255,255,255,0.2)' }} />}
             {config?.categoryLogo && <img src={config.categoryLogo} alt="Categoría" style={{ height: '45px', maxWidth: '120px', objectFit: 'contain' }} />}
+          </div>
+        )}
+
+        {!hasCustomBg && eventName && (
+          <div style={{
+            height: '100%', width: isCompact ? '220px' : '300px', flexShrink: 0, boxSizing: 'border-box', padding: '0 15px',
+            backgroundColor: themeMain, borderRight: `3px solid ${themeAccent}`, zIndex: 10,
+            display: 'flex', alignItems: 'center'
+          }}>
+            <MarqueeText
+              text={eventName} align="center"
+              style={{ color: '#fff', fontWeight: '900', fontSize: isCompact ? '15px' : '19px', textTransform: 'uppercase' }}
+            />
           </div>
         )}
 
