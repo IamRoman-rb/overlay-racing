@@ -38,6 +38,7 @@ const dbPath = path.join(userDataPath, 'database.json');
 const posPath = path.join(userDataPath, 'posiciones.json');
 const backupPath = path.join(userDataPath, 'last_race.json');
 const lapTimesPath = path.join(userDataPath, 'lap_times.json');
+const votesHistoryPath = path.join(userDataPath, 'votes_history.json');
 
 // --- LOG A ARCHIVO: en la app instalada no hay consola, así que todo console.log/warn/error se copia
 // a un archivo para poder diagnosticar problemas en PCs de clientes (ver AJUSTES > DIAGNÓSTICO). ---
@@ -611,6 +612,72 @@ ipcMain.on('toggle-lap-counter', (e, data) => { broadcastState.lapCounter = data
 ipcMain.on('reset-votes', () => {
   votesData = {};
   broadcast('update-votes', votesData);
+});
+
+// --- HISTORIAL DE VOTACIONES POR CATEGORÍA ---
+// Cada registro guarda el ranking completo de una categoría/carrera de un día (con los nombres de los
+// pilotos tal como estaban al guardar, porque al cambiar de categoría la lista de pilotos cambia).
+function readVotesHistory() {
+  try {
+    if (fs.existsSync(votesHistoryPath)) {
+      const parsed = JSON.parse(fs.readFileSync(votesHistoryPath, 'utf-8'));
+      if (Array.isArray(parsed)) return parsed;
+    }
+  } catch (e) {}
+  return [];
+}
+function writeVotesHistory(list) {
+  try { fs.writeFileSync(votesHistoryPath, JSON.stringify(list, null, 2)); return true; } catch (e) { return false; }
+}
+function localDayString(date) {
+  const pad = (n) => String(n).padStart(2, '0');
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+}
+
+ipcMain.handle('get-vote-history', () => readVotesHistory());
+
+// data: { category, drivers: [{number, name}], resetAfter }
+// Si ya hay un registro de la misma categoría el mismo día, se reemplaza (volver a guardar = actualizar).
+ipcMain.handle('save-vote-record', (event, data) => {
+  const category = String(data?.category || '').trim();
+  if (!category) return { ok: false, reason: 'NO_CATEGORY' };
+
+  const namesByNumber = {};
+  (data?.drivers || []).forEach(d => { if (d?.number != null) namesByNumber[String(d.number)] = d.name || ''; });
+
+  const results = Object.keys(votesData)
+    .filter(num => votesData[num] > 0)
+    .map(num => ({ number: String(num), name: namesByNumber[num] || '', votes: votesData[num] }))
+    .sort((a, b) => b.votes - a.votes);
+  if (results.length === 0) return { ok: false, reason: 'NO_VOTES' };
+
+  const now = new Date();
+  const day = localDayString(now);
+  const record = {
+    id: `${now.getTime()}`,
+    category,
+    day,
+    savedAt: now.toISOString(),
+    totalVotes: results.reduce((sum, r) => sum + r.votes, 0),
+    results
+  };
+
+  const sameKey = (r) => r.day === day && String(r.category).trim().toLowerCase() === category.toLowerCase();
+  const history = readVotesHistory().filter(r => !sameKey(r));
+  history.push(record);
+  if (!writeVotesHistory(history)) return { ok: false, reason: 'WRITE_FAILED' };
+
+  if (data?.resetAfter) {
+    votesData = {};
+    broadcast('update-votes', votesData);
+  }
+  return { ok: true, record, history };
+});
+
+ipcMain.handle('delete-vote-record', (event, id) => {
+  const history = readVotesHistory().filter(r => r.id !== id);
+  writeVotesHistory(history);
+  return history;
 });
 ipcMain.on('toggle-virtual-champ', (e, data) => { broadcastState.virtualChamp = data; broadcast('set-virtual-champ', data); });
 

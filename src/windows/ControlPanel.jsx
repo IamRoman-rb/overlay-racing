@@ -5,6 +5,7 @@ import CustomizePanel from '../windows/CustomizePanel';
 import DriversTable from '../windows/DriversTable';
 import TrackMapPanel from '../windows/TrackMapPanel';
 import UserManual from '../windows/UserManual';
+import VoteHistory from '../windows/VoteHistory';
 import banderaCuadrosImg from '../assets/bandera cuadros.jpg';
 import { createTranslator } from '../i18n/translations';
 
@@ -1267,6 +1268,10 @@ export default function ControlPanel() {
                 );
               });
             })()}
+          </div>
+
+          <div style={{ borderTop: `1px solid ${colors.border}`, marginTop: '35px', paddingTop: '30px' }}>
+            <VoteHistory votes={votes} drivers={drivers} sessionInfo={sessionInfo} language={language} colors={colors} inputStyle={inputStyle} btnStyle={btnStyle} t={t} />
           </div>
         </div>
       )}
