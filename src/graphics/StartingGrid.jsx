@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import pilotoAnonimo from '../assets/piloto_anonimo.png';
 import { getSkinStyle } from '../utils/skinStyles';
 import MarqueeText from './MarqueeText';
+import { getAnimDuration } from '../utils/animationTiming';
 
 let ipcRenderer = null;
 if (typeof window !== 'undefined' && typeof window.require === 'function') {
@@ -26,6 +27,7 @@ export default function StartingGrid({ drivers, config, isVisible, id = 'grid' }
   const customBg = config[`design_${id}`];
   const bRad = config[`borderRadius_${id}`] || '8px';
   const animStyle = config[`animationStyle_${id}`] || 'slide';
+  const animDur = getAnimDuration(config, id);
 
   // TIPO DE GRILLA: 'standard', 'photos', 'cinematic' o un skin (pro/gradient/glass, que reusan el layout estándar)
   const gridFormat = config?.gridFormat || 'standard';
@@ -89,7 +91,7 @@ export default function StartingGrid({ drivers, config, isVisible, id = 'grid' }
       display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
       backgroundColor: 'transparent',
       zIndex: 30,
-      transition: 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+      transition: `all ${animDur}s cubic-bezier(0.175, 0.885, 0.32, 1.275)`,
       opacity: isVisible ? 1 : 0,
       transform: isVisible ? `scale(${pos.scale}) translateY(0)` : transformHidden,
       pointerEvents: isVisible ? 'auto' : 'none'

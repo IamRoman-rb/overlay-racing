@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { getSkinStyle } from '../utils/skinStyles';
 import MarqueeText from './MarqueeText';
+import { getAnimDuration } from '../utils/animationTiming';
 
 const PODIUM_COLORS = { 1: '#ffd700', 2: '#c0c0c0', 3: '#cd7f32' };
 
@@ -24,6 +25,7 @@ export default function Ticker({ drivers, isVisible, config, id = 'ticker', sess
   const hasCustomBg = !!customBg;
   const bRad = config[`borderRadius_${id}`] || '8px';
   const animStyle = config[`animationStyle_${id}`] || 'slide'
+  const animDur = getAnimDuration(config, id);
 
   const isCompact = tickerFormat === 'compact';
   const isPodium = tickerFormat === 'podium';
@@ -76,7 +78,7 @@ export default function Ticker({ drivers, isVisible, config, id = 'ticker', sess
       <div style={{
         position: 'absolute', left: `${pos.x}px`, top: `${pos.y}px`,
         transformOrigin: 'top left', zIndex: 20, width: '1920px',
-        transition: 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+        transition: `all ${animDur}s cubic-bezier(0.175, 0.885, 0.32, 1.275)`,
         opacity: isVisible ? 1 : 0,
         transform: isVisible ? `scale(${pos.scale}) translateY(0)` : transformHidden,
         pointerEvents: isVisible ? 'auto' : 'none'
@@ -175,7 +177,7 @@ export default function Ticker({ drivers, isVisible, config, id = 'ticker', sess
       height: barHeight,
       backgroundImage: hasCustomBg ? `url(${customBg})` : 'none',
       backgroundSize: '100% 100%', backgroundRepeat: 'no-repeat', backgroundPosition: 'center',
-      transition: 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+      transition: `all ${animDur}s cubic-bezier(0.175, 0.885, 0.32, 1.275)`,
       opacity: isVisible ? 1 : 0,
       transform: isVisible ? `scale(${pos.scale}) translateY(0)` : transformHidden,
       pointerEvents: isVisible ? 'auto' : 'none'

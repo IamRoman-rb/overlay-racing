@@ -758,6 +758,20 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
               <option value="rotate">{t('personalizar.animRotate')}</option>
             </select>
           </div>
+
+          {/* La alerta de sanciones aparece/desaparece sin transición, así que no tiene duración configurable */}
+          {selectedGraphic !== 'penaltyAlert' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+              <label style={{ fontSize: '9px', color: colors.textMuted, fontWeight: 'bold' }}>{t('personalizar.durationLabel')}</label>
+              <input
+                type="number" min="0" max="10" step="0.1"
+                value={config[`animationDuration_${selectedGraphic}`] ?? ''}
+                placeholder={['finalResults', 'winner'].includes(selectedGraphic) ? '0.5' : '0.4'}
+                onChange={(e) => onConfigChange(`animationDuration_${selectedGraphic}`, e.target.value)}
+                style={{ ...inputStyle, padding: '10px', fontSize: '11px' }}
+              />
+            </div>
+          )}
         </div>
 
         <h3 style={{ color: colors.yellow, marginBottom: '15px' }}>{t('personalizar.coordsTitle')}</h3>

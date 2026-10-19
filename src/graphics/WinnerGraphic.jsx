@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import pilotoAnonimo from '../assets/piloto_anonimo.png';
 import { getSkinStyle } from '../utils/skinStyles';
+import { getAnimDuration } from '../utils/animationTiming';
 
 export default function WinnerGraphic({ driver, isVisible, config, id = 'winner', sessionInfo }) {
   const pos = config?.positions?.[id] || { x: 440, y: 550, scale: 1 };
@@ -16,6 +17,7 @@ export default function WinnerGraphic({ driver, isVisible, config, id = 'winner'
   const hasCustomBg = !!customBg;
   const bRad = config[`borderRadius_${id}`] || '8px';
   const animStyle = config[`animationStyle_${id}`] || 'slide'
+  const animDur = getAnimDuration(config, id, 0.5);
   const winnerFormat = config?.winnerFormat || 'standard';
   // Mismo nombre de evento que muestra la torre; si no hay sesión en vivo, cae al campeonato
   const eventName = sessionInfo?.name || config?.eventName || config?.campeonato || 'CARRERA';
@@ -46,7 +48,7 @@ export default function WinnerGraphic({ driver, isVisible, config, id = 'winner'
   const wrapperStyle = {
     position: 'absolute', left: `${pos.x}px`, top: `${pos.y}px`, transformOrigin: 'top left',
     zIndex: 40, pointerEvents: 'none',
-    transition: 'all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+    transition: `all ${animDur}s cubic-bezier(0.175, 0.885, 0.32, 1.275)`,
     opacity: isVisible ? 1 : 0,
     transform: isVisible ? `scale(${pos.scale}) translateY(0)` : transformHidden
   };

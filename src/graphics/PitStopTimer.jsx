@@ -1,6 +1,7 @@
 // src/graphics/PitStopTimer.jsx
 import { useState, useEffect, useRef } from 'react';
 import { getSkinStyle } from '../utils/skinStyles';
+import { getAnimDuration } from '../utils/animationTiming';
 
 export default function PitStopTimer({ isVisible, config, pitState, id = 'pitStop' }) {
   const pos = config?.positions?.[id] || { x: 850, y: 900, scale: 1 };
@@ -16,6 +17,7 @@ export default function PitStopTimer({ isVisible, config, pitState, id = 'pitSto
   const customBg = config[`design_${id}`];
   const bRad = config[`borderRadius_${id}`] || '8px';
   const animStyle = config[`animationStyle_${id}`] || 'slide';
+  const animDur = getAnimDuration(config, id);
   const pitStopFormat = config?.pitStopFormat || 'standard';
   const skin = getSkinStyle(pitStopFormat, { themeMain, themeAccent });
 
@@ -69,7 +71,7 @@ export default function PitStopTimer({ isVisible, config, pitState, id = 'pitSto
 
   const wrapperStyle = {
     position: 'absolute', left: `${pos.x}px`, top: `${pos.y}px`, transformOrigin: 'top left',
-    zIndex: 48, transition: 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+    zIndex: 48, transition: `all ${animDur}s cubic-bezier(0.175, 0.885, 0.32, 1.275)`,
     opacity: isVisible ? 1 : 0, transform: isVisible ? `scale(${pos.scale}) translateX(0)` : transformHidden
   };
 

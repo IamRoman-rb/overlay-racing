@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { getSkinStyle } from '../utils/skinStyles';
+import { getAnimDuration } from '../utils/animationTiming';
 
 export default function FastestLap({ drivers, config, isVisible, id = 'fastestLap' }) {
   const pos = config?.positions?.[id] || { x: 440, y: 150, scale: 1 };
@@ -17,6 +18,7 @@ export default function FastestLap({ drivers, config, isVisible, id = 'fastestLa
   const hasCustomBg = !!customBg;
   const bRad = config[`borderRadius_${id}`] || '8px';
   const animStyle = config[`animationStyle_${id}`] || 'slide';
+  const animDur = getAnimDuration(config, id);
   const fastestLapFormat = config?.fastestLapFormat || 'standard';
   const skin = getSkinStyle(fastestLapFormat, { themeMain, themeAccent });
 
@@ -56,7 +58,7 @@ export default function FastestLap({ drivers, config, isVisible, id = 'fastestLa
     position: 'absolute', left: `${pos.x}px`, top: `${pos.y}px`,
     transform: `scale(${pos.scale})`, transformOrigin: 'top left',
     zIndex: 40, pointerEvents: 'none',
-    transition: 'opacity 0.4s ease-in-out',
+    transition: `opacity ${animDur}s ease-in-out`,
     opacity: isVisible ? 1 : 0
   };
 
@@ -73,7 +75,7 @@ export default function FastestLap({ drivers, config, isVisible, id = 'fastestLa
           boxShadow: hasCustomBg ? 'none' : '0 10px 30px rgba(0,0,0,0.6)',
           borderRadius: bRad, overflow: 'hidden',
           transform: isVisible ? 'translateY(0) scale(1)' : transformHidden,
-          transition: 'transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
+          transition: `transform ${animDur}s cubic-bezier(0.175, 0.885, 0.32, 1.275)`
         }}>
           <span style={{ color: themeTitleText, fontWeight: '900', fontSize: '11px', fontStyle: 'italic', letterSpacing: '1px', whiteSpace: 'nowrap' }}>
             RÉCORD
@@ -104,7 +106,7 @@ export default function FastestLap({ drivers, config, isVisible, id = 'fastestLa
           boxShadow: hasCustomBg ? 'none' : '0 10px 30px rgba(0,0,0,0.6)',
           borderRadius: bRad, overflow: 'hidden', padding: '16px 15px',
           transform: isVisible ? 'translateY(0) scale(1)' : transformHidden,
-          transition: 'transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
+          transition: `transform ${animDur}s cubic-bezier(0.175, 0.885, 0.32, 1.275)`
         }}>
           <span style={{ color: '#fff', fontWeight: '900', fontSize: '13px', fontStyle: 'italic', letterSpacing: '2px', opacity: 0.9 }}>
             RECORD DE VUELTA
@@ -127,7 +129,7 @@ export default function FastestLap({ drivers, config, isVisible, id = 'fastestLa
         <div style={{
           display: 'flex', flexDirection: 'column', gap: '2px',
           transform: isVisible ? 'translateY(0) scale(1)' : transformHidden,
-          transition: 'transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
+          transition: `transform ${animDur}s cubic-bezier(0.175, 0.885, 0.32, 1.275)`
         }}>
           <span style={{ color: themeTitleText, fontWeight: '900', fontSize: '13px', fontStyle: 'italic', letterSpacing: '1px', textShadow: '2px 2px 6px rgba(0,0,0,0.9)' }}>
             RECORD DE VUELTA
@@ -159,7 +161,7 @@ export default function FastestLap({ drivers, config, isVisible, id = 'fastestLa
          borderRadius: bRad,
          overflow: 'hidden',
          transform: isVisible ? 'translateY(0) scale(1)' : transformHidden,
-         transition: 'transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+         transition: `transform ${animDur}s cubic-bezier(0.175, 0.885, 0.32, 1.275)`,
          padding: hasCustomBg ? '10px' : '0'
        }}>
          {/* ENCABEZADO */}

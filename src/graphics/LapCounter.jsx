@@ -1,5 +1,6 @@
 // src/graphics/LapCounter.jsx
 import { getSkinStyle } from '../utils/skinStyles';
+import { getAnimDuration } from '../utils/animationTiming';
 
 export default function LapCounter({ isVisible, config, sessionInfo, id = 'lapCounter' }) {
   const pos = config?.positions?.[id] || { x: 1700, y: 40, scale: 1 };
@@ -16,6 +17,7 @@ export default function LapCounter({ isVisible, config, sessionInfo, id = 'lapCo
   const hasCustomBg = !!customBg;
   const bRad = config[`borderRadius_${id}`] !== undefined ? config[`borderRadius_${id}`] : '8px';
   const animStyle = config[`animationStyle_${id}`] || 'slide';
+  const animDur = getAnimDuration(config, id);
   const lapCounterFormat = config?.lapCounterFormat || 'standard';
   const skin = getSkinStyle(lapCounterFormat, { themeMain, themeAccent });
 
@@ -30,7 +32,7 @@ export default function LapCounter({ isVisible, config, sessionInfo, id = 'lapCo
   const wrapperStyle = {
     position: 'absolute', left: `${pos.x}px`, top: `${pos.y}px`, transformOrigin: 'top right',
     zIndex: 40, pointerEvents: 'none',
-    transition: 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+    transition: `all ${animDur}s cubic-bezier(0.175, 0.885, 0.32, 1.275)`,
     opacity: isVisible ? 1 : 0,
     transform: isVisible ? `scale(${pos.scale}) translateY(0)` : transformHidden
   };

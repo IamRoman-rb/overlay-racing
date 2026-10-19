@@ -84,6 +84,7 @@ function getWindDirLabel(deg) {
 }
 
 import { getSkinStyle } from '../utils/skinStyles';
+import { getAnimDuration } from '../utils/animationTiming';
 
 export default function Weather({ data, isVisible, config, id = 'clima' }) {
   const pos = config?.positions?.[id] || { x: 20, y: 160, scale: 1 };
@@ -97,6 +98,7 @@ export default function Weather({ data, isVisible, config, id = 'clima' }) {
   const customBg = config?.[`design_${id}`];
   const bRad = config?.[`borderRadius_${id}`] || '8px';
   const animStyle = config?.[`animationStyle_${id}`] || 'slide';
+  const animDur = getAnimDuration(config, id);
   const climaFormat = config?.climaFormat || 'standard';
   const skin = getSkinStyle(climaFormat, { themeMain, themeAccent });
 
@@ -114,7 +116,7 @@ export default function Weather({ data, isVisible, config, id = 'clima' }) {
   const wrapperStyle = {
     position: 'absolute', left: `${pos.x}px`, top: `${pos.y}px`,
     transformOrigin: 'top left', zIndex: 15,
-    transition: 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+    transition: `all ${animDur}s cubic-bezier(0.175, 0.885, 0.32, 1.275)`,
     opacity: isVisible ? 1 : 0, pointerEvents: 'none',
     transform: isVisible ? `scale(${pos.scale}) translateX(0)` : transformHidden
   };

@@ -1,4 +1,5 @@
 import { getSkinStyle } from '../utils/skinStyles';
+import { getAnimDuration } from '../utils/animationTiming';
 
 export default function CustomZocalo({ isVisible, title, text, config, id = 'customZocalo' }) {
   const pos = config?.positions?.[id] || { x: 20, y: 550, scale: 1 };
@@ -14,6 +15,7 @@ export default function CustomZocalo({ isVisible, title, text, config, id = 'cus
   const hasCustomBg = !!customBg;
   const bRad = config?.[`borderRadius_${id}`] || '4px';
   const animStyle = config?.[`animationStyle_${id}`] || 'slide';
+  const animDur = getAnimDuration(config, id);
   const zocaloFormat = config?.customZocaloFormat || 'standard';
   const skin = getSkinStyle(zocaloFormat, { themeMain, themeAccent });
 
@@ -27,7 +29,7 @@ export default function CustomZocalo({ isVisible, title, text, config, id = 'cus
   const wrapperStyle = {
     position: 'absolute', left: `${pos.x}px`, top: `${pos.y}px`,
     transformOrigin: 'top left',
-    zIndex: 50, transition: 'opacity 0.4s ease-in-out, transform 0.4s ease-in-out',
+    zIndex: 50, transition: `opacity ${animDur}s ease-in-out, transform ${animDur}s ease-in-out`,
     opacity: isVisible ? 1 : 0,
     transform: isVisible ? `scale(${pos.scale}) translateX(0)` : transformHidden,
     pointerEvents: 'none'

@@ -1,4 +1,5 @@
 import { getSkinStyle } from '../utils/skinStyles';
+import { getAnimDuration } from '../utils/animationTiming';
 
 export default function LapTimeEvolution({ history, drivers, config, isVisible, focusDriver, id = 'lapTimesHistory' }) {
   const pos = config?.positions?.[id] || { x: 100, y: 500, scale: 1 };
@@ -12,6 +13,7 @@ export default function LapTimeEvolution({ history, drivers, config, isVisible, 
   const customBg = config?.[`design_${id}`];
   const bRad = config?.[`borderRadius_${id}`] || '8px';
   const animStyle = config?.[`animationStyle_${id}`] || 'slide';
+  const animDur = getAnimDuration(config, id);
   const chartFormat = config?.lapTimesHistoryFormat || 'standard';
   const isCompact = chartFormat === 'compact';
   const isLarge = chartFormat === 'large';
@@ -113,7 +115,7 @@ export default function LapTimeEvolution({ history, drivers, config, isVisible, 
       <div style={{
         position: 'absolute', left: `${pos.x}px`, top: `${pos.y}px`,
         transformOrigin: 'top left', zIndex: 40, pointerEvents: 'none',
-        transition: 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+        transition: `all ${animDur}s cubic-bezier(0.175, 0.885, 0.32, 1.275)`,
         opacity: isVisible ? 1 : 0,
         transform: isVisible ? `scale(${pos.scale}) translateY(0)` : transformHidden
       }}>
@@ -207,7 +209,7 @@ export default function LapTimeEvolution({ history, drivers, config, isVisible, 
     <div style={{
       position: 'absolute', left: `${pos.x}px`, top: `${pos.y}px`,
       transformOrigin: 'top left', zIndex: 40, pointerEvents: 'none',
-      transition: 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+      transition: `all ${animDur}s cubic-bezier(0.175, 0.885, 0.32, 1.275)`,
       opacity: isVisible ? 1 : 0,
       transform: isVisible ? `scale(${pos.scale}) translateY(0)` : transformHidden
     }}>

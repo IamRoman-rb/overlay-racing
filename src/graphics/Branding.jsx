@@ -2,6 +2,7 @@
 // Marca de agua con el logo de la productora y el de la categoría (los que se cargan en
 // PERSONALIZAR > Recursos multimedia). Se muestra/oculta con su botón del panel.
 import { getSkinStyle } from '../utils/skinStyles';
+import { getAnimDuration } from '../utils/animationTiming';
 
 export default function Branding({ isVisible, config, id = 'branding' }) {
   const pos = config?.positions?.[id] || { x: 1640, y: 900, scale: 1 };
@@ -14,6 +15,7 @@ export default function Branding({ isVisible, config, id = 'branding' }) {
   const hasCustomBg = !!customBg;
   const bRad = config?.[`borderRadius_${id}`] !== undefined ? config[`borderRadius_${id}`] : '8px';
   const animStyle = config?.[`animationStyle_${id}`] || 'slide';
+  const animDur = getAnimDuration(config, id);
   const format = config?.brandingFormat || 'standard';
   const show = config?.brandingShow || 'both';
   const skin = getSkinStyle(format, { themeMain, themeAccent });
@@ -33,7 +35,7 @@ export default function Branding({ isVisible, config, id = 'branding' }) {
   const wrapperStyle = {
     position: 'absolute', left: `${pos.x}px`, top: `${pos.y}px`, transformOrigin: 'top left',
     zIndex: 40, pointerEvents: 'none',
-    transition: 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+    transition: `all ${animDur}s cubic-bezier(0.175, 0.885, 0.32, 1.275)`,
     opacity: visible ? 1 : 0,
     transform: visible ? `scale(${pos.scale})` : transformHidden
   };

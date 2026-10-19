@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { getSkinStyle } from '../utils/skinStyles';
 import pilotoAnonimo from '../assets/piloto_anonimo.png';
+import { getAnimDuration } from '../utils/animationTiming';
 
 const PODIUM_COLORS = { 1: '#ffd700', 2: '#c0c0c0', 3: '#cd7f32' };
 
@@ -28,6 +29,7 @@ export default function FinalResults({ drivers, config, isVisible, id = 'finalRe
   const hasCustomBg = !!customBg;
   const bRad = config[`borderRadius_${id}`] || '8px';
   const animStyle = config[`animationStyle_${id}`] || 'slide';
+  const animDur = getAnimDuration(config, id, 0.5);
 
   const resultsFormat = config?.finalResultsFormat || 'standard';
   const isCompact = resultsFormat === 'compact';
@@ -92,7 +94,7 @@ export default function FinalResults({ drivers, config, isVisible, id = 'finalRe
       <div style={{
         position: 'absolute', left: `${pos.x}px`, top: `${pos.y}px`,
         transformOrigin: 'top left', zIndex: 35,
-        transition: 'all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+        transition: `all ${animDur}s cubic-bezier(0.175, 0.885, 0.32, 1.275)`,
         opacity: isVisible ? 1 : 0,
         transform: isVisible ? `scale(${pos.scale}) translateY(0)` : transformHidden,
         pointerEvents: isVisible ? 'auto' : 'none'
@@ -222,7 +224,7 @@ export default function FinalResults({ drivers, config, isVisible, id = 'finalRe
         transformOrigin: 'top left', zIndex: 35, 
         
         // CORRECCIÓN 2: Le decimos que anime "all" y le aplicamos el transformHidden
-        transition: 'all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275)', 
+        transition: `all ${animDur}s cubic-bezier(0.175, 0.885, 0.32, 1.275)`, 
         opacity: isVisible ? 1 : 0, 
         transform: isVisible ? `scale(${pos.scale}) translateY(0)` : transformHidden,
         

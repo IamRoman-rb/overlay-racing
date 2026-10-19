@@ -1,5 +1,6 @@
 import banderaCuadrosImg from '../assets/bandera cuadros.jpg';
 import { getSkinStyle } from '../utils/skinStyles';
+import { getAnimDuration } from '../utils/animationTiming';
 
 const FLAG_GLOW_COLOR = { red: '#e74c3c', black: '#ffcc00', blue: '#3498db', tricolor: '#ffffff', checkered: '#ffffff' };
 
@@ -21,6 +22,7 @@ export default function Flags({ activeFlags, config, id = 'flags' }) {
   const customBg = config[`design_${id}`];
   const bRad = config[`borderRadius_${id}`] || '8px';
   const animStyle = config[`animationStyle_${id}`] || 'slide';
+  const animDur = getAnimDuration(config, id);
   const flagsFormat = config?.flagsFormat || 'standard';
 
   // Lógica para la Bandera Negra con color de acento
@@ -87,7 +89,7 @@ export default function Flags({ activeFlags, config, id = 'flags' }) {
           boxShadow: useImageBg ? 'none' : '0 6px 20px rgba(0,0,0,0.6)',
           transform: isVisible ? 'translateY(0) scale(1)' : transformHidden,
           opacity: isVisible ? 1 : 0,
-          transition: 'transform 0.4s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.4s ease-in-out'
+          transition: `transform ${animDur}s cubic-bezier(0.25, 1, 0.5, 1), opacity ${animDur}s ease-in-out`
         }}>
           <h1 style={{ margin: 0, fontSize: '42px', fontWeight: '900', color: currentStyle.color, textTransform: 'uppercase', letterSpacing: '2px', textShadow: currentStyle.textShadow || '1px 1px 0px rgba(0,0,0,0.5)' }}>
             {label}
@@ -115,7 +117,7 @@ export default function Flags({ activeFlags, config, id = 'flags' }) {
           boxShadow: useImageBg ? 'none' : '0 5px 15px rgba(0,0,0,0.5)',
           transform: isVisible ? 'translateX(0) scale(1)' : 'translateX(-120%) scale(1)',
           opacity: isVisible ? 1 : 0,
-          transition: 'transform 0.4s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.4s ease-in-out'
+          transition: `transform ${animDur}s cubic-bezier(0.25, 1, 0.5, 1), opacity ${animDur}s ease-in-out`
         }}>
           <h2 style={{ margin: 0, fontSize: '22px', fontWeight: '900', color: currentStyle.color, textTransform: 'uppercase', textShadow: currentStyle.textShadow || '1px 1px 0px rgba(0,0,0,0.5)' }}>
             {label}
@@ -137,7 +139,7 @@ export default function Flags({ activeFlags, config, id = 'flags' }) {
           display: 'flex', borderRadius: bRad, overflow: 'hidden', boxShadow: '0 5px 15px rgba(0,0,0,0.5)',
           transform: isVisible ? 'translateY(0) scale(1)' : transformHidden,
           opacity: isVisible ? 1 : 0,
-          transition: 'transform 0.4s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.4s ease-in-out'
+          transition: `transform ${animDur}s cubic-bezier(0.25, 1, 0.5, 1), opacity ${animDur}s ease-in-out`
         }}>
           <div style={{
             width: '70px', background: useImageBg ? 'transparent' : currentStyle.bg,
@@ -173,7 +175,7 @@ export default function Flags({ activeFlags, config, id = 'flags' }) {
          textAlign: 'center', width: '100%',
          transform: isVisible ? 'translateY(0) scale(1)' : transformHidden,
          opacity: isVisible ? 1 : 0,
-         transition: 'transform 0.4s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.4s ease-in-out'
+         transition: `transform ${animDur}s cubic-bezier(0.25, 1, 0.5, 1), opacity ${animDur}s ease-in-out`
       }}>
          <h1 style={{
            margin: 0, fontSize: '36px', fontWeight: '900',

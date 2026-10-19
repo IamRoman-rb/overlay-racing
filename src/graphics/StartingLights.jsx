@@ -1,4 +1,5 @@
 import { getSkinStyle } from '../utils/skinStyles';
+import { getAnimDuration } from '../utils/animationTiming';
 
 export default function StartingLights({ isVisible, step = 0, config }) {
   if (!isVisible) return null;
@@ -8,6 +9,7 @@ export default function StartingLights({ isVisible, step = 0, config }) {
   const customBg = config?.[`design_${id}`];
   const bRad = config?.[`borderRadius_${id}`] || '12px';
   const animStyle = config?.[`animationStyle_${id}`] || 'slide';
+  const animDur = getAnimDuration(config, id);
   const lightsFormat = config?.startingLightsFormat || 'classic';
   const skin = getSkinStyle(lightsFormat, { themeMain: config?.themeMain || '#e74c3c', themeAccent: config?.themeAccent || '#f39c12' });
 
@@ -25,7 +27,7 @@ export default function StartingLights({ isVisible, step = 0, config }) {
     <div style={{
       position: 'absolute', left: `${pos.x}px`, top: `${pos.y}px`,
       transform: `scale(${pos.scale})`, transformOrigin: 'top left',
-      animation: `${animName} 0.4s ease-out`
+      animation: `${animName} ${animDur}s ease-out`
     }}>
       <style>{`
         @keyframes slideInLights { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }

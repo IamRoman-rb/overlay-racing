@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import pilotoAnonimo from '../assets/piloto_anonimo.png';
 import { getSkinStyle } from '../utils/skinStyles';
+import { getAnimDuration } from '../utils/animationTiming';
 
 export default function DriverInfo({ driver, config, isVisible, id = 'driverInfo' }) {
   const pos = config?.positions?.[id] || { x: 380, y: 335, scale: 1 };
@@ -19,6 +20,7 @@ export default function DriverInfo({ driver, config, isVisible, id = 'driverInfo
   // LECTURA DE BORDES Y ANIMACIÓN
   const bRad = config[`borderRadius_${id}`] || '8px';
   const animStyle = config[`animationStyle_${id}`] || 'slide';
+  const animDur = getAnimDuration(config, id);
   const driverInfoFormat = config?.driverInfoFormat || 'standard';
   const skin = getSkinStyle(driverInfoFormat, { themeMain, themeAccent });
 
@@ -45,7 +47,7 @@ export default function DriverInfo({ driver, config, isVisible, id = 'driverInfo
   const wrapperStyle = {
     position: 'absolute', left: `${pos.x}px`, top: `${pos.y}px`,
     transformOrigin: 'top left', zIndex: 45, pointerEvents: 'none',
-    transition: 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+    transition: `all ${animDur}s cubic-bezier(0.175, 0.885, 0.32, 1.275)`,
     opacity: isVisible ? 1 : 0,
     transform: isVisible ? `scale(${pos.scale}) translateX(0)` : transformHidden
   };
