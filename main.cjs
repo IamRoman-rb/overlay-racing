@@ -1075,6 +1075,16 @@ ipcMain.on('overlay-control', (event, action) => {
   else if (action === 'close') app.quit();
 });
 
+// Tras un alert()/confirm() nativo en Windows la ventana pierde el foco de teclado (los inputs no
+// dejan escribir); blur + focus fuerza a Windows a devolvérselo.
+ipcMain.on('refocus-window', (e) => {
+  const win = BrowserWindow.fromWebContents(e.sender);
+  if (!win || win.isDestroyed()) return;
+  win.blur();
+  win.focus();
+  e.sender.focus();
+});
+
 function createWindows() {
   const iconPath = path.join(__dirname, 'src', 'assets', 'logo.png');
 
