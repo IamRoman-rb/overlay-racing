@@ -18,7 +18,7 @@ export default function WinnerGraphic({ driver, isVisible, config, id = 'winner'
   const animStyle = config[`animationStyle_${id}`] || 'slide'
   const winnerFormat = config?.winnerFormat || 'standard';
   // Mismo nombre de evento que muestra la torre; si no hay sesión en vivo, cae al campeonato
-  const eventName = sessionInfo?.name || config?.campeonato || 'CARRERA';
+  const eventName = sessionInfo?.name || config?.eventName || config?.campeonato || 'CARRERA';
   const skin = getSkinStyle(winnerFormat, { themeMain, themeAccent });
 
   // Animación de entrada (Slide desde abajo, como la gráfica principal)

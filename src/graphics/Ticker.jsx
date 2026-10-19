@@ -96,7 +96,7 @@ export default function Ticker({ drivers, isVisible, config, id = 'ticker', sess
               display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 10px'
             }}>
               <span style={{ color: '#fff', fontWeight: '900', fontSize: '20px', textAlign: 'center', textTransform: 'uppercase', lineHeight: '1.15' }}>
-                {config?.campeonato || 'CATEGORÍA'}
+                {config?.eventName || config?.campeonato || 'CATEGORÍA'}
               </span>
             </div>
             <div style={{

@@ -230,7 +230,10 @@ export default function Overlay() {
   }, []);
 
   const safeConfig = config || {};
-  const combinedConfig = { ...safeConfig, positions: positions || {} };
+  // Nombre del evento para los títulos de las gráficas: el de la sesión en vivo (por ejemplo
+  // "125cc 4T Libre - 1era Manga"); si todavía no hay sesión cargada, el campeonato escrito a mano.
+  const eventName = (sessionInfo && sessionInfo.name) || safeConfig.campeonato || '';
+  const combinedConfig = { ...safeConfig, positions: positions || {}, eventName };
 
   const formattedDrivers = useMemo(() => {
     return drivers.map(d => ({ ...d, name: formatDriverName(d.name, safeConfig.nameFormat) }));

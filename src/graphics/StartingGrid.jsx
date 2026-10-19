@@ -120,7 +120,7 @@ export default function StartingGrid({ drivers, config, isVisible, id = 'grid' }
                 {config?.categoryLogo && <img src={config.categoryLogo} alt="Categoría" style={{ height: '45px', maxWidth: '100px', objectFit: 'contain' }} />}
               </div>
             )}
-            <span style={{ textShadow: gridSkin?.textShadow }}>Ordenamiento de partida - {config?.campeonato || 'CARRERA'}</span>
+            <span style={{ textShadow: gridSkin?.textShadow, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '1250px' }}>Ordenamiento de partida - {config?.eventName || config?.campeonato || 'CARRERA'}</span>
           </div>
 
           <div key={`std-${page}`} className="grid-page" style={{ marginTop: '150px' }}>
@@ -140,7 +140,7 @@ export default function StartingGrid({ drivers, config, isVisible, id = 'grid' }
           {/* MODO FOTOS: HEADER BROADCAST (TIPO FÓRMULA 1) */}
           <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', display: 'flex', flexDirection: 'column' }}>
             <div style={{ backgroundColor: themeHeaderBg, padding: '15px', textAlign: 'center', color: '#fff', fontSize: '28px', fontWeight: '900', letterSpacing: '2px' }}>
-               {config?.campeonato || 'CAMPEONATO'}
+               {config?.eventName || config?.campeonato || 'CAMPEONATO'}
             </div>
             <div style={{ display: 'flex', width: '100%', height: '40px' }}>
                <div style={{ backgroundColor: themeMain, color: '#fff', width: '30%', display: 'flex', alignItems: 'center', paddingLeft: '40px', fontSize: '24px', fontWeight: '900', letterSpacing: '1px' }}>
@@ -397,7 +397,7 @@ function CinematicGridView({ allDrivers, currentDriver, page, config, bRad, them
         <div style={{ position: 'absolute', top: '30px', left: '110px', display: 'flex', alignItems: 'center', gap: '15px' }}>
           {config?.logo && <img src={config.logo} alt="Productora" style={{ height: '32px', maxWidth: '90px', objectFit: 'contain' }} />}
           <span style={{ fontSize: '16px', fontWeight: '900', color: themeTitleText, textTransform: 'uppercase', letterSpacing: '1px' }}>
-            {config?.campeonato || 'CARRERA'}
+            {config?.eventName || config?.campeonato || 'CARRERA'}
           </span>
         </div>
 

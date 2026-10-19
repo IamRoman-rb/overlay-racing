@@ -525,11 +525,16 @@ async function scrapeSpeedhive(inputCode) {
             ''
           ).trim();
         };
+        // En la vista /active de Speedhive el nombre de la sesión (ej. "125cc 4T Libre - 1era Manga")
+        // va en <h1 class="session-name">; los demás son respaldo por si cambian las clases.
         const sessionSelectors = [
+          'h1.session-name',
           '.session-name',
           '.session-title',
           '[class*="session-name"]',
-          '[class*="session-title"]'
+          '[class*="session-title"]',
+          '.active-session-header h1',
+          'h1.title'
         ];
 
         for (

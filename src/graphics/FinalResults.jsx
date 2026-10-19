@@ -107,7 +107,7 @@ export default function FinalResults({ drivers, config, isVisible, id = 'finalRe
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px', padding: '14px 26px', backgroundColor: themeMain }}>
             {config?.logo && <img src={config.logo} alt="Logo" style={{ height: '34px', maxWidth: '160px', objectFit: 'contain' }} />}
             <span style={{ color: '#fff', fontWeight: 900, fontSize: '20px', letterSpacing: '1px', textTransform: 'uppercase' }}>
-              {config.campeonato || 'CARRERA'}
+              {config.campeonato || 'RESULTADOS FINALES'}
             </span>
           </div>
 
@@ -115,7 +115,7 @@ export default function FinalResults({ drivers, config, isVisible, id = 'finalRe
             {/* COLUMNA IZQUIERDA: TABLA DE RESULTADOS */}
             <div style={{ flex: '0 0 940px', padding: '24px 26px', display: 'flex', flexDirection: 'column' }}>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: '10px', marginBottom: '14px' }}>
-                <span style={{ fontSize: '30px', fontWeight: 900, color: themeNormalText, letterSpacing: '1px' }}>CARRERA</span>
+                <span style={{ fontSize: '30px', fontWeight: 900, color: themeNormalText, letterSpacing: '1px', maxWidth: '700px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', textTransform: 'uppercase' }}>{config.eventName || 'CARRERA'}</span>
                 {broadcastPages > 1 && (
                   <span style={{ fontSize: '12px', color: themeTitleText, fontWeight: 'bold' }}>PÁGINA {page + 1} DE {broadcastPages}</span>
                 )}
@@ -205,7 +205,7 @@ export default function FinalResults({ drivers, config, isVisible, id = 'finalRe
                     {winnerDriver.name}
                   </div>
                   <div style={{ fontSize: '14px', fontWeight: 'bold', color: themeNormalText, textTransform: 'uppercase', opacity: 0.85 }}>
-                    {winnerDriver.make || (config.campeonato || 'CARRERA')}
+                    {winnerDriver.make || (config.eventName || config.campeonato || 'CARRERA')}
                   </div>
                 </div>
               )}
@@ -252,7 +252,7 @@ export default function FinalResults({ drivers, config, isVisible, id = 'finalRe
                    <img src={config.logo} alt="Logo Productora" style={{ height: isCompact ? '38px' : '55px', maxWidth: '180px', objectFit: 'contain' }} />
                  )}
                  <h1 style={{ color: themeTitleText, fontSize: isCompact ? '28px' : '40px', fontWeight: '900', textTransform: 'uppercase', margin: 0 }}>
-                     RESULTADOS FINALES - {config.campeonato || 'CARRERA'}
+                     RESULTADOS FINALES - {config.eventName || config.campeonato || 'CARRERA'}
                  </h1>
              </div>
 
