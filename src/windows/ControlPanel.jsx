@@ -209,6 +209,8 @@ export default function ControlPanel() {
   const [activeFlags, setActiveFlags] = useState({ red: false, tricolor: false, black: false, blue: false, checkered: false });
   const [graphics, setGraphics] = useState({ relator: false, comentarista: false, notero1: false, notero2: false, circuito: false, clima: false });
   const [showLapCounter, setShowLapCounter] = useState(false);
+  const panelContainerRef = useRef(null);
+  const [panelSplitDrag, setPanelSplitDrag] = useState(null); // tamaño provisorio (px) mientras se arrastra el divisor
   const [showVirtualChamp, setShowVirtualChamp] = useState(false);
   const [championship, setChampionship] = useState([]);
   const [loadingExcel, setLoadingExcel] = useState(false);
@@ -422,24 +424,64 @@ export default function ControlPanel() {
   const panelLayout = PANEL_LAYOUTS.includes(config.panelLayout) ? config.panelLayout : 'left';
   const panelSideBySide = panelLayout === 'left' || panelLayout === 'right';
   const panelButtonsFirst = panelLayout === 'left' || panelLayout === 'top';
+  // Tamaño de la zona de botones, ajustable arrastrando el divisor (ancho si van lado a lado, alto si van apilados)
+  const SPLIT_DEFAULT = panelSideBySide ? 320 : 230;
+  const SPLIT_MIN = panelSideBySide ? 220 : 90;
+  const splitKey = panelSideBySide ? 'panelSplitSide' : 'panelSplitStack';
+  const savedSplit = parseInt(config[splitKey], 10);
+  const panelSplitSize = panelSplitDrag !== null ? panelSplitDrag : (savedSplit > 0 ? savedSplit : SPLIT_DEFAULT);
+
+  const handlePanelSplitMouseDown = (e) => {
+    e.preventDefault();
+    const container = panelContainerRef.current;
+    if (!container) return;
+    const startPos = panelSideBySide ? e.clientX : e.clientY;
+    const startSize = panelSplitSize;
+    const max = Math.max(SPLIT_MIN, (panelSideBySide ? container.clientWidth - 320 : container.clientHeight * 0.8));
+    // Si los botones están a la derecha / abajo, arrastrar hacia el otro lado los agranda
+    const sign = panelButtonsFirst ? 1 : -1;
+    let latest = startSize;
+    const onMove = (ev) => {
+      const delta = ((panelSideBySide ? ev.clientX : ev.clientY) - startPos) * sign;
+      latest = Math.round(Math.min(max, Math.max(SPLIT_MIN, startSize + delta)));
+      setPanelSplitDrag(latest);
+    };
+    const onUp = () => {
+      window.removeEventListener('mousemove', onMove);
+      window.removeEventListener('mouseup', onUp);
+      setPanelSplitDrag(null);
+      handleDirectSave(splitKey, latest);
+    };
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onUp);
+  };
+  const handlePanelSplitReset = () => handleDirectSave(splitKey, null);
+
   const panelButtonsStyle = panelSideBySide
     ? {
-        width: '320px', flexShrink: 0, backgroundColor: colors.bgPanel, padding: '0 15px', overflowY: 'auto',
-        order: panelButtonsFirst ? 0 : 1,
+        width: `${panelSplitSize}px`, flexShrink: 0, backgroundColor: colors.bgPanel, padding: '0 15px', overflowY: 'auto',
+        order: panelButtonsFirst ? 0 : 2,
         borderRight: panelLayout === 'left' ? `1px solid ${colors.border}` : 'none',
         borderLeft: panelLayout === 'right' ? `1px solid ${colors.border}` : 'none'
       }
     : {
-        flexShrink: 0, backgroundColor: colors.bgPanel, padding: '14px 20px 10px',
+        height: `${panelSplitSize}px`, flexShrink: 0, backgroundColor: colors.bgPanel, padding: '14px 20px 10px', overflow: 'auto',
         columnWidth: '250px', columnGap: '25px',
-        order: panelButtonsFirst ? 0 : 1,
+        order: panelButtonsFirst ? 0 : 2,
         borderBottom: panelLayout === 'top' ? `1px solid ${colors.border}` : 'none',
         borderTop: panelLayout === 'bottom' ? `1px solid ${colors.border}` : 'none'
       };
   const panelTableStyle = {
     flex: panelSideBySide ? 1 : '1 0 auto', minHeight: panelSideBySide ? undefined : '320px', padding: '20px',
     overflowY: panelSideBySide ? 'auto' : 'visible', backgroundColor: colors.bgApp, position: 'relative',
-    order: panelButtonsFirst ? 1 : 0
+    order: panelButtonsFirst ? 2 : 0
+  };
+  const panelDividerStyle = {
+    order: 1, flexShrink: 0, boxSizing: 'border-box', zIndex: 5,
+    ...(panelSideBySide
+      ? { width: '8px', cursor: 'col-resize', backgroundImage: `linear-gradient(to right, transparent 3px, ${colors.border} 3px, ${colors.border} 5px, transparent 5px)` }
+      : { height: '8px', cursor: 'row-resize', backgroundImage: `linear-gradient(to bottom, transparent 3px, ${colors.border} 3px, ${colors.border} 5px, transparent 5px)` }),
+    backgroundColor: panelSplitDrag !== null ? colors.yellow : 'transparent'
   };
   const handleSave = async () => { if (ipcRenderer) await ipcRenderer.invoke('save-config', config); };
   const handleCommitCircuit = async (name) => { const next = { ...config, circuito: name }; setConfig(next); if (ipcRenderer) await ipcRenderer.invoke('save-config', next); };
@@ -788,7 +830,7 @@ export default function ControlPanel() {
       </div>
 
       {activeTab === 'panel' && (
-        <div style={{ display: 'flex', flexDirection: panelSideBySide ? 'row' : 'column', flex: 1, overflow: panelSideBySide ? 'hidden' : 'auto' }}>
+        <div ref={panelContainerRef} style={{ display: 'flex', flexDirection: panelSideBySide ? 'row' : 'column', flex: 1, overflow: panelSideBySide ? 'hidden' : 'auto' }}>
           <style>{`.panel-multicol > * { break-inside: avoid; } .panel-multicol > :first-child { margin-top: 0 !important; }`}</style>
           <div className={panelSideBySide ? undefined : 'panel-multicol'} style={panelButtonsStyle}>
 
@@ -1007,6 +1049,16 @@ export default function ControlPanel() {
               <button onClick={handleToggleWinner} style={btnStyle(showWinner)}>{t('panel.showWinnerBtn')}</button>
             </div>
           </div>
+
+          {panelSplitDrag !== null && (
+            <div style={{ position: 'fixed', inset: 0, zIndex: 9999, cursor: panelSideBySide ? 'col-resize' : 'row-resize', userSelect: 'none' }} />
+          )}
+          <div
+            onMouseDown={handlePanelSplitMouseDown}
+            onDoubleClick={handlePanelSplitReset}
+            title={t('panel.splitTitle')}
+            style={panelDividerStyle}
+          />
 
           <div style={panelTableStyle}>
             {autoScrape && (
