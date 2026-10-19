@@ -22,7 +22,10 @@ const colors = {
 
 const inputStyle = { backgroundColor: colors.bgInput, border: `1px solid ${colors.border}`, color: colors.textMain, padding: '8px', fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', width: '100%', boxSizing: 'border-box', outline: 'none' };
 const btnStyle = (isActive = false) => ({ backgroundColor: isActive ? colors.yellow : colors.bgInput, color: isActive ? '#000' : colors.textMain, border: `1px solid ${isActive ? colors.yellow : colors.border}`, padding: '12px 10px', fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', cursor: 'pointer', width: '100%', textAlign: 'center', transition: 'all 0.2s ease' });
-const sectionTitleStyle = { fontSize: '10px', color: colors.textMuted, textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '8px', marginTop: '20px' };
+const sectionTitleStyle = { fontSize: '10px', color: colors.textMuted, textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '8px', marginTop: '20px', breakAfter: 'avoid-column' };
+
+// Distribuciones de la pestaña PANEL (se elige en PERSONALIZAR): dónde van los botones respecto de la tabla de pilotos.
+const PANEL_LAYOUTS = ['left', 'right', 'top', 'bottom'];
 
 const GraphicControl = ({ id, label, value, isActive, onChange, onBlur, onToggle, t }) => (<div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}> <button onClick={() => onToggle(id)} style={btnStyle(isActive)}>{label}</button> <input name={id} value={value || ''} onChange={onChange} onBlur={onBlur} style={inputStyle} placeholder={t('panel.namePlaceholder')} /> </div>);
 // Buscador con lista: se escribe parte del nombre (sin importar tildes ni mayúsculas) y se filtran los guardados.
@@ -413,6 +416,30 @@ export default function ControlPanel() {
   const handleToggleFinalResults = () => { setShowFinalResults(!showFinalResults); if (ipcRenderer) ipcRenderer.send('toggle-final-results', !showFinalResults); };
   const handleToggleWinner = () => { const newState = !showWinner; setShowWinner(newState); const winnerDriver = drivers.find(d => String(d.pos) === '1') || drivers[0]; if (ipcRenderer) ipcRenderer.send('toggle-winner', { isVisible: newState, driver: winnerDriver }); };
   const handleChange = (e) => setConfig({ ...config, [e.target.name]: e.target.value });
+
+  // Distribución de la pestaña PANEL: el orden de los bloques se resuelve con `order`, sin mover el JSX.
+  const panelLayout = PANEL_LAYOUTS.includes(config.panelLayout) ? config.panelLayout : 'left';
+  const panelSideBySide = panelLayout === 'left' || panelLayout === 'right';
+  const panelButtonsFirst = panelLayout === 'left' || panelLayout === 'top';
+  const panelButtonsStyle = panelSideBySide
+    ? {
+        width: '320px', flexShrink: 0, backgroundColor: colors.bgPanel, padding: '0 15px', overflowY: 'auto',
+        order: panelButtonsFirst ? 0 : 1,
+        borderRight: panelLayout === 'left' ? `1px solid ${colors.border}` : 'none',
+        borderLeft: panelLayout === 'right' ? `1px solid ${colors.border}` : 'none'
+      }
+    : {
+        flexShrink: 0, backgroundColor: colors.bgPanel, padding: '14px 20px 10px',
+        columnWidth: '250px', columnGap: '25px',
+        order: panelButtonsFirst ? 0 : 1,
+        borderBottom: panelLayout === 'top' ? `1px solid ${colors.border}` : 'none',
+        borderTop: panelLayout === 'bottom' ? `1px solid ${colors.border}` : 'none'
+      };
+  const panelTableStyle = {
+    flex: panelSideBySide ? 1 : '1 0 auto', minHeight: panelSideBySide ? undefined : '320px', padding: '20px',
+    overflowY: panelSideBySide ? 'auto' : 'visible', backgroundColor: colors.bgApp, position: 'relative',
+    order: panelButtonsFirst ? 1 : 0
+  };
   const handleSave = async () => { if (ipcRenderer) await ipcRenderer.invoke('save-config', config); };
   const handleCommitCircuit = async (name) => { const next = { ...config, circuito: name }; setConfig(next); if (ipcRenderer) await ipcRenderer.invoke('save-config', next); };
   const handleToggleBattle = () => { const newState = !showBattle; setShowBattle(newState); if (ipcRenderer) ipcRenderer.send('toggle-battle', { isVisible: newState, pos: battleTarget }); };
@@ -760,8 +787,9 @@ export default function ControlPanel() {
       </div>
 
       {activeTab === 'panel' && (
-        <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
-          <div style={{ width: '320px', backgroundColor: colors.bgPanel, padding: '0 15px', overflowY: 'auto', borderRight: `1px solid ${colors.border}` }}>
+        <div style={{ display: 'flex', flexDirection: panelSideBySide ? 'row' : 'column', flex: 1, overflow: panelSideBySide ? 'hidden' : 'auto' }}>
+          <style>{`.panel-multicol > * { break-inside: avoid; } .panel-multicol > :first-child { margin-top: 0 !important; }`}</style>
+          <div className={panelSideBySide ? undefined : 'panel-multicol'} style={panelButtonsStyle}>
 
             <div style={sectionTitleStyle}>{t('panel.flagsSection')}</div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '5px', marginBottom: '20px' }}>
@@ -962,7 +990,7 @@ export default function ControlPanel() {
             </div>
           </div>
 
-          <div style={{ flex: 1, padding: '20px', overflowY: 'auto', backgroundColor: colors.bgApp, position: 'relative' }}>
+          <div style={panelTableStyle}>
             {autoScrape && (
               <div style={{
                 position: 'absolute', top: 0, left: 0, height: '3px',

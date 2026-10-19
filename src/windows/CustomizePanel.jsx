@@ -4,6 +4,15 @@ import { SKIN_FORMATS } from '../utils/skinStyles';
 export default function CustomizePanel({ config, positions, defaultPositions, onUpdatePositions, onSelectLogo, onSelectCategoryLogo, onSelectPhotosFolder, onClearLogo, onClearCategoryLogo, onClearPhotosFolder, onConfigChange, colors, inputStyle, btnStyle, t }) {
   const [selectedGraphic, setSelectedGraphic] = useState('relator');
 
+  // Distribución de la pestaña PANEL del Control Panel (4 opciones)
+  const PANEL_LAYOUT_OPTIONS = [
+    { id: 'left', vertical: true, buttonsFirst: true },
+    { id: 'right', vertical: true, buttonsFirst: false },
+    { id: 'top', vertical: false, buttonsFirst: true },
+    { id: 'bottom', vertical: false, buttonsFirst: false },
+  ];
+  const panelLayout = PANEL_LAYOUT_OPTIONS.some(o => o.id === config.panelLayout) ? config.panelLayout : 'left';
+
   const skinLabels = { pro: t('personalizar.skinPro'), gradient: t('personalizar.skinGradient'), glass: t('personalizar.skinGlass') };
   const renderSkinOptions = () => SKIN_FORMATS.map(value => (
     <option key={value} value={value}>{skinLabels[value] || value}</option>
@@ -102,9 +111,8 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
     { id: 'themeNormalText', label: t('personalizar.colorNormalText'), default: '#ffffff' }, { id: 'themeNumberText', label: t('personalizar.colorNumberText'), default: '#bdc3c7' }
   ];
 
-  // Grilla: pilotos por fila (1-4) y por pantalla (hasta 3 filas); mismos límites que StartingGrid
-  const gridPerRow = Math.min(4, Math.max(1, parseInt(config.gridPerRow, 10) || 2));
-  const gridPerPage = Math.min(gridPerRow * 3, Math.max(1, parseInt(config.gridPerPage, 10) || gridPerRow));
+  // Grilla: los pilotos van de a 2 por fila; se elige cuántas filas se ven (1-4, igual que StartingGrid)
+  const gridRows = Math.min(4, Math.max(1, parseInt(config.gridRows, 10) || 1));
 
   return (
     <div style={{ display: 'flex', flex: 1, overflow: 'hidden', backgroundColor: colors.bgApp }} onMouseMove={handlePreviewMouseMove} onMouseUp={handlePreviewMouseUp} onMouseLeave={handlePreviewMouseUp} >
@@ -115,6 +123,32 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
           {allGraphics.map(graphic => (
             <button key={graphic.id} onClick={() => setSelectedGraphic(graphic.id)} style={{ ...btnStyle(selectedGraphic === graphic.id), padding: '8px 5px', fontSize: '9px' }}> {graphic.label} </button>
           ))}
+        </div>
+
+        <h3 style={{ color: colors.yellow, marginBottom: '8px' }}>{t('personalizar.panelLayoutTitle')}</h3>
+        <p style={{ fontSize: '10px', color: colors.textMuted, lineHeight: '1.5', marginTop: 0, marginBottom: '12px' }}>{t('personalizar.panelLayoutDesc')}</p>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '30px' }}>
+          {PANEL_LAYOUT_OPTIONS.map(opt => {
+            const active = panelLayout === opt.id;
+            const btnBox = { backgroundColor: active ? colors.yellow : '#555', borderRadius: '2px' };
+            const tableBox = { backgroundColor: active ? '#000' : '#888', borderRadius: '2px', flex: 1 };
+            return (
+              <button
+                key={opt.id}
+                onClick={() => onConfigChange('panelLayout', opt.id)}
+                style={{ ...btnStyle(active), display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', padding: '10px 6px', fontSize: '9px' }}
+              >
+                <div style={{ width: '70px', height: '46px', display: 'flex', flexDirection: opt.vertical ? 'row' : 'column', gap: '3px', padding: '3px', border: `1px solid ${active ? '#000' : colors.border}`, borderRadius: '3px', boxSizing: 'border-box' }}>
+                  {[opt.buttonsFirst ? 'b' : 't', opt.buttonsFirst ? 't' : 'b'].map(kind => (
+                    kind === 'b'
+                      ? <div key="b" style={{ ...btnBox, ...(opt.vertical ? { width: '30%' } : { height: '38%' }) }} />
+                      : <div key="t" style={tableBox} />
+                  ))}
+                </div>
+                <span>{t(`personalizar.panelLayout_${opt.id}`)}</span>
+              </button>
+            );
+          })}
         </div>
 
         <h3 style={{ color: colors.yellow, marginBottom: '15px' }}>{t('personalizar.themeConfig')}</h3>
@@ -169,24 +203,14 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
             </select>
             {(config.gridFormat || 'standard') !== 'photos' && (config.gridFormat || 'standard') !== 'cinematic' && (
               <>
-                <label style={{ fontSize: '10px', color: colors.textMuted, fontWeight: 'bold', marginTop: '15px' }}>{t('personalizar.gridPerRowLabel')}</label>
+                <label style={{ fontSize: '10px', color: colors.textMuted, fontWeight: 'bold', marginTop: '15px' }}>{t('personalizar.gridRowsLabel')}</label>
                 <select
-                  value={gridPerRow}
-                  onChange={(e) => onConfigChange('gridPerRow', parseInt(e.target.value, 10))}
+                  value={gridRows}
+                  onChange={(e) => onConfigChange('gridRows', parseInt(e.target.value, 10))}
                   style={{ ...inputStyle, padding: '10px', fontSize: '11px', cursor: 'pointer', border: `1px solid ${colors.border}` }}
                 >
                   {[1, 2, 3, 4].map(n => (
-                    <option key={n} value={n}>{n === 1 ? t('personalizar.gridPerRowOne') : t('personalizar.gridPerRowOption', { n })}</option>
-                  ))}
-                </select>
-                <label style={{ fontSize: '10px', color: colors.textMuted, fontWeight: 'bold', marginTop: '15px' }}>{t('personalizar.gridPerPageLabel')}</label>
-                <select
-                  value={gridPerPage}
-                  onChange={(e) => onConfigChange('gridPerPage', parseInt(e.target.value, 10))}
-                  style={{ ...inputStyle, padding: '10px', fontSize: '11px', cursor: 'pointer', border: `1px solid ${colors.border}` }}
-                >
-                  {Array.from({ length: gridPerRow * 3 }, (_, i) => i + 1).map(n => (
-                    <option key={n} value={n}>{n === 1 ? t('personalizar.gridPerPageOne') : t('personalizar.gridPerPageOption', { n })}</option>
+                    <option key={n} value={n}>{n === 1 ? t('personalizar.gridRowsOne') : t('personalizar.gridRowsOption', { n, m: n * 2 })}</option>
                   ))}
                 </select>
               </>
