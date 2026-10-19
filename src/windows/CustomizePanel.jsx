@@ -102,6 +102,10 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
     { id: 'themeNormalText', label: t('personalizar.colorNormalText'), default: '#ffffff' }, { id: 'themeNumberText', label: t('personalizar.colorNumberText'), default: '#bdc3c7' }
   ];
 
+  // Grilla: pilotos por fila (1-4) y por pantalla (hasta 3 filas); mismos límites que StartingGrid
+  const gridPerRow = Math.min(4, Math.max(1, parseInt(config.gridPerRow, 10) || 2));
+  const gridPerPage = Math.min(gridPerRow * 3, Math.max(1, parseInt(config.gridPerPage, 10) || gridPerRow));
+
   return (
     <div style={{ display: 'flex', flex: 1, overflow: 'hidden', backgroundColor: colors.bgApp }} onMouseMove={handlePreviewMouseMove} onMouseUp={handlePreviewMouseUp} onMouseLeave={handlePreviewMouseUp} >
       <div style={{ width: '380px', minWidth: '380px', backgroundColor: colors.bgPanel, padding: '20px', overflowY: 'auto', borderRight: `1px solid ${colors.border}`, zIndex: 100 }}>
@@ -165,13 +169,23 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
             </select>
             {(config.gridFormat || 'standard') !== 'photos' && (config.gridFormat || 'standard') !== 'cinematic' && (
               <>
+                <label style={{ fontSize: '10px', color: colors.textMuted, fontWeight: 'bold', marginTop: '15px' }}>{t('personalizar.gridPerRowLabel')}</label>
+                <select
+                  value={gridPerRow}
+                  onChange={(e) => onConfigChange('gridPerRow', parseInt(e.target.value, 10))}
+                  style={{ ...inputStyle, padding: '10px', fontSize: '11px', cursor: 'pointer', border: `1px solid ${colors.border}` }}
+                >
+                  {[1, 2, 3, 4].map(n => (
+                    <option key={n} value={n}>{n === 1 ? t('personalizar.gridPerRowOne') : t('personalizar.gridPerRowOption', { n })}</option>
+                  ))}
+                </select>
                 <label style={{ fontSize: '10px', color: colors.textMuted, fontWeight: 'bold', marginTop: '15px' }}>{t('personalizar.gridPerPageLabel')}</label>
                 <select
-                  value={config.gridPerPage || 2}
+                  value={gridPerPage}
                   onChange={(e) => onConfigChange('gridPerPage', parseInt(e.target.value, 10))}
                   style={{ ...inputStyle, padding: '10px', fontSize: '11px', cursor: 'pointer', border: `1px solid ${colors.border}` }}
                 >
-                  {[1, 2, 3, 4, 5, 6].map(n => (
+                  {Array.from({ length: gridPerRow * 3 }, (_, i) => i + 1).map(n => (
                     <option key={n} value={n}>{n === 1 ? t('personalizar.gridPerPageOne') : t('personalizar.gridPerPageOption', { n })}</option>
                   ))}
                 </select>

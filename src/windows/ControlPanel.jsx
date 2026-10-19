@@ -25,7 +25,73 @@ const btnStyle = (isActive = false) => ({ backgroundColor: isActive ? colors.yel
 const sectionTitleStyle = { fontSize: '10px', color: colors.textMuted, textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '8px', marginTop: '20px' };
 
 const GraphicControl = ({ id, label, value, isActive, onChange, onBlur, onToggle, t }) => (<div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}> <button onClick={() => onToggle(id)} style={btnStyle(isActive)}>{label}</button> <input name={id} value={value || ''} onChange={onChange} onBlur={onBlur} style={inputStyle} placeholder={t('panel.namePlaceholder')} /> </div>);
-const SelectControl = ({ id, label, value, options, isActive, onChange, onBlur, onToggle, t }) => (<div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}> <button onClick={() => onToggle(id)} style={btnStyle(isActive)}>{label}</button> <select name={id} value={value || ''} onChange={onChange} onBlur={onBlur} style={inputStyle}> <option value="">{t('common.selectPlaceholder')}</option> {options.map((opt, i) => (<option key={i} value={opt.nombre}>{opt.nombre.toUpperCase()}</option>))} </select> </div>);
+// Buscador con lista: se escribe parte del nombre (sin importar tildes ni mayúsculas) y se filtran los guardados.
+// También acepta texto libre que no esté en la lista.
+const normalizeText = (str) => String(str || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+
+const SearchSelectControl = ({ id, label, value, options, isActive, onChange, onCommit, onToggle, t }) => {
+  const [open, setOpen] = useState(false);
+  const [highlight, setHighlight] = useState(-1);
+  const normalizedValue = normalizeText(value).trim();
+  const isExact = options.some(o => normalizeText(o.nombre) === normalizedValue);
+  const words = normalizedValue.split(/\s+/).filter(Boolean);
+  // Con un valor ya elegido (o vacío) se muestra la lista completa para poder cambiarlo.
+  const matches = (isExact || words.length === 0)
+    ? options
+    : options.filter(o => { const n = normalizeText(o.nombre); return words.every(w => n.includes(w)); });
+
+  const pick = (name) => { onChange(name); onCommit(name); setOpen(false); setHighlight(-1); };
+  const handleKeyDown = (e) => {
+    if (e.key === 'ArrowDown') { e.preventDefault(); setOpen(true); setHighlight(h => Math.min(matches.length - 1, h + 1)); }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); setHighlight(h => Math.max(0, h - 1)); }
+    else if (e.key === 'Enter') {
+      e.preventDefault();
+      if (open && highlight >= 0 && matches[highlight]) pick(matches[highlight].nombre);
+      else { onCommit(value || ''); setOpen(false); }
+    }
+    else if (e.key === 'Escape') setOpen(false);
+  };
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+      <button onClick={() => onToggle(id)} style={btnStyle(isActive)}>{label}</button>
+      <div style={{ position: 'relative' }}>
+        <input
+          name={id} value={value || ''} autoComplete="off" placeholder={t('common.searchPlaceholder')}
+          onChange={(e) => { onChange(e.target.value); setOpen(true); setHighlight(-1); }}
+          onFocus={() => setOpen(true)}
+          onBlur={() => { setOpen(false); onCommit(value || ''); }}
+          onKeyDown={handleKeyDown}
+          style={{ ...inputStyle, paddingRight: value ? '26px' : '8px' }}
+        />
+        {value ? (
+          <span
+            onMouseDown={(e) => { e.preventDefault(); pick(''); }}
+            style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', color: colors.textMuted, cursor: 'pointer', fontSize: '12px', lineHeight: 1 }}
+          >✕</span>
+        ) : null}
+        {open && matches.length > 0 && (
+          <ul style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 50, margin: 0, padding: 0, listStyle: 'none', maxHeight: '220px', overflowY: 'auto', backgroundColor: colors.bgInput, border: `1px solid ${colors.border}`, borderTop: 'none', boxShadow: '0 8px 20px rgba(0,0,0,0.6)' }}>
+            {matches.map((o, i) => (
+              <li
+                key={o.nombre}
+                ref={i === highlight ? (el) => { if (el && el.scrollIntoView) el.scrollIntoView({ block: 'nearest' }); } : undefined}
+                onMouseDown={(e) => { e.preventDefault(); pick(o.nombre); }}
+                onMouseEnter={() => setHighlight(i)}
+                style={{ padding: '7px 8px', fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', cursor: 'pointer', color: normalizeText(o.nombre) === normalizedValue ? colors.yellow : colors.textMain, backgroundColor: i === highlight ? colors.border : 'transparent' }}
+              >
+                {o.nombre}
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+      {value && !isExact && matches.length === 0 && (
+        <span style={{ fontSize: '9px', color: colors.textMuted, lineHeight: 1.3 }}>{t('common.noMatches')}</span>
+      )}
+    </div>
+  );
+};
 const WeatherControl = ({ id, label, config, isActive, onToggle, setConfig, t }) => {
   const [loading, setLoading] = useState(false);
 
@@ -348,6 +414,7 @@ export default function ControlPanel() {
   const handleToggleWinner = () => { const newState = !showWinner; setShowWinner(newState); const winnerDriver = drivers.find(d => String(d.pos) === '1') || drivers[0]; if (ipcRenderer) ipcRenderer.send('toggle-winner', { isVisible: newState, driver: winnerDriver }); };
   const handleChange = (e) => setConfig({ ...config, [e.target.name]: e.target.value });
   const handleSave = async () => { if (ipcRenderer) await ipcRenderer.invoke('save-config', config); };
+  const handleCommitCircuit = async (name) => { const next = { ...config, circuito: name }; setConfig(next); if (ipcRenderer) await ipcRenderer.invoke('save-config', next); };
   const handleToggleBattle = () => { const newState = !showBattle; setShowBattle(newState); if (ipcRenderer) ipcRenderer.send('toggle-battle', { isVisible: newState, pos: battleTarget }); };
   const handleToggleVirtualChamp = () => { setShowVirtualChamp(!showVirtualChamp); if (ipcRenderer) ipcRenderer.send('toggle-virtual-champ', !showVirtualChamp); };
   const handleToggleLapTimesHistory = () => {
@@ -727,7 +794,7 @@ export default function ControlPanel() {
               <GraphicControl id="comentarista" label={t('graphics.comentarista')} value={config.comentarista} isActive={graphics.comentarista} onChange={handleChange} onBlur={handleSave} onToggle={handleToggleGraphic} t={t} />
               <GraphicControl id="notero1" label={t('graphics.notero1')} value={config.notero1} isActive={graphics.notero1} onChange={handleChange} onBlur={handleSave} onToggle={handleToggleGraphic} t={t} />
               <GraphicControl id="notero2" label={t('graphics.notero2')} value={config.notero2} isActive={graphics.notero2} onChange={handleChange} onBlur={handleSave} onToggle={handleToggleGraphic} t={t} />
-              <SelectControl id="circuito" label={t('graphics.circuito')} value={config.circuito} options={circuitosData} isActive={graphics.circuito} onChange={handleChange} onBlur={handleSave} onToggle={handleToggleGraphic} t={t} />
+              <SearchSelectControl id="circuito" label={t('graphics.circuito')} value={config.circuito} options={circuitosData} isActive={graphics.circuito} onChange={(v) => setConfig({ ...config, circuito: v })} onCommit={handleCommitCircuit} onToggle={handleToggleGraphic} t={t} />
               <WeatherControl id="clima" label={t('graphics.clima')} config={config} setConfig={setConfig} isActive={graphics.clima} onToggle={handleToggleGraphic} t={t} />
             </div>
 

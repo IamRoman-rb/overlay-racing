@@ -9,7 +9,7 @@ export const LANGUAGES = [
 export const translations = {
   es: {
     common: {
-      selectPlaceholder: 'SELECCIONAR...',
+      searchPlaceholder: 'ESCRIBÍ PARA BUSCAR...', noMatches: 'Sin coincidencias: se usará el texto escrito (el clima necesita uno de la lista)', selectPlaceholder: 'SELECCIONAR...',
       selectCurvePlaceholder: 'SELECCIONAR CURVA...',
       selectDriverPlaceholder: 'SELECCIONAR PILOTO...',
       emptyLabel: 'VACÍO',
@@ -162,7 +162,7 @@ export const translations = {
       textTypography: 'TEXTO Y TIPOGRAFÍA', fontLabel: 'TIPOGRAFÍA GENERAL',
       fontArial: 'Arial (Clásica)', fontOswald: 'Oswald (TV)', fontMontserrat: 'Montserrat (Moderna)',
       fontTeko: 'Teko (Racing)', fontExo: 'Exo 2 (Futurista)',
-      gridPerPageLabel: 'PILOTOS POR PANTALLA (GRILLA)', gridPerPageOption: '{n} pilotos', gridPerPageOne: '1 piloto', towerBlurLabel: 'DIFUMINADO DEL FONDO (TORRE)', blurNone: 'Sin difuminado', blurSoft: 'Suave', blurMedium: 'Medio', blurStrong: 'Fuerte', nameFormatLabel: 'FORMATO NOMBRES', nameOriginal: 'Original', nameUppercase: 'MAYÚSCULAS',
+      gridPerRowLabel: 'PILOTOS POR FILA (GRILLA)', gridPerRowOption: '{n} por fila', gridPerRowOne: '1 por fila', gridPerPageLabel: 'PILOTOS POR PANTALLA (GRILLA)', gridPerPageOption: '{n} pilotos', gridPerPageOne: '1 piloto', towerBlurLabel: 'DIFUMINADO DEL FONDO (TORRE)', blurNone: 'Sin difuminado', blurSoft: 'Suave', blurMedium: 'Medio', blurStrong: 'Fuerte', nameFormatLabel: 'FORMATO NOMBRES', nameOriginal: 'Original', nameUppercase: 'MAYÚSCULAS',
       nameFirstInitialLast: 'R. Borla', nameFirstLastInitial: 'Roman B.', nameLastOnly: 'Borla (Solo Apellido)',
       formatOf: 'FORMATO DE {name}', styleOf: 'ESTILO: {name}', lowerThirdFormatLabel: 'FORMATO DE ZÓCALO',
       borderRadiusLabel: 'BORDES (REDONDEO)', radius0: '0px (Cuadrados)', radius8: '8px (Normal)',
@@ -211,7 +211,7 @@ export const translations = {
 
   en: {
     common: {
-      selectPlaceholder: 'SELECT...',
+      searchPlaceholder: 'TYPE TO SEARCH...', noMatches: 'No matches: the typed text will be used (weather needs one from the list)', selectPlaceholder: 'SELECT...',
       selectCurvePlaceholder: 'SELECT CORNER...',
       selectDriverPlaceholder: 'SELECT DRIVER...',
       emptyLabel: 'EMPTY',
@@ -364,7 +364,7 @@ export const translations = {
       textTypography: 'TEXT & TYPOGRAPHY', fontLabel: 'GENERAL FONT',
       fontArial: 'Arial (Classic)', fontOswald: 'Oswald (TV)', fontMontserrat: 'Montserrat (Modern)',
       fontTeko: 'Teko (Racing)', fontExo: 'Exo 2 (Futuristic)',
-      gridPerPageLabel: 'DRIVERS PER SCREEN (GRID)', gridPerPageOption: '{n} drivers', gridPerPageOne: '1 driver', towerBlurLabel: 'BACKGROUND BLUR (TOWER)', blurNone: 'No blur', blurSoft: 'Soft', blurMedium: 'Medium', blurStrong: 'Strong', nameFormatLabel: 'NAME FORMAT', nameOriginal: 'Original', nameUppercase: 'UPPERCASE',
+      gridPerRowLabel: 'DRIVERS PER ROW (GRID)', gridPerRowOption: '{n} per row', gridPerRowOne: '1 per row', gridPerPageLabel: 'DRIVERS PER SCREEN (GRID)', gridPerPageOption: '{n} drivers', gridPerPageOne: '1 driver', towerBlurLabel: 'BACKGROUND BLUR (TOWER)', blurNone: 'No blur', blurSoft: 'Soft', blurMedium: 'Medium', blurStrong: 'Strong', nameFormatLabel: 'NAME FORMAT', nameOriginal: 'Original', nameUppercase: 'UPPERCASE',
       nameFirstInitialLast: 'R. Borla', nameFirstLastInitial: 'Roman B.', nameLastOnly: 'Borla (Last Name Only)',
       formatOf: 'FORMAT FOR {name}', styleOf: 'STYLE: {name}', lowerThirdFormatLabel: 'LOWER THIRD FORMAT',
       borderRadiusLabel: 'BORDERS (ROUNDING)', radius0: '0px (Square)', radius8: '8px (Normal)',
@@ -413,7 +413,7 @@ export const translations = {
 
   pt: {
     common: {
-      selectPlaceholder: 'SELECIONAR...',
+      searchPlaceholder: 'DIGITE PARA BUSCAR...', noMatches: 'Sem resultados: será usado o texto digitado (o clima precisa de um da lista)', selectPlaceholder: 'SELECIONAR...',
       selectCurvePlaceholder: 'SELECIONAR CURVA...',
       selectDriverPlaceholder: 'SELECIONAR PILOTO...',
       emptyLabel: 'VAZIO',
@@ -566,7 +566,7 @@ export const translations = {
       textTypography: 'TEXTO E TIPOGRAFIA', fontLabel: 'TIPOGRAFIA GERAL',
       fontArial: 'Arial (Clássica)', fontOswald: 'Oswald (TV)', fontMontserrat: 'Montserrat (Moderna)',
       fontTeko: 'Teko (Racing)', fontExo: 'Exo 2 (Futurista)',
-      gridPerPageLabel: 'PILOTOS POR TELA (GRID)', gridPerPageOption: '{n} pilotos', gridPerPageOne: '1 piloto', towerBlurLabel: 'DESFOQUE DO FUNDO (TORRE)', blurNone: 'Sem desfoque', blurSoft: 'Suave', blurMedium: 'Médio', blurStrong: 'Forte', nameFormatLabel: 'FORMATO DOS NOMES', nameOriginal: 'Original', nameUppercase: 'MAIÚSCULAS',
+      gridPerRowLabel: 'PILOTOS POR LINHA (GRID)', gridPerRowOption: '{n} por linha', gridPerRowOne: '1 por linha', gridPerPageLabel: 'PILOTOS POR TELA (GRID)', gridPerPageOption: '{n} pilotos', gridPerPageOne: '1 piloto', towerBlurLabel: 'DESFOQUE DO FUNDO (TORRE)', blurNone: 'Sem desfoque', blurSoft: 'Suave', blurMedium: 'Médio', blurStrong: 'Forte', nameFormatLabel: 'FORMATO DOS NOMES', nameOriginal: 'Original', nameUppercase: 'MAIÚSCULAS',
       nameFirstInitialLast: 'R. Borla', nameFirstLastInitial: 'Roman B.', nameLastOnly: 'Borla (Só Sobrenome)',
       formatOf: 'FORMATO DE {name}', styleOf: 'ESTILO: {name}', lowerThirdFormatLabel: 'FORMATO DA TARJA',
       borderRadiusLabel: 'BORDAS (ARREDONDAMENTO)', radius0: '0px (Quadrado)', radius8: '8px (Normal)',
@@ -615,7 +615,7 @@ export const translations = {
 
   de: {
     common: {
-      selectPlaceholder: 'AUSWÄHLEN...',
+      searchPlaceholder: 'ZUM SUCHEN TIPPEN...', noMatches: 'Keine Treffer: der eingegebene Text wird verwendet (das Wetter braucht einen aus der Liste)', selectPlaceholder: 'AUSWÄHLEN...',
       selectCurvePlaceholder: 'KURVE AUSWÄHLEN...',
       selectDriverPlaceholder: 'FAHRER AUSWÄHLEN...',
       emptyLabel: 'LEER',
@@ -768,7 +768,7 @@ export const translations = {
       textTypography: 'TEXT & TYPOGRAFIE', fontLabel: 'ALLGEMEINE SCHRIFTART',
       fontArial: 'Arial (Klassisch)', fontOswald: 'Oswald (TV)', fontMontserrat: 'Montserrat (Modern)',
       fontTeko: 'Teko (Racing)', fontExo: 'Exo 2 (Futuristisch)',
-      gridPerPageLabel: 'FAHRER PRO BILDSCHIRM (STARTAUFSTELLUNG)', gridPerPageOption: '{n} Fahrer', gridPerPageOne: '1 Fahrer', towerBlurLabel: 'HINTERGRUND-UNSCHÄRFE (TURM)', blurNone: 'Keine Unschärfe', blurSoft: 'Leicht', blurMedium: 'Mittel', blurStrong: 'Stark', nameFormatLabel: 'NAMENSFORMAT', nameOriginal: 'Original', nameUppercase: 'GROSSBUCHSTABEN',
+      gridPerRowLabel: 'FAHRER PRO REIHE (STARTAUFSTELLUNG)', gridPerRowOption: '{n} pro Reihe', gridPerRowOne: '1 pro Reihe', gridPerPageLabel: 'FAHRER PRO BILDSCHIRM (STARTAUFSTELLUNG)', gridPerPageOption: '{n} Fahrer', gridPerPageOne: '1 Fahrer', towerBlurLabel: 'HINTERGRUND-UNSCHÄRFE (TURM)', blurNone: 'Keine Unschärfe', blurSoft: 'Leicht', blurMedium: 'Mittel', blurStrong: 'Stark', nameFormatLabel: 'NAMENSFORMAT', nameOriginal: 'Original', nameUppercase: 'GROSSBUCHSTABEN',
       nameFirstInitialLast: 'R. Borla', nameFirstLastInitial: 'Roman B.', nameLastOnly: 'Borla (Nur Nachname)',
       formatOf: 'FORMAT FÜR {name}', styleOf: 'STIL: {name}', lowerThirdFormatLabel: 'FORMAT DER BAUCHBINDE',
       borderRadiusLabel: 'RÄNDER (RUNDUNG)', radius0: '0px (Eckig)', radius8: '8px (Normal)',
@@ -817,7 +817,7 @@ export const translations = {
 
   fr: {
     common: {
-      selectPlaceholder: 'SÉLECTIONNER...',
+      searchPlaceholder: 'TAPEZ POUR RECHERCHER...', noMatches: "Aucun résultat : le texte saisi sera utilisé (la météo en exige un de la liste)", selectPlaceholder: 'SÉLECTIONNER...',
       selectCurvePlaceholder: 'SÉLECTIONNER UN VIRAGE...',
       selectDriverPlaceholder: 'SÉLECTIONNER UN PILOTE...',
       emptyLabel: 'VIDE',
@@ -970,7 +970,7 @@ export const translations = {
       textTypography: 'TEXTE ET TYPOGRAPHIE', fontLabel: 'POLICE GÉNÉRALE',
       fontArial: 'Arial (Classique)', fontOswald: 'Oswald (TV)', fontMontserrat: 'Montserrat (Moderne)',
       fontTeko: 'Teko (Racing)', fontExo: 'Exo 2 (Futuriste)',
-      gridPerPageLabel: "PILOTES PAR ÉCRAN (GRILLE)", gridPerPageOption: '{n} pilotes', gridPerPageOne: '1 pilote', towerBlurLabel: "FLOU D'ARRIÈRE-PLAN (TOUR)", blurNone: 'Sans flou', blurSoft: 'Léger', blurMedium: 'Moyen', blurStrong: 'Fort', nameFormatLabel: 'FORMAT DES NOMS', nameOriginal: 'Original', nameUppercase: 'MAJUSCULES',
+      gridPerRowLabel: "PILOTES PAR RANGÉE (GRILLE)", gridPerRowOption: '{n} par rangée', gridPerRowOne: '1 par rangée', gridPerPageLabel: "PILOTES PAR ÉCRAN (GRILLE)", gridPerPageOption: '{n} pilotes', gridPerPageOne: '1 pilote', towerBlurLabel: "FLOU D'ARRIÈRE-PLAN (TOUR)", blurNone: 'Sans flou', blurSoft: 'Léger', blurMedium: 'Moyen', blurStrong: 'Fort', nameFormatLabel: 'FORMAT DES NOMS', nameOriginal: 'Original', nameUppercase: 'MAJUSCULES',
       nameFirstInitialLast: 'R. Borla', nameFirstLastInitial: 'Roman B.', nameLastOnly: 'Borla (Nom Seul)',
       formatOf: 'FORMAT DE {name}', styleOf: 'STYLE : {name}', lowerThirdFormatLabel: 'FORMAT DU BANDEAU',
       borderRadiusLabel: 'BORDURES (ARRONDI)', radius0: '0px (Carré)', radius8: '8px (Normal)',

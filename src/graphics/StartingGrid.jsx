@@ -30,9 +30,19 @@ export default function StartingGrid({ drivers, config, isVisible, id = 'grid' }
   const gridFormat = config?.gridFormat || 'standard';
   const gridSkin = getSkinStyle(gridFormat, { themeMain, themeAccent });
   // 'cinematic' avanza piloto por piloto (1 a la vez) y 'photos' siempre muestra 2 (izquierda/derecha).
-  // En la clásica y sus skins la cantidad por pantalla se elige en PERSONALIZAR (1 a 6, de a 2 por fila).
-  const perPageSetting = Math.min(6, Math.max(1, parseInt(config?.gridPerPage, 10) || 2));
+  // En la clásica y sus skins se eligen en PERSONALIZAR los pilotos por fila (1 a 4) y por pantalla
+  // (hasta 3 filas). Sin elección de "por pantalla", se muestra una sola fila.
+  const perRow = Math.min(4, Math.max(1, parseInt(config?.gridPerRow, 10) || 2));
+  const perPageSetting = Math.min(perRow * 3, Math.max(1, parseInt(config?.gridPerPage, 10) || perRow));
   const itemsPerPage = gridFormat === 'cinematic' ? 1 : (gridFormat === 'photos' ? 2 : perPageSetting);
+  // Con 3 o 4 por fila las tarjetas se angostan para que la fila entre en 1920 px.
+  const cardWidth = perRow >= 4 ? 380 : (perRow === 3 ? 420 : 450);
+  const cardMarginX = perRow >= 4 ? 30 : (perRow === 3 ? 40 : 45);
+  const cardSlot = cardWidth + 12 + cardMarginX * 2; // +12: bordes de la tarjeta
+  const gridRowWidth = perRow * cardSlot;
+  const gridContainerWidth = Math.max(1280, gridRowWidth + 40);
+  // El panel crece hacia ambos lados para mantener el mismo centro que el de 1280 px.
+  const gridShiftX = (gridFormat === 'photos' || gridFormat === 'cinematic') ? 0 : Math.round((gridContainerWidth - 1280) / 2);
 
   let transformHidden = `scale(${config?.positions?.[id]?.scale || 1}) translateY(40px)`;
   if (animStyle === 'fade') transformHidden = `scale(${config?.positions?.[id]?.scale || 1})`;
@@ -80,9 +90,9 @@ export default function StartingGrid({ drivers, config, isVisible, id = 'grid' }
 
   return (
     <div style={{
-      position: 'absolute', left: `${pos.x}px`, top: `${pos.y}px`,
+      position: 'absolute', left: `${pos.x - gridShiftX}px`, top: `${pos.y}px`,
       transformOrigin: 'top left',
-      width: (gridFormat === 'photos' || gridFormat === 'cinematic') ? '1920px' : '1280px',
+      width: (gridFormat === 'photos' || gridFormat === 'cinematic') ? '1920px' : `${gridContainerWidth}px`,
       height: (gridFormat === 'photos' || gridFormat === 'cinematic') ? '1080px' : '720px',
       display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
       backgroundColor: 'transparent',
@@ -102,7 +112,7 @@ export default function StartingGrid({ drivers, config, isVisible, id = 'grid' }
       {(gridFormat === 'standard' || gridSkin) && (
         <>
           <div style={{
-            position: 'absolute', top: '50px', left: '10%',
+            position: 'absolute', top: '50px', left: `calc((100% - ${gridRowWidth}px) / 2 + ${cardMarginX}px)`,
             backgroundColor: gridSkin ? gridSkin.background : themeHeaderBg, color: themeTitleText, padding: '15px 40px',
             backgroundImage: gridSkin?.backgroundImage,
             fontSize: '32px', fontWeight: '900', textTransform: 'uppercase',
@@ -122,10 +132,11 @@ export default function StartingGrid({ drivers, config, isVisible, id = 'grid' }
             <span style={{ textShadow: gridSkin?.textShadow }}>Ordenamiento de partida - {config?.campeonato || 'CARRERA'}</span>
           </div>
 
-          <div key={`std-${page}`} className="grid-page" style={{ marginTop: '150px' }}>
+          <div key={`std-${page}`} className="grid-page" style={{ marginTop: '150px', width: `${gridRowWidth}px` }}>
             {currentDrivers.map((driver) => (
               <DriverCardStandard
                 key={driver.pos} driver={driver} config={config} customBg={customBg} bRad={bRad} skin={gridSkin}
+                cardWidth={cardWidth} cardMarginX={cardMarginX}
                 themeBg={themeBg} themeHeaderBg={themeHeaderBg} themeSecondary={themeSecondary}
                 themeAccent={themeAccent} themeNormalText={themeNormalText} themeNumberText={themeNumberText}
               />
@@ -194,7 +205,7 @@ export default function StartingGrid({ drivers, config, isVisible, id = 'grid' }
 // ----------------------------------------------------------------------------------
 // TARJETA MODO ESTÁNDAR (La que ya tenías)
 // ----------------------------------------------------------------------------------
-function DriverCardStandard({ driver, config, customBg, bRad, themeBg, themeHeaderBg, themeSecondary, themeAccent, themeNormalText, themeNumberText, skin }) {
+function DriverCardStandard({ driver, config, customBg, bRad, cardWidth = 450, cardMarginX = 45, themeBg, themeHeaderBg, themeSecondary, themeAccent, themeNormalText, themeNumberText, skin }) {
   const [imgSrc, setImgSrc] = useState(pilotoAnonimo);
   const hasCustomBg = !!customBg;
 
@@ -216,7 +227,7 @@ function DriverCardStandard({ driver, config, customBg, bRad, themeBg, themeHead
       backgroundSize: '100% 100%', backgroundRepeat: 'no-repeat', backgroundPosition: 'center',
       border: skin ? skin.border : 'none',
       borderLeft: skin ? skin.border : (hasCustomBg ? 'none' : `8px solid ${themeSecondary}`),
-      borderRadius: bRad, width: '450px', height: '110px', margin: '0 45px 40px',
+      borderRadius: bRad, width: `${cardWidth}px`, height: '110px', margin: `0 ${cardMarginX}px 40px`,
       boxShadow: skin ? skin.boxShadow : (hasCustomBg ? 'none' : '10px 15px 30px rgba(0,0,0,0.8)'),
       backdropFilter: skin?.backdropFilter,
       position: 'relative', overflow: 'visible'
