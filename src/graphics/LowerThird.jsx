@@ -18,6 +18,9 @@ export default function LowerThird({ role, name, isVisible, config, id }) {
   const animDur = getAnimDuration(config, id);
   const format = config[`lowerThirdFormat_${id}`] || 'standard';
   const skin = getSkinStyle(format, { themeMain, themeAccent });
+  // ALINEACIÓN DEL TEXTO (izquierda / centro / derecha) dentro de la caja
+  const textAlign = ['left', 'center', 'right'].includes(config[`textAlign_${id}`]) ? config[`textAlign_${id}`] : 'left';
+  const alignItems = { left: 'flex-start', center: 'center', right: 'flex-end' }[textAlign];
 
   // CÁLCULO DE LA ANIMACIÓN DE ENTRADA
   let transformHidden = `scale(${pos.scale}) translateX(-40px)`;
@@ -39,7 +42,7 @@ export default function LowerThird({ role, name, isVisible, config, id }) {
   if (format === 'minimal') {
     return (
       <div style={wrapperStyle}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', padding: '4px 2px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems, textAlign, gap: '2px', padding: '4px 2px' }}>
           <span style={{ color: themeAccent, fontSize: '12px', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '2px', textShadow: '2px 2px 6px rgba(0,0,0,0.9)' }}>
             {role}
           </span>
@@ -68,7 +71,7 @@ export default function LowerThird({ role, name, isVisible, config, id }) {
             backgroundImage: hasCustomBg ? `url(${customBg})` : 'none',
             backgroundSize: '100% 100%', backgroundRepeat: 'no-repeat', backgroundPosition: 'center',
             border: hasCustomBg ? 'none' : `2px solid ${themeMain}`,
-            padding: '10px 20px', minWidth: '220px',
+            padding: '10px 20px', minWidth: '220px', textAlign,
             borderRadius: `0 ${bRad} ${bRad} ${bRad}`, boxShadow: hasCustomBg ? 'none' : '2px 4px 12px rgba(0,0,0,0.6)'
           }}>
             <span style={{ color: themeNormalText, fontSize: '24px', fontWeight: '900', textTransform: 'uppercase' }}>
@@ -96,7 +99,7 @@ export default function LowerThird({ role, name, isVisible, config, id }) {
             backgroundColor: hasCustomBg ? 'transparent' : themeHeaderBg,
             backgroundImage: hasCustomBg ? `url(${customBg})` : 'none',
             backgroundSize: '100% 100%', backgroundRepeat: 'no-repeat', backgroundPosition: 'center',
-            padding: '10px 22px', display: 'flex', flexDirection: 'column', justifyContent: 'center', minWidth: '220px', position: 'relative'
+            padding: '10px 22px', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems, textAlign, minWidth: '220px', position: 'relative'
           }}>
             <span style={{ color: themeNormalText, fontSize: '24px', fontWeight: '900', textTransform: 'uppercase' }}>
               {name || '...'}
@@ -137,7 +140,7 @@ export default function LowerThird({ role, name, isVisible, config, id }) {
           </div>
         )}
 
-        <div style={{ padding: '10px 20px', display: 'flex', flexDirection: 'column', minWidth: '200px', justifyContent: 'center' }}>
+        <div style={{ padding: '10px 20px', display: 'flex', flexDirection: 'column', alignItems, textAlign, minWidth: '200px', justifyContent: 'center' }}>
           <span style={{ color: themeAccent, fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '1px' }}>
             {role}
           </span>

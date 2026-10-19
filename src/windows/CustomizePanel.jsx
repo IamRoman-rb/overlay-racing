@@ -759,6 +759,22 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
             </select>
           </div>
 
+          {/* Alineación del texto de los zócalos (relator, comentarista, notero, circuito y zócalo libre) */}
+          {['relator', 'comentarista', 'notero1', 'notero2', 'circuito', 'customZocalo'].includes(selectedGraphic) && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+              <label style={{ fontSize: '9px', color: colors.textMuted, fontWeight: 'bold' }}>{t('personalizar.textAlignLabel')}</label>
+              <select
+                value={config[`textAlign_${selectedGraphic}`] || (selectedGraphic === 'customZocalo' && config.customZocaloFormat === 'banner' ? 'center' : 'left')}
+                onChange={(e) => onConfigChange(`textAlign_${selectedGraphic}`, e.target.value)}
+                style={{ ...inputStyle, padding: '10px', fontSize: '11px', cursor: 'pointer' }}
+              >
+                <option value="left">{t('personalizar.alignLeft')}</option>
+                <option value="center">{t('personalizar.alignCenter')}</option>
+                <option value="right">{t('personalizar.alignRight')}</option>
+              </select>
+            </div>
+          )}
+
           {/* La alerta de sanciones aparece/desaparece sin transición, así que no tiene duración configurable */}
           {selectedGraphic !== 'penaltyAlert' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>

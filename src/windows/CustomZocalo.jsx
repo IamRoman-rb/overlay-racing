@@ -18,6 +18,10 @@ export default function CustomZocalo({ isVisible, title, text, config, id = 'cus
   const animDur = getAnimDuration(config, id);
   const zocaloFormat = config?.customZocaloFormat || 'standard';
   const skin = getSkinStyle(zocaloFormat, { themeMain, themeAccent });
+  // ALINEACIÓN DEL TEXTO: si no se eligió una, el banner va centrado y el resto a la izquierda (como siempre)
+  const alignSetting = config?.[`textAlign_${id}`];
+  const textAlign = ['left', 'center', 'right'].includes(alignSetting) ? alignSetting : (zocaloFormat === 'banner' ? 'center' : 'left');
+  const alignItems = { left: 'flex-start', center: 'center', right: 'flex-end' }[textAlign];
 
   let transformHidden = `scale(${pos.scale}) translateX(-40px)`;
   if (animStyle === 'fade') transformHidden = `scale(${pos.scale})`;
@@ -44,7 +48,7 @@ export default function CustomZocalo({ isVisible, title, text, config, id = 'cus
           backgroundImage: hasCustomBg ? `url(${customBg})` : 'none',
           backgroundSize: '100% 100%', backgroundRepeat: 'no-repeat', backgroundPosition: 'center',
           borderTop: hasCustomBg ? 'none' : `4px solid ${themeMain}`,
-          padding: '14px 0', textAlign: 'center', width: '100%',
+          padding: '14px 40px', textAlign, width: '100%', boxSizing: 'border-box',
           boxShadow: hasCustomBg ? 'none' : '0 10px 30px rgba(0,0,0,0.6)', borderRadius: bRad
         }}>
           {title && (
@@ -78,7 +82,7 @@ export default function CustomZocalo({ isVisible, title, text, config, id = 'cus
             backgroundImage: hasCustomBg ? `url(${customBg})` : 'none',
             backgroundSize: '100% 100%', backgroundRepeat: 'no-repeat', backgroundPosition: 'center',
             border: hasCustomBg ? 'none' : `2px solid ${themeMain}`,
-            padding: '12px 22px', minWidth: '300px',
+            padding: '12px 22px', minWidth: '300px', textAlign,
             borderRadius: title ? `0 ${bRad} ${bRad} ${bRad}` : bRad,
             boxShadow: hasCustomBg ? 'none' : '0 10px 30px rgba(0,0,0,0.6)'
           }}>
@@ -95,7 +99,7 @@ export default function CustomZocalo({ isVisible, title, text, config, id = 'cus
   if (zocaloFormat === 'minimal') {
     return (
       <div style={wrapperStyle}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems, textAlign, gap: '2px' }}>
           {title && (
             <span style={{ color: themeAccent, fontSize: '13px', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '1px', textShadow: '2px 2px 6px rgba(0,0,0,0.9)' }}>
               {title}
@@ -137,7 +141,7 @@ export default function CustomZocalo({ isVisible, title, text, config, id = 'cus
         )}
 
         {/* ZONA DE TEXTOS */}
-        <div style={{ padding: '12px 25px', display: 'flex', flexDirection: 'column', justifyContent: 'center', minWidth: '300px' }}>
+        <div style={{ padding: '12px 25px', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems, textAlign, minWidth: '300px' }}>
           {title && (
             <span style={{ color: themeAccent, fontSize: '13px', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '2px' }}>
               {title}
