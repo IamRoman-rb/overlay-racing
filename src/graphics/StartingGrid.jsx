@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import pilotoAnonimo from '../assets/piloto_anonimo.png';
 import { getSkinStyle } from '../utils/skinStyles';
+import MarqueeText from './MarqueeText';
 
 let ipcRenderer = null;
 if (typeof window !== 'undefined' && typeof window.require === 'function') {
@@ -111,16 +112,24 @@ export default function StartingGrid({ drivers, config, isVisible, id = 'grid' }
             borderBottom: gridSkin ? gridSkin.border : `6px solid ${themeMain}`,
             boxShadow: gridSkin ? gridSkin.boxShadow : '0 10px 20px rgba(0,0,0,0.5)',
             backdropFilter: gridSkin?.backdropFilter,
-            display: 'flex', alignItems: 'center', gap: '20px', borderRadius: bRad
+            display: 'flex', alignItems: 'center', gap: '20px', borderRadius: bRad,
+            // Nunca más ancho que el bloque de tarjetas (de borde a borde, simétrico al centro de la grilla):
+            // si el nombre del evento es muy largo, se desplaza en vez de agrandar el título.
+            boxSizing: 'border-box', maxWidth: '1006px'
           }}>
             {(config?.logo || config?.categoryLogo) && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginRight: '10px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginRight: '10px', flexShrink: 0 }}>
                 {config?.logo && <img src={config.logo} alt="Productora" style={{ height: '45px', maxWidth: '100px', objectFit: 'contain' }} />}
                 {config?.logo && config?.categoryLogo && <div style={{ height: '35px', width: '3px', backgroundColor: 'rgba(255, 255, 255, 0.2)' }} />}
                 {config?.categoryLogo && <img src={config.categoryLogo} alt="Categoría" style={{ height: '45px', maxWidth: '100px', objectFit: 'contain' }} />}
               </div>
             )}
-            <span style={{ textShadow: gridSkin?.textShadow, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '1250px' }}>Ordenamiento de partida - {config?.eventName || config?.campeonato || 'CARRERA'}</span>
+            <div style={{ minWidth: 0, flex: '0 1 auto' }}>
+              <MarqueeText
+                text={`Ordenamiento de partida - ${config?.eventName || config?.campeonato || 'CARRERA'}`}
+                style={{ textShadow: gridSkin?.textShadow }}
+              />
+            </div>
           </div>
 
           <div key={`std-${page}`} className="grid-page" style={{ marginTop: '150px' }}>
@@ -394,11 +403,14 @@ function CinematicGridView({ allDrivers, currentDriver, page, config, bRad, them
         </div>
 
         {/* ENCABEZADO / CAMPEONATO (altura reservada aparte, nunca se pisa con las filas) */}
-        <div style={{ position: 'absolute', top: '30px', left: '110px', display: 'flex', alignItems: 'center', gap: '15px' }}>
-          {config?.logo && <img src={config.logo} alt="Productora" style={{ height: '32px', maxWidth: '90px', objectFit: 'contain' }} />}
-          <span style={{ fontSize: '16px', fontWeight: '900', color: themeTitleText, textTransform: 'uppercase', letterSpacing: '1px' }}>
-            {config?.eventName || config?.campeonato || 'CARRERA'}
-          </span>
+        <div style={{ position: 'absolute', top: '30px', left: '110px', maxWidth: '450px', display: 'flex', alignItems: 'center', gap: '15px' }}>
+          {config?.logo && <img src={config.logo} alt="Productora" style={{ height: '32px', maxWidth: '90px', objectFit: 'contain', flexShrink: 0 }} />}
+          <div style={{ minWidth: 0, flex: '0 1 auto' }}>
+            <MarqueeText
+              text={config?.eventName || config?.campeonato || 'CARRERA'}
+              style={{ fontSize: '16px', fontWeight: '900', color: themeTitleText, textTransform: 'uppercase', letterSpacing: '1px' }}
+            />
+          </div>
         </div>
 
         {/* DOS COLUMNAS: altura tope fija = AVAILABLE_HEIGHT, así nunca se sale del panel */}
