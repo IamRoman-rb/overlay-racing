@@ -99,12 +99,9 @@ const SearchSelectControl = ({ id, label, value, options, isActive, onChange, on
 const WeatherControl = ({ id, label, config, isActive, onToggle, setConfig, t }) => {
   const [loading, setLoading] = useState(false);
 
-  const fetchWeather = async () => {
-    const circuitoSeleccionado = circuitosData.find(c => c.nombre === config.circuito);
-    if (!circuitoSeleccionado) { alert(t('panel.weatherNeedCircuit')); return; }
+  const fetchWeatherAt = async (lat, lon, place = null) => {
     setLoading(true);
     try {
-      const { lat, lon } = circuitoSeleccionado;
       const weatherRes = await fetch(
         `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true&hourly=relative_humidity_2m,apparent_temperature,precipitation_probability&windspeed_unit=kmh&timezone=auto`
       );
@@ -123,6 +120,7 @@ const WeatherControl = ({ id, label, config, isActive, onToggle, setConfig, t })
         feelsLike: weatherData.hourly?.apparent_temperature?.[idx] ?? null,
         humidity: weatherData.hourly?.relative_humidity_2m?.[idx] ?? null,
         precipProb: weatherData.hourly?.precipitation_probability?.[idx] ?? null,
+        place,
       };
 
       const newConfig = { ...config, weatherData: newWeatherData };
@@ -135,6 +133,34 @@ const WeatherControl = ({ id, label, config, isActive, onToggle, setConfig, t })
     setLoading(false);
   };
 
+  const fetchWeather = () => {
+    const circuitoSeleccionado = circuitosData.find(c => c.nombre === config.circuito);
+    if (!circuitoSeleccionado) { alert(t('panel.weatherNeedCircuit')); return; }
+    return fetchWeatherAt(circuitoSeleccionado.lat, circuitoSeleccionado.lon);
+  };
+
+  // Ubicación aproximada de la PC por IP (navigator.geolocation en Electron/Windows
+  // depende de una API key de Google y suele fallar). Se prueban dos servicios por si uno cae.
+  const fetchWeatherHere = async () => {
+    setLoading(true);
+    let loc = null;
+    try {
+      const r = await fetch('https://ipwho.is/');
+      const d = await r.json();
+      if (d.success !== false && typeof d.latitude === 'number') loc = { lat: d.latitude, lon: d.longitude, place: [d.city, d.country_code].filter(Boolean).join(', ') };
+    } catch (e) { console.error(e); }
+    if (!loc) {
+      try {
+        const r = await fetch('https://ipapi.co/json/');
+        const d = await r.json();
+        if (typeof d.latitude === 'number') loc = { lat: d.latitude, lon: d.longitude, place: [d.city, d.country_code].filter(Boolean).join(', ') };
+      } catch (e) { console.error(e); }
+    }
+    setLoading(false);
+    if (!loc) { alert(t('panel.weatherLocError')); return; }
+    return fetchWeatherAt(loc.lat, loc.lon, loc.place);
+  };
+
   const wd = config.weatherData;
 
   return (
@@ -144,11 +170,14 @@ const WeatherControl = ({ id, label, config, isActive, onToggle, setConfig, t })
         <button onClick={fetchWeather} disabled={loading} style={{ backgroundColor: colors.bgInput, color: colors.yellow, border: `1px solid ${colors.border}`, cursor: 'pointer', padding: '0 10px' }}>
           {loading ? '⏳' : '☁️'}
         </button>
+        <button onClick={fetchWeatherHere} disabled={loading} title={t('panel.weatherHereTitle')} style={{ backgroundColor: colors.bgInput, color: colors.yellow, border: `1px solid ${colors.border}`, cursor: 'pointer', padding: '0 10px' }}>
+          📍
+        </button>
       </div>
       <div style={{ ...inputStyle, textTransform: 'none', cursor: 'default', display: 'flex', alignItems: 'center', minHeight: '32px' }}>
         {wd ? (
           <span style={{ fontSize: '10px' }}>
-            {Math.round(wd.temp)}°C · ST {wd.feelsLike !== null ? Math.round(wd.feelsLike) + '°' : '-'} · 💨 {wd.windSpeed !== undefined ? Math.round(wd.windSpeed) : '-'}km/h · 💧 {wd.humidity !== null ? Math.round(wd.humidity) + '%' : '-'} · 🌧 {wd.precipProb !== null ? Math.round(wd.precipProb) + '%' : '-'}
+            {Math.round(wd.temp)}°C · ST {wd.feelsLike !== null ? Math.round(wd.feelsLike) + '°' : '-'} · 💨 {wd.windSpeed !== undefined ? Math.round(wd.windSpeed) : '-'}km/h · 💧 {wd.humidity !== null ? Math.round(wd.humidity) + '%' : '-'} · 🌧 {wd.precipProb !== null ? Math.round(wd.precipProb) + '%' : '-'}{wd.place ? ` · 📍 ${wd.place}` : ''}
           </span>
         ) : (
           <span style={{ color: colors.textMuted, fontSize: '10px' }}>{t('panel.weatherNoData')}</span>
