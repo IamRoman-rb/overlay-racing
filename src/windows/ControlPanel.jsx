@@ -22,7 +22,7 @@ const colors = {
 
 const inputStyle = { backgroundColor: colors.bgInput, border: `1px solid ${colors.border}`, color: colors.textMain, padding: '8px', fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', width: '100%', boxSizing: 'border-box', outline: 'none' };
 const btnStyle = (isActive = false) => ({ backgroundColor: isActive ? colors.yellow : colors.bgInput, color: isActive ? '#000' : colors.textMain, border: `1px solid ${isActive ? colors.yellow : colors.border}`, padding: '12px 10px', fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', cursor: 'pointer', width: '100%', textAlign: 'center', transition: 'all 0.2s ease' });
-const sectionTitleStyle = { fontSize: '10px', color: colors.textMuted, textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '8px', marginTop: '20px', breakAfter: 'avoid-column' };
+const sectionTitleStyle = { fontSize: '10px', color: colors.textMuted, textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '8px', marginTop: 0 };
 
 // Distribuciones de la pestaña PANEL (se elige en PERSONALIZAR): dónde van los botones respecto de la tabla de pilotos.
 const PANEL_LAYOUTS = ['left', 'right', 'top', 'bottom'];
@@ -210,6 +210,7 @@ export default function ControlPanel() {
   const [graphics, setGraphics] = useState({ relator: false, comentarista: false, notero1: false, notero2: false, circuito: false, clima: false });
   const [showLapCounter, setShowLapCounter] = useState(false);
   const panelContainerRef = useRef(null);
+  const panelButtonsRef = useRef(null);
   const [panelSplitDrag, setPanelSplitDrag] = useState(null); // tamaño provisorio (px) mientras se arrastra el divisor
   const [showVirtualChamp, setShowVirtualChamp] = useState(false);
   const [championship, setChampionship] = useState([]);
@@ -425,18 +426,19 @@ export default function ControlPanel() {
   const panelSideBySide = panelLayout === 'left' || panelLayout === 'right';
   const panelButtonsFirst = panelLayout === 'left' || panelLayout === 'top';
   // Tamaño de la zona de botones, ajustable arrastrando el divisor (ancho si van lado a lado, alto si van apilados)
-  const SPLIT_DEFAULT = panelSideBySide ? 320 : 230;
-  const SPLIT_MIN = panelSideBySide ? 220 : 90;
+  // Apilados, el alto es automático (se ajusta al contenido) hasta que se arrastra el divisor.
+  const SPLIT_MIN = panelSideBySide ? 240 : 90;
   const splitKey = panelSideBySide ? 'panelSplitSide' : 'panelSplitStack';
   const savedSplit = parseInt(config[splitKey], 10);
-  const panelSplitSize = panelSplitDrag !== null ? panelSplitDrag : (savedSplit > 0 ? savedSplit : SPLIT_DEFAULT);
+  const panelSplitSize = panelSplitDrag !== null ? panelSplitDrag : (savedSplit > 0 ? savedSplit : (panelSideBySide ? 350 : null));
 
   const handlePanelSplitMouseDown = (e) => {
     e.preventDefault();
     const container = panelContainerRef.current;
     if (!container) return;
     const startPos = panelSideBySide ? e.clientX : e.clientY;
-    const startSize = panelSplitSize;
+    const zone = panelButtonsRef.current;
+    const startSize = zone ? Math.round(panelSideBySide ? zone.getBoundingClientRect().width : zone.getBoundingClientRect().height) : (panelSplitSize || SPLIT_MIN);
     const max = Math.max(SPLIT_MIN, (panelSideBySide ? container.clientWidth - 320 : container.clientHeight * 0.8));
     // Si los botones están a la derecha / abajo, arrastrar hacia el otro lado los agranda
     const sign = panelButtonsFirst ? 1 : -1;
@@ -457,17 +459,23 @@ export default function ControlPanel() {
   };
   const handlePanelSplitReset = () => handleDirectSave(splitKey, null);
 
+  // Las secciones (y los botones dentro de cada una) fluyen como flex: al ensanchar la zona se acomodan
+  // en más columnas y al angostarla se apilan, en vez de estirarse.
+  const panelButtonsBase = {
+    display: 'flex', flexWrap: 'wrap', alignItems: 'flex-start', alignContent: 'flex-start', gap: '18px 24px',
+    boxSizing: 'border-box', flexShrink: 0, backgroundColor: colors.bgPanel, overflowY: 'auto', overflowX: 'hidden',
+    order: panelButtonsFirst ? 0 : 2
+  };
+  const panelSectionStyle = { flex: '1 1 235px', minWidth: 0, maxWidth: '460px' };
+  const panelSectionWideStyle = { ...panelSectionStyle, flexBasis: '300px' };
   const panelButtonsStyle = panelSideBySide
     ? {
-        width: `${panelSplitSize}px`, flexShrink: 0, backgroundColor: colors.bgPanel, padding: '0 15px', overflowY: 'auto',
-        order: panelButtonsFirst ? 0 : 2,
+        ...panelButtonsBase, width: `${panelSplitSize}px`, padding: '18px 15px',
         borderRight: panelLayout === 'left' ? `1px solid ${colors.border}` : 'none',
         borderLeft: panelLayout === 'right' ? `1px solid ${colors.border}` : 'none'
       }
     : {
-        height: `${panelSplitSize}px`, flexShrink: 0, backgroundColor: colors.bgPanel, padding: '14px 20px 10px', overflow: 'auto',
-        columnWidth: '250px', columnGap: '25px',
-        order: panelButtonsFirst ? 0 : 2,
+        ...panelButtonsBase, padding: '16px 20px 14px', ...(panelSplitSize ? { height: `${panelSplitSize}px` } : {}),
         borderBottom: panelLayout === 'top' ? `1px solid ${colors.border}` : 'none',
         borderTop: panelLayout === 'bottom' ? `1px solid ${colors.border}` : 'none'
       };
@@ -831,11 +839,11 @@ export default function ControlPanel() {
 
       {activeTab === 'panel' && (
         <div ref={panelContainerRef} style={{ display: 'flex', flexDirection: panelSideBySide ? 'row' : 'column', flex: 1, overflow: panelSideBySide ? 'hidden' : 'auto' }}>
-          <style>{`.panel-multicol > * { break-inside: avoid; } .panel-multicol > :first-child { margin-top: 0 !important; }`}</style>
-          <div className={panelSideBySide ? undefined : 'panel-multicol'} style={panelButtonsStyle}>
-
+          <style>{`.panel-section > :last-child { margin-bottom: 0 !important; }`}</style>
+          <div ref={panelButtonsRef} style={panelButtonsStyle}>
+            <div className="panel-section" style={panelSectionStyle}>
             <div style={sectionTitleStyle}>{t('panel.flagsSection')}</div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '5px', marginBottom: '20px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(110px, 1fr))', gap: '5px', marginBottom: '20px' }}>
               <button onClick={() => handleToggleFlag('red')} style={{ ...btnStyle(activeFlags.red), backgroundColor: activeFlags.red ? '#e74c3c' : colors.bgInput, color: activeFlags.red ? '#fff' : colors.textMain, borderColor: activeFlags.red ? '#c0392b' : colors.border }}>{t('panel.flagRed')}</button>
               <button onClick={() => handleToggleFlag('tricolor')} style={{ ...btnStyle(activeFlags.tricolor), background: activeFlags.tricolor ? 'linear-gradient(90deg, #0033a0, #fff, #ff8200)' : colors.bgInput, color: activeFlags.tricolor ? '#000' : colors.textMain, textShadow: activeFlags.tricolor ? '0 0 3px #fff' : 'none' }}>{t('panel.flagTricolor')}</button>
               <button onClick={() => handleToggleFlag('blue')} style={{ ...btnStyle(activeFlags.blue), backgroundColor: activeFlags.blue ? '#3498db' : colors.bgInput, color: activeFlags.blue ? '#fff' : colors.textMain, borderColor: activeFlags.blue ? '#2980b9' : colors.border }}>{t('panel.flagBlue')}</button>
@@ -858,9 +866,11 @@ export default function ControlPanel() {
                 <input name="blackFlagNumber" value={config.blackFlagNumber || ''} onChange={(e) => handleDirectSave('blackFlagNumber', e.target.value)} style={{ ...inputStyle, width: '45px', textAlign: 'center', padding: '0', fontSize: '14px' }} placeholder={t('panel.flagNumberPlaceholder')} title={t('panel.flagNumberTitle')} />
               </div>
             </div>
+            </div>
 
+            <div className="panel-section" style={panelSectionWideStyle}>
             <div style={sectionTitleStyle}>{t('panel.personalSection')}</div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '8px' }}>
               <GraphicControl id="relator" label={t('graphics.relator')} value={config.relator} isActive={graphics.relator} onChange={handleChange} onBlur={handleSave} onToggle={handleToggleGraphic} t={t} />
               <GraphicControl id="comentarista" label={t('graphics.comentarista')} value={config.comentarista} isActive={graphics.comentarista} onChange={handleChange} onBlur={handleSave} onToggle={handleToggleGraphic} t={t} />
               <GraphicControl id="notero1" label={t('graphics.notero1')} value={config.notero1} isActive={graphics.notero1} onChange={handleChange} onBlur={handleSave} onToggle={handleToggleGraphic} t={t} />
@@ -868,7 +878,9 @@ export default function ControlPanel() {
               <SearchSelectControl id="circuito" label={t('graphics.circuito')} value={config.circuito} options={circuitosData} isActive={graphics.circuito} onChange={(v) => setConfig({ ...config, circuito: v })} onCommit={handleCommitCircuit} onToggle={handleToggleGraphic} t={t} />
               <WeatherControl id="clima" label={t('graphics.clima')} config={config} setConfig={setConfig} isActive={graphics.clima} onToggle={handleToggleGraphic} t={t} />
             </div>
+            </div>
 
+            <div className="panel-section" style={panelSectionStyle}>
             <div style={sectionTitleStyle}>{t('graphics.trackAlert')}</div>
 <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', marginBottom: '20px' }}>
   <select
@@ -900,7 +912,9 @@ export default function ControlPanel() {
     </button>
   </div>
 </div>
+            </div>
 
+            <div className="panel-section" style={panelSectionStyle}>
             <div style={sectionTitleStyle}>{t('panel.gridSection')}</div>
             <div style={{ display: 'flex', gap: '5px', marginBottom: '5px' }}>
               <button onClick={() => { if (ipcRenderer) ipcRenderer.send('grid-prev'); }} style={{ ...btnStyle(), flex: 1 }}>{t('panel.gridPrev')}</button>
@@ -912,7 +926,9 @@ export default function ControlPanel() {
                 {autoScrape ? t('panel.autoScrapeStop') : t('panel.autoScrapeStart')}
               </button>
             </div>
+            </div>
 
+            <div className="panel-section" style={panelSectionStyle}>
             <div style={sectionTitleStyle}>{t('graphics.startingLights')}</div>
             <div style={{ display: 'flex', gap: '5px', marginBottom: '15px' }}>
               {startingLightsStep === 5 ? (
@@ -941,9 +957,11 @@ export default function ControlPanel() {
                 {t('common.hide')}
               </button>
             </div>
+            </div>
 
+            <div className="panel-section" style={panelSectionStyle}>
             <div style={sectionTitleStyle}>{t('panel.graphicsSection')}</div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '5px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(110px, 1fr))', gap: '5px' }}>
               <button onClick={handleToggleTicker} style={btnStyle(showTicker)}>{t('graphics.ticker')}</button>
               <button onClick={handleToggleTower} style={btnStyle(showTower)}>{t('panel.towerShort')}</button>
               <button onClick={handleToggleLapCounter} style={btnStyle(showLapCounter)}>{t('panel.lapsShort')}</button>
@@ -958,14 +976,16 @@ export default function ControlPanel() {
               </button>
 
             </div>
+            </div>
 
+            <div className="panel-section" style={panelSectionStyle}>
             <div style={sectionTitleStyle}>{t('graphics.branding')}</div>
             <div style={{ display: 'flex', gap: '5px', marginBottom: '8px' }}>
               <button onClick={() => handleToggleGraphic('branding')} style={{ ...btnStyle(!!graphics.branding), flex: 1 }}>
                 {graphics.branding ? t('panel.hideBranding') : t('panel.showBranding')}
               </button>
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '5px', marginBottom: '8px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(68px, 1fr))', gap: '5px', marginBottom: '8px' }}>
               {['both', 'producer', 'category'].map(opt => (
                 <button key={opt} onClick={() => handleDirectSave('brandingShow', opt)} style={{ ...btnStyle((config.brandingShow || 'both') === opt), padding: '8px 4px', fontSize: '10px' }}>
                   {t(`panel.branding_${opt}`)}
@@ -975,7 +995,9 @@ export default function ControlPanel() {
             <div style={{ fontSize: '10px', color: (config.logo || config.categoryLogo) ? colors.textMuted : '#e67e22', marginBottom: '15px' }}>
               {(config.logo || config.categoryLogo) ? t('panel.brandingNote', { tab: t('tabs.personalizar') }) : t('panel.brandingNoLogos', { tab: t('tabs.personalizar') })}
             </div>
+            </div>
 
+            <div className="panel-section" style={panelSectionStyle}>
             <div style={sectionTitleStyle}>{t('panel.battleSection')}</div>
             <div style={{ display: 'flex', gap: '5px', marginBottom: '15px' }}>
               <div style={{ display: 'flex', alignItems: 'center', backgroundColor: colors.bgInput, border: `1px solid ${colors.border}`, padding: '0 10px', borderRadius: '4px' }}>
@@ -990,7 +1012,9 @@ export default function ControlPanel() {
                 {showBattle ? t('panel.hideBattle') : t('panel.showBattle')}
               </button>
             </div>
+            </div>
 
+            <div className="panel-section" style={panelSectionStyle}>
             <div style={sectionTitleStyle}>{t('graphics.virtualChamp')}</div>
             <div style={{ display: 'flex', gap: '5px', marginBottom: '15px' }}>
               <button onClick={handleToggleVirtualChamp} style={{ ...btnStyle(showVirtualChamp), flex: 1 }}>
@@ -1000,7 +1024,9 @@ export default function ControlPanel() {
             <div style={{ fontSize: '10px', color: colors.textMuted, marginTop: '-10px', marginBottom: '15px' }}>
               {t('panel.champNote', { tab: t('tabs.campeonato') })}
             </div>
+            </div>
 
+            <div className="panel-section" style={panelSectionStyle}>
             <div style={sectionTitleStyle}>{t('graphics.lapTimesHistory')}</div>
             <div style={{ display: 'flex', gap: '5px', marginBottom: '15px' }}>
               <button onClick={handleToggleLapTimesHistory} style={{ ...btnStyle(showLapTimesHistory), flex: 2 }}>
@@ -1015,7 +1041,9 @@ export default function ControlPanel() {
                 {t('panel.lapTimesFocusNote', { number: selectedLapTimesDriver })}
               </div>
             )}
+            </div>
 
+            <div className="panel-section" style={panelSectionStyle}>
             <div style={sectionTitleStyle}>{t('panel.votingSection')}</div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px' }}>
               <span style={{
@@ -1032,7 +1060,9 @@ export default function ControlPanel() {
               <button onClick={handleToggleVotingQR} style={btnStyle(showVotingQR)}>{t('graphics.votingQR')}</button>
               <button onClick={handleToggleVotingResults} style={btnStyle(showVotingResults)}>{t('panel.votingResultsLive')}</button>
             </div>
+            </div>
 
+            <div className="panel-section" style={panelSectionStyle}>
             <div style={sectionTitleStyle}>{t('panel.backupSection')}</div>
             <div style={{ display: 'flex', gap: '5px', marginBottom: '15px' }}>
               <button onClick={handleSaveBackup} style={{ ...btnStyle(), flex: 1, backgroundColor: '#8e44ad', color: '#fff', borderColor: '#9b59b6' }}>
@@ -1042,11 +1072,14 @@ export default function ControlPanel() {
                 {t('panel.loadSaved')}
               </button>
             </div>
+            </div>
 
+            <div className="panel-section" style={panelSectionStyle}>
             <div style={sectionTitleStyle}>{t('panel.closingSection')}</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', marginBottom: '20px' }}>
               <button onClick={handleToggleFinalResults} style={btnStyle(showFinalResults)}>{t('panel.finalResultBtn')}</button>
               <button onClick={handleToggleWinner} style={btnStyle(showWinner)}>{t('panel.showWinnerBtn')}</button>
+            </div>
             </div>
           </div>
 
