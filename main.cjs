@@ -310,6 +310,7 @@ function connectToCloud() {
         comisario_token: cloudConfig.comisarioToken
       });
       pushDriversToCloud();
+      pushLeaderboardToCloud(lastLeaderboard);
     });
     cloudSocket.on('disconnect', () => {
       broadcast('cloud-status', { connected: false });
@@ -403,6 +404,18 @@ function pushDriversToCloud() {
     if (!cloudSocket?.connected || !cloudConfig?.qrToken) return;
     const drivers = (currentDriversForVote || []).map(d => ({ number: d?.number, name: d?.name }));
     cloudSocket.emit('push-drivers', { qr_token: cloudConfig.qrToken, drivers });
+  } catch (e) {}
+}
+
+// Tabla completa del scraper (posiciones, vueltas, tiempos, sectores) para la vista de
+// prensa en el server (relator / comentarista / notero).
+function pushLeaderboardToCloud(leaderboard) {
+  try {
+    if (!cloudSocket?.connected || !cloudConfig?.qrToken || !leaderboard) return;
+    cloudSocket.emit('push-leaderboard', {
+      qr_token: cloudConfig.qrToken,
+      leaderboard: { session: leaderboard.session || {}, drivers: leaderboard.drivers || [] }
+    });
   } catch (e) {}
 }
 
@@ -591,7 +604,7 @@ const broadcast = (event, data) => {
 };
 
 ipcMain.on('preview-positions', (event, data) => broadcast('update-positions', data));
-ipcMain.on('force-update-leaderboard', (event, data) => { lastLeaderboard = data; broadcast('update-leaderboard', data); });
+ipcMain.on('force-update-leaderboard', (event, data) => { lastLeaderboard = data; broadcast('update-leaderboard', data); pushLeaderboardToCloud(data); });
 ipcMain.on('toggle-ticker', (e, data) => { broadcastState.ticker = data; broadcast('set-ticker-visibility', data); });
 ipcMain.on('toggle-tower', (e, data) => { broadcastState.tower = data; broadcast('set-tower-visibility', data); });
 ipcMain.on('toggle-graphic', (e, data) => { broadcastState.graphics[data.id] = data.visible; broadcast('set-graphic-visibility', data); });
@@ -931,6 +944,7 @@ ipcMain.handle('scrape-timing', async (event, { provider, code }) => {
   if (leaderboard?.error) return leaderboard;
   lastLeaderboard = leaderboard;
   broadcast('update-leaderboard', leaderboard);
+  pushLeaderboardToCloud(leaderboard);
   calculateLiveChampionship();
   updateLapTimesHistory(leaderboard);
   return leaderboard;
