@@ -835,6 +835,10 @@ async function scrapeRaceMonitor(inputCode) {
         const timeEl = document.querySelector('.timingHeader div[style*="top: 21px"][style*="left: 60px"]');
         if (timeEl) sessionData.totalTime = timeEl.textContent.trim();
 
+        // Estado de la pista que informa Race Monitor arriba a la derecha: "Green", "Yellow", "Red"...
+        const flagEl = document.querySelector('.timingHeader div[style*="top: 7px"][style*="right: 40px"]');
+        sessionData.flag = flagEl ? flagEl.textContent.trim().toLowerCase() : '';
+
         const rows = document.querySelectorAll('.racerRowWide, .racerRow, .racerRowStacked');
         rows.forEach(row => {
           const pos = row.querySelector('.position')?.textContent.trim() || '';

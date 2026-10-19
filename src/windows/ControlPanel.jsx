@@ -235,6 +235,9 @@ export default function ControlPanel() {
     ? t(scrapeErrorKeys[scrapeError.code] || 'panel.scrapeErrGeneric') + (scrapeError.message && scrapeError.code !== 'NO_DRIVERS' ? ` (${scrapeError.message})` : '')
     : '';
   const configRef = useRef(config);
+  const activeFlagsRef = useRef(null);      // espejo de activeFlags para leerlo desde el scraper sin closures viejas
+  const lastRmFlagRef = useRef(null);       // último estado de pista que informó Race Monitor ('green', 'yellow', 'red'...)
+  const autoFlagRef = useRef(null);         // bandera que puso el modo automático ('red' | 'tricolor'), null si la puso el operador
   const isScrapingRef = useRef(false);
 
   const [newRecordAlert, setNewRecordAlert] = useState(false);
@@ -272,6 +275,7 @@ export default function ControlPanel() {
   const stewardUrl = isTunnelReady ? localIp.replace('/votar', '/comisarios') : '';
 
   useEffect(() => { configRef.current = config; }, [config]);
+  useEffect(() => { activeFlagsRef.current = activeFlags; }, [activeFlags]);
 
   useEffect(() => {
     if (ipcRenderer) {
@@ -580,6 +584,7 @@ export default function ControlPanel() {
         } else if (data && data.drivers) {
           setDrivers(data.drivers);
           if (data.session) setSessionInfo(data.session);
+          if (provider === 'racemonitor') handleAutoFlag(data.session?.flag);
           setScrapeError(data.drivers.length === 0 ? { code: 'NO_DRIVERS' } : null);
           if (data.drivers.length === 0) status = 'error';
         }
@@ -664,11 +669,37 @@ export default function ControlPanel() {
     if (saved === false) alert(t('campeonato.alertTemplateError'));
   };
 
+  const applyFlags = (newFlags) => {
+    activeFlagsRef.current = newFlags;
+    setActiveFlags(newFlags);
+    if (ipcRenderer) ipcRenderer.send('toggle-flag', newFlags);
+  };
+
   const handleToggleFlag = (type) => {
     const newFlags = { red: false, tricolor: false, black: false, blue: false, checkered: false };
     if (!activeFlags[type]) newFlags[type] = true;
-    setActiveFlags(newFlags);
-    if (ipcRenderer) ipcRenderer.send('toggle-flag', newFlags);
+    autoFlagRef.current = null; // el operador toma el control: el modo automático ya no toca esta bandera
+    applyFlags(newFlags);
+  };
+
+  // BANDERAS AUTOMÁTICAS (Race Monitor): amarilla -> auto de seguridad, roja -> bandera roja, verde -> las baja.
+  // Solo reacciona cuando el estado de pista CAMBIA y solo baja las banderas que puso él mismo, así no pisa
+  // lo que el operador active a mano (azul, negra, cuadros) ni una bandera manual.
+  const handleAutoFlag = (rawFlag) => {
+    const flag = (rawFlag || '').toLowerCase();
+    if (!flag || flag === lastRmFlagRef.current) return;
+    lastRmFlagRef.current = flag;
+    if (configRef.current.autoFlags === false) return;
+
+    const target = flag.includes('red') ? 'red' : (flag.includes('yellow') ? 'tricolor' : null);
+    if (target) {
+      autoFlagRef.current = target;
+      applyFlags({ red: false, tricolor: false, black: false, blue: false, checkered: false, [target]: true });
+    } else if (autoFlagRef.current) {
+      const own = autoFlagRef.current;
+      autoFlagRef.current = null;
+      if (activeFlagsRef.current?.[own]) applyFlags({ red: false, tricolor: false, black: false, blue: false, checkered: false });
+    }
   };
 
   const handleSelectPhotosFolder = async () => {
@@ -866,6 +897,10 @@ export default function ControlPanel() {
                 <button onClick={() => handleToggleFlag('black')} style={{ ...btnStyle(activeFlags.black), flex: 1, backgroundColor: activeFlags.black ? '#111' : colors.bgInput, color: activeFlags.black ? '#fff' : colors.textMain, borderColor: activeFlags.black ? '#000' : colors.border, padding: '12px 5px' }}>{t('panel.flagBlack')}</button>
                 <input name="blackFlagNumber" value={config.blackFlagNumber || ''} onChange={(e) => handleDirectSave('blackFlagNumber', e.target.value)} style={{ ...inputStyle, width: '45px', textAlign: 'center', padding: '0', fontSize: '14px' }} placeholder={t('panel.flagNumberPlaceholder')} title={t('panel.flagNumberTitle')} />
               </div>
+              <label title={t('panel.autoFlagsHint')} style={{ gridColumn: '1 / -1', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '11px', color: colors.textMuted, cursor: 'pointer' }}>
+                <input type="checkbox" checked={config.autoFlags !== false} onChange={(e) => handleDirectSave('autoFlags', e.target.checked)} />
+                {t('panel.autoFlags')}
+              </label>
             </div>
             </div>
 

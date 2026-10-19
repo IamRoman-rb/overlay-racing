@@ -39,6 +39,7 @@ export const translations = {
       totalTime: 'TIEMPO TOTAL', live: '🟢 EN VIVO', paused: 'PAUSADO'
     },
     panel: {
+      autoFlags: 'Banderas automáticas (Race Monitor)', autoFlagsHint: 'Amarilla = Auto de seguridad, Roja = Bandera roja, Verde = las baja. Solo con Race Monitor como fuente.',
       flagsSection: 'BANDERAS DE CARRERA', flagRed: 'ROJA', flagTricolor: 'TRICOLOR',
       flagBlue: 'AZUL (PASO)', flagCheckered: 'ÚLTIMA VUELTA', flagBlack: 'NEGRA',
       flagNumberPlaceholder: 'Nº', flagNumberTitle: 'Escribe el número del auto a excluir',
@@ -262,6 +263,7 @@ export const translations = {
       totalTime: 'TOTAL TIME', live: '🟢 LIVE', paused: 'PAUSED'
     },
     panel: {
+      autoFlags: 'Automatic flags (Race Monitor)', autoFlagsHint: 'Yellow = Safety car, Red = Red flag, Green = clears them. Race Monitor source only.',
       flagsSection: 'RACE FLAGS', flagRed: 'RED', flagTricolor: 'SAFETY CAR',
       flagBlue: 'BLUE (LET PASS)', flagCheckered: 'LAST LAP', flagBlack: 'BLACK',
       flagNumberPlaceholder: 'No.', flagNumberTitle: 'Enter the car number to exclude',
@@ -485,6 +487,7 @@ export const translations = {
       totalTime: 'TEMPO TOTAL', live: '🟢 AO VIVO', paused: 'PAUSADO'
     },
     panel: {
+      autoFlags: 'Bandeiras automáticas (Race Monitor)', autoFlagsHint: 'Amarela = Safety car, Vermelha = Bandeira vermelha, Verde = remove. Somente com Race Monitor como fonte.',
       flagsSection: 'BANDEIRAS DE CORRIDA', flagRed: 'VERMELHA', flagTricolor: 'SAFETY CAR',
       flagBlue: 'AZUL (CEDER PASSAGEM)', flagCheckered: 'ÚLTIMA VOLTA', flagBlack: 'PRETA',
       flagNumberPlaceholder: 'Nº', flagNumberTitle: 'Digite o número do carro a excluir',
@@ -708,6 +711,7 @@ export const translations = {
       totalTime: 'GESAMTZEIT', live: '🟢 LIVE', paused: 'PAUSIERT'
     },
     panel: {
+      autoFlags: 'Automatische Flaggen (Race Monitor)', autoFlagsHint: 'Gelb = Safety Car, Rot = Rote Flagge, Grün = nimmt sie weg. Nur mit Race Monitor als Quelle.',
       flagsSection: 'RENNFLAGGEN', flagRed: 'ROT', flagTricolor: 'SAFETY CAR',
       flagBlue: 'BLAU (DURCHLASSEN)', flagCheckered: 'LETZTE RUNDE', flagBlack: 'SCHWARZ',
       flagNumberPlaceholder: 'Nr.', flagNumberTitle: 'Startnummer des auszuschließenden Autos eingeben',
@@ -931,6 +935,7 @@ export const translations = {
       totalTime: 'TEMPS TOTAL', live: '🟢 EN DIRECT', paused: 'EN PAUSE'
     },
     panel: {
+      autoFlags: 'Drapeaux automatiques (Race Monitor)', autoFlagsHint: 'Jaune = Voiture de sécurité, Rouge = Drapeau rouge, Vert = les retire. Uniquement avec Race Monitor comme source.',
       flagsSection: 'DRAPEAUX DE COURSE', flagRed: 'ROUGE', flagTricolor: 'VOITURE DE SÉCURITÉ',
       flagBlue: 'BLEU (LAISSER PASSER)', flagCheckered: 'DERNIER TOUR', flagBlack: 'NOIR',
       flagNumberPlaceholder: 'N°', flagNumberTitle: 'Indiquez le numéro de la voiture à exclure',
