@@ -96,6 +96,50 @@ const SearchSelectControl = ({ id, label, value, options, isActive, onChange, on
     </div>
   );
 };
+// Marcadores de consumo de la PC (CPU, GPU, RAM, temperatura) para vigilar que la transmisión no sature la máquina.
+const usageColor = (pct) => pct >= 90 ? colors.red : pct >= 70 ? colors.yellow : colors.green;
+const tempColor = (c) => c >= 85 ? colors.red : c >= 70 ? colors.yellow : colors.green;
+
+const Meter = ({ label, value, text, color, title }) => (
+  <div title={title} style={{ display: 'flex', alignItems: 'center', gap: '6px', minWidth: '120px' }}>
+    <span style={{ fontSize: '9px', fontWeight: 'bold', letterSpacing: '1px', color: colors.textMuted, width: '30px' }}>{label}</span>
+    <div style={{ flex: 1, height: '6px', backgroundColor: colors.bgInput, border: `1px solid ${colors.border}` }}>
+      <div style={{ width: `${Math.max(0, Math.min(100, value ?? 0))}%`, height: '100%', backgroundColor: color, transition: 'width 0.5s ease, background-color 0.5s ease' }} />
+    </div>
+    <span style={{ fontSize: '10px', fontWeight: 'bold', color: value === null ? colors.textMuted : color, width: '38px', textAlign: 'right' }}>{text}</span>
+  </div>
+);
+
+const SystemMonitor = ({ t }) => {
+  const [stats, setStats] = useState(null);
+
+  useEffect(() => {
+    if (!ipcRenderer) return;
+    let alive = true;
+    const tick = () => ipcRenderer.invoke('get-system-stats').then(s => { if (alive) setStats(s); }).catch(() => {});
+    tick();
+    const id = setInterval(tick, 2000);
+    return () => { alive = false; clearInterval(id); };
+  }, []);
+
+  if (!ipcRenderer) return null;
+  const pct = (v) => v === null || v === undefined ? '--' : `${Math.round(v)}%`;
+  const temp = stats?.cpuTemp ?? stats?.gpuTemp ?? null;
+  const tempTitle = stats && temp !== null
+    ? `CPU: ${stats.cpuTemp !== null ? Math.round(stats.cpuTemp) + '°C' : '-'} · GPU: ${stats.gpuTemp !== null ? Math.round(stats.gpuTemp) + '°C' : '-'}`
+    : t('header.sysTempHint');
+
+  return (
+    <div style={{ display: 'flex', justifyContent: 'center', gap: '28px', padding: '4px 20px', backgroundColor: colors.bgPanel, borderBottom: `1px solid ${colors.border}` }}>
+      <Meter label="CPU" value={stats?.cpu ?? null} text={pct(stats?.cpu)} color={usageColor(stats?.cpu ?? 0)} />
+      <Meter label="GPU" value={stats?.gpu ?? null} text={pct(stats?.gpu)} color={usageColor(stats?.gpu ?? 0)} />
+      <Meter label="RAM" value={stats?.ram ?? null} text={pct(stats?.ram)} color={usageColor(stats?.ram ?? 0)}
+        title={stats ? `${stats.ramUsedGb.toFixed(1)} / ${stats.ramTotalGb.toFixed(1)} GB` : undefined} />
+      <Meter label="TEMP" value={temp} text={temp === null ? '--' : `${Math.round(temp)}°C`} color={tempColor(temp ?? 0)} title={tempTitle} />
+    </div>
+  );
+};
+
 const WeatherControl = ({ id, label, config, isActive, onToggle, setConfig, t }) => {
   const [loading, setLoading] = useState(false);
 
@@ -848,6 +892,7 @@ export default function ControlPanel() {
         }
       `}</style>
 
+      <SystemMonitor t={t} />
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 20px', borderBottom: `1px solid ${colors.border}` }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <div style={{ width: '15px', height: '15px', backgroundColor: colors.yellow }}></div>

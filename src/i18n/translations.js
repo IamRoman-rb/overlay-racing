@@ -36,7 +36,8 @@ export const translations = {
     },
     header: {
       title: 'RACE DYNAMICS DASHBOARD', bestLap: 'MEJOR VUELTA', laps: 'VUELTAS',
-      totalTime: 'TIEMPO TOTAL', live: '🟢 EN VIVO', paused: 'PAUSADO'
+      totalTime: 'TIEMPO TOTAL', live: '🟢 EN VIVO', paused: 'PAUSADO',
+      sysTempHint: 'Sin dato de temperatura: Windows no la expone en esta PC. Abrí LibreHardwareMonitor para verla.'
     },
     panel: {
       autoFlags: 'Banderas automáticas (Race Monitor / Speedhive)', autoFlagsHint: 'Amarilla = Auto de seguridad, Roja = Bandera roja, Verde = las baja.',
@@ -262,7 +263,8 @@ export const translations = {
     },
     header: {
       title: 'RACE DYNAMICS DASHBOARD', bestLap: 'FASTEST LAP', laps: 'LAPS',
-      totalTime: 'TOTAL TIME', live: '🟢 LIVE', paused: 'PAUSED'
+      totalTime: 'TOTAL TIME', live: '🟢 LIVE', paused: 'PAUSED',
+      sysTempHint: 'No temperature data: Windows does not expose it on this PC. Open LibreHardwareMonitor to see it.'
     },
     panel: {
       autoFlags: 'Automatic flags (Race Monitor / Speedhive)', autoFlagsHint: 'Yellow = Safety car, Red = Red flag, Green = clears them.',
@@ -488,7 +490,8 @@ export const translations = {
     },
     header: {
       title: 'RACE DYNAMICS DASHBOARD', bestLap: 'VOLTA MAIS RÁPIDA', laps: 'VOLTAS',
-      totalTime: 'TEMPO TOTAL', live: '🟢 AO VIVO', paused: 'PAUSADO'
+      totalTime: 'TEMPO TOTAL', live: '🟢 AO VIVO', paused: 'PAUSADO',
+      sysTempHint: 'Sem dado de temperatura: o Windows não a expõe neste PC. Abra o LibreHardwareMonitor para vê-la.'
     },
     panel: {
       autoFlags: 'Bandeiras automáticas (Race Monitor / Speedhive)', autoFlagsHint: 'Amarela = Safety car, Vermelha = Bandeira vermelha, Verde = remove.',
@@ -714,7 +717,8 @@ export const translations = {
     },
     header: {
       title: 'RACE DYNAMICS DASHBOARD', bestLap: 'SCHNELLSTE RUNDE', laps: 'RUNDEN',
-      totalTime: 'GESAMTZEIT', live: '🟢 LIVE', paused: 'PAUSIERT'
+      totalTime: 'GESAMTZEIT', live: '🟢 LIVE', paused: 'PAUSIERT',
+      sysTempHint: 'Keine Temperaturdaten: Windows stellt sie auf diesem PC nicht bereit. Öffne LibreHardwareMonitor, um sie zu sehen.'
     },
     panel: {
       autoFlags: 'Automatische Flaggen (Race Monitor / Speedhive)', autoFlagsHint: 'Gelb = Safety Car, Rot = Rote Flagge, Grün = nimmt sie weg.',
@@ -940,7 +944,8 @@ export const translations = {
     },
     header: {
       title: 'RACE DYNAMICS DASHBOARD', bestLap: 'MEILLEUR TOUR', laps: 'TOURS',
-      totalTime: 'TEMPS TOTAL', live: '🟢 EN DIRECT', paused: 'EN PAUSE'
+      totalTime: 'TEMPS TOTAL', live: '🟢 EN DIRECT', paused: 'EN PAUSE',
+      sysTempHint: 'Pas de donnée de température : Windows ne la fournit pas sur ce PC. Ouvrez LibreHardwareMonitor pour la voir.'
     },
     panel: {
       autoFlags: 'Drapeaux automatiques (Race Monitor / Speedhive)', autoFlagsHint: 'Jaune = Voiture de sécurité, Rouge = Drapeau rouge, Vert = les retire.',

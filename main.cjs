@@ -14,6 +14,7 @@ const xlsx = require('xlsx');
 const { getLoginHtml } = require('./src/scripts/loginHtml.cjs');
 const crypto = require('crypto');
 const os = require('os');
+const { getSystemStats, stopHardwarePoller } = require('./src/scripts/systemStats.cjs');
 
 let controlWindow;
 let overlayWindow;
@@ -882,6 +883,7 @@ ipcMain.handle('get-network-urls', () => {
   return urls;
 });
 
+ipcMain.handle('get-system-stats', () => getSystemStats());
 ipcMain.handle('get-local-ip', () => getVotingUrl());
 ipcMain.handle('get-steward-url', () => getStewardUrl());
 ipcMain.handle('get-votes', () => votesData);
@@ -1117,4 +1119,5 @@ function createWindows() {
 }
 
 if (gotSingleInstanceLock) app.whenReady().then(createLoginWindow);
+app.on('will-quit', stopHardwarePoller);
 app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(); });
