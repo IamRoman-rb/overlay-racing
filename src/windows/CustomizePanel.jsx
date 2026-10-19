@@ -783,6 +783,7 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
               <option value="bounce">{t('personalizar.animBounce')}</option>
               <option value="flip">{t('personalizar.animFlip')}</option>
               <option value="rotate">{t('personalizar.animRotate')}</option>
+              <option value="roll">{t('personalizar.animRoll')}</option>
             </select>
           </div>
 

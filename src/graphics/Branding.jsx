@@ -2,7 +2,7 @@
 // Marca de agua con el logo de la productora y el de la categoría (los que se cargan en
 // PERSONALIZAR > Recursos multimedia). Se muestra/oculta con su botón del panel.
 import { getSkinStyle } from '../utils/skinStyles';
-import { getAnimDuration } from '../utils/animationTiming';
+import { getAnimDuration, getRollClip } from '../utils/animationTiming';
 
 export default function Branding({ isVisible, config, id = 'branding' }) {
   const pos = config?.positions?.[id] || { x: 1640, y: 900, scale: 1 };
@@ -36,8 +36,8 @@ export default function Branding({ isVisible, config, id = 'branding' }) {
     position: 'absolute', left: `${pos.x}px`, top: `${pos.y}px`, transformOrigin: 'top left',
     zIndex: 40, pointerEvents: 'none',
     transition: `all ${animDur}s cubic-bezier(0.175, 0.885, 0.32, 1.275)`,
-    opacity: visible ? 1 : 0,
-    transform: visible ? `scale(${pos.scale})` : transformHidden
+    opacity: visible || animStyle === 'roll' ? 1 : 0,
+    transform: visible || animStyle === 'roll' ? `scale(${pos.scale})` : transformHidden, ...getRollClip(animStyle, visible)
   };
 
   // Sin logos cargados no se dibuja nada (así no queda una caja vacía en el aire)

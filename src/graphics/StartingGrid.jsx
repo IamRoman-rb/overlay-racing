@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import pilotoAnonimo from '../assets/piloto_anonimo.png';
 import { getSkinStyle } from '../utils/skinStyles';
 import MarqueeText from './MarqueeText';
-import { getAnimDuration } from '../utils/animationTiming';
+import { getAnimDuration, getRollClip } from '../utils/animationTiming';
 
 let ipcRenderer = null;
 if (typeof window !== 'undefined' && typeof window.require === 'function') {
@@ -92,8 +92,8 @@ export default function StartingGrid({ drivers, config, isVisible, id = 'grid' }
       backgroundColor: 'transparent',
       zIndex: 30,
       transition: `all ${animDur}s cubic-bezier(0.175, 0.885, 0.32, 1.275)`,
-      opacity: isVisible ? 1 : 0,
-      transform: isVisible ? `scale(${pos.scale}) translateY(0)` : transformHidden,
+      opacity: isVisible || animStyle === 'roll' ? 1 : 0,
+      transform: isVisible || animStyle === 'roll' ? `scale(${pos.scale}) translateY(0)` : transformHidden, ...getRollClip(animStyle, isVisible),
       pointerEvents: isVisible ? 'auto' : 'none'
     }}>
       <style>{`

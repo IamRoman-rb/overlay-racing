@@ -1,6 +1,6 @@
 // src/graphics/LapCounter.jsx
 import { getSkinStyle } from '../utils/skinStyles';
-import { getAnimDuration } from '../utils/animationTiming';
+import { getAnimDuration, getRollClip } from '../utils/animationTiming';
 
 export default function LapCounter({ isVisible, config, sessionInfo, id = 'lapCounter' }) {
   const pos = config?.positions?.[id] || { x: 1700, y: 40, scale: 1 };
@@ -33,8 +33,8 @@ export default function LapCounter({ isVisible, config, sessionInfo, id = 'lapCo
     position: 'absolute', left: `${pos.x}px`, top: `${pos.y}px`, transformOrigin: 'top right',
     zIndex: 40, pointerEvents: 'none',
     transition: `all ${animDur}s cubic-bezier(0.175, 0.885, 0.32, 1.275)`,
-    opacity: isVisible ? 1 : 0,
-    transform: isVisible ? `scale(${pos.scale}) translateY(0)` : transformHidden
+    opacity: isVisible || animStyle === 'roll' ? 1 : 0,
+    transform: isVisible || animStyle === 'roll' ? `scale(${pos.scale}) translateY(0)` : transformHidden, ...getRollClip(animStyle, isVisible)
   };
 
   // FORMATO CON ETIQUETA: barra "VUELTA" arriba + número grande abajo

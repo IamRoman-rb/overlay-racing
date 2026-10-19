@@ -1,7 +1,7 @@
 // src/graphics/PitStopTimer.jsx
 import { useState, useEffect, useRef } from 'react';
 import { getSkinStyle } from '../utils/skinStyles';
-import { getAnimDuration } from '../utils/animationTiming';
+import { getAnimDuration, getRollClip } from '../utils/animationTiming';
 
 export default function PitStopTimer({ isVisible, config, pitState, id = 'pitStop' }) {
   const pos = config?.positions?.[id] || { x: 850, y: 900, scale: 1 };
@@ -72,7 +72,7 @@ export default function PitStopTimer({ isVisible, config, pitState, id = 'pitSto
   const wrapperStyle = {
     position: 'absolute', left: `${pos.x}px`, top: `${pos.y}px`, transformOrigin: 'top left',
     zIndex: 48, transition: `all ${animDur}s cubic-bezier(0.175, 0.885, 0.32, 1.275)`,
-    opacity: isVisible ? 1 : 0, transform: isVisible ? `scale(${pos.scale}) translateX(0)` : transformHidden
+    opacity: isVisible || animStyle === 'roll' ? 1 : 0, transform: isVisible || animStyle === 'roll' ? `scale(${pos.scale}) translateX(0)` : transformHidden, ...getRollClip(animStyle, isVisible)
   };
 
   // FORMATO COMPACTO: una sola fila, sin barra de encabezado

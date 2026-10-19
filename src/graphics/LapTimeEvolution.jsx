@@ -1,5 +1,5 @@
 import { getSkinStyle } from '../utils/skinStyles';
-import { getAnimDuration } from '../utils/animationTiming';
+import { getAnimDuration, getRollClip } from '../utils/animationTiming';
 
 export default function LapTimeEvolution({ history, drivers, config, isVisible, focusDriver, id = 'lapTimesHistory' }) {
   const pos = config?.positions?.[id] || { x: 100, y: 500, scale: 1 };
@@ -116,8 +116,8 @@ export default function LapTimeEvolution({ history, drivers, config, isVisible, 
         position: 'absolute', left: `${pos.x}px`, top: `${pos.y}px`,
         transformOrigin: 'top left', zIndex: 40, pointerEvents: 'none',
         transition: `all ${animDur}s cubic-bezier(0.175, 0.885, 0.32, 1.275)`,
-        opacity: isVisible ? 1 : 0,
-        transform: isVisible ? `scale(${pos.scale}) translateY(0)` : transformHidden
+        opacity: isVisible || animStyle === 'roll' ? 1 : 0,
+        transform: isVisible || animStyle === 'roll' ? `scale(${pos.scale}) translateY(0)` : transformHidden, ...getRollClip(animStyle, isVisible)
       }}>
         <div style={{
           width: `${TABLE_W}px`,
@@ -210,8 +210,8 @@ export default function LapTimeEvolution({ history, drivers, config, isVisible, 
       position: 'absolute', left: `${pos.x}px`, top: `${pos.y}px`,
       transformOrigin: 'top left', zIndex: 40, pointerEvents: 'none',
       transition: `all ${animDur}s cubic-bezier(0.175, 0.885, 0.32, 1.275)`,
-      opacity: isVisible ? 1 : 0,
-      transform: isVisible ? `scale(${pos.scale}) translateY(0)` : transformHidden
+      opacity: isVisible || animStyle === 'roll' ? 1 : 0,
+      transform: isVisible || animStyle === 'roll' ? `scale(${pos.scale}) translateY(0)` : transformHidden, ...getRollClip(animStyle, isVisible)
     }}>
       {isMinimal && (
         <span style={{ display: 'block', color: themeTitleText, fontSize: '11px', fontWeight: '900', letterSpacing: '0.5px', textTransform: 'uppercase', marginBottom: '4px', textShadow: '2px 2px 6px rgba(0,0,0,0.9)' }}>

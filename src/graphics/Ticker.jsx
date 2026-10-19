@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { getSkinStyle } from '../utils/skinStyles';
 import MarqueeText from './MarqueeText';
-import { getAnimDuration } from '../utils/animationTiming';
+import { getAnimDuration, getRollClip } from '../utils/animationTiming';
 
 const PODIUM_COLORS = { 1: '#ffd700', 2: '#c0c0c0', 3: '#cd7f32' };
 
@@ -79,8 +79,8 @@ export default function Ticker({ drivers, isVisible, config, id = 'ticker', sess
         position: 'absolute', left: `${pos.x}px`, top: `${pos.y}px`,
         transformOrigin: 'top left', zIndex: 20, width: '1920px',
         transition: `all ${animDur}s cubic-bezier(0.175, 0.885, 0.32, 1.275)`,
-        opacity: isVisible ? 1 : 0,
-        transform: isVisible ? `scale(${pos.scale}) translateY(0)` : transformHidden,
+        opacity: isVisible || animStyle === 'roll' ? 1 : 0,
+        transform: isVisible || animStyle === 'roll' ? `scale(${pos.scale}) translateY(0)` : transformHidden, ...getRollClip(animStyle, isVisible),
         pointerEvents: isVisible ? 'auto' : 'none'
       }}>
         <style>{`@keyframes fadeBoardPage { 0% { opacity: 0; transform: translateY(8px); } 100% { opacity: 1; transform: translateY(0); } }`}</style>
@@ -178,8 +178,8 @@ export default function Ticker({ drivers, isVisible, config, id = 'ticker', sess
       backgroundImage: hasCustomBg ? `url(${customBg})` : 'none',
       backgroundSize: '100% 100%', backgroundRepeat: 'no-repeat', backgroundPosition: 'center',
       transition: `all ${animDur}s cubic-bezier(0.175, 0.885, 0.32, 1.275)`,
-      opacity: isVisible ? 1 : 0,
-      transform: isVisible ? `scale(${pos.scale}) translateY(0)` : transformHidden,
+      opacity: isVisible || animStyle === 'roll' ? 1 : 0,
+      transform: isVisible || animStyle === 'roll' ? `scale(${pos.scale}) translateY(0)` : transformHidden, ...getRollClip(animStyle, isVisible),
       pointerEvents: isVisible ? 'auto' : 'none'
     }}>
       <style>{`

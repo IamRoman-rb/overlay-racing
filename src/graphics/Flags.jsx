@@ -1,6 +1,6 @@
 import banderaCuadrosImg from '../assets/bandera cuadros.jpg';
 import { getSkinStyle } from '../utils/skinStyles';
-import { getAnimDuration } from '../utils/animationTiming';
+import { getAnimDuration, getRollClip } from '../utils/animationTiming';
 
 const FLAG_GLOW_COLOR = { red: '#e74c3c', black: '#ffcc00', blue: '#3498db', tricolor: '#ffffff', checkered: '#ffffff' };
 
@@ -87,9 +87,9 @@ export default function Flags({ activeFlags, config, id = 'flags' }) {
           borderTop: useImageBg ? 'none' : '4px solid rgba(0,0,0,0.35)',
           borderBottom: useImageBg ? 'none' : '4px solid rgba(0,0,0,0.35)',
           boxShadow: useImageBg ? 'none' : '0 6px 20px rgba(0,0,0,0.6)',
-          transform: isVisible ? 'translateY(0) scale(1)' : transformHidden,
-          opacity: isVisible ? 1 : 0,
-          transition: `transform ${animDur}s cubic-bezier(0.25, 1, 0.5, 1), opacity ${animDur}s ease-in-out`
+          transform: isVisible || animStyle === 'roll' ? 'translateY(0) scale(1)' : transformHidden, ...getRollClip(animStyle, isVisible),
+          opacity: isVisible || animStyle === 'roll' ? 1 : 0,
+          transition: `transform ${animDur}s cubic-bezier(0.25, 1, 0.5, 1), opacity ${animDur}s ease-in-out, clip-path ${animDur}s ease-in-out`
         }}>
           <h1 style={{ margin: 0, fontSize: '42px', fontWeight: '900', color: currentStyle.color, textTransform: 'uppercase', letterSpacing: '2px', textShadow: currentStyle.textShadow || '1px 1px 0px rgba(0,0,0,0.5)' }}>
             {label}
@@ -117,7 +117,7 @@ export default function Flags({ activeFlags, config, id = 'flags' }) {
           boxShadow: useImageBg ? 'none' : '0 5px 15px rgba(0,0,0,0.5)',
           transform: isVisible ? 'translateX(0) scale(1)' : 'translateX(-120%) scale(1)',
           opacity: isVisible ? 1 : 0,
-          transition: `transform ${animDur}s cubic-bezier(0.25, 1, 0.5, 1), opacity ${animDur}s ease-in-out`
+          transition: `transform ${animDur}s cubic-bezier(0.25, 1, 0.5, 1), opacity ${animDur}s ease-in-out, clip-path ${animDur}s ease-in-out`
         }}>
           <h2 style={{ margin: 0, fontSize: '22px', fontWeight: '900', color: currentStyle.color, textTransform: 'uppercase', textShadow: currentStyle.textShadow || '1px 1px 0px rgba(0,0,0,0.5)' }}>
             {label}
@@ -137,9 +137,9 @@ export default function Flags({ activeFlags, config, id = 'flags' }) {
       }}>
         <div style={{
           display: 'flex', borderRadius: bRad, overflow: 'hidden', boxShadow: '0 5px 15px rgba(0,0,0,0.5)',
-          transform: isVisible ? 'translateY(0) scale(1)' : transformHidden,
-          opacity: isVisible ? 1 : 0,
-          transition: `transform ${animDur}s cubic-bezier(0.25, 1, 0.5, 1), opacity ${animDur}s ease-in-out`
+          transform: isVisible || animStyle === 'roll' ? 'translateY(0) scale(1)' : transformHidden, ...getRollClip(animStyle, isVisible),
+          opacity: isVisible || animStyle === 'roll' ? 1 : 0,
+          transition: `transform ${animDur}s cubic-bezier(0.25, 1, 0.5, 1), opacity ${animDur}s ease-in-out, clip-path ${animDur}s ease-in-out`
         }}>
           <div style={{
             width: '70px', background: useImageBg ? 'transparent' : currentStyle.bg,
@@ -173,9 +173,9 @@ export default function Flags({ activeFlags, config, id = 'flags' }) {
          boxShadow: skin ? skin.boxShadow : (useImageBg ? 'none' : '0 5px 15px rgba(0,0,0,0.5)'),
          backdropFilter: skin?.backdropFilter,
          textAlign: 'center', width: '100%',
-         transform: isVisible ? 'translateY(0) scale(1)' : transformHidden,
-         opacity: isVisible ? 1 : 0,
-         transition: `transform ${animDur}s cubic-bezier(0.25, 1, 0.5, 1), opacity ${animDur}s ease-in-out`
+         transform: isVisible || animStyle === 'roll' ? 'translateY(0) scale(1)' : transformHidden, ...getRollClip(animStyle, isVisible),
+         opacity: isVisible || animStyle === 'roll' ? 1 : 0,
+         transition: `transform ${animDur}s cubic-bezier(0.25, 1, 0.5, 1), opacity ${animDur}s ease-in-out, clip-path ${animDur}s ease-in-out`
       }}>
          <h1 style={{
            margin: 0, fontSize: '36px', fontWeight: '900',

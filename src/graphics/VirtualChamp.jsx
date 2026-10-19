@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { io } from 'socket.io-client';
 import { getSkinStyle } from '../utils/skinStyles';
-import { getAnimDuration } from '../utils/animationTiming';
+import { getAnimDuration, getRollClip } from '../utils/animationTiming';
 
 const PODIUM_COLORS = { 0: '#ffd700', 1: '#c0c0c0', 2: '#cd7f32' };
 
@@ -50,7 +50,7 @@ export default function VirtualChamp({ config, isVisible, id = 'virtualChamp' })
     <div style={{
       position: 'absolute', left: `${pos.x}px`, top: `${pos.y}px`, transformOrigin: 'top left',
       zIndex: 40, transition: `all ${animDur}s cubic-bezier(0.175, 0.885, 0.32, 1.275)`,
-      opacity: isVisible ? 1 : 0, transform: isVisible ? `scale(${pos.scale}) translateX(0)` : transformHidden,
+      opacity: isVisible || animStyle === 'roll' ? 1 : 0, transform: isVisible || animStyle === 'roll' ? `scale(${pos.scale}) translateX(0)` : transformHidden, ...getRollClip(animStyle, isVisible),
       display: 'flex', flexDirection: 'column', width: isCompact ? '340px' : '400px',
       backgroundColor: skin ? skin.background : (transparent ? 'transparent' : themeBg),
       backgroundImage: customBg ? `url(${customBg})` : (skin?.backgroundImage || 'none'), backgroundSize: '100% 100%',

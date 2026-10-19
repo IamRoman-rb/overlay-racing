@@ -1,5 +1,5 @@
 import { getSkinStyle } from '../utils/skinStyles';
-import { getAnimDuration } from '../utils/animationTiming';
+import { getAnimDuration, getRollClip } from '../utils/animationTiming';
 
 export default function LowerThird({ role, name, isVisible, config, id }) {
   const pos = config?.positions?.[id] || { x: 20, y: 100, scale: 1 };
@@ -34,8 +34,8 @@ export default function LowerThird({ role, name, isVisible, config, id }) {
     position: 'absolute', left: `${pos.x}px`, top: `${pos.y}px`,
     transformOrigin: 'top left',
     zIndex: 15, transition: `all ${animDur}s cubic-bezier(0.175, 0.885, 0.32, 1.275)`,
-    opacity: isVisible ? 1 : 0, pointerEvents: isVisible ? 'auto' : 'none',
-    transform: isVisible ? `scale(${pos.scale}) translateX(0)` : transformHidden,
+    opacity: isVisible || animStyle === 'roll' ? 1 : 0, pointerEvents: isVisible ? 'auto' : 'none',
+    transform: isVisible || animStyle === 'roll' ? `scale(${pos.scale}) translateX(0)` : transformHidden, ...getRollClip(animStyle, isVisible),
   };
 
   // FORMATO MINIMALISTA: sin caja, solo texto con línea de acento debajo

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import pilotoAnonimo from '../assets/piloto_anonimo.png';
 import { getSkinStyle } from '../utils/skinStyles';
-import { getAnimDuration } from '../utils/animationTiming';
+import { getAnimDuration, getRollClip } from '../utils/animationTiming';
 
 export default function DriverInfo({ driver, config, isVisible, id = 'driverInfo' }) {
   const pos = config?.positions?.[id] || { x: 380, y: 335, scale: 1 };
@@ -48,8 +48,8 @@ export default function DriverInfo({ driver, config, isVisible, id = 'driverInfo
     position: 'absolute', left: `${pos.x}px`, top: `${pos.y}px`,
     transformOrigin: 'top left', zIndex: 45, pointerEvents: 'none',
     transition: `all ${animDur}s cubic-bezier(0.175, 0.885, 0.32, 1.275)`,
-    opacity: isVisible ? 1 : 0,
-    transform: isVisible ? `scale(${pos.scale}) translateX(0)` : transformHidden
+    opacity: isVisible || animStyle === 'roll' ? 1 : 0,
+    transform: isVisible || animStyle === 'roll' ? `scale(${pos.scale}) translateX(0)` : transformHidden, ...getRollClip(animStyle, isVisible)
   };
 
   if (!driver) return <div style={wrapperStyle} />;

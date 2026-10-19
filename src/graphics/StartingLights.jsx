@@ -22,6 +22,7 @@ export default function StartingLights({ isVisible, step = 0, config }) {
   if (animStyle === 'bounce') animName = 'bounceInLights';
   if (animStyle === 'flip') animName = 'flipInLights';
   if (animStyle === 'rotate') animName = 'rotateInLights';
+  if (animStyle === 'roll') animName = 'rollInLights';
 
   return (
     <div style={{
@@ -36,6 +37,7 @@ export default function StartingLights({ isVisible, step = 0, config }) {
         @keyframes bounceInLights { from { opacity: 0; transform: scale(0.3); } to { opacity: 1; transform: scale(1); } }
         @keyframes flipInLights { from { opacity: 0; transform: scaleY(0.05); } to { opacity: 1; transform: scaleY(1); } }
         @keyframes rotateInLights { from { opacity: 0; transform: scale(0.85) rotate(-15deg); } to { opacity: 1; transform: scale(1) rotate(0deg); } }
+        @keyframes rollInLights { from { clip-path: inset(0px -100px 100% -100px); } to { clip-path: inset(-100px); } }
         @keyframes goFlash { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
       `}</style>
 

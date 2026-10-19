@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { getSkinStyle } from '../utils/skinStyles';
-import { getAnimDuration } from '../utils/animationTiming';
+import { getAnimDuration, getRollClip } from '../utils/animationTiming';
 
 export default function FastestLap({ drivers, config, isVisible, id = 'fastestLap' }) {
   const pos = config?.positions?.[id] || { x: 440, y: 150, scale: 1 };
@@ -74,8 +74,8 @@ export default function FastestLap({ drivers, config, isVisible, id = 'fastestLa
           borderLeft: hasCustomBg ? 'none' : `4px solid ${themeMain}`,
           boxShadow: hasCustomBg ? 'none' : '0 10px 30px rgba(0,0,0,0.6)',
           borderRadius: bRad, overflow: 'hidden',
-          transform: isVisible ? 'translateY(0) scale(1)' : transformHidden,
-          transition: `transform ${animDur}s cubic-bezier(0.175, 0.885, 0.32, 1.275)`
+          transform: isVisible || animStyle === 'roll' ? 'translateY(0) scale(1)' : transformHidden, ...getRollClip(animStyle, isVisible),
+          transition: `transform ${animDur}s cubic-bezier(0.175, 0.885, 0.32, 1.275), clip-path ${animDur}s ease-in-out`
         }}>
           <span style={{ color: themeTitleText, fontWeight: '900', fontSize: '11px', fontStyle: 'italic', letterSpacing: '1px', whiteSpace: 'nowrap' }}>
             RÉCORD
@@ -105,8 +105,8 @@ export default function FastestLap({ drivers, config, isVisible, id = 'fastestLa
           backgroundSize: '100% 100%', backgroundRepeat: 'no-repeat', backgroundPosition: 'center',
           boxShadow: hasCustomBg ? 'none' : '0 10px 30px rgba(0,0,0,0.6)',
           borderRadius: bRad, overflow: 'hidden', padding: '16px 15px',
-          transform: isVisible ? 'translateY(0) scale(1)' : transformHidden,
-          transition: `transform ${animDur}s cubic-bezier(0.175, 0.885, 0.32, 1.275)`
+          transform: isVisible || animStyle === 'roll' ? 'translateY(0) scale(1)' : transformHidden, ...getRollClip(animStyle, isVisible),
+          transition: `transform ${animDur}s cubic-bezier(0.175, 0.885, 0.32, 1.275), clip-path ${animDur}s ease-in-out`
         }}>
           <span style={{ color: '#fff', fontWeight: '900', fontSize: '13px', fontStyle: 'italic', letterSpacing: '2px', opacity: 0.9 }}>
             RECORD DE VUELTA
@@ -128,8 +128,8 @@ export default function FastestLap({ drivers, config, isVisible, id = 'fastestLa
       <div style={wrapperStyle}>
         <div style={{
           display: 'flex', flexDirection: 'column', gap: '2px',
-          transform: isVisible ? 'translateY(0) scale(1)' : transformHidden,
-          transition: `transform ${animDur}s cubic-bezier(0.175, 0.885, 0.32, 1.275)`
+          transform: isVisible || animStyle === 'roll' ? 'translateY(0) scale(1)' : transformHidden, ...getRollClip(animStyle, isVisible),
+          transition: `transform ${animDur}s cubic-bezier(0.175, 0.885, 0.32, 1.275), clip-path ${animDur}s ease-in-out`
         }}>
           <span style={{ color: themeTitleText, fontWeight: '900', fontSize: '13px', fontStyle: 'italic', letterSpacing: '1px', textShadow: '2px 2px 6px rgba(0,0,0,0.9)' }}>
             RECORD DE VUELTA
@@ -160,8 +160,8 @@ export default function FastestLap({ drivers, config, isVisible, id = 'fastestLa
          backdropFilter: skin?.backdropFilter,
          borderRadius: bRad,
          overflow: 'hidden',
-         transform: isVisible ? 'translateY(0) scale(1)' : transformHidden,
-         transition: `transform ${animDur}s cubic-bezier(0.175, 0.885, 0.32, 1.275)`,
+         transform: isVisible || animStyle === 'roll' ? 'translateY(0) scale(1)' : transformHidden, ...getRollClip(animStyle, isVisible),
+         transition: `transform ${animDur}s cubic-bezier(0.175, 0.885, 0.32, 1.275), clip-path ${animDur}s ease-in-out`,
          padding: hasCustomBg ? '10px' : '0'
        }}>
          {/* ENCABEZADO */}

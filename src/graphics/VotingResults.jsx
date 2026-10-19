@@ -1,5 +1,5 @@
 import { getSkinStyle } from '../utils/skinStyles';
-import { getAnimDuration } from '../utils/animationTiming';
+import { getAnimDuration, getRollClip } from '../utils/animationTiming';
 
 export default function VotingResults({ isVisible, drivers, votes, config, id = 'votingResults' }) {
   const pos = config?.positions?.[id] || { x: 1550, y: 50, scale: 1 };
@@ -44,8 +44,8 @@ export default function VotingResults({ isVisible, drivers, votes, config, id = 
       position: 'absolute', left: `${pos.x}px`, top: `${pos.y}px`, transformOrigin: 'top left',
       zIndex: 40, pointerEvents: 'none',
       transition: `all ${animDur}s cubic-bezier(0.175, 0.885, 0.32, 1.275)`,
-      opacity: isVisible ? 1 : 0,
-      transform: isVisible ? `scale(${pos.scale}) translateX(0)` : transformHidden,
+      opacity: isVisible || animStyle === 'roll' ? 1 : 0,
+      transform: isVisible || animStyle === 'roll' ? `scale(${pos.scale}) translateX(0)` : transformHidden, ...getRollClip(animStyle, isVisible),
       width: '320px',
 
       backgroundColor: skin ? skin.background : (transparent ? 'transparent' : themeBg),
