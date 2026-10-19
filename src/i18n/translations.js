@@ -174,7 +174,7 @@ export const translations = {
       alertPositionsReset: '✅ Se restablecieron todas las posiciones al layout preconfigurado.'
     },
     personalizar: {
-      selectGraphic: 'SELECCIONAR GRÁFICA', themeConfig: 'CONFIGURACIÓN VISUAL (TEMA)',
+      selectGraphic: 'SELECCIONAR GRÁFICA', multiSelectHint: 'Ctrl + clic para sumar gráficas y verlas juntas en la previsualización. Un clic sin Ctrl vuelve a ver una sola.', themeConfig: 'CONFIGURACIÓN VISUAL (TEMA)',
       colorBorder: 'BORDES / LÍNEAS', colorSecondary: 'CAJAS / SECUNDARIO', colorAccent: 'ACENTO / POSICIÓN',
       colorBg: 'FONDO GENERAL', colorHeaderBg: 'FONDO ENCABEZADOS', colorTitleText: 'TEXTO TÍTULOS',
       colorNormalText: 'TEXTO NOMBRES', colorNumberText: 'TEXTO TIEMPOS',
@@ -398,7 +398,7 @@ export const translations = {
       alertPositionsReset: '✅ All positions were reset to the preset layout.'
     },
     personalizar: {
-      selectGraphic: 'SELECT GRAPHIC', themeConfig: 'VISUAL SETTINGS (THEME)',
+      selectGraphic: 'SELECT GRAPHIC', multiSelectHint: 'Ctrl + click to add graphics and see them together in the preview. A click without Ctrl goes back to a single one.', themeConfig: 'VISUAL SETTINGS (THEME)',
       colorBorder: 'BORDERS / LINES', colorSecondary: 'BOXES / SECONDARY', colorAccent: 'ACCENT / POSITION',
       colorBg: 'GENERAL BACKGROUND', colorHeaderBg: 'HEADER BACKGROUND', colorTitleText: 'TITLE TEXT',
       colorNormalText: 'NAME TEXT', colorNumberText: 'TIME TEXT',
@@ -622,7 +622,7 @@ export const translations = {
       alertPositionsReset: '✅ Todas as posições foram restabelecidas para o layout pré-configurado.'
     },
     personalizar: {
-      selectGraphic: 'SELECIONAR GRÁFICO', themeConfig: 'CONFIGURAÇÃO VISUAL (TEMA)',
+      selectGraphic: 'SELECIONAR GRÁFICO', multiSelectHint: 'Ctrl + clique para somar gráficos e vê-los juntos na pré-visualização. Um clique sem Ctrl volta a mostrar só um.', themeConfig: 'CONFIGURAÇÃO VISUAL (TEMA)',
       colorBorder: 'BORDAS / LINHAS', colorSecondary: 'CAIXAS / SECUNDÁRIO', colorAccent: 'DESTAQUE / POSIÇÃO',
       colorBg: 'FUNDO GERAL', colorHeaderBg: 'FUNDO DOS CABEÇALHOS', colorTitleText: 'TEXTO DOS TÍTULOS',
       colorNormalText: 'TEXTO DOS NOMES', colorNumberText: 'TEXTO DOS TEMPOS',
@@ -846,7 +846,7 @@ export const translations = {
       alertPositionsReset: '✅ Alle Positionen wurden auf das voreingestellte Layout zurückgesetzt.'
     },
     personalizar: {
-      selectGraphic: 'GRAFIK AUSWÄHLEN', themeConfig: 'VISUELLE EINSTELLUNGEN (THEMA)',
+      selectGraphic: 'GRAFIK AUSWÄHLEN', multiSelectHint: 'Strg + Klick, um Grafiken hinzuzufügen und sie gemeinsam in der Vorschau zu sehen. Ein Klick ohne Strg zeigt wieder nur eine.', themeConfig: 'VISUELLE EINSTELLUNGEN (THEMA)',
       colorBorder: 'RÄNDER / LINIEN', colorSecondary: 'BOXEN / SEKUNDÄR', colorAccent: 'AKZENT / POSITION',
       colorBg: 'ALLGEMEINER HINTERGRUND', colorHeaderBg: 'HINTERGRUND KOPFZEILEN', colorTitleText: 'TEXT DER TITEL',
       colorNormalText: 'TEXT DER NAMEN', colorNumberText: 'TEXT DER ZEITEN',
@@ -1070,7 +1070,7 @@ export const translations = {
       alertPositionsReset: '✅ Toutes les positions ont été réinitialisées à la disposition préconfigurée.'
     },
     personalizar: {
-      selectGraphic: 'SÉLECTIONNER UN GRAPHIQUE', themeConfig: 'CONFIGURATION VISUELLE (THÈME)',
+      selectGraphic: 'SÉLECTIONNER UN GRAPHIQUE', multiSelectHint: "Ctrl + clic pour ajouter des graphiques et les voir ensemble dans l'aperçu. Un clic sans Ctrl revient à un seul.", themeConfig: 'CONFIGURATION VISUELLE (THÈME)',
       colorBorder: 'BORDURES / LIGNES', colorSecondary: 'BOÎTES / SECONDAIRE', colorAccent: 'ACCENT / POSITION',
       colorBg: 'FOND GÉNÉRAL', colorHeaderBg: 'FOND DES EN-TÊTES', colorTitleText: 'TEXTE DES TITRES',
       colorNormalText: 'TEXTE DES NOMS', colorNumberText: 'TEXTE DES TEMPS',

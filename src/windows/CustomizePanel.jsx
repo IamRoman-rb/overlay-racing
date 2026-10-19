@@ -4,6 +4,8 @@ import GraphicPreview from './GraphicPreview';
 
 export default function CustomizePanel({ config, positions, defaultPositions, onUpdatePositions, onSelectLogo, onSelectCategoryLogo, onSelectPhotosFolder, onClearLogo, onClearCategoryLogo, onClearPhotosFolder, onConfigChange, colors, inputStyle, btnStyle, t, drivers, sessionInfo }) {
   const [selectedGraphic, setSelectedGraphic] = useState('relator');
+  // Gráficas acumuladas con Ctrl + clic para verlas juntas en la previsualización (vacío = se ve solo la seleccionada)
+  const [groupIds, setGroupIds] = useState([]);
 
   // Distribución de la pestaña PANEL del Control Panel (4 opciones)
   const PANEL_LAYOUT_OPTIONS = [
@@ -59,7 +61,8 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
     let lastState = { id: null, has: true };
     const tick = () => {
       raf = requestAnimationFrame(tick);
-      const wrap = graphicWrapRef.current, stage = previewRef.current, box = selectionRef.current;
+      const stage = previewRef.current, box = selectionRef.current;
+      const wrap = graphicWrapRef.current && Array.from(graphicWrapRef.current.children).find(el => el.dataset.gid === selectedGraphic);
       if (!wrap || !stage || !box) return;
       const stageRect = stage.getBoundingClientRect();
       if (stageRect.width === 0) return;
@@ -93,6 +96,29 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
   }, [selectedGraphic]);
+
+  // Clic normal: una sola gráfica. Ctrl + clic: suma (o quita) gráficas para verlas todas juntas.
+  const handleGraphicButtonClick = (e, id) => {
+    if (!(e.ctrlKey || e.metaKey)) {
+      setGroupIds([]);
+      setSelectedGraphic(id);
+      return;
+    }
+    const current = groupIds.length > 0 ? groupIds : [selectedGraphic];
+    if (!current.includes(id)) {
+      setGroupIds([...current, id]);
+      setSelectedGraphic(id);
+    } else if (id !== selectedGraphic) {
+      setGroupIds(current);
+      setSelectedGraphic(id);
+    } else {
+      const rest = current.filter(g => g !== id);
+      if (rest.length === 0) return;
+      setGroupIds(rest.length > 1 ? rest : []);
+      setSelectedGraphic(rest[rest.length - 1]);
+    }
+  };
+  const shownIds = groupIds.length > 0 ? groupIds : [selectedGraphic];
 
   const getCurrentPos = (id) => positions[id] || defaultPositions[id] || { x: 0, y: 0, scale: 1 };
 
@@ -247,9 +273,10 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
         <h3 style={{ color: colors.yellow, marginTop: 0, marginBottom: '15px' }}>{t('personalizar.selectGraphic')}</h3>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '5px', marginBottom: '30px' }}>
           {allGraphics.map(graphic => (
-            <button key={graphic.id} onClick={() => setSelectedGraphic(graphic.id)} style={{ ...btnStyle(selectedGraphic === graphic.id), padding: '8px 5px', fontSize: '9px' }}> {graphic.label} </button>
+            <button key={graphic.id} onClick={(e) => handleGraphicButtonClick(e, graphic.id)} style={{ ...btnStyle(selectedGraphic === graphic.id), padding: '8px 5px', fontSize: '9px', ...(groupIds.includes(graphic.id) && selectedGraphic !== graphic.id ? { outline: `2px solid ${colors.yellow}`, outlineOffset: '-2px' } : {}) }}> {graphic.label} </button>
           ))}
         </div>
+        <p style={{ fontSize: '10px', color: colors.textMuted, lineHeight: '1.5', marginTop: '-22px', marginBottom: '30px' }}>{t('personalizar.multiSelectHint')}</p>
 
         <h3 style={{ color: colors.yellow, marginBottom: '8px' }}>{t('personalizar.panelLayoutTitle')}</h3>
         <p style={{ fontSize: '10px', color: colors.textMuted, lineHeight: '1.5', marginTop: 0, marginBottom: '12px' }}>{t('personalizar.panelLayoutDesc')}</p>
@@ -892,7 +919,11 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
 
               {/* LA GRÁFICA REAL (con datos de la carrera si los hay, o de ejemplo) */}
               <div ref={graphicWrapRef} style={{ position: 'absolute', left: 0, top: 0, width: '1920px', height: '1080px', pointerEvents: 'none', zIndex: 10 }}>
-                <GraphicPreview id={selectedGraphic} config={config} positions={positions} drivers={drivers} sessionInfo={sessionInfo} />
+                {shownIds.map(gid => (
+                  <div key={gid} data-gid={gid} style={{ position: 'absolute', left: 0, top: 0, width: '1920px', height: '1080px' }}>
+                    <GraphicPreview id={gid} config={config} positions={positions} drivers={drivers} sessionInfo={sessionInfo} />
+                  </div>
+                ))}
               </div>
 
               {/* Si la gráfica no muestra nada todavía (por ejemplo, sin datos), se marca su lugar con un rectángulo */}
