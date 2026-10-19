@@ -76,7 +76,8 @@ const defaultPositions = {
   lapTimesHistory: { x: 950, y: 350, scale: 1 },
   trackAlert: { x: 950, y: 610, scale: 1 },
   penaltyAlert: { x: 950, y: 500, scale: 1 },
-  driverInfo: { x: 380, y: 335, scale: 1 }
+  driverInfo: { x: 380, y: 335, scale: 1 },
+  branding: { x: 1640, y: 900, scale: 1 }
 };
 
 if (!fs.existsSync(posPath)) fs.writeFileSync(posPath, JSON.stringify(defaultPositions, null, 2));

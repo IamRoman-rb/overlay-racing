@@ -20,6 +20,7 @@ import StartingLights from '../graphics/StartingLights';
 import LapTimeEvolution from '../graphics/LapTimeEvolution';
 import TrackAlert from '../graphics/TrackAlert';
 import PenaltyAlert from '../graphics/PenaltyAlert';
+import Branding from '../graphics/Branding';
 import { formatDriverName } from '../utils/formatDriverName';
 
 // Datos de ejemplo para mostrar la gráfica real en PERSONALIZAR cuando todavía no hay carrera cargada.
@@ -110,6 +111,8 @@ export default function GraphicPreview({ id, config, positions, drivers, session
       return <TrackAlert alert={{ isVisible: true, type: 'yellow', curveName: 'CURVA 1', curveId: null }} config={fullConfig} />;
     case 'penaltyAlert':
       return <PenaltyAlert alert={{ isVisible: true, driverNumber: list[1]?.number, driverName: list[1]?.name, type: 'penalty', reason: 'Exceso de velocidad en boxes' }} config={fullConfig} />;
+    case 'branding':
+      return <Branding isVisible config={fullConfig} />;
     default:
       return null;
   }

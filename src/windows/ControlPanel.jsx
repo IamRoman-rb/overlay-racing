@@ -169,14 +169,15 @@ export const defaultPositions = {
   virtualChamp: { x: 1440, y: 235, scale: 1 }, pitStop: { x: 850, y: 900, scale: 1 },
   startingLights: { x: 775, y: 470, scale: 1 }, lapTimesHistory: { x: 950, y: 350, scale: 1 },
   trackAlert: { x: 950, y: 610, scale: 1 }, penaltyAlert: { x: 950, y: 500, scale: 1 },
-  driverInfo: { x: 380, y: 335, scale: 1 }
+  driverInfo: { x: 380, y: 335, scale: 1 },
+  branding: { x: 1640, y: 900, scale: 1 }
 };
 
 const GRAPHIC_IDS = [
   'relator', 'comentarista', 'notero1', 'notero2', 'circuito', 'clima', 'ticker', 'tower',
   'grid', 'finalResults', 'winner', 'flags', 'fastestLap', 'driverInfo', 'battle', 'customZocalo',
   'votingQR', 'votingResults', 'lapCounter', 'virtualChamp', 'startingLights',
-  'lapTimesHistory', 'trackAlert', 'penaltyAlert'
+  'lapTimesHistory', 'trackAlert', 'penaltyAlert', 'branding'
 ];
 
 const TAB_IDS = ['panel', 'campeonato', 'votaciones', 'sanciones', 'cloud', 'zocalos', 'disenos', 'circuito', 'ajustes', 'personalizar', 'manual'];
@@ -914,6 +915,23 @@ export default function ControlPanel() {
                 {t('panel.recordLapShort')}
               </button>
 
+            </div>
+
+            <div style={sectionTitleStyle}>{t('graphics.branding')}</div>
+            <div style={{ display: 'flex', gap: '5px', marginBottom: '8px' }}>
+              <button onClick={() => handleToggleGraphic('branding')} style={{ ...btnStyle(!!graphics.branding), flex: 1 }}>
+                {graphics.branding ? t('panel.hideBranding') : t('panel.showBranding')}
+              </button>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '5px', marginBottom: '8px' }}>
+              {['both', 'producer', 'category'].map(opt => (
+                <button key={opt} onClick={() => handleDirectSave('brandingShow', opt)} style={{ ...btnStyle((config.brandingShow || 'both') === opt), padding: '8px 4px', fontSize: '10px' }}>
+                  {t(`panel.branding_${opt}`)}
+                </button>
+              ))}
+            </div>
+            <div style={{ fontSize: '10px', color: (config.logo || config.categoryLogo) ? colors.textMuted : '#e67e22', marginBottom: '15px' }}>
+              {(config.logo || config.categoryLogo) ? t('panel.brandingNote', { tab: t('tabs.personalizar') }) : t('panel.brandingNoLogos', { tab: t('tabs.personalizar') })}
             </div>
 
             <div style={sectionTitleStyle}>{t('panel.battleSection')}</div>

@@ -31,7 +31,8 @@ export const translations = {
       votingResults: 'RESULTADOS DE VOTACIÓN', lapCounter: 'CONTADOR DE VUELTAS',
       virtualChamp: 'CAMPEONATO VIRTUAL', pitStop: 'CRONÓMETRO DE BOXES',
       startingLights: 'SEMÁFORO DE LARGADA', lapTimesHistory: 'EVOLUCIÓN DE TIEMPOS DE VUELTA',
-      trackAlert: 'ALERTA EN CURVA', penaltyAlert: 'SANCIÓN / INVESTIGACIÓN'
+      trackAlert: 'ALERTA EN CURVA', penaltyAlert: 'SANCIÓN / INVESTIGACIÓN',
+      branding: 'LOGOS PRODUCTORA Y CATEGORÍA'
     },
     header: {
       title: 'RACE DYNAMICS DASHBOARD', bestLap: 'MEJOR VUELTA', laps: 'VUELTAS',
@@ -49,7 +50,7 @@ export const translations = {
       gridSection: 'GRILLA', gridPrev: '◀ ANT', showGrid: 'MOSTRAR GRILLA', gridNext: 'SIG ▶',
       autoScrapeStop: '⏹ DETENER (1s)', autoScrapeStart: '▶ AUTO-CARGA',
       lightsGo: '🟢 LARGAR (DAR SALIDA)', lightsCounting: '🔴 ENCENDIENDO ({step}/5)', lightsStart: '🚦 INICIAR SEMÁFORO',
-      graphicsSection: 'GRÁFICOS', towerShort: 'TORRE', lapsShort: 'VUELTAS', recordLapShort: 'RECORD VUELTA',
+      graphicsSection: 'GRÁFICOS', towerShort: 'TORRE', lapsShort: 'VUELTAS', recordLapShort: 'RECORD VUELTA', showBranding: 'MOSTRAR LOGOS', hideBranding: 'OCULTAR LOGOS', branding_both: 'AMBOS', branding_producer: 'PRODUCTORA', branding_category: 'CATEGORÍA', brandingNote: 'Los logos se cargan en la pestaña {tab}.', brandingNoLogos: '⚠️ Todavía no hay logos cargados. Cargalos en la pestaña {tab}.',
       battleSection: 'BATALLA EN PISTA', posLabel: 'POS:', showBattle: 'MOSTRAR BATALLA', hideBattle: 'OCULTAR BATALLA',
       hideChampTable: 'OCULTAR TABLA EN OVERLAY', showChampTable: 'MOSTRAR TABLA EN OVERLAY',
       champNote: 'Cargá el Excel y mirá la tabla completa en la pestaña {tab}.',
@@ -176,7 +177,8 @@ export const translations = {
       mediaTitle: 'RECURSOS MULTIMEDIA', producerLogo: 'LOGO PRODUCTORA', categoryLogo: 'LOGO CATEGORÍA',
       photosFolder: 'CARPETA FOTOS DE PILOTOS', noFolderSelected: 'Ninguna carpeta seleccionada.',
       chooseFolderBtn: '📁 ELEGIR CARPETA', removeFolderBtn: '🗑️ QUITAR CARPETA',
-      previewPlaceholder: 'ÁREA DE GRÁFICA'
+      previewPlaceholder: 'ÁREA DE GRÁFICA',
+      brandingShowLabel: 'LOGOS A MOSTRAR', brandingHint: 'Los logos se cargan más abajo, en Recursos multimedia.'
     },
     circuito: {
       confirmRemoveMap: '¿Seguro que querés quitar el mapa del circuito? Se perderán las curvas marcadas.',
@@ -233,7 +235,8 @@ export const translations = {
       votingResults: 'VOTING RESULTS', lapCounter: 'LAP COUNTER',
       virtualChamp: 'VIRTUAL STANDINGS', pitStop: 'PIT STOP TIMER',
       startingLights: 'STARTING LIGHTS', lapTimesHistory: 'LAP TIME EVOLUTION',
-      trackAlert: 'CORNER ALERT', penaltyAlert: 'PENALTY / INVESTIGATION'
+      trackAlert: 'CORNER ALERT', penaltyAlert: 'PENALTY / INVESTIGATION',
+      branding: 'PRODUCER & CATEGORY LOGOS'
     },
     header: {
       title: 'RACE DYNAMICS DASHBOARD', bestLap: 'FASTEST LAP', laps: 'LAPS',
@@ -251,7 +254,7 @@ export const translations = {
       gridSection: 'STARTING GRID', gridPrev: '◀ PREV', showGrid: 'SHOW GRID', gridNext: 'NEXT ▶',
       autoScrapeStop: '⏹ STOP (1s)', autoScrapeStart: '▶ AUTO-REFRESH',
       lightsGo: '🟢 GO (RELEASE START)', lightsCounting: '🔴 LIGHTING UP ({step}/5)', lightsStart: '🚦 START LIGHTS SEQUENCE',
-      graphicsSection: 'GRAPHICS', towerShort: 'TOWER', lapsShort: 'LAPS', recordLapShort: 'FASTEST LAP',
+      graphicsSection: 'GRAPHICS', towerShort: 'TOWER', lapsShort: 'LAPS', recordLapShort: 'FASTEST LAP', showBranding: 'SHOW LOGOS', hideBranding: 'HIDE LOGOS', branding_both: 'BOTH', branding_producer: 'PRODUCER', branding_category: 'CATEGORY', brandingNote: 'Logos are loaded in the {tab} tab.', brandingNoLogos: '⚠️ No logos loaded yet. Load them in the {tab} tab.',
       battleSection: 'BATTLE ON TRACK', posLabel: 'POS:', showBattle: 'SHOW BATTLE', hideBattle: 'HIDE BATTLE',
       hideChampTable: 'HIDE TABLE ON OVERLAY', showChampTable: 'SHOW TABLE ON OVERLAY',
       champNote: 'Load the Excel and see the full table in the {tab} tab.',
@@ -378,7 +381,8 @@ export const translations = {
       mediaTitle: 'MEDIA RESOURCES', producerLogo: 'PRODUCER LOGO', categoryLogo: 'CATEGORY LOGO',
       photosFolder: 'DRIVER PHOTOS FOLDER', noFolderSelected: 'No folder selected.',
       chooseFolderBtn: '📁 CHOOSE FOLDER', removeFolderBtn: '🗑️ REMOVE FOLDER',
-      previewPlaceholder: 'GRAPHIC AREA'
+      previewPlaceholder: 'GRAPHIC AREA',
+      brandingShowLabel: 'LOGOS TO SHOW', brandingHint: 'Logos are loaded below, in Media Resources.'
     },
     circuito: {
       confirmRemoveMap: 'Are you sure you want to remove the track map? The marked corners will be lost.',
@@ -435,7 +439,8 @@ export const translations = {
       votingResults: 'RESULTADOS DA VOTAÇÃO', lapCounter: 'CONTADOR DE VOLTAS',
       virtualChamp: 'CAMPEONATO VIRTUAL', pitStop: 'CRONÔMETRO DE BOX',
       startingLights: 'SEMÁFORO DE LARGADA', lapTimesHistory: 'EVOLUÇÃO DOS TEMPOS DE VOLTA',
-      trackAlert: 'ALERTA DE CURVA', penaltyAlert: 'PUNIÇÃO / INVESTIGAÇÃO'
+      trackAlert: 'ALERTA DE CURVA', penaltyAlert: 'PUNIÇÃO / INVESTIGAÇÃO',
+      branding: 'LOGOS PRODUTORA E CATEGORIA'
     },
     header: {
       title: 'RACE DYNAMICS DASHBOARD', bestLap: 'VOLTA MAIS RÁPIDA', laps: 'VOLTAS',
@@ -453,7 +458,7 @@ export const translations = {
       gridSection: 'GRID', gridPrev: '◀ ANT', showGrid: 'MOSTRAR GRID', gridNext: 'PRÓX ▶',
       autoScrapeStop: '⏹ PARAR (1s)', autoScrapeStart: '▶ ATUALIZAÇÃO AUTOMÁTICA',
       lightsGo: '🟢 LARGAR (DAR PARTIDA)', lightsCounting: '🔴 ACENDENDO ({step}/5)', lightsStart: '🚦 INICIAR SEMÁFORO',
-      graphicsSection: 'GRÁFICOS', towerShort: 'TORRE', lapsShort: 'VOLTAS', recordLapShort: 'VOLTA RÁPIDA',
+      graphicsSection: 'GRÁFICOS', towerShort: 'TORRE', lapsShort: 'VOLTAS', recordLapShort: 'VOLTA RÁPIDA', showBranding: 'MOSTRAR LOGOS', hideBranding: 'OCULTAR LOGOS', branding_both: 'AMBOS', branding_producer: 'PRODUTORA', branding_category: 'CATEGORIA', brandingNote: 'Os logos são carregados na aba {tab}.', brandingNoLogos: '⚠️ Ainda não há logos carregados. Carregue-os na aba {tab}.',
       battleSection: 'BATALHA NA PISTA', posLabel: 'POS:', showBattle: 'MOSTRAR BATALHA', hideBattle: 'OCULTAR BATALHA',
       hideChampTable: 'OCULTAR TABELA NO OVERLAY', showChampTable: 'MOSTRAR TABELA NO OVERLAY',
       champNote: 'Carregue o Excel e veja a tabela completa na aba {tab}.',
@@ -580,7 +585,8 @@ export const translations = {
       mediaTitle: 'RECURSOS DE MÍDIA', producerLogo: 'LOGO DA PRODUTORA', categoryLogo: 'LOGO DA CATEGORIA',
       photosFolder: 'PASTA DE FOTOS DOS PILOTOS', noFolderSelected: 'Nenhuma pasta selecionada.',
       chooseFolderBtn: '📁 ESCOLHER PASTA', removeFolderBtn: '🗑️ REMOVER PASTA',
-      previewPlaceholder: 'ÁREA DO GRÁFICO'
+      previewPlaceholder: 'ÁREA DO GRÁFICO',
+      brandingShowLabel: 'LOGOS A MOSTRAR', brandingHint: 'Os logos são carregados abaixo, em Recursos de mídia.'
     },
     circuito: {
       confirmRemoveMap: 'Tem certeza de que deseja remover o mapa do circuito? As curvas marcadas serão perdidas.',
@@ -637,7 +643,8 @@ export const translations = {
       votingResults: 'ABSTIMMUNGSERGEBNIS', lapCounter: 'RUNDENZÄHLER',
       virtualChamp: 'VIRTUELLE MEISTERSCHAFT', pitStop: 'BOXENSTOPP-UHR',
       startingLights: 'STARTAMPEL', lapTimesHistory: 'RUNDENZEIT-VERLAUF',
-      trackAlert: 'KURVEN-ALARM', penaltyAlert: 'STRAFE / UNTERSUCHUNG'
+      trackAlert: 'KURVEN-ALARM', penaltyAlert: 'STRAFE / UNTERSUCHUNG',
+      branding: 'LOGOS PRODUKTION & KATEGORIE'
     },
     header: {
       title: 'RACE DYNAMICS DASHBOARD', bestLap: 'SCHNELLSTE RUNDE', laps: 'RUNDEN',
@@ -655,7 +662,7 @@ export const translations = {
       gridSection: 'STARTAUFSTELLUNG', gridPrev: '◀ ZURÜCK', showGrid: 'GRID ANZEIGEN', gridNext: 'WEITER ▶',
       autoScrapeStop: '⏹ STOPPEN (1s)', autoScrapeStart: '▶ AUTO-AKTUALISIERUNG',
       lightsGo: '🟢 START (FREIGABE)', lightsCounting: '🔴 SCHALTET AUF ({step}/5)', lightsStart: '🚦 STARTAMPEL STARTEN',
-      graphicsSection: 'GRAFIKEN', towerShort: 'TURM', lapsShort: 'RUNDEN', recordLapShort: 'SCHNELLSTE RUNDE',
+      graphicsSection: 'GRAFIKEN', towerShort: 'TURM', lapsShort: 'RUNDEN', recordLapShort: 'SCHNELLSTE RUNDE', showBranding: 'LOGOS ANZEIGEN', hideBranding: 'LOGOS AUSBLENDEN', branding_both: 'BEIDE', branding_producer: 'PRODUKTION', branding_category: 'KATEGORIE', brandingNote: 'Die Logos werden im Tab {tab} geladen.', brandingNoLogos: '⚠️ Noch keine Logos geladen. Lade sie im Tab {tab}.',
       battleSection: 'DUELL AUF DER STRECKE', posLabel: 'POS:', showBattle: 'DUELL ANZEIGEN', hideBattle: 'DUELL AUSBLENDEN',
       hideChampTable: 'TABELLE IM OVERLAY AUSBLENDEN', showChampTable: 'TABELLE IM OVERLAY ANZEIGEN',
       champNote: 'Lade die Excel-Datei und sieh dir die vollständige Tabelle im Tab {tab} an.',
@@ -782,7 +789,8 @@ export const translations = {
       mediaTitle: 'MEDIENRESSOURCEN', producerLogo: 'LOGO DER PRODUKTION', categoryLogo: 'LOGO DER KATEGORIE',
       photosFolder: 'ORDNER MIT FAHRERFOTOS', noFolderSelected: 'Kein Ordner ausgewählt.',
       chooseFolderBtn: '📁 ORDNER WÄHLEN', removeFolderBtn: '🗑️ ORDNER ENTFERNEN',
-      previewPlaceholder: 'GRAFIKBEREICH'
+      previewPlaceholder: 'GRAFIKBEREICH',
+      brandingShowLabel: 'ANZUZEIGENDE LOGOS', brandingHint: 'Die Logos werden weiter unten unter Medienressourcen geladen.'
     },
     circuito: {
       confirmRemoveMap: 'Bist du sicher, dass du die Streckenkarte entfernen möchtest? Die markierten Kurven gehen dabei verloren.',
@@ -839,7 +847,8 @@ export const translations = {
       votingResults: 'RÉSULTATS DU VOTE', lapCounter: 'COMPTEUR DE TOURS',
       virtualChamp: 'CHAMPIONNAT VIRTUEL', pitStop: 'CHRONO DES STANDS',
       startingLights: 'FEUX DE DÉPART', lapTimesHistory: 'ÉVOLUTION DES TEMPS AU TOUR',
-      trackAlert: 'ALERTE VIRAGE', penaltyAlert: 'SANCTION / ENQUÊTE'
+      trackAlert: 'ALERTE VIRAGE', penaltyAlert: 'SANCTION / ENQUÊTE',
+      branding: 'LOGOS PRODUCTION ET CATÉGORIE'
     },
     header: {
       title: 'RACE DYNAMICS DASHBOARD', bestLap: 'MEILLEUR TOUR', laps: 'TOURS',
@@ -857,7 +866,7 @@ export const translations = {
       gridSection: 'GRILLE', gridPrev: '◀ PRÉC', showGrid: 'AFFICHER LA GRILLE', gridNext: 'SUIV ▶',
       autoScrapeStop: '⏹ ARRÊTER (1s)', autoScrapeStart: '▶ ACTUALISATION AUTO',
       lightsGo: '🟢 DÉPART (LANCER)', lightsCounting: '🔴 ALLUMAGE ({step}/5)', lightsStart: '🚦 DÉMARRER LES FEUX',
-      graphicsSection: 'GRAPHIQUES', towerShort: 'TOUR', lapsShort: 'TOURS', recordLapShort: 'MEILLEUR TOUR',
+      graphicsSection: 'GRAPHIQUES', towerShort: 'TOUR', lapsShort: 'TOURS', recordLapShort: 'MEILLEUR TOUR', showBranding: 'AFFICHER LES LOGOS', hideBranding: 'MASQUER LES LOGOS', branding_both: 'LES DEUX', branding_producer: 'PRODUCTION', branding_category: 'CATÉGORIE', brandingNote: 'Les logos se chargent dans l\'onglet {tab}.', brandingNoLogos: '⚠️ Aucun logo chargé pour le moment. Chargez-les dans l\'onglet {tab}.',
       battleSection: 'DUEL SUR PISTE', posLabel: 'POS :', showBattle: 'AFFICHER LE DUEL', hideBattle: 'MASQUER LE DUEL',
       hideChampTable: 'MASQUER LE TABLEAU SUR L\'OVERLAY', showChampTable: 'AFFICHER LE TABLEAU SUR L\'OVERLAY',
       champNote: 'Chargez le fichier Excel et consultez le tableau complet dans l\'onglet {tab}.',
@@ -984,7 +993,8 @@ export const translations = {
       mediaTitle: 'RESSOURCES MULTIMÉDIAS', producerLogo: 'LOGO DE LA PRODUCTION', categoryLogo: 'LOGO DE LA CATÉGORIE',
       photosFolder: 'DOSSIER DES PHOTOS DES PILOTES', noFolderSelected: 'Aucun dossier sélectionné.',
       chooseFolderBtn: '📁 CHOISIR UN DOSSIER', removeFolderBtn: '🗑️ RETIRER LE DOSSIER',
-      previewPlaceholder: 'ZONE DU GRAPHIQUE'
+      previewPlaceholder: 'ZONE DU GRAPHIQUE',
+      brandingShowLabel: 'LOGOS À AFFICHER', brandingHint: 'Les logos se chargent plus bas, dans Ressources multimédias.'
     },
     circuito: {
       confirmRemoveMap: 'Êtes-vous sûr de vouloir retirer le plan du circuit ? Les virages marqués seront perdus.',

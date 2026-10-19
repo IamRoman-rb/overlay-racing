@@ -226,7 +226,7 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
     'relator', 'comentarista', 'notero1', 'notero2', 'circuito', 'clima', 'ticker', 'tower',
     'grid', 'finalResults', 'winner', 'flags', 'fastestLap', 'driverInfo', 'battle', 'customZocalo',
     'votingQR', 'votingResults', 'lapCounter', 'virtualChamp', 'pitStop', 'startingLights',
-    'lapTimesHistory', 'trackAlert', 'penaltyAlert'
+    'lapTimesHistory', 'trackAlert', 'penaltyAlert', 'branding'
   ];
   const allGraphics = GRAPHIC_IDS.map(id => ({ id, label: t(`graphics.${id}`) }));
 
@@ -679,6 +679,33 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
               <option value="minimal">Minimalista (Sin Caja)</option>
               {renderSkinOptions()}
             </select>
+          </div>
+        )}
+
+        {selectedGraphic === 'branding' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', marginBottom: '30px', backgroundColor: '#111', padding: '15px', borderRadius: '8px', border: `1px solid ${colors.border}` }}>
+            <label style={{ fontSize: '10px', color: colors.textMuted, fontWeight: 'bold' }}>{t('personalizar.formatOf', { name: t('graphics.branding') })}</label>
+            <select
+              value={config.brandingFormat || 'standard'}
+              onChange={(e) => onConfigChange('brandingFormat', e.target.value)}
+              style={{ ...inputStyle, padding: '10px', fontSize: '11px', cursor: 'pointer', border: `1px solid ${colors.border}` }}
+            >
+              <option value="standard">Clásico (Logos en Fila con Caja)</option>
+              <option value="stacked">Apilado (Un Logo sobre el Otro)</option>
+              <option value="minimal">Minimalista (Sin Caja)</option>
+              {renderSkinOptions()}
+            </select>
+            <label style={{ fontSize: '10px', color: colors.textMuted, fontWeight: 'bold', marginTop: '15px' }}>{t('personalizar.brandingShowLabel')}</label>
+            <select
+              value={config.brandingShow || 'both'}
+              onChange={(e) => onConfigChange('brandingShow', e.target.value)}
+              style={{ ...inputStyle, padding: '10px', fontSize: '11px', cursor: 'pointer', border: `1px solid ${colors.border}` }}
+            >
+              <option value="both">{t('panel.branding_both')}</option>
+              <option value="producer">{t('panel.branding_producer')}</option>
+              <option value="category">{t('panel.branding_category')}</option>
+            </select>
+            <span style={{ fontSize: '10px', color: colors.textMuted, lineHeight: '1.5', marginTop: '10px' }}>{t('personalizar.brandingHint')}</span>
           </div>
         )}
 

@@ -21,6 +21,7 @@ import { formatDriverName } from '../utils/formatDriverName';
 import LapTimeEvolution from '../graphics/LapTimeEvolution';
 import TrackAlert from '../graphics/TrackAlert';
 import PenaltyAlert from '../graphics/PenaltyAlert';
+import Branding from '../graphics/Branding';
 
 let ipcRenderer = null;
 if (typeof window !== 'undefined' && typeof window.require === 'function') {
@@ -278,6 +279,7 @@ export default function Overlay() {
       <PitStopTimer isVisible={pitStopState?.isVisible} pitState={pitStopState} config={combinedConfig} />
       <TrackAlert alert={trackAlert} config={combinedConfig} />
       <PenaltyAlert alert={penaltyAlert} config={combinedConfig} />
+      <Branding isVisible={graphics?.branding} config={combinedConfig} />
     </div>
   );
 }
