@@ -557,6 +557,12 @@ async function scrapeSpeedhive(inputCode) {
             break;
           }
         }
+        // Bandera de la sesión: el ícono del encabezado cambia de clase (ico-flag-green-xl,
+        // ico-flag-yellow-xl, ico-flag-red-xl...). Guardamos solo el color ('green', 'yellow', 'red'...).
+        const flagIcon = document.querySelector('.active-session-header i[class*="ico-flag-"], i[class*="ico-flag-"]');
+        const flagMatch = flagIcon && flagIcon.className.match(/ico-flag-([a-z]+)/i);
+        sessionData.flag = flagMatch ? flagMatch[1].toLowerCase() : '';
+
         const rows =
           Array.from(
             document.querySelectorAll(

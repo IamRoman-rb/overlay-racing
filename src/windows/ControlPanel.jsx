@@ -584,7 +584,7 @@ export default function ControlPanel() {
         } else if (data && data.drivers) {
           setDrivers(data.drivers);
           if (data.session) setSessionInfo(data.session);
-          if (provider === 'racemonitor') handleAutoFlag(data.session?.flag);
+          handleAutoFlag(data.session?.flag);
           setScrapeError(data.drivers.length === 0 ? { code: 'NO_DRIVERS' } : null);
           if (data.drivers.length === 0) status = 'error';
         }
