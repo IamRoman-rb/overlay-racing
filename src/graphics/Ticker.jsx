@@ -82,7 +82,7 @@ export default function Ticker({ drivers, isVisible, config, id = 'ticker', sess
         <div style={{
           position: 'relative', display: 'flex', width: '100%', height: '210px',
           backgroundColor: skin ? skin.background : (hasCustomBg ? 'transparent' : themeBg),
-          backgroundImage: hasCustomBg ? `url(${customBg})` : 'none',
+          backgroundImage: hasCustomBg ? `url(${customBg})` : (skin?.backgroundImage || 'none'),
           backgroundSize: '100% 100%', backgroundRepeat: 'no-repeat', backgroundPosition: 'center',
           border: skin ? skin.border : 'none',
           borderTop: skin ? skin.border : (hasCustomBg ? 'none' : `4px solid ${themeMain}`),
@@ -190,6 +190,7 @@ export default function Ticker({ drivers, isVisible, config, id = 'ticker', sess
       <div style={{
         width: '100%', height: '100%',
         backgroundColor: skin ? skin.background : (hasCustomBg ? 'transparent' : themeBg),
+        backgroundImage: skin?.backgroundImage,
         border: skin ? skin.border : 'none',
         borderTop: skin ? skin.border : (hasCustomBg ? 'none' : `4px solid ${themeMain}`),
         boxShadow: skin ? skin.boxShadow : 'none',
@@ -251,7 +252,7 @@ export default function Ticker({ drivers, isVisible, config, id = 'ticker', sess
               {tickerItems.map((driver, index) => {
                 const podiumColor = isPodium ? PODIUM_COLORS[Number(driver.pos)] : null;
                 return (
-                  <div key={index} className="driver-item">
+                  <div key={index} className="driver-item" style={{ gap: '10px' }}>
 
                     <div style={{ color: podiumColor || (hasCustomBg ? '#fff' : themeAccent), fontWeight: '900', fontSize: isCompact ? '18px' : '22px', minWidth: '25px', textAlign: 'center' }}>
                       {driver.pos}

@@ -277,7 +277,7 @@ export default function Overlay() {
       <Battle drivers={formattedDrivers} config={combinedConfig} isVisible={battleData?.isVisible} battleFocusPos={battleData?.pos} />
       <StartingGrid drivers={formattedDrivers} config={combinedConfig} isVisible={isGridVisible} />
       <FinalResults drivers={formattedDrivers} config={combinedConfig} isVisible={isFinalResultsVisible} />
-      <WinnerGraphic driver={formattedWinnerData} config={combinedConfig} isVisible={isWinnerVisible} />
+      <WinnerGraphic driver={formattedWinnerData} config={combinedConfig} isVisible={isWinnerVisible} sessionInfo={sessionInfo} />
       <Flags activeFlags={activeFlags} config={combinedConfig} />
 
       <LowerThird id="relator" role="Relator" name={safeConfig.relator} isVisible={graphics?.relator} config={combinedConfig} />

@@ -94,6 +94,7 @@ export default function TrackAlert({ alert, config, id = 'trackAlert' }) {
 
       <div style={{
         width: '340px', backgroundColor: skin ? skin.background : 'rgba(0,0,0,0.9)', borderRadius: bRad,
+        backgroundImage: skin?.backgroundImage,
         border: skin ? skin.border : `3px solid ${accentColor}`, overflow: 'hidden',
         boxShadow: skin ? skin.boxShadow : '0 10px 30px rgba(0,0,0,0.7)',
         backdropFilter: skin?.backdropFilter

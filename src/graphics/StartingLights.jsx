@@ -105,6 +105,7 @@ export default function StartingLights({ isVisible, step = 0, config }) {
         // FORMATO CLÁSICO (+ skins broadcast pro/degradé/cristal en la caja): una sola fila de 5 luces
         <div style={{
           display: 'flex', gap: '14px', backgroundColor: skin ? skin.background : '#111',
+          backgroundImage: skin?.backgroundImage,
           padding: '20px 30px', borderRadius: bRad, border: skin ? skin.border : '4px solid #000',
           boxShadow: skin ? skin.boxShadow : '0 8px 25px rgba(0,0,0,0.6)',
           backdropFilter: skin?.backdropFilter

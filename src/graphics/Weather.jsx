@@ -207,7 +207,7 @@ export default function Weather({ data, isVisible, config, id = 'clima' }) {
       <div style={{
         width: '340px',
         backgroundColor: skin ? skin.background : (customBg ? 'transparent' : themeBg),
-        backgroundImage: customBg ? `url(${customBg})` : 'none',
+        backgroundImage: customBg ? `url(${customBg})` : (skin?.backgroundImage || 'none'),
         backgroundSize: '100% 100%', backgroundRepeat: 'no-repeat', backgroundPosition: 'center',
         border: skin ? skin.border : 'none',
         borderLeft: skin ? skin.border : (customBg ? 'none' : `4px solid ${themeMain}`),

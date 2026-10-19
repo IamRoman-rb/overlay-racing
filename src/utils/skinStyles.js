@@ -9,7 +9,9 @@ export function getSkinStyle(format, { themeMain, themeAccent }) {
     // TV de automovilismo profesional (F1, MotoGP, TC/ACTC, Carburando):
     // paneles planos y prolijos, alto contraste, sin efectos "gamer".
     return {
-      background: 'linear-gradient(180deg, #1b1f27 0%, #05070a 100%)',
+      // `background` es un COLOR (se usa en backgroundColor); el degradé va aparte en `backgroundImage`.
+      background: '#0b0e13',
+      backgroundImage: 'linear-gradient(180deg, #1b1f27 0%, #05070a 100%)',
       border: `2px solid ${themeAccent}`,
       boxShadow: '0 14px 30px rgba(0,0,0,0.65), inset 0 1px 0 rgba(255,255,255,0.08)',
       textShadow: '0px 2px 3px rgba(0,0,0,0.85)',
@@ -18,7 +20,8 @@ export function getSkinStyle(format, { themeMain, themeAccent }) {
   }
   if (format === 'gradient') {
     return {
-      background: `linear-gradient(135deg, ${themeMain}, ${themeAccent})`,
+      background: themeMain,
+      backgroundImage: `linear-gradient(135deg, ${themeMain}, ${themeAccent})`,
       border: 'none',
       boxShadow: '0 10px 30px rgba(0,0,0,0.5)',
       textShadow: '1px 1px 3px rgba(0,0,0,0.6)',
@@ -28,6 +31,7 @@ export function getSkinStyle(format, { themeMain, themeAccent }) {
   if (format === 'glass') {
     return {
       background: 'rgba(255,255,255,0.08)',
+      backgroundImage: 'none',
       border: '1px solid rgba(255,255,255,0.25)',
       boxShadow: '0 8px 32px rgba(0,0,0,0.45)',
       textShadow: 'none',

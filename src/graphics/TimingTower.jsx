@@ -25,6 +25,17 @@ export default function TimingTower({ drivers, config, isVisible, id = 'tower', 
   const themeNumberText = config?.themeNumberText || '#3498db';
   const skin = getSkinStyle(towerFormat, { themeMain, themeAccent });
 
+  // Difuminado del fondo (backdrop blur) elegible en PERSONALIZAR; por defecto un blur suave.
+  const configuredBlur = config?.towerBlur;
+  const blurUnset = configuredBlur === undefined || configuredBlur === '';
+  // Sin elección del usuario: blur suave, salvo en el skin cristal que ya trae el suyo.
+  const blurPx = blurUnset ? (towerFormat === 'glass' ? 0 : 6) : Math.max(0, Number(configuredBlur) || 0);
+  const backdropFilter = blurPx > 0 ? `blur(${blurPx}px)` : skin?.backdropFilter;
+  // El skin "pro" es un fondo oscuro opaco: lo hacemos algo translúcido para que el blur se note.
+  const proBlurred = towerFormat === 'pro' && blurPx > 0;
+  const towerSkinBackground = proBlurred ? 'rgba(11,14,19,0.80)' : skin?.background;
+  const towerSkinImage = proBlurred ? 'none' : (skin?.backgroundImage || 'none');
+
   // MAGIA DE DISEÑO, BORDES Y ANIMACIÓN
   const customBg = config[`design_${id}`];
   const hasCustomBg = !!customBg;
@@ -72,13 +83,13 @@ export default function TimingTower({ drivers, config, isVisible, id = 'tower', 
       position: 'absolute', left: `${pos.x}px`, top: `${pos.y}px`, transformOrigin: 'top left',
       width: '320px', height: '650px',
 
-      backgroundColor: skin ? skin.background : ((hasCustomBg || isMinimal) ? 'transparent' : themeBg),
+      backgroundColor: skin ? towerSkinBackground : ((hasCustomBg || isMinimal) ? 'transparent' : themeBg),
       border: skin ? skin.border : 'none',
       borderTop: skin ? skin.border : ((hasCustomBg || isMinimal) ? 'none' : `4px solid ${themeMain}`),
-      backgroundImage: hasCustomBg ? `url(${customBg})` : 'none',
+      backgroundImage: hasCustomBg ? `url(${customBg})` : towerSkinImage,
       backgroundSize: '100% 100%', backgroundRepeat: 'no-repeat', backgroundPosition: 'center',
       boxShadow: skin ? skin.boxShadow : ((hasCustomBg || isMinimal) ? 'none' : '0 10px 30px rgba(0,0,0,0.5)'),
-      backdropFilter: skin?.backdropFilter,
+      backdropFilter,
 
       borderRadius: bRad,
       display: 'flex', flexDirection: 'column', zIndex: 10,

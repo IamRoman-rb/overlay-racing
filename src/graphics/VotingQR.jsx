@@ -112,7 +112,7 @@ export default function VotingQR({ isVisible, config, localIp, id = 'votingQR' }
       ...wrapperStyle,
       display: 'flex', flexDirection: 'column', width: '250px',
       backgroundColor: skin ? skin.background : (hasCustomBg ? 'transparent' : themeBg),
-      backgroundImage: hasCustomBg ? `url(${customBg})` : 'none',
+      backgroundImage: hasCustomBg ? `url(${customBg})` : (skin?.backgroundImage || 'none'),
       backgroundSize: '100% 100%', backgroundRepeat: 'no-repeat', backgroundPosition: 'center',
       borderRadius: bRad,
       border: skin ? skin.border : 'none',

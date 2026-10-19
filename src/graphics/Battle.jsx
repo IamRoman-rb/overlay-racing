@@ -180,7 +180,7 @@ export default function Battle({ drivers, config, isVisible, battleFocusPos = 1,
     <div style={{
       ...wrapperStyle, display: 'flex', flexDirection: 'column',
       width: containerWidth,
-      backgroundImage: customBg ? `url(${customBg})` : 'none',
+      backgroundImage: customBg ? `url(${customBg})` : (skin?.backgroundImage || 'none'),
       backgroundSize: '100% 100%', backgroundRepeat: 'no-repeat', backgroundPosition: 'center',
       padding: customBg ? '20px' : '0'
     }}>
@@ -201,6 +201,7 @@ export default function Battle({ drivers, config, isVisible, battleFocusPos = 1,
 
       <div style={{
         backgroundColor: skin ? skin.background : (customBg ? 'transparent' : themeBg),
+        backgroundImage: skin?.backgroundImage,
         borderBottom: skin ? skin.border : (customBg ? 'none' : `4px solid ${themeMain}`),
         borderLeft: skin ? skin.border : 'none', borderRight: skin ? skin.border : 'none',
         borderBottomLeftRadius: bRad, borderBottomRightRadius: bRad,

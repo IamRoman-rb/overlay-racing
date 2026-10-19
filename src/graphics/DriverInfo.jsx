@@ -141,7 +141,7 @@ export default function DriverInfo({ driver, config, isVisible, id = 'driverInfo
         backgroundColor: skin ? skin.background : (hasCustomBg ? 'transparent' : themeBg),
         border: skin ? skin.border : 'none',
         borderTop: skin ? skin.border : (hasCustomBg ? 'none' : `4px solid ${themeMain}`),
-        backgroundImage: hasCustomBg ? `url(${customBg})` : 'none',
+        backgroundImage: hasCustomBg ? `url(${customBg})` : (skin?.backgroundImage || 'none'),
         backgroundSize: '100% 100%', backgroundRepeat: 'no-repeat', backgroundPosition: 'center',
         boxShadow: skin ? skin.boxShadow : (hasCustomBg ? 'none' : '0 10px 30px rgba(0,0,0,0.6)'),
         backdropFilter: skin?.backdropFilter,

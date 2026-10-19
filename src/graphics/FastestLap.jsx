@@ -151,7 +151,7 @@ export default function FastestLap({ drivers, config, isVisible, id = 'fastestLa
        <div style={{
          display: 'flex', flexDirection: 'column', width: '450px',
          backgroundColor: skin ? skin.background : (hasCustomBg ? 'transparent' : themeBg),
-         backgroundImage: hasCustomBg ? `url(${customBg})` : 'none',
+         backgroundImage: hasCustomBg ? `url(${customBg})` : (skin?.backgroundImage || 'none'),
          backgroundSize: '100% 100%', backgroundRepeat: 'no-repeat', backgroundPosition: 'center',
          border: skin ? skin.border : 'none',
          boxShadow: skin ? skin.boxShadow : (hasCustomBg ? 'none' : '0 10px 30px rgba(0,0,0,0.6)'),

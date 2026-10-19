@@ -51,7 +51,7 @@ export default function VirtualChamp({ config, isVisible, id = 'virtualChamp' })
       opacity: isVisible ? 1 : 0, transform: isVisible ? `scale(${pos.scale}) translateX(0)` : transformHidden,
       display: 'flex', flexDirection: 'column', width: isCompact ? '340px' : '400px',
       backgroundColor: skin ? skin.background : (transparent ? 'transparent' : themeBg),
-      backgroundImage: customBg ? `url(${customBg})` : 'none', backgroundSize: '100% 100%',
+      backgroundImage: customBg ? `url(${customBg})` : (skin?.backgroundImage || 'none'), backgroundSize: '100% 100%',
       border: skin ? skin.border : 'none',
       borderRadius: bRad, boxShadow: skin ? skin.boxShadow : (transparent ? 'none' : '0 10px 30px rgba(0,0,0,0.8)'),
       backdropFilter: skin?.backdropFilter, overflow: 'hidden'

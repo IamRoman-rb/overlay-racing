@@ -163,6 +163,20 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
               <option value="cinematic">Cinematic (Grilla + Foto Central + Info)</option>
               {renderSkinOptions()}
             </select>
+            {(config.gridFormat || 'standard') !== 'photos' && (config.gridFormat || 'standard') !== 'cinematic' && (
+              <>
+                <label style={{ fontSize: '10px', color: colors.textMuted, fontWeight: 'bold', marginTop: '15px' }}>{t('personalizar.gridPerPageLabel')}</label>
+                <select
+                  value={config.gridPerPage || 2}
+                  onChange={(e) => onConfigChange('gridPerPage', parseInt(e.target.value, 10))}
+                  style={{ ...inputStyle, padding: '10px', fontSize: '11px', cursor: 'pointer', border: `1px solid ${colors.border}` }}
+                >
+                  {[1, 2, 3, 4, 5, 6].map(n => (
+                    <option key={n} value={n}>{n === 1 ? t('personalizar.gridPerPageOne') : t('personalizar.gridPerPageOption', { n })}</option>
+                  ))}
+                </select>
+              </>
+            )}
           </div>
         )}
 
@@ -453,6 +467,17 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
               <option value="podium">Podio (Colores Oro/Plata/Bronce)</option>
               <option value="minimal">Minimalista (Filas Cebra, Sin Header)</option>
               {renderSkinOptions()}
+            </select>
+            <label style={{ fontSize: '10px', color: colors.textMuted, fontWeight: 'bold', marginTop: '15px' }}>{t('personalizar.towerBlurLabel')}</label>
+            <select
+              value={config.towerBlur === undefined || config.towerBlur === '' ? 6 : config.towerBlur}
+              onChange={(e) => onConfigChange('towerBlur', parseInt(e.target.value, 10))}
+              style={{ ...inputStyle, padding: '10px', fontSize: '11px', cursor: 'pointer', border: `1px solid ${colors.border}` }}
+            >
+              <option value={0}>{t('personalizar.blurNone')}</option>
+              <option value={6}>{t('personalizar.blurSoft')}</option>
+              <option value={12}>{t('personalizar.blurMedium')}</option>
+              <option value={20}>{t('personalizar.blurStrong')}</option>
             </select>
           </div>
         )}

@@ -47,7 +47,7 @@ export default function VotingResults({ isVisible, drivers, votes, config, id = 
       width: '320px',
 
       backgroundColor: skin ? skin.background : (transparent ? 'transparent' : themeBg),
-      backgroundImage: hasCustomBg ? `url(${customBg})` : 'none',
+      backgroundImage: hasCustomBg ? `url(${customBg})` : (skin?.backgroundImage || 'none'),
       backgroundSize: '100% 100%', backgroundRepeat: 'no-repeat', backgroundPosition: 'center',
 
       borderRadius: bRad, // <-- APLICADO BORDE DINÁMICO

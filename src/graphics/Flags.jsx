@@ -163,7 +163,7 @@ export default function Flags({ activeFlags, config, id = 'flags' }) {
     }}>
       <div style={{
          background: skin ? skin.background : (useImageBg ? 'transparent' : currentStyle.bg),
-         backgroundImage: skin ? 'none' : (useImageBg ? `url(${bgUrl})` : 'none'),
+         backgroundImage: skin ? (skin.backgroundImage || 'none') : (useImageBg ? `url(${bgUrl})` : 'none'),
          backgroundSize: bgSize, backgroundRepeat: 'no-repeat', backgroundPosition: 'center',
          padding: '10px 30px',
          border: skin ? skin.border : 'none',

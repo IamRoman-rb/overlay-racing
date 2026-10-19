@@ -110,7 +110,7 @@ export default function LowerThird({ role, name, isVisible, config, id }) {
   return (
     <div style={{
       ...wrapperStyle,
-      backgroundImage: customBg ? `url(${customBg})` : 'none',
+      backgroundImage: customBg ? `url(${customBg})` : (skin?.backgroundImage || 'none'),
       backgroundSize: '100% 100%', backgroundRepeat: 'no-repeat', backgroundPosition: 'center',
       minWidth: customBg ? '400px' : 'auto', height: customBg ? '80px' : 'auto',
       borderRadius: bRad // <-- APLICAMOS EL BORDE AQUÍ TAMBIÉN

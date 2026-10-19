@@ -18,8 +18,10 @@ function supportsFlexGap() {
 
 function applyGap(el) {
   const gap = el.style.gap;
-  if (!gap || el.style.display !== 'flex') return;
-  const column = el.style.flexDirection === 'column' || el.style.flexDirection === 'column-reverse';
+  if (!gap) return;
+  const cs = window.getComputedStyle(el);
+  if (cs.display !== 'flex' && cs.display !== 'inline-flex') return;
+  const column = cs.flexDirection === 'column' || cs.flexDirection === 'column-reverse';
   const prop = column ? 'marginTop' : 'marginLeft';
   const reset = column ? 'marginLeft' : 'marginTop';
   Array.from(el.children).forEach((child, i) => {

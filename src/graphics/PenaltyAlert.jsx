@@ -19,6 +19,7 @@ function CardFormat({ alert, config, pos, skinFormat }) {
         minWidth: '340px',
         maxWidth: '420px',
         backgroundColor: skin ? skin.background : bgColor,
+        backgroundImage: skin?.backgroundImage,
         border: skin ? skin.border : `2px solid ${borderColor}`,
         borderRadius: radius,
         boxShadow: skin ? skin.boxShadow : '0 4px 20px rgba(0,0,0,0.6)',

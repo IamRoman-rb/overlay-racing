@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import pilotoAnonimo from '../assets/piloto_anonimo.png';
 import { getSkinStyle } from '../utils/skinStyles';
 
-export default function WinnerGraphic({ driver, isVisible, config, id = 'winner' }) {
+export default function WinnerGraphic({ driver, isVisible, config, id = 'winner', sessionInfo }) {
   const pos = config?.positions?.[id] || { x: 440, y: 550, scale: 1 };
 
   const themeBg = config?.themeBg || '#1a1a1a';
@@ -17,6 +17,8 @@ export default function WinnerGraphic({ driver, isVisible, config, id = 'winner'
   const bRad = config[`borderRadius_${id}`] || '8px';
   const animStyle = config[`animationStyle_${id}`] || 'slide'
   const winnerFormat = config?.winnerFormat || 'standard';
+  // Mismo nombre de evento que muestra la torre; si no hay sesión en vivo, cae al campeonato
+  const eventName = sessionInfo?.name || config?.campeonato || 'CARRERA';
   const skin = getSkinStyle(winnerFormat, { themeMain, themeAccent });
 
   // Animación de entrada (Slide desde abajo, como la gráfica principal)
@@ -70,7 +72,7 @@ export default function WinnerGraphic({ driver, isVisible, config, id = 'winner'
           borderRadius: `0 0 ${bRad} ${bRad}`
         }}>
           <span style={{ fontSize: '13px', fontWeight: 'bold', color: themeAccent, letterSpacing: '2px' }}>
-            GANADOR — {config.campeonato || 'CARRERA'}
+            GANADOR — {eventName}
           </span><br />
           <span style={{ fontSize: '26px', fontWeight: '900', color: themeNormalText, textTransform: 'uppercase' }}>
             #{driver.number} {driver.name}
@@ -113,7 +115,7 @@ export default function WinnerGraphic({ driver, isVisible, config, id = 'winner'
       <div style={wrapperStyle}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
           <span style={{ fontSize: '13px', fontWeight: 'bold', color: themeAccent, letterSpacing: '2px', textShadow: '2px 2px 6px rgba(0,0,0,0.9)' }}>
-            GANADOR — {config.campeonato || 'CARRERA'}
+            GANADOR — {eventName}
           </span>
           <span style={{ fontSize: '38px', fontWeight: '900', color: themeNormalText, textTransform: 'uppercase', textShadow: '2px 2px 6px rgba(0,0,0,0.9)' }}>
             #{driver.number} {driver.name}
@@ -123,23 +125,22 @@ export default function WinnerGraphic({ driver, isVisible, config, id = 'winner'
     );
   }
 
-  // FORMATO ESTÁNDAR (comportamiento original)
+  // FORMATO ESTÁNDAR: el separador entre nombre y número ocupa todo el alto de la gráfica
   return (
     <div style={{
       ...wrapperStyle,
       backgroundColor: skin ? skin.background : (hasCustomBg ? 'transparent' : themeBg),
-      backgroundImage: hasCustomBg ? `url(${customBg})` : 'none',
+      backgroundImage: hasCustomBg ? `url(${customBg})` : (skin?.backgroundImage || 'none'),
       backgroundSize: '100% 100%', backgroundRepeat: 'no-repeat', backgroundPosition: 'center',
-      padding: '20px 40px',
-      borderRadius: bRad, // <-- APLICADO BORDE DINÁMICO
+      borderRadius: bRad,
       border: skin ? skin.border : (hasCustomBg ? 'none' : `4px solid ${themeMain}`),
-      display: 'flex', alignItems: 'center', gap: '30px',
+      display: 'flex', alignItems: 'stretch', overflow: 'hidden',
       boxShadow: skin ? skin.boxShadow : (hasCustomBg ? 'none' : '0 10px 30px rgba(0,0,0,0.5)'),
       backdropFilter: skin?.backdropFilter,
     }}>
-       <div style={{ display: 'flex', flexDirection: 'column' }}>
-          <span style={{ fontSize: '14px', fontWeight: 'bold', color: themeAccent, opacity: 0.8 }}>
-            GANADOR - {config.campeonato || 'CARRERA'}
+       <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '20px 30px 20px 40px', minWidth: 0 }}>
+          <span style={{ fontSize: '24px', fontWeight: '800', color: themeAccent, opacity: 0.9, maxWidth: '780px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', textTransform: 'uppercase' }}>
+            GANADOR - {eventName}
           </span>
           <span style={{ fontSize: '36px', fontWeight: '900', color: themeAccent, textTransform: 'uppercase' }}>
             {driver.name}
@@ -147,9 +148,10 @@ export default function WinnerGraphic({ driver, isVisible, config, id = 'winner'
        </div>
 
        <div style={{
+         display: 'flex', alignItems: 'center', alignSelf: 'stretch',
          fontSize: '48px', fontWeight: '900', color: themeAccent,
          borderLeft: hasCustomBg ? '3px solid rgba(255,255,255,0.2)' : `3px solid ${themeAccent}`,
-         paddingLeft: '20px', opacity: 0.9
+         padding: '0 40px 0 30px', opacity: 0.9
        }}>
          #{driver.number}
        </div>

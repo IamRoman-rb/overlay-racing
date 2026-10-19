@@ -29,8 +29,10 @@ export default function StartingGrid({ drivers, config, isVisible, id = 'grid' }
   // TIPO DE GRILLA: 'standard', 'photos', 'cinematic' o un skin (pro/gradient/glass, que reusan el layout estándar)
   const gridFormat = config?.gridFormat || 'standard';
   const gridSkin = getSkinStyle(gridFormat, { themeMain, themeAccent });
-  // 'cinematic' avanza piloto por piloto (1 a la vez); el resto sigue de a 2 por página.
-  const itemsPerPage = gridFormat === 'cinematic' ? 1 : 2;
+  // 'cinematic' avanza piloto por piloto (1 a la vez) y 'photos' siempre muestra 2 (izquierda/derecha).
+  // En la clásica y sus skins la cantidad por pantalla se elige en PERSONALIZAR (1 a 6, de a 2 por fila).
+  const perPageSetting = Math.min(6, Math.max(1, parseInt(config?.gridPerPage, 10) || 2));
+  const itemsPerPage = gridFormat === 'cinematic' ? 1 : (gridFormat === 'photos' ? 2 : perPageSetting);
 
   let transformHidden = `scale(${config?.positions?.[id]?.scale || 1}) translateY(40px)`;
   if (animStyle === 'fade') transformHidden = `scale(${config?.positions?.[id]?.scale || 1})`;
@@ -92,7 +94,7 @@ export default function StartingGrid({ drivers, config, isVisible, id = 'grid' }
     }}>
       <style>{`
         @keyframes zoomInForward { 0% { transform: scale(0.8) translateZ(-500px); opacity: 0; } 70% { transform: scale(1.02) translateZ(0); opacity: 1; } 100% { transform: scale(1) translateZ(0); opacity: 1; } }
-        .grid-page { width: 100%; display: flex; justify-content: center; gap: 60px; animation: zoomInForward 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+        .grid-page { width: 100%; display: flex; flex-wrap: wrap; justify-content: center; animation: zoomInForward 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
         @keyframes cinematicFade { 0% { opacity: 0; transform: translateY(20px); } 100% { opacity: 1; transform: translateY(0); } }
       `}</style>
 
@@ -102,6 +104,7 @@ export default function StartingGrid({ drivers, config, isVisible, id = 'grid' }
           <div style={{
             position: 'absolute', top: '50px', left: '10%',
             backgroundColor: gridSkin ? gridSkin.background : themeHeaderBg, color: themeTitleText, padding: '15px 40px',
+            backgroundImage: gridSkin?.backgroundImage,
             fontSize: '32px', fontWeight: '900', textTransform: 'uppercase',
             border: gridSkin ? gridSkin.border : 'none',
             borderBottom: gridSkin ? gridSkin.border : `6px solid ${themeMain}`,
@@ -209,11 +212,11 @@ function DriverCardStandard({ driver, config, customBg, bRad, themeBg, themeHead
     <div style={{
       display: 'flex', alignItems: 'center',
       backgroundColor: skin ? skin.background : (hasCustomBg ? 'transparent' : themeBg),
-      backgroundImage: hasCustomBg ? `url(${customBg})` : 'none',
+      backgroundImage: hasCustomBg ? `url(${customBg})` : (skin?.backgroundImage || 'none'),
       backgroundSize: '100% 100%', backgroundRepeat: 'no-repeat', backgroundPosition: 'center',
       border: skin ? skin.border : 'none',
       borderLeft: skin ? skin.border : (hasCustomBg ? 'none' : `8px solid ${themeSecondary}`),
-      borderRadius: bRad, width: '450px', height: '110px',
+      borderRadius: bRad, width: '450px', height: '110px', margin: '0 45px 40px',
       boxShadow: skin ? skin.boxShadow : (hasCustomBg ? 'none' : '10px 15px 30px rgba(0,0,0,0.8)'),
       backdropFilter: skin?.backdropFilter,
       position: 'relative', overflow: 'visible'
@@ -225,7 +228,7 @@ function DriverCardStandard({ driver, config, customBg, bRad, themeBg, themeHead
         <span style={{ fontSize: '18px', color: themeAccent, fontWeight: 'bold', textShadow: '2px 2px 4px rgba(0,0,0,0.8)' }}>
           #{driver.number} {driver.make ? `| ${driver.make}` : ''}
         </span>
-        <span style={{ fontSize: '26px', fontWeight: '900', textTransform: 'uppercase', color: themeNormalText, whiteSpace: 'nowrap', textShadow: '2px 2px 4px rgba(0,0,0,0.8)', textOverflow: 'ellipsis' }}>
+        <span style={{ fontSize: '26px', fontWeight: '900', textTransform: 'uppercase', color: themeNormalText, whiteSpace: 'nowrap', overflow: 'hidden', textShadow: '2px 2px 4px rgba(0,0,0,0.8)', textOverflow: 'ellipsis' }}>
           {driver.name}
         </span>
       </div>

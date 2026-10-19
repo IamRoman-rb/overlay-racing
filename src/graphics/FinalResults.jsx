@@ -234,7 +234,7 @@ export default function FinalResults({ drivers, config, isVisible, id = 'finalRe
 
          <div style={{
              backgroundColor: skin ? skin.background : (transparent ? 'transparent' : themeBg),
-             backgroundImage: hasCustomBg ? `url(${customBg})` : 'none',
+             backgroundImage: hasCustomBg ? `url(${customBg})` : (skin?.backgroundImage || 'none'),
              backgroundSize: '100% 100%', backgroundRepeat: 'no-repeat', backgroundPosition: 'center',
              padding: isMinimal ? '10px' : '40px', display: 'flex', flexDirection: 'column',
              alignItems: 'center', boxShadow: skin ? skin.boxShadow : (transparent ? 'none' : '0 15px 50px rgba(0,0,0,0.8)'),

@@ -112,7 +112,7 @@ export default function CustomZocalo({ isVisible, title, text, config, id = 'cus
     <div style={{ ...wrapperStyle, display: 'flex', boxShadow: hasCustomBg ? 'none' : '0 10px 30px rgba(0,0,0,0.6)' }}>
       <div style={{
         backgroundColor: skin ? skin.background : (hasCustomBg ? 'transparent' : themeBg),
-        backgroundImage: hasCustomBg ? `url(${customBg})` : 'none',
+        backgroundImage: hasCustomBg ? `url(${customBg})` : (skin?.backgroundImage || 'none'),
         backgroundSize: '100% 100%', backgroundRepeat: 'no-repeat', backgroundPosition: 'center',
         border: skin ? skin.border : 'none',
         borderLeft: skin ? skin.border : (hasCustomBg ? 'none' : `4px solid ${themeMain}`),
