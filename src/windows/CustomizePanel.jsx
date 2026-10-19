@@ -1,7 +1,8 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { SKIN_FORMATS } from '../utils/skinStyles';
+import GraphicPreview from './GraphicPreview';
 
-export default function CustomizePanel({ config, positions, defaultPositions, onUpdatePositions, onSelectLogo, onSelectCategoryLogo, onSelectPhotosFolder, onClearLogo, onClearCategoryLogo, onClearPhotosFolder, onConfigChange, colors, inputStyle, btnStyle, t }) {
+export default function CustomizePanel({ config, positions, defaultPositions, onUpdatePositions, onSelectLogo, onSelectCategoryLogo, onSelectPhotosFolder, onClearLogo, onClearCategoryLogo, onClearPhotosFolder, onConfigChange, colors, inputStyle, btnStyle, t, drivers, sessionInfo }) {
   const [selectedGraphic, setSelectedGraphic] = useState('relator');
 
   // Distribución de la pestaña PANEL del Control Panel (4 opciones)
@@ -18,22 +19,111 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
     <option key={value} value={value}>{skinLabels[value] || value}</option>
   ));
 
-  const dragInfo = useRef({ isDragging: false, id: null, startX: 0, startY: 0, initialX: 0, initialY: 0 });
-  const previewRef = useRef(null);
+  const dragInfo = useRef({ isDragging: false, id: null, startX: 0, startY: 0, initialX: 0, initialY: 0, offX: 0, offY: 0, width: 0, height: 0 });
+  const previewRef = useRef(null);       // escenario de 1920x1080 (escalado)
+  const previewAreaRef = useRef(null);   // zona disponible, para ajustar la escala
+  const graphicWrapRef = useRef(null);   // contenedor de la gráfica real
+  const fallbackRef = useRef(null);      // rectángulo de reemplazo si la gráfica no muestra nada
+  const selectionRef = useRef(null);     // recuadro de selección / zona de arrastre
+  const labelRef = useRef(null);         // lectura de X, Y y tamaño
+  const boundsRef = useRef(null);        // {x, y, w, h} de la gráfica seleccionada, en px del escenario
 
-  const PREVIEW_SCALE = 0.42;
+  const [previewScale, setPreviewScale] = useState(0.42);
+  const [contentState, setContentState] = useState({ id: null, has: true });
+  const [showGuides, setShowGuides] = useState(true);
+  const [showGrid, setShowGrid] = useState(false);
+  const [snapEnabled, setSnapEnabled] = useState(true);
+  const [snapLines, setSnapLines] = useState({ x: [], y: [] });
+  const hasContent = contentState.id === selectedGraphic ? contentState.has : true;
+
+  // Líneas a las que "se pega" la gráfica al arrastrarla: bordes, centro y zona segura (5 %) del cuadro
+  const SNAP_X = [0, 96, 960, 1824, 1920];
+  const SNAP_Y = [0, 54, 540, 1026, 1080];
+  const SNAP_THRESHOLD = 10;
+
+  // Ajusta la escala del escenario al espacio disponible (el ResizeObserver avisa también al montar)
+  useEffect(() => {
+    const el = previewAreaRef.current;
+    if (!el || typeof ResizeObserver === 'undefined') return undefined;
+    const ro = new ResizeObserver(() => {
+      const scale = Math.min((el.clientWidth - 48) / 1920, (el.clientHeight - 48) / 1080);
+      setPreviewScale(Math.max(0.2, Math.min(1, scale)));
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
+  // Mide la gráfica real seleccionada en cada cuadro y mueve el recuadro de selección sobre ella
+  useEffect(() => {
+    let raf = 0;
+    let lastState = { id: null, has: true };
+    const tick = () => {
+      raf = requestAnimationFrame(tick);
+      const wrap = graphicWrapRef.current, stage = previewRef.current, box = selectionRef.current;
+      if (!wrap || !stage || !box) return;
+      const stageRect = stage.getBoundingClientRect();
+      if (stageRect.width === 0) return;
+      const k = stageRect.width / 1920;
+
+      let left = Infinity, top = Infinity, right = -Infinity, bottom = -Infinity;
+      Array.from(wrap.children).forEach(child => {
+        if (child.tagName === 'STYLE' || child.tagName === 'SCRIPT') return;
+        const r = child.getBoundingClientRect();
+        if (r.width <= 0 || r.height <= 0) return;
+        left = Math.min(left, r.left); top = Math.min(top, r.top); right = Math.max(right, r.right); bottom = Math.max(bottom, r.bottom);
+      });
+      const has = right > left;
+      if (!has && fallbackRef.current) {
+        const r = fallbackRef.current.getBoundingClientRect();
+        left = r.left; top = r.top; right = r.right; bottom = r.bottom;
+      }
+      if (lastState.id !== selectedGraphic || lastState.has !== has) {
+        lastState = { id: selectedGraphic, has };
+        setContentState(lastState);
+      }
+      if (!(right > left)) { boundsRef.current = null; box.style.display = 'none'; return; }
+
+      const b = { x: (left - stageRect.left) / k, y: (top - stageRect.top) / k, w: (right - left) / k, h: (bottom - top) / k };
+      boundsRef.current = b;
+      box.style.display = 'block';
+      box.style.left = `${b.x}px`; box.style.top = `${b.y}px`;
+      box.style.width = `${b.w}px`; box.style.height = `${b.h}px`;
+      if (labelRef.current) labelRef.current.textContent = `X ${Math.round(b.x)}  Y ${Math.round(b.y)}  ·  ${Math.round(b.w)} × ${Math.round(b.h)}`;
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [selectedGraphic]);
+
+  const getCurrentPos = (id) => positions[id] || defaultPositions[id] || { x: 0, y: 0, scale: 1 };
 
   const handlePreviewMouseDown = (e, id) => {
     e.preventDefault();
     e.stopPropagation();
     setSelectedGraphic(id);
-    const pos = positions[id] || defaultPositions[id] || { x: 0, y: 0, scale: 1 };
-    dragInfo.current = { isDragging: true, id, startX: e.clientX, startY: e.clientY, initialX: pos.x, initialY: pos.y };
+    const pos = getCurrentPos(id);
+    const b = boundsRef.current;
+    dragInfo.current = {
+      isDragging: true, id, startX: e.clientX, startY: e.clientY, initialX: pos.x, initialY: pos.y,
+      offX: b ? b.x - pos.x : 0, offY: b ? b.y - pos.y : 0, width: b ? b.w : 0, height: b ? b.h : 0
+    };
+    if (previewRef.current && previewRef.current.parentElement) previewRef.current.parentElement.focus();
+  };
+
+  // Devuelve cuánto hay que correr la gráfica para que su borde o su centro caiga sobre una línea guía
+  const snapAxis = (start, size, targets) => {
+    let best = null;
+    [start, start + size / 2, start + size].forEach(candidate => {
+      targets.forEach(target => {
+        const delta = target - candidate;
+        if (Math.abs(delta) <= SNAP_THRESHOLD && (best === null || Math.abs(delta) < Math.abs(best.delta))) best = { delta, target };
+      });
+    });
+    return best;
   };
 
   const handlePreviewMouseMove = (e) => {
     if (!dragInfo.current.isDragging || !previewRef.current) return;
-    const { id, startX, startY, initialX, initialY } = dragInfo.current;
+    const { id, startX, startY, initialX, initialY, offX, offY, width, height } = dragInfo.current;
 
     const rect = previewRef.current.getBoundingClientRect();
     const actualScale = rect.width / 1920;
@@ -41,18 +131,54 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
     const dx = (e.clientX - startX) / actualScale;
     const dy = (e.clientY - startY) / actualScale;
 
-    const newX = Math.round(initialX + dx);
-    const newY = Math.round(initialY + dy);
+    let newX = Math.round(initialX + dx);
+    let newY = Math.round(initialY + dy);
 
-    const newPositions = { ...positions, [id]: { ...positions[id], x: newX, y: newY } };
+    // Imán a los ejes (se desactiva manteniendo Alt)
+    const lines = { x: [], y: [] };
+    if (snapEnabled && !e.altKey && width > 0) {
+      const sx = snapAxis(newX + offX, width, SNAP_X);
+      if (sx) { newX += sx.delta; lines.x.push(sx.target); }
+      const sy = snapAxis(newY + offY, height, SNAP_Y);
+      if (sy) { newY += sy.delta; lines.y.push(sy.target); }
+    }
+    setSnapLines(prev => (JSON.stringify(prev) === JSON.stringify(lines) ? prev : lines));
+
+    const newPositions = { ...positions, [id]: { ...getCurrentPos(id), x: Math.round(newX), y: Math.round(newY) } };
     onUpdatePositions(newPositions, false);
   };
 
   const handlePreviewMouseUp = () => {
     if (dragInfo.current.isDragging) {
       dragInfo.current.isDragging = false;
+      setSnapLines({ x: [], y: [] });
       onUpdatePositions(positions, true);
     }
+  };
+
+  // Centra la gráfica seleccionada en el cuadro, usando su tamaño real medido
+  const handleCenter = (axis) => {
+    const b = boundsRef.current;
+    if (!b) return;
+    const pos = getCurrentPos(selectedGraphic);
+    const next = { ...pos };
+    if (axis === 'x' || axis === 'both') next.x = Math.round(pos.x + (960 - (b.x + b.w / 2)));
+    if (axis === 'y' || axis === 'both') next.y = Math.round(pos.y + (540 - (b.y + b.h / 2)));
+    onUpdatePositions({ ...positions, [selectedGraphic]: next }, true);
+  };
+
+  // Ajuste fino con el teclado: flechas = 1 px, Shift + flechas = 10 px
+  const handleStageKeyDown = (e) => {
+    const step = e.shiftKey ? 10 : 1;
+    const deltas = { ArrowLeft: [-step, 0], ArrowRight: [step, 0], ArrowUp: [0, -step], ArrowDown: [0, step] };
+    const d = deltas[e.key];
+    if (!d) return;
+    e.preventDefault();
+    const pos = getCurrentPos(selectedGraphic);
+    onUpdatePositions({ ...positions, [selectedGraphic]: { ...pos, x: pos.x + d[0], y: pos.y + d[1] } }, false);
+  };
+  const handleStageKeyUp = (e) => {
+    if (e.key.startsWith('Arrow')) onUpdatePositions(positions, true);
   };
 
   const handlePosChange = (axis, value) => {
@@ -77,11 +203,11 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
     return (
       <div
         key={id}
+        ref={isSelected ? fallbackRef : undefined}
         onMouseDown={(e) => handlePreviewMouseDown(e, id)}
         style={{
           position: 'absolute', left: `${pos.x}px`, top: `${pos.y}px`, transform: `scale(${pos.scale})`, transformOrigin: 'top left',
           cursor: dragInfo.current.isDragging && isSelected ? 'grabbing' : 'grab',
-          border: isSelected ? `4px dashed ${config.themeAccent || '#ffcc00'}` : 'none',
           backgroundColor: config.themeBg || 'rgba(0, 0, 0, 0.85)',
           padding: '10px 20px', minWidth: '250px',
           borderLeft: `4px solid ${config.themeMain || '#e74c3c'}`,
@@ -651,30 +777,106 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
 
       </div>
 
-      <div style={{ flex: 1, backgroundColor: colors.bgApp, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
-        <div style={{
-          width: 1920 * PREVIEW_SCALE, height: 1080 * PREVIEW_SCALE,
-          minWidth: 1920 * PREVIEW_SCALE, minHeight: 1080 * PREVIEW_SCALE,
-          flexShrink: 0, position: 'relative', boxShadow: '0 0 30px rgba(0,0,0,1)'
-        }}>
+      <div style={{ flex: 1, minWidth: 0, backgroundColor: colors.bgApp, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+
+        {/* BARRA DE HERRAMIENTAS: ejes, cuadrícula, imán y centrado */}
+        <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '14px', padding: '10px 16px', backgroundColor: colors.bgPanel, borderBottom: `1px solid ${colors.border}` }}>
+          {[
+            { key: 'guides', label: t('personalizar.guidesToggle'), checked: showGuides, set: setShowGuides },
+            { key: 'grid', label: t('personalizar.gridToggle'), checked: showGrid, set: setShowGrid },
+            { key: 'snap', label: t('personalizar.snapToggle'), checked: snapEnabled, set: setSnapEnabled },
+          ].map(opt => (
+            <label key={opt.key} style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '10px', fontWeight: 'bold', color: colors.textMain, cursor: 'pointer', textTransform: 'uppercase' }}>
+              <input type="checkbox" checked={opt.checked} onChange={(e) => opt.set(e.target.checked)} style={{ cursor: 'pointer' }} />
+              {opt.label}
+            </label>
+          ))}
+          <span style={{ flex: 1 }} />
+          <button onClick={() => handleCenter('x')} style={{ ...btnStyle(false), width: 'auto', padding: '6px 12px', fontSize: '9px' }}>{t('personalizar.centerH')}</button>
+          <button onClick={() => handleCenter('y')} style={{ ...btnStyle(false), width: 'auto', padding: '6px 12px', fontSize: '9px' }}>{t('personalizar.centerV')}</button>
+          <button onClick={() => handleCenter('both')} style={{ ...btnStyle(false), width: 'auto', padding: '6px 12px', fontSize: '9px' }}>{t('personalizar.centerBoth')}</button>
+        </div>
+
+        <div ref={previewAreaRef} style={{ flex: 1, minHeight: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
           <div
-            ref={previewRef}
+            tabIndex={0}
+            onKeyDown={handleStageKeyDown}
+            onKeyUp={handleStageKeyUp}
             style={{
-              width: '1920px', height: '1080px',
-              backgroundColor: config.chromaColor || '#00FF00',
-              position: 'absolute', top: 0, left: 0,
-              transform: `scale(${PREVIEW_SCALE})`, transformOrigin: 'top left',
-              border: '4px solid #555', boxSizing: 'border-box', overflow: 'hidden',
-              fontFamily: config.fontFamily || 'Arial, sans-serif'
+              width: 1920 * previewScale, height: 1080 * previewScale,
+              minWidth: 1920 * previewScale, minHeight: 1080 * previewScale,
+              flexShrink: 0, position: 'relative', outline: 'none',
+              boxShadow: '0 0 0 2px #555, 0 0 30px rgba(0,0,0,1)'
             }}
           >
-            <style>
-              {`@import url('https://fonts.googleapis.com/css2?family=Exo+2:ital,wght@0,400;0,700;0,900;1,900&family=Montserrat:ital,wght@0,400;0,700;0,900;1,900&family=Oswald:wght@400;700&family=Teko:wght@400;600;700&display=swap');`}
-            </style>
-            {allGraphics
-              .filter(graphic => graphic.id === selectedGraphic)
-              .map(graphic => renderPreviewGraphic(graphic.id, graphic.label))}
+            <div
+              ref={previewRef}
+              style={{
+                width: '1920px', height: '1080px',
+                backgroundColor: config.chromaColor || '#00FF00',
+                position: 'absolute', top: 0, left: 0,
+                transform: `scale(${previewScale})`, transformOrigin: 'top left',
+                overflow: 'hidden',
+                fontFamily: config.fontFamily || 'Arial, sans-serif'
+              }}
+            >
+              <style>
+                {`@import url('https://fonts.googleapis.com/css2?family=Exo+2:ital,wght@0,400;0,700;0,900;1,900&family=Montserrat:ital,wght@0,400;0,700;0,900;1,900&family=Oswald:wght@400;700&family=Teko:wght@400;600;700&display=swap');`}
+              </style>
+
+              {/* CUADRÍCULA Y EJES (debajo de la gráfica) */}
+              {showGrid && (
+                <div style={{
+                  position: 'absolute', left: 0, top: 0, width: '1920px', height: '1080px', pointerEvents: 'none', zIndex: 1,
+                  backgroundImage: 'linear-gradient(to right, rgba(255,255,255,0.22) 2px, transparent 2px), linear-gradient(to bottom, rgba(255,255,255,0.22) 2px, transparent 2px)',
+                  backgroundSize: '100px 100px'
+                }} />
+              )}
+
+              {/* LA GRÁFICA REAL (con datos de la carrera si los hay, o de ejemplo) */}
+              <div ref={graphicWrapRef} style={{ position: 'absolute', left: 0, top: 0, width: '1920px', height: '1080px', pointerEvents: 'none', zIndex: 10 }}>
+                <GraphicPreview id={selectedGraphic} config={config} positions={positions} drivers={drivers} sessionInfo={sessionInfo} />
+              </div>
+
+              {/* Si la gráfica no muestra nada todavía (por ejemplo, sin datos), se marca su lugar con un rectángulo */}
+              {!hasContent && renderPreviewGraphic(selectedGraphic, t(`graphics.${selectedGraphic}`))}
+
+              {showGuides && (
+                <>
+                  <div style={{ position: 'absolute', left: '959px', top: 0, width: '2px', height: '1080px', backgroundColor: 'rgba(0, 229, 255, 0.75)', pointerEvents: 'none', zIndex: 900 }} />
+                  <div style={{ position: 'absolute', left: 0, top: '539px', width: '1920px', height: '2px', backgroundColor: 'rgba(0, 229, 255, 0.75)', pointerEvents: 'none', zIndex: 900 }} />
+                  <div style={{ position: 'absolute', left: '96px', top: '54px', width: '1728px', height: '972px', border: '2px dashed rgba(255,255,255,0.45)', boxSizing: 'border-box', pointerEvents: 'none', zIndex: 900 }} />
+                </>
+              )}
+
+              {/* LÍNEAS DE IMÁN ACTIVAS mientras se arrastra */}
+              {snapLines.x.map(x => (
+                <div key={`sx${x}`} style={{ position: 'absolute', left: `${x - 2}px`, top: 0, width: '4px', height: '1080px', backgroundColor: '#ff2bd6', pointerEvents: 'none', zIndex: 950 }} />
+              ))}
+              {snapLines.y.map(y => (
+                <div key={`sy${y}`} style={{ position: 'absolute', left: 0, top: `${y - 2}px`, width: '1920px', height: '4px', backgroundColor: '#ff2bd6', pointerEvents: 'none', zIndex: 950 }} />
+              ))}
+
+              {/* RECUADRO DE SELECCIÓN: se posiciona solo sobre la gráfica y sirve para arrastrarla */}
+              <div
+                ref={selectionRef}
+                onMouseDown={(e) => handlePreviewMouseDown(e, selectedGraphic)}
+                style={{
+                  position: 'absolute', display: 'none', zIndex: 1000, boxSizing: 'border-box',
+                  border: `3px dashed ${config.themeAccent || '#ffcc00'}`, cursor: 'grab'
+                }}
+              >
+                <div ref={labelRef} style={{
+                  position: 'absolute', left: '-3px', top: '-34px', whiteSpace: 'nowrap', pointerEvents: 'none',
+                  backgroundColor: config.themeAccent || '#ffcc00', color: '#000', fontSize: '20px', fontWeight: 'bold', padding: '2px 8px', fontFamily: 'monospace'
+                }} />
+              </div>
+            </div>
           </div>
+        </div>
+
+        <div style={{ padding: '6px 16px', fontSize: '10px', color: colors.textMuted, borderTop: `1px solid ${colors.border}`, backgroundColor: colors.bgPanel }}>
+          {t('personalizar.nudgeHint')}
         </div>
       </div>
     </div>
