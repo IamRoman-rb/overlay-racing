@@ -1,0 +1,7 @@
+{
+  "id": "racing",
+  "name": "Carrera",
+  "version": "1.0.0",
+  "entry": "main.cjs",
+  "launcherApi": 1
+}

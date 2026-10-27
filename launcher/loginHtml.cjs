@@ -1,4 +1,4 @@
-const { icon } = require('./webIcons.cjs');
+const { icon } = require('./icons.cjs');
 
 function getLoginHtml() {
   return `<!DOCTYPE html>

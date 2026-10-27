@@ -11,28 +11,19 @@ const https = require('https');
 const { Server } = require('socket.io');
 const { io: ioClient } = require('socket.io-client');
 const xlsx = require('xlsx');
-const { getLoginHtml } = require('./src/scripts/loginHtml.cjs');
-const crypto = require('crypto');
 const os = require('os');
 const { getSystemStats, stopHardwarePoller } = require('./src/scripts/systemStats.cjs');
 
+// MÓDULO DE CARRERA (Race Dynamics).
+// Este archivo ya no es el programa completo: lo abre el instalador (launcher/main.cjs) después del login, tras
+// descargarlo del servidor junto con el resto del módulo. El instalador pasa el contexto por global.overlayModuleCtx
+// y llama a start(); el login, el menú de módulos, la instancia única y el log a archivo viven en el instalador.
+const moduleCtx = global.overlayModuleCtx || {};
+
 let controlWindow;
 let overlayWindow;
-let loginWindow;
 
-// Una sola copia del programa a la vez: si se abre una segunda (por ejemplo, el instalador la lanza
-// al terminar y ya había una abierta), la nueva se cierra y se trae al frente la que ya estaba.
-const gotSingleInstanceLock = app.requestSingleInstanceLock();
-if (!gotSingleInstanceLock) {
-  app.exit(0);
-} else {
-  app.on('second-instance', () => {
-    const win = controlWindow || loginWindow;
-    if (win) { if (win.isMinimized()) win.restore(); win.focus(); }
-  });
-}
-
-const isDev = !app.isPackaged;
+const isDev = moduleCtx.isDev !== undefined ? moduleCtx.isDev : !app.isPackaged;
 const userDataPath = isDev ? __dirname : app.getPath('userData');
 
 const dbPath = path.join(userDataPath, 'database.json');
@@ -41,24 +32,10 @@ const backupPath = path.join(userDataPath, 'last_race.json');
 const lapTimesPath = path.join(userDataPath, 'lap_times.json');
 const votesHistoryPath = path.join(userDataPath, 'votes_history.json');
 
-// --- LOG A ARCHIVO: en la app instalada no hay consola, así que todo console.log/warn/error se copia
-// a un archivo para poder diagnosticar problemas en PCs de clientes (ver AJUSTES > DIAGNÓSTICO). ---
-const logDir = app.getPath('userData');
-const logPath = path.join(logDir, 'race-dynamics.log');
-try {
-  fs.mkdirSync(logDir, { recursive: true });
-  if (fs.existsSync(logPath) && fs.statSync(logPath).size > 1024 * 1024) fs.renameSync(logPath, logPath + '.old');
-} catch (e) {}
-for (const level of ['log', 'warn', 'error']) {
-  const original = console[level].bind(console);
-  console[level] = (...args) => {
-    original(...args);
-    try {
-      const text = args.map(a => (typeof a === 'string' ? a : require('util').inspect(a, { depth: 3 }))).join(' ');
-      fs.appendFileSync(logPath, `[${new Date().toISOString()}] ${level.toUpperCase()} ${text}\n`);
-    } catch (e) {}
-  };
-}
+// Log a archivo: lo instala el instalador (launcher/logger.cjs); acá sólo se necesita saber dónde queda,
+// para mostrarlo en AJUSTES > DIAGNÓSTICO.
+const logDir = moduleCtx.logDir || app.getPath('userData');
+const logPath = moduleCtx.logPath || path.join(logDir, 'race-dynamics.log');
 
 // Layout pensado para un lienzo de 1920x1080: torre de posiciones arriba a la izquierda,
 // zócalos (relator/comentarista/noteros/circuito/clima) apilados abajo a la izquierda pero
@@ -210,7 +187,8 @@ async function createPublicTunnel() {
     publicVotingUrl = null;
     broadcast('update-ip', null);
 
-    const { startTunnel } = await import('untun');
+    // untun es un paquete sólo-ESM: se importa a través del instalador, que es donde se resuelven las dependencias
+    const { startTunnel } = await (moduleCtx.importDep ? moduleCtx.importDep('untun') : import('untun'));
     // acceptCloudflareNotice: sin esto, en una PC donde todavía no está descargado el binario de
     // cloudflared, untun intenta preguntar por consola (que en la app empaquetada no existe), cancela
     // el túnel y el QR de votación nunca funciona. Con la opción, lo descarga solo la primera vez.
@@ -345,61 +323,6 @@ function connectToCloud() {
     cloudSocket = null;
   }
 }
-
-// Identificador único y estable de esta computadora, para vincular la licencia.
-// No depende de un paquete externo: usa la MAC de la primera interfaz de red real
-// combinada con el hostname, todo hasheado (no guarda datos sensibles en crudo).
-function getMachineId() {
-  try {
-    const nets = os.networkInterfaces();
-    let mac = null;
-    for (const name of Object.keys(nets)) {
-      for (const net of nets[name]) {
-        if (!net.internal && net.mac && net.mac !== '00:00:00:00:00:00') {
-          mac = net.mac;
-          break;
-        }
-      }
-      if (mac) break;
-    }
-    const raw = `${mac || 'nomac'}-${os.hostname()}-${os.platform()}-${os.arch()}`;
-    return crypto.createHash('sha256').update(raw).digest('hex');
-  } catch (e) {
-    return crypto.createHash('sha256').update(`fallback-${Date.now()}`).digest('hex');
-  }
-}
-
-function createLoginWindow() {
-  const iconPath = path.join(__dirname, 'src', 'assets', 'logo.png');
-  loginWindow = new BrowserWindow({
-    width: 420, height: 480, icon: iconPath, resizable: false, autoHideMenuBar: true,
-    webPreferences: { nodeIntegration: true, contextIsolation: false }
-  });
-  loginWindow.loadURL('data:text/html;charset=utf-8,' + encodeURIComponent(getLoginHtml()));
-  loginWindow.on('closed', () => { loginWindow = null; if (!controlWindow) app.quit(); });
-}
-
-ipcMain.handle('attempt-license-login', async (event, { username, password }) => {
-  try {
-    const machineId = getMachineId();
-    const response = await fetch(`${CLOUD_URL}/api/public/license/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, password, machineId })
-    });
-    const data = await response.json().catch(() => ({}));
-
-    if (!response.ok) {
-      return { success: false, error: data?.error || 'No se pudo iniciar sesión' };
-    }
-
-    if (loginWindow) { loginWindow.close(); loginWindow = null; }
-    createWindows();
-    return { success: true };
-  } catch (e) {
-    return { success: false, error: 'No se pudo conectar al servidor. Revisá tu conexión a internet.' };
-  }
-});
 
 function pushDriversToCloud() {
   try {
@@ -580,7 +503,7 @@ server.on('error', (err) => {
   if (app.isReady()) fatal(); else app.once('ready', fatal);
 });
 
-if (gotSingleInstanceLock) server.listen(8080, '0.0.0.0', async () => {
+server.listen(8080, '0.0.0.0', async () => {
   await createPublicTunnel();
   loadCloudConfig();
   connectToCloud();
@@ -1120,6 +1043,11 @@ function createWindows() {
   controlWindow.on('closed', () => app.quit());
 }
 
-if (gotSingleInstanceLock) app.whenReady().then(createLoginWindow);
 app.on('will-quit', stopHardwarePoller);
-app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(); });
+
+// Punto de entrada que usa el instalador
+module.exports = {
+  start() {
+    createWindows();
+  }
+};

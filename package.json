@@ -3,7 +3,7 @@
   "private": true,
   "version": "1.0.0",
   "type": "module",
-  "main": "main.cjs",
+  "main": "launcher/main.cjs",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
@@ -11,15 +11,15 @@
     "preview": "vite preview",
     "electron:dev": "wait-on http://localhost:5173 && electron .",
     "start": "concurrently -k \"npm run dev\" \"npm run electron:dev\"",
-    "dist": "npm run build && node scripts/bundle-chromium.cjs && electron-builder --win nsis",
-    "dist:portable": "npm run build && node scripts/bundle-chromium.cjs && electron-builder --win portable"
+    "dist": "node scripts/bundle-chromium.cjs && electron-builder --win nsis",
+    "dist:portable": "node scripts/bundle-chromium.cjs && electron-builder --win portable",
+    "module:pack": "node scripts/pack-module.cjs",
+    "module:publish": "node scripts/publish-module.cjs"
   },
   "dependencies": {
+    "adm-zip": "^0.6.1",
     "express": "^5.2.1",
     "puppeteer": "^25.8.0",
-    "react": "^19.2.8",
-    "react-dom": "^19.2.8",
-    "react-router-dom": "^7.18.2",
     "socket.io": "^4.8.3",
     "socket.io-client": "^4.8.3",
     "untun": "^0.2.2",
@@ -38,6 +38,9 @@
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react-refresh": "^0.5.4",
     "globals": "^17.11.0",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
+    "react-router-dom": "^7.18.2",
     "vite": "^8.2.2",
     "wait-on": "^9.1.0"
   },
@@ -74,9 +77,13 @@
     },
     "portable": {
       "artifactName": "Race-Dynamics-Portable-${version}.${ext}"
-    }
+    },
+    "files": [
+      "launcher/**/*",
+      "package.json"
+    ]
   },
-  "description": "Race Dynamics: overlay y panel de control para transmisiones de automovilismo",
+  "description": "Race Dynamics: instalador con los módulos del software (carrera, ...), que se descargan del servidor según la licencia",
   "author": {
     "name": "Race Dynamics"
   }

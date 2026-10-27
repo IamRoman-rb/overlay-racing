@@ -26,3 +26,6 @@ release/
 # Chromium empaquetado para el scraper (lo genera scripts/bundle-chromium.cjs)
 chromium/
 votes_history.json
+
+# Paquetes de módulos generados con npm run module:pack
+release-modules/
