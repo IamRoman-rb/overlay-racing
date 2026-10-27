@@ -1,7 +1,7 @@
 {
   "name": "overlay-racing",
   "private": true,
-  "version": "1.0.0",
+  "version": "1.1.1",
   "type": "module",
   "main": "launcher/main.cjs",
   "scripts": {
@@ -85,6 +85,6 @@
   },
   "description": "Race Dynamics: instalador con los módulos del software (carrera, ...), que se descargan del servidor según la licencia",
   "author": {
-    "name": "Race Dynamics"
+    "name": "Roman Manuel Borla"
   }
 }
