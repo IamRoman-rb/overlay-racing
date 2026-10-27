@@ -55,6 +55,16 @@ function getModulesHtml() {
   .error { font-size: 11px; color: #f87171; background: rgba(231,76,60,0.1); border: 1px solid #e74c3c; border-radius: 4px; padding: 8px 10px; display: none; }
   .error.show { display: block; }
   .empty { color: #888; font-size: 13px; padding: 40px 0; text-align: center; }
+  .update {
+    font-size: 11px; line-height: 1.5; color: #f1c40f; background: rgba(241,196,15,0.08);
+    border: 1px solid rgba(241,196,15,0.45); border-radius: 4px; padding: 8px 10px; display: none;
+  }
+  .update.show { display: block; }
+  .update b { color: #fff; }
+  .update .notes { color: #bbb; display: block; margin-top: 2px; }
+  .actions { display: flex; flex-direction: column; gap: 8px; }
+  .open.update-btn { background: #f1c40f; color: #000; }
+  .open.secondary { background: #242424; color: #ccc; border: 1px solid #333; }
 </style>
 </head>
 <body>
@@ -78,12 +88,30 @@ function getModulesHtml() {
   const PHASES = { checking: 'Buscando actualizaciones...', downloading: 'Descargando', verifying: 'Verificando el paquete...', installing: 'Instalando...', opening: 'Abriendo...' };
 
   const grid = document.getElementById('grid');
-  const cards = {};
+  let cards = {};
+  let busy = false; // mientras se descarga / abre un módulo no se vuelve a armar la lista
 
   function formatDate(value) {
     if (!value) return '';
     const d = new Date(String(value).replace(' ', 'T') + 'Z');
     return isNaN(d) ? '' : d.toLocaleDateString('es-AR');
+  }
+
+  function small(svg) { return svg.split('2.4em').join('1.3em'); }
+
+  function metaText(m) {
+    if (!m.available) return 'PRÓXIMAMENTE';
+    if (m.installedVersion === 'dev') return 'DESARROLLO (CÓDIGO LOCAL)';
+    if (m.installedVersion) return 'VERSIÓN INSTALADA ' + m.installedVersion;
+    return 'VERSIÓN DISPONIBLE ' + m.version + ' · SE DESCARGA AL ABRIR';
+  }
+
+  function makeButton(className, html, onClick) {
+    const btn = document.createElement('button');
+    btn.className = 'open ' + className;
+    btn.innerHTML = html;
+    btn.addEventListener('click', onClick);
+    return btn;
   }
 
   function buildCard(m) {
@@ -98,37 +126,77 @@ function getModulesHtml() {
     desc.textContent = m.description || '';
     const meta = document.createElement('div');
     meta.className = 'meta';
-    meta.textContent = m.available ? ('VERSIÓN DISPONIBLE ' + m.version) : 'PRÓXIMAMENTE';
+    meta.textContent = metaText(m);
+
+    // Aviso de actualización: se ofrece, pero nunca se obliga (se puede abrir la versión instalada)
+    const update = document.createElement('div');
+    update.className = 'update';
+    if (m.updateAvailable) {
+      update.classList.add('show');
+      const head = document.createElement('div');
+      head.innerHTML = m.updateBlocked
+        ? '<b>Hay una versión nueva (' + m.version + ')</b> que necesita un instalador más nuevo. Mientras tanto podés seguir usando la ' + m.installedVersion + '.'
+        : '<b>Actualización disponible: ' + m.version + '</b> (tenés la ' + m.installedVersion + ')';
+      update.appendChild(head);
+      if (m.notes) {
+        const notes = document.createElement('span');
+        notes.className = 'notes';
+        notes.textContent = m.notes;
+        update.appendChild(notes);
+      }
+    }
+
     const bar = document.createElement('div');
     bar.className = 'bar';
     const fill = document.createElement('i');
     bar.appendChild(fill);
     const error = document.createElement('div');
     error.className = 'error';
-    const btn = document.createElement('button');
-    btn.className = 'open';
-    btn.disabled = !m.available;
-    btn.innerHTML = m.available ? ICONS.play_arrow.replace('2.4em', '1.3em').replace('2.4em', '1.3em') + ' Abrir' : 'No disponible todavía';
-    btn.addEventListener('click', () => openModule(m.id));
-    card.append(ico, title, desc, meta, bar, error, btn);
-    cards[m.id] = { card, btn, bar, fill, meta, error, m };
+
+    const actions = document.createElement('div');
+    actions.className = 'actions';
+    const buttons = [];
+    if (!m.available) {
+      const b = makeButton('', 'No disponible todavía', () => {});
+      b.disabled = true;
+      buttons.push(b);
+    } else if (m.updateAvailable && !m.updateBlocked) {
+      buttons.push(makeButton('update-btn', small(ICONS.download) + ' Actualizar y abrir', () => openModule(m.id, true)));
+      buttons.push(makeButton('secondary', 'Abrir sin actualizar', () => openModule(m.id, false)));
+    } else if (m.updateAvailable) {
+      buttons.push(makeButton('', small(ICONS.play_arrow) + ' Abrir versión ' + m.installedVersion, () => openModule(m.id, false)));
+    } else {
+      const label = m.installedVersion ? ' Abrir' : ' Descargar y abrir';
+      const icon = m.installedVersion ? ICONS.play_arrow : ICONS.download;
+      buttons.push(makeButton('', small(icon) + label, () => openModule(m.id, false)));
+    }
+    buttons.forEach(b => actions.appendChild(b));
+
+    card.append(ico, title, desc, meta, update, bar, error, actions);
+    cards[m.id] = { card, buttons, bar, fill, meta, error, m };
     return card;
   }
 
-  async function openModule(id) {
+  function setButtonsEnabled(enabled) {
+    Object.values(cards).forEach(c => c.buttons.forEach(b => { b.disabled = !enabled || !c.m.available; }));
+  }
+
+  async function openModule(id, update) {
     const c = cards[id];
-    Object.values(cards).forEach(x => { x.btn.disabled = true; });
+    busy = true;
+    setButtonsEnabled(false);
     c.error.classList.remove('show');
     c.bar.classList.add('show');
     c.fill.style.width = '0';
-    c.meta.textContent = PHASES.checking.toUpperCase();
-    const result = await ipcRenderer.invoke('open-module', id);
+    c.meta.textContent = (update ? PHASES.checking : PHASES.opening).toUpperCase();
+    const result = await ipcRenderer.invoke('open-module', { id, update });
     if (result && result.error) {
       c.error.textContent = result.error;
       c.error.classList.add('show');
       c.bar.classList.remove('show');
-      c.meta.textContent = c.m.available ? ('VERSIÓN DISPONIBLE ' + c.m.version) : 'PRÓXIMAMENTE';
-      Object.values(cards).forEach(x => { x.btn.disabled = !x.m.available; });
+      c.meta.textContent = metaText(c.m);
+      busy = false;
+      setButtonsEnabled(true);
     }
     // Si se abrió bien, el proceso principal cierra esta ventana
   }
@@ -139,22 +207,31 @@ function getModulesHtml() {
     const label = PHASES[s.phase] || '';
     const pct = s.phase === 'downloading' ? Math.round((s.progress || 0) * 100) : null;
     c.meta.textContent = (pct === null ? label : label + ' ' + pct + '%').toUpperCase();
-    if (pct !== null) c.fill.style.width = pct + '%';
-    else c.fill.style.width = '100%';
+    c.fill.style.width = pct === null ? '100%' : pct + '%';
   });
 
   document.getElementById('btnLogout').addEventListener('click', () => ipcRenderer.send('launcher-logout'));
 
-  ipcRenderer.invoke('get-launcher-state').then(state => {
+  function render(state) {
     document.getElementById('username').textContent = state.username;
     const expires = state.expiresAt ? ' · vence el ' + formatDate(state.expiresAt) : '';
     document.getElementById('planInfo').textContent = (PLAN_LABELS[state.plan] || '') + expires;
+    grid.innerHTML = '';
+    cards = {};
     if (!state.modules.length) {
       grid.innerHTML = '<div class="empty">Tu licencia no incluye módulos todavía. Contactá al proveedor.</div>';
       return;
     }
     state.modules.forEach(m => grid.appendChild(buildCard(m)));
-  });
+  }
+
+  // Al abrir la ventana y cada vez que vuelve al frente se busca si hay versiones nuevas publicadas
+  async function refresh() {
+    if (busy) return;
+    render(await ipcRenderer.invoke('get-launcher-state'));
+  }
+  window.addEventListener('focus', refresh);
+  refresh();
 </script>
 </body>
 </html>`;

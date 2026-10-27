@@ -19,6 +19,12 @@ instalador (launcher/) --login--> servidor: licencia -> módulos + token de sesi
   puede declarar un `launcherApi` mayor y el instalador viejo le pide al cliente que se actualice).
 - Cada paquete va **firmado**: el servidor lo firma con una clave privada (`RELEASE_SIGNING_KEY` en el `.env` del backend) y el
   instalador trae la pública (`launcher/release-public-key.pem`). Un paquete sin firma válida no se ejecuta.
+- **Actualizaciones opcionales**: al abrir la ventana de módulos (y cada vez que vuelve al frente) el instalador consulta si hay
+  una versión más nueva de cada módulo. Si la hay, la tarjeta muestra el aviso (con las notas de la versión) y dos botones:
+  "Actualizar y abrir" y "Abrir sin actualizar". Nunca se obliga a actualizar, y con la versión instalada se puede trabajar
+  aunque no haya internet. Solo la primera vez (sin nada instalado) la descarga es obligatoria.
+- El instalador `.exe` es un asistente clásico: bienvenida, elegir la carpeta de instalación, instalar para este usuario o
+  para todos, accesos directos y finalizar. Al desinstalar se conservan los datos y los módulos descargados.
 - Las descargas exigen la sesión de la licencia: si está suspendida, vencida o no incluye el módulo, el servidor no lo entrega.
 
 ## Publicar una versión nueva de un módulo (Carrera)

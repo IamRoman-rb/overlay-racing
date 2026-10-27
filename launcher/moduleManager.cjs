@@ -86,11 +86,48 @@ function describe(moduleId, version) {
   return { moduleId, version, dir, entry: manifest.entry || 'main.cjs' };
 }
 
-// Deja listo el módulo: usa el instalado si ya es la última versión, o descarga la nueva.
+// Estado de un módulo para la ventana de módulos: qué versión hay instalada y si el servidor tiene una más nueva.
+// Una actualización NUNCA es obligatoria: si ya hay una versión instalada, se puede abrir sin actualizar.
+async function getModuleStatus(entry, sessionToken) {
+  const local = useLocalSource(entry.id);
+  const installed = installedVersions(entry.id);
+  const status = {
+    ...entry,
+    installedVersion: local ? 'dev' : (installed[installed.length - 1] || null),
+    updateAvailable: false,
+    updateBlocked: false,
+    notes: null
+  };
+  if (local) return status;
+
+  // Se consulta de nuevo al servidor: así aparecen también las versiones publicadas después de iniciar sesión
+  try {
+    const latest = await api.fetchLatest(entry.id, sessionToken);
+    status.available = true;
+    status.version = latest.version;
+    status.notes = latest.notes || null;
+    if (status.installedVersion && compareVersions(latest.version, status.installedVersion) > 0) {
+      status.updateAvailable = true;
+      // El módulo nuevo necesita un instalador más nuevo: se avisa, pero se puede seguir usando el instalado
+      status.updateBlocked = latest.launcherApi > LAUNCHER_API;
+    }
+  } catch (err) {
+    console.warn('[launcher] no se pudo consultar la última versión de', entry.id, '-', err.message);
+    // Sin respuesta del servidor se conserva lo que ya se sabía (y lo instalado sigue abriéndose)
+  }
+  return status;
+}
+
+// Deja listo el módulo para abrirlo.
+//  - Sin nada instalado: lo descarga (no hay otra opción).
+//  - Con una versión instalada: la abre tal cual, salvo que se pida actualizar ({ update: true }).
 // onStatus({ phase: 'checking' | 'downloading' | 'verifying' | 'installing', progress? })
-async function ensureModule(moduleId, sessionToken, onStatus = () => {}) {
+async function ensureModule(moduleId, sessionToken, onStatus = () => {}, { update = false } = {}) {
   const local = useLocalSource(moduleId);
   if (local) return { moduleId, version: 'dev', dir: local, entry: 'main.cjs' };
+
+  const alreadyInstalled = installedVersions(moduleId);
+  if (alreadyInstalled.length && !update) return describe(moduleId, alreadyInstalled[alreadyInstalled.length - 1]);
 
   onStatus({ phase: 'checking' });
   let latest;
@@ -162,4 +199,4 @@ function loadModule(installed, ctx) {
   return mod.start(global.overlayModuleCtx);
 }
 
-module.exports = { ensureModule, loadModule, installedVersions };
+module.exports = { ensureModule, getModuleStatus, loadModule, installedVersions };

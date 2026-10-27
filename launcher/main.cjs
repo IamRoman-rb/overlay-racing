@@ -11,7 +11,7 @@ const { installLogger, logDir, logPath } = require('./logger.cjs');
 const { getLoginHtml } = require('./loginHtml.cjs');
 const { getModulesHtml } = require('./modulesHtml.cjs');
 const api = require('./api.cjs');
-const { ensureModule, loadModule } = require('./moduleManager.cjs');
+const { ensureModule, getModuleStatus, loadModule } = require('./moduleManager.cjs');
 
 let loginWindow = null;
 let modulesWindow = null;
@@ -85,15 +85,17 @@ ipcMain.handle('attempt-license-login', async (event, { username, password }) =>
   return { success: true };
 });
 
-// Sólo aparecen los módulos que incluye la licencia; si compra otro, aparece en el próximo inicio de sesión
-ipcMain.handle('get-launcher-state', () => ({
+// Sólo aparecen los módulos que incluye la licencia; si compra otro, aparece en el próximo inicio de sesión.
+// Cada módulo trae su versión instalada y si el servidor tiene una más nueva (updateAvailable).
+ipcMain.handle('get-launcher-state', async () => ({
   username: session?.username || '',
   plan: session?.plan || null,
   expiresAt: session?.expiresAt || null,
-  modules: session?.moduleCatalog || []
+  modules: session ? await Promise.all((session.moduleCatalog || []).map(entry => getModuleStatus(entry, session.sessionToken))) : []
 }));
 
-ipcMain.handle('open-module', async (event, moduleId) => {
+// update: true = el usuario eligió actualizar; false = abrir la versión instalada tal cual
+ipcMain.handle('open-module', async (event, { id: moduleId, update = false }) => {
   if (!session || !session.modules.includes(moduleId)) return { error: 'Tu licencia no incluye este módulo.' };
   if (moduleRunning) return { error: 'Ya hay un módulo abierto.' };
 
@@ -102,7 +104,7 @@ ipcMain.handle('open-module', async (event, moduleId) => {
   };
 
   try {
-    const installed = await ensureModule(moduleId, session.sessionToken, sendStatus);
+    const installed = await ensureModule(moduleId, session.sessionToken, sendStatus, { update });
     sendStatus({ phase: 'opening' });
     moduleRunning = true;
     await loadModule(installed, {
