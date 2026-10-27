@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import Icon from '../components/Icon';
+import { withIcons } from '../components/withIcons';
 
 function Section({ id, icon, title, children, colors, openId, setOpenId }) {
   const isOpen = openId === id;
@@ -13,8 +15,8 @@ function Section({ id, icon, title, children, colors, openId, setOpenId }) {
   return (
     <div style={sectionStyle}>
       <div style={headerStyle} onClick={() => setOpenId(isOpen ? null : id)}>
-        <span>{icon} {title}</span>
-        <span style={{ color: colors.textMuted }}>{isOpen ? '▲' : '▼'}</span>
+        <span>{withIcons(icon)} {title}</span>
+        <span style={{ color: colors.textMuted }}><Icon name={isOpen ? 'arrow_drop_up' : 'arrow_drop_down'} size="1.6em" /></span>
       </div>
       {isOpen && <div style={bodyStyle}>{children}</div>}
     </div>
@@ -37,13 +39,13 @@ export default function UserManual({ colors, t, language }) {
   return (
     <div style={{ padding: '30px', flex: 1, backgroundColor: colors.bgApp, overflowY: 'auto' }}>
       <h2 style={{ color: colors.yellow, marginTop: 0, borderBottom: `1px solid ${colors.border}`, paddingBottom: '10px' }}>
-        {t('manual.title')}
+        {t.i('manual.title')}
       </h2>
       <p style={{ color: colors.textMuted, fontSize: '13px', marginBottom: '10px', maxWidth: '800px' }}>
         {t('manual.intro')}
       </p>
       {language && language !== 'es' && (
-        <div style={{ ...note, marginBottom: '20px', maxWidth: '800px' }}>{t('manual.contentSpanishOnly')}</div>
+        <div style={{ ...note, marginBottom: '20px', maxWidth: '800px' }}>{t.i('manual.contentSpanishOnly')}</div>
       )}
 
       <Section id="intro" icon="🎬" title={t('manual.sections.intro')} {...sectionProps}>
@@ -83,7 +85,7 @@ export default function UserManual({ colors, t, language }) {
           192.168.1.11, máscara 255.255.255.0). Si no conecta, permití Race Dynamics en el Firewall de Windows para redes privadas.
         </div>
         <div style={note}>
-          ⚠️ La Opción B solo funciona con el programa ya instalado (el .exe empaquetado), no mientras se está
+          <Icon name="warning" color="#f1c40f" /> La Opción B solo funciona con el programa ya instalado (el .exe empaquetado), no mientras se está
           ejecutando en modo desarrollo. Ahí sí es transparente de verdad y no necesita Chroma Key. Si tenés dudas
           sobre cuál opción te conviene, probá primero la Opción A.
         </div>
@@ -129,7 +131,7 @@ export default function UserManual({ colors, t, language }) {
         <ol style={ol}>
           <li style={li}>Andá a la pestaña <b>AJUSTES</b> y elegí el proveedor: <b>Speedhive (MyLaps)</b> o <b>Race Monitor</b>.</li>
           <li style={li}>Pegá el código de la carrera, o directamente la URL completa de Speedhive/Race Monitor — el programa reconoce ambos formatos igual.</li>
-          <li style={li}>Tocá "🔄 CARGAR DATOS AHORA" para traer los datos una sola vez, o activá "▶ AUTO-CARGA" en la pestaña PANEL para que se actualice solo cada 1 segundo mientras dura la sesión.</li>
+          <li style={li}>Tocá "<Icon name="refresh" /> CARGAR DATOS AHORA" para traer los datos una sola vez, o activá "<Icon name="play_arrow" /> AUTO-CARGA" en la pestaña PANEL para que se actualice solo cada 1 segundo mientras dura la sesión.</li>
         </ol>
         <div style={note}>Si intentás hacer auto-carga sin haber cargado antes un código, el programa te va a avisar que primero completes el código en AJUSTES.</div>
       </Section>
@@ -157,7 +159,7 @@ export default function UserManual({ colors, t, language }) {
           según la posición en la que va llegando, y recalcula la tabla en vivo.
         </p>
         <div style={note}>
-          💡 No hace falta armar el archivo de cero: en la pestaña <b>CAMPEONATO</b>, el botón "DESCARGAR PLANTILLA EXCEL" guarda un
+          <Icon name="lightbulb" color="#f1c40f" /> No hace falta armar el archivo de cero: en la pestaña <b>CAMPEONATO</b>, el botón "DESCARGAR PLANTILLA EXCEL" guarda un
           <span style={code}>.xlsx</span> con las columnas correctas, datos de ejemplo y una hoja de instrucciones. Completalo y cargalo con "CARGAR EXCEL".
         </div>
         <p style={{ color: colors.textMuted, fontStyle: 'italic' }}>
@@ -195,14 +197,14 @@ export default function UserManual({ colors, t, language }) {
           <li style={li}>Si al abrir la nueva versión no ves tu configuración anterior, volvé a AJUSTES, tocá "CARGAR CONFIGURACIÓN" y elegí esa misma carpeta.</li>
         </ol>
         <div style={note}>
-          ⚠️ Cargar una configuración reemplaza la actual por completo (colores, textos, formatos y posiciones). No afecta los datos de la carrera en vivo (tabla de pilotos, tiempos), que vienen de Speedhive/Race Monitor.
+          <Icon name="warning" color="#f1c40f" /> Cargar una configuración reemplaza la actual por completo (colores, textos, formatos y posiciones). No afecta los datos de la carrera en vivo (tabla de pilotos, tiempos), que vienen de Speedhive/Race Monitor.
         </div>
       </Section>
 
       <Section id="tabs" icon="🗂️" title={t('manual.sections.tabs')} {...sectionProps}>
         <table style={table}>
           <tbody>
-            <tr><td style={{ ...td, fontWeight: 'bold', whiteSpace: 'nowrap' }}>PANEL</td><td style={td}>El control principal al aire: banderas, zócalos de relator/comentarista/noteros/circuito/clima, alertas de curva, grilla de partida, auto-carga de tiempos, semáforo de largada, torre de posiciones, batalla, campeonato virtual, evolución de tiempos, votación, resultados finales y ganador. A la derecha está la tabla de pilotos en vivo.</td></tr>
+            <tr><td style={{ ...td, fontWeight: 'bold', whiteSpace: 'nowrap' }}>PANEL</td><td style={td}>El control principal al aire: banderas (roja, tricolor, azul, verde, cuadros y negra), zócalos de relator/comentarista/noteros/circuito/clima, alertas de curva, grilla de partida, auto-carga de tiempos, semáforo de largada (con su secuencia de luces en vivo), torre de posiciones, batalla, campeonato virtual, evolución de tiempos, votación, resultados finales (con botones ANT / SIG para pasar las páginas a mano) y ganador. A la derecha está la tabla de pilotos en vivo.</td></tr>
             <tr><td style={{ ...td, fontWeight: 'bold' }}>CAMPEONATO</td><td style={td}>Cargar el Excel del campeonato y ver la tabla completa de puntos en vivo (ver sección de Excel más arriba).</td></tr>
             <tr><td style={{ ...td, fontWeight: 'bold' }}>VOTACIONES</td><td style={td}>Estado del túnel público, link/QR de votación, mostrar/ocultar QR y resultados al aire, reiniciar votos, y ranking de votos en vivo.</td></tr>
             <tr><td style={{ ...td, fontWeight: 'bold' }}>SANCIONES</td><td style={td}>QR y link del panel de comisarios, estado de la sanción/investigación activa, y controles para emitirla o quitarla manualmente.</td></tr>
@@ -212,12 +214,13 @@ export default function UserManual({ colors, t, language }) {
             <tr><td style={{ ...td, fontWeight: 'bold' }}>CIRCUITO</td><td style={td}>Cargar la imagen del circuito y marcar las curvas (arrastrando puntos), para usarlas en las alertas de curva del PANEL.</td></tr>
             <tr><td style={{ ...td, fontWeight: 'bold' }}>AJUSTES</td><td style={td}>Idioma del programa, color de Chroma Key para vMix, configuración del proveedor de timing en vivo (Speedhive/Race Monitor), y copia de seguridad de la configuración (database.json + posiciones.json).</td></tr>
             <tr><td style={{ ...td, fontWeight: 'bold' }}>PERSONALIZAR</td><td style={td}>Colores del tema, tipografía, formato visual de cada gráfica, bordes, animaciones de entrada, posición/escala con vista previa arrastrable, logos y carpeta de fotos.</td></tr>
+            <tr><td style={{ ...td, fontWeight: 'bold' }}>EDITOR</td><td style={td}>Elegir una gráfica y arrastrar sus objetos (logo, título, tabla…) de un lugar a otro con el mouse para personalizarla. Los cambios se guardan solos y se ven en el overlay al instante. Se puede deshacer, restablecer un objeto o toda la gráfica.</td></tr>
           </tbody>
         </table>
       </Section>
 
       <div style={{ ...note, marginTop: '10px', backgroundColor: 'rgba(52, 152, 219, 0.1)', borderColor: '#3498db' }}>
-        {t('manual.feedbackNote')}
+        {t.i('manual.feedbackNote')}
       </div>
     </div>
   );

@@ -1,6 +1,7 @@
 // src/windows/VoteHistory.jsx
 // Guardado de las votaciones por categoría y gráfica del piloto más votado de cada una.
 import { useState, useEffect, useMemo } from 'react';
+import Icon from '../components/Icon';
 
 let ipcRenderer = null;
 if (typeof window !== 'undefined' && typeof window.require === 'function') {
@@ -97,7 +98,7 @@ export default function VoteHistory({ votes, drivers, sessionInfo, language, col
     <div>
       {/* GUARDAR LA VOTACIÓN ACTUAL */}
       <div style={boxStyle}>
-        <div style={{ fontSize: '13px', fontWeight: 'bold', color: colors.yellow, marginBottom: '6px' }}>{t('votaciones.saveTitle')}</div>
+        <div style={{ fontSize: '13px', fontWeight: 'bold', color: colors.yellow, marginBottom: '6px' }}>{t.i('votaciones.saveTitle')}</div>
         <div style={{ fontSize: '12px', color: colors.textMuted, marginBottom: '14px' }}>{t('votaciones.saveDescription')}</div>
         <label style={labelStyle}>{t('votaciones.categoryLabel')}</label>
         <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
@@ -112,7 +113,7 @@ export default function VoteHistory({ votes, drivers, sessionInfo, language, col
             disabled={totalVotes === 0}
             style={{ ...btnStyle(totalVotes > 0), width: 'auto', padding: '12px 22px', opacity: totalVotes > 0 ? 1 : 0.5, cursor: totalVotes > 0 ? 'pointer' : 'not-allowed' }}
           >
-            {t('votaciones.saveBtn')}
+            {t.i('votaciones.saveBtn')}
           </button>
         </div>
         <label style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '12px', fontSize: '12px', color: colors.textMain, cursor: 'pointer' }}>
@@ -126,7 +127,7 @@ export default function VoteHistory({ votes, drivers, sessionInfo, language, col
 
       {/* GRÁFICA: PILOTO MÁS VOTADO POR CATEGORÍA */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px', marginBottom: '12px', flexWrap: 'wrap' }}>
-        <div style={{ fontSize: '14px', fontWeight: 'bold', color: colors.yellow }}>{t('votaciones.savedTitle')}</div>
+        <div style={{ fontSize: '14px', fontWeight: 'bold', color: colors.yellow }}>{t.i('votaciones.savedTitle')}</div>
         {history.length > 0 && (
           <select
             value={selectedDay}
@@ -167,7 +168,7 @@ export default function VoteHistory({ votes, drivers, sessionInfo, language, col
                 <div style={{ flex: 1, position: 'relative', height: '28px', backgroundColor: colors.bgInput, borderRadius: '14px', overflow: 'hidden', border: `1px solid ${colors.border}` }}>
                   <div style={{ width: `${share}%`, height: '100%', backgroundColor: colors.yellow, opacity: 0.85 }} />
                   <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', fontSize: '12px', fontWeight: '900', color: colors.textMain, textShadow: '1px 1px 2px rgba(0,0,0,0.9)', whiteSpace: 'nowrap', maxWidth: 'calc(100% - 24px)', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                    🏆 {driverLabel(winner)}
+                    <Icon name="trophy" color="#ffcc00" /> {driverLabel(winner)}
                   </span>
                 </div>
                 <div style={{ width: '120px', flexShrink: 0, textAlign: 'right', fontSize: '12px', color: colors.textMuted, fontWeight: 'bold' }}>
@@ -193,7 +194,7 @@ export default function VoteHistory({ votes, drivers, sessionInfo, language, col
               onClick={() => handleDelete(selectedRecord)}
               style={{ ...btnStyle(), width: 'auto', backgroundColor: '#c0392b', color: '#fff', borderColor: '#e74c3c' }}
             >
-              {t('votaciones.deleteBtn')}
+              {t.i('votaciones.deleteBtn')}
             </button>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>

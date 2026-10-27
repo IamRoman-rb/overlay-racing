@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { LANGUAGES } from '../i18n/translations';
+import Icon from '../components/Icon';
 
 export default function SettingsPanel({ config, handleDirectSave, handleScrape, colors, inputStyle, btnStyle, t, language, setLanguage, onExportSettings, onImportSettings, onResetAllPositions, scrapeErrorText, onGetDiagnostics, onOpenLogs, onGetNetworkUrls }) {
 
@@ -87,7 +88,7 @@ export default function SettingsPanel({ config, handleDirectSave, handleScrape, 
     error: { bg: '#e74c3c', fg: '#fff', border: '#c0392b' }
   }[loadState];
   const loadBtnLabel = {
-    idle: t('ajustes.loadNowBtn'),
+    idle: t.i('ajustes.loadNowBtn'),
     loading: t('ajustes.loadingBtn'),
     ok: t('ajustes.loadedBtn'),
     error: t('ajustes.loadErrorBtn')
@@ -199,14 +200,14 @@ export default function SettingsPanel({ config, handleDirectSave, handleScrape, 
             style={{ ...btnStyle(true), width: 'auto', padding: '10px 30px', backgroundColor: loadBtnColors.bg, color: loadBtnColors.fg, borderColor: loadBtnColors.border }}
           >
             {loadState === 'loading' && <span className="load-now-spinner" />}
-            {loadState === 'ok' && <span style={{ fontSize: '15px', lineHeight: 1 }}>✓</span>}
-            {loadState === 'error' && <span style={{ fontSize: '15px', lineHeight: 1 }}>✕</span>}
+            {loadState === 'ok' && <Icon name="check" size="1.5em" />}
+            {loadState === 'error' && <Icon name="close" size="1.5em" />}
             <span>{loadBtnLabel}</span>
           </button>
         </div>
         {scrapeErrorText && (
           <div style={{ marginTop: '15px', backgroundColor: 'rgba(231, 76, 60, 0.1)', border: `1px solid ${colors.red}`, borderRadius: '6px', padding: '12px 16px', color: colors.red, fontSize: '12px', fontWeight: 'bold', lineHeight: '1.5', wordBreak: 'break-word' }}>
-            ⚠️ {scrapeErrorText}
+            <Icon name="warning" color="#f1c40f" /> {scrapeErrorText}
           </div>
         )}
 
@@ -222,10 +223,10 @@ export default function SettingsPanel({ config, handleDirectSave, handleScrape, 
         </p>
         <div style={{ display: 'flex', gap: '10px' }}>
           <button onClick={onExportSettings} style={{ ...btnStyle(false), width: 'auto', padding: '10px 20px', backgroundColor: '#2ecc71', color: '#fff', borderColor: '#27ae60' }}>
-            {t('ajustes.exportSettingsBtn')}
+            {t.i('ajustes.exportSettingsBtn')}
           </button>
           <button onClick={onImportSettings} style={{ ...btnStyle(false), width: 'auto', padding: '10px 20px', backgroundColor: '#d35400', color: '#fff', borderColor: '#e67e22' }}>
-            {t('ajustes.importSettingsBtn')}
+            {t.i('ajustes.importSettingsBtn')}
           </button>
         </div>
       </div>
@@ -239,7 +240,7 @@ export default function SettingsPanel({ config, handleDirectSave, handleScrape, 
           {t('ajustes.resetPositionsDescription')}
         </p>
         <button onClick={onResetAllPositions} style={{ ...btnStyle(false), width: 'auto', padding: '10px 20px', backgroundColor: '#c0392b', color: '#fff', borderColor: '#e74c3c' }}>
-          {t('ajustes.resetAllPositionsBtn')}
+          {t.i('ajustes.resetAllPositionsBtn')}
         </button>
       </div>
       {/* SECCIÓN: CONEXIÓN CON VMIX DESDE OTRA PC */}
@@ -259,7 +260,7 @@ export default function SettingsPanel({ config, handleDirectSave, handleScrape, 
                 <span style={{ fontSize: '10px', color: colors.textMuted, minWidth: '110px' }}>{item.adapter}</span>
                 <span style={{ fontFamily: 'monospace', fontSize: '14px', color: colors.yellow, flex: 1, wordBreak: 'break-all' }}>{item.url}</span>
                 <button onClick={() => handleCopyUrl(item.url)} style={{ ...btnStyle(false), width: 'auto', padding: '6px 14px', fontSize: '10px' }}>
-                  {copiedUrl === item.url ? t('ajustes.vmixCopied') : t('ajustes.vmixCopy')}
+                  {copiedUrl === item.url ? t.i('ajustes.vmixCopied') : t.i('ajustes.vmixCopy')}
                 </button>
               </div>
             ))}
@@ -276,9 +277,9 @@ export default function SettingsPanel({ config, handleDirectSave, handleScrape, 
           {t('ajustes.diagDescription')}
         </p>
         <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-          <button onClick={handleShowDiagnostics} style={{ ...btnStyle(false), width: 'auto', padding: '10px 20px' }}>{t('ajustes.diagShowBtn')}</button>
-          {diagText && <button onClick={handleCopyDiagnostics} style={{ ...btnStyle(false), width: 'auto', padding: '10px 20px' }}>{diagCopied ? t('ajustes.diagCopied') : t('ajustes.diagCopyBtn')}</button>}
-          <button onClick={onOpenLogs} style={{ ...btnStyle(false), width: 'auto', padding: '10px 20px' }}>{t('ajustes.diagOpenBtn')}</button>
+          <button onClick={handleShowDiagnostics} style={{ ...btnStyle(false), width: 'auto', padding: '10px 20px' }}>{t.i('ajustes.diagShowBtn')}</button>
+          {diagText && <button onClick={handleCopyDiagnostics} style={{ ...btnStyle(false), width: 'auto', padding: '10px 20px' }}>{diagCopied ? t.i('ajustes.diagCopied') : t.i('ajustes.diagCopyBtn')}</button>}
+          <button onClick={onOpenLogs} style={{ ...btnStyle(false), width: 'auto', padding: '10px 20px' }}>{t.i('ajustes.diagOpenBtn')}</button>
         </div>
         {diagText && (
           <pre style={{ marginTop: '15px', padding: '12px', backgroundColor: colors.bgApp, border: `1px solid ${colors.border}`, borderRadius: '6px', color: colors.textMain, fontSize: '11px', lineHeight: '1.5', whiteSpace: 'pre-wrap', wordBreak: 'break-all', maxHeight: '300px', overflowY: 'auto' }}>{diagText}</pre>

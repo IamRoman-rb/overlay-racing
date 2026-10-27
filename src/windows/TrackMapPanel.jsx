@@ -1,5 +1,6 @@
 // src/windows/TrackMapPanel.jsx
 import { useState, useRef } from 'react';
+import Icon from '../components/Icon';
 
 let ipcRenderer = null;
 if (typeof window !== 'undefined' && typeof window.require === 'function') {
@@ -101,9 +102,9 @@ export default function TrackMapPanel({ config, onConfigChange, colors, inputSty
         <h3 style={{ color: colors.yellow, marginTop: 0, marginBottom: '15px' }}>{t('circuito.title')}</h3>
 
         <div style={{ display: 'flex', gap: '5px', marginBottom: '20px' }}>
-          <button onClick={handleSelectImage} style={{ ...btnStyle(false), flex: 1 }}>{t('circuito.loadImageBtn')}</button>
+          <button onClick={handleSelectImage} style={{ ...btnStyle(false), flex: 1 }}>{t.i('circuito.loadImageBtn')}</button>
           {config?.trackImage && (
-            <button onClick={handleClearImage} style={{ ...btnStyle(false), flex: 1, backgroundColor: '#c0392b', color: '#fff', border: 'none' }}>{t('common.removeBtn')}</button>
+            <button onClick={handleClearImage} style={{ ...btnStyle(false), flex: 1, backgroundColor: '#c0392b', color: '#fff', border: 'none' }}>{t.i('common.removeBtn')}</button>
           )}
         </div>
 
@@ -139,7 +140,7 @@ export default function TrackMapPanel({ config, onConfigChange, colors, inputSty
               <button
                 onClick={(e) => { e.stopPropagation(); handleDeleteCurve(c.id); }}
                 style={{ backgroundColor: '#c0392b', color: '#fff', border: 'none', borderRadius: '4px', padding: '4px 8px', fontSize: '10px', cursor: 'pointer' }}
-              >✕</button>
+              ><Icon name="close" /></button>
             </div>
           ))}
         </div>

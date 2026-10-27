@@ -1,3 +1,5 @@
+const { icon } = require('./webIcons.cjs');
+
 function getPenaltyHtml(drivers, campeonato, currentPenalty) {
   const safeDrivers = Array.isArray(drivers) ? drivers : [];
   const driversJson = JSON.stringify(safeDrivers).replace(/</g, '\\u003c');
@@ -83,7 +85,7 @@ function getPenaltyHtml(drivers, campeonato, currentPenalty) {
 </head>
 <body>
 
-  <h1>🚩 COMISARIOS DEPORTIVOS</h1>
+  <h1>${icon('flag')} COMISARIOS DEPORTIVOS</h1>
   <p class="subtitle">${title} — cargá la sanción o marcá la maniobra bajo investigación. Sale al aire al instante.</p>
 
   <div id="status" class="status">
@@ -96,8 +98,8 @@ function getPenaltyHtml(drivers, campeonato, currentPenalty) {
 
   <label>TIPO</label>
   <div class="type-row">
-    <button type="button" id="btnInvestigation" class="type-btn">🔎 INVESTIGACIÓN</button>
-    <button type="button" id="btnPenalty" class="type-btn">🚫 SANCIÓN</button>
+    <button type="button" id="btnInvestigation" class="type-btn">${icon('search')} INVESTIGACIÓN</button>
+    <button type="button" id="btnPenalty" class="type-btn">${icon('block')} SANCIÓN</button>
   </div>
 
   <label for="reason">MOTIVO (OPCIONAL)</label>
@@ -109,13 +111,15 @@ function getPenaltyHtml(drivers, campeonato, currentPenalty) {
   </div>
 
   <div class="actions">
-    <button type="button" class="submit" id="btnSubmit">🔴 EMITIR EN PANTALLA</button>
+    <button type="button" class="submit" id="btnSubmit">${icon('fiber_manual_record', '#e74c3c')} EMITIR EN PANTALLA</button>
     <button type="button" class="hide" id="btnHide">OCULTAR</button>
   </div>
 
   <div id="toast" class="toast"></div>
 
 <script>
+  const ICONS = ${JSON.stringify({ warn: icon('warning', '#f1c40f'), ok: icon('check_circle', '#2ecc71'), fail: icon('cancel', '#e74c3c') })};
+
   const drivers = ${driversJson};
   let current = ${currentJson};
   let selectedType = 'investigation';
@@ -154,7 +158,7 @@ function getPenaltyHtml(drivers, campeonato, currentPenalty) {
   }
 
   function showToast(msg, isError) {
-    toast.textContent = msg;
+    toast.innerHTML = msg;
     toast.className = 'toast show' + (isError ? ' error' : '');
     setTimeout(() => { toast.className = 'toast'; }, 2500);
   }
@@ -164,7 +168,7 @@ function getPenaltyHtml(drivers, campeonato, currentPenalty) {
 
   btnSubmit.addEventListener('click', async () => {
     const driverNumber = driverSelect.value;
-    if (!driverNumber) { showToast('⚠️ Seleccioná un piloto primero', true); return; }
+    if (!driverNumber) { showToast(ICONS.warn + ' Seleccioná un piloto primero', true); return; }
     const driver = drivers.find(d => String(d.number) === String(driverNumber));
     const reason = document.getElementById('reason').value || '';
     let seconds = parseInt(document.getElementById('seconds').value, 10);
@@ -186,9 +190,9 @@ function getPenaltyHtml(drivers, campeonato, currentPenalty) {
       if (!res.ok) throw new Error('bad status');
       current = { isVisible: true, driverNumber: driver ? driver.number : driverNumber, driverName: driver ? driver.name : '', type: selectedType, reason: reason };
       renderStatus();
-      showToast('✅ Enviado al aire');
+      showToast(ICONS.ok + ' Enviado al aire');
     } catch (e) {
-      showToast('❌ No se pudo enviar. Revisá la conexión.', true);
+      showToast(ICONS.fail + ' No se pudo enviar. Revisá la conexión.', true);
     }
     btnSubmit.disabled = false;
   });
@@ -202,7 +206,7 @@ function getPenaltyHtml(drivers, campeonato, currentPenalty) {
       renderStatus();
       showToast('Cartel ocultado');
     } catch (e) {
-      showToast('❌ No se pudo ocultar. Revisá la conexión.', true);
+      showToast(ICONS.fail + ' No se pudo ocultar. Revisá la conexión.', true);
     }
     btnHide.disabled = false;
   });

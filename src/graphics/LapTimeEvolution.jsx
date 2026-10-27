@@ -1,4 +1,5 @@
 import { getSkinStyle } from '../utils/skinStyles';
+import Icon from '../components/Icon';
 import { getAnimDuration, getRollClip } from '../utils/animationTiming';
 
 export default function LapTimeEvolution({ history, drivers, config, isVisible, focusDriver, id = 'lapTimesHistory' }) {
@@ -159,10 +160,10 @@ export default function LapTimeEvolution({ history, drivers, config, isVisible, 
             const last = row.points[row.points.length - 1];
             const prev = row.points[row.points.length - 2];
             let trendColor = themeNormalText;
-            let trendArrow = '—';
+            let trendArrow = <span>—</span>;
             if (last && prev) {
-              if (last.seconds < prev.seconds) { trendColor = '#2ecc71'; trendArrow = '↗'; }
-              else if (last.seconds > prev.seconds) { trendColor = '#e74c3c'; trendArrow = '↘'; }
+              if (last.seconds < prev.seconds) { trendColor = '#2ecc71'; trendArrow = <Icon name="trending_up" size="1.3em" />; }
+              else if (last.seconds > prev.seconds) { trendColor = '#e74c3c'; trendArrow = <Icon name="trending_down" size="1.3em" />; }
             }
 
             return (

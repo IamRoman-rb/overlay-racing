@@ -1,4 +1,5 @@
 // src/scripts/votingHtml.cjs
+const { icon } = require('./webIcons.cjs');
 
 function getVotingHtml(drivers, campeonato) {
   if (!drivers || drivers.length === 0) {
@@ -54,11 +55,11 @@ function getVotingHtml(drivers, campeonato) {
       </div>
 
       <div id="thanks">
-        <div class="thanks-icon">🏁</div>
+        <div class="thanks-icon">${icon('sports_score', '#ffcc00', '1.2em')}</div>
         <div class="thanks-title">¡Voto Registrado!</div>
         <div class="thanks-text">
           Tu elección ha sido procesada con éxito.
-          <span class="highlight">¡Seguí mirando la transmisión<br>EN VIVO! 📺</span>
+          <span class="highlight">¡Seguí mirando la transmisión<br>EN VIVO! ${icon('tv')}</span>
           El resultado final del <b>"Piloto del Día"</b> se anunciará en pantalla en instantes.
         </div>
         <div class="thanks-footer">Ya puedes cerrar esta ventana con seguridad.</div>
@@ -66,7 +67,7 @@ function getVotingHtml(drivers, campeonato) {
       
       <script>
         function vote(num, btn) {
-          btn.innerHTML = '⏳';
+          btn.innerHTML = ${JSON.stringify(icon('hourglass_top'))};
           btn.style.opacity = '0.7';
           btn.disabled = true;
           

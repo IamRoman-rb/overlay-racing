@@ -1,3 +1,5 @@
+import { withIcons } from '../components/withIcons';
+
 export const LANGUAGES = [
   { value: 'es', label: 'Español' },
   { value: 'en', label: 'English' },
@@ -20,7 +22,7 @@ export const translations = {
     tabs: {
       panel: 'PANEL', campeonato: 'CAMPEONATO', votaciones: 'VOTACIONES', sanciones: 'SANCIONES',
       cloud: 'CLOUD', zocalos: 'ZÓCALOS', disenos: 'DISEÑOS', circuito: 'CIRCUITO',
-      ajustes: 'AJUSTES', personalizar: 'PERSONALIZAR', manual: 'MANUAL'
+      ajustes: 'AJUSTES', personalizar: 'PERSONALIZAR', editor: 'EDITOR', manual: 'MANUAL'
     },
     graphics: {
       relator: 'RELATOR', comentarista: 'COMENTARISTA', notero1: 'NOTERO 1', notero2: 'NOTERO 2',
@@ -34,12 +36,43 @@ export const translations = {
       trackAlert: 'ALERTA EN CURVA', penaltyAlert: 'SANCIÓN / INVESTIGACIÓN',
       branding: 'LOGOS PRODUCTORA Y CATEGORÍA'
     },
+    editor: {
+      title: 'EDITOR DE GRÁFICAS',
+      description: 'Elegí una gráfica y arrastrá sus objetos (logo, título, tabla…) de un lugar a otro para personalizarla. Los cambios se guardan solos y se ven al instante en el overlay.',
+      selectGraphic: 'Gráfica',
+      detailTitle: 'Nivel de detalle',
+      detail1: 'BLOQUES',
+      detail2: 'ELEMENTOS',
+      detail3: 'DETALLE',
+      detailHint: 'Bloques mueve las partes grandes; Detalle separa cada texto o imagen.',
+      objectsTitle: 'Objetos de la gráfica ({n})',
+      noObjects: 'Esta gráfica no muestra nada por ahora (por ejemplo, faltan datos o logos).',
+      objectImage: 'Imagen',
+      objectBlock: 'Bloque',
+      offsetLabel: 'Desplazamiento del objeto',
+      resetObject: '[[restart_alt]] RESTABLECER OBJETO',
+      resetObjectTitle: 'Volver este objeto a su lugar original',
+      undoBtn: '[[undo]] DESHACER',
+      resetGraphic: '[[restart_alt]] RESTABLECER GRÁFICA',
+      confirmReset: '¿Volver todos los objetos de esta gráfica a su lugar original?',
+      edited: 'Con objetos movidos',
+      tips: 'Arrastrá un recuadro para mover el objeto · Shift: mover en línea recta · Alt: sin imán · Flechas: ajuste fino de 1 px (Shift: 10 px) · Supr: restablecer objeto · Ctrl + Z: deshacer'
+    },
     header: {
       title: 'RACE DYNAMICS DASHBOARD', bestLap: 'MEJOR VUELTA', laps: 'VUELTAS',
       totalTime: 'TIEMPO TOTAL', live: '🟢 EN VIVO', paused: 'PAUSADO',
       sysTempHint: 'Sin dato de temperatura: Windows no la expone en esta PC. Abrí LibreHardwareMonitor para verla.'
     },
     panel: {
+      flagGreen: 'VERDE',
+      finalPrevTitle: 'Página anterior de los resultados finales',
+      finalNextTitle: 'Página siguiente de los resultados finales (pasa a manual: se detiene la rotación automática)',
+      weatherCircuitTitle: 'Obtener el clima del circuito seleccionado',
+      lightsOff: 'Semáforo apagado',
+      lightsPreparing: 'Preparando…',
+      lightsRedCount: 'Rojo {step} de 5',
+      lightsReadyToGo: 'Rojo 5 de 5 · listo para largar',
+      lightsGreen: 'Verde · ¡largada!',
       autoFlags: 'Banderas automáticas (Race Monitor / Speedhive)', autoFlagsHint: 'Amarilla = Auto de seguridad, Roja = Bandera roja, Verde = las baja.',
       flagsSection: 'BANDERAS DE CARRERA', flagRed: 'ROJA', flagTricolor: 'TRICOLOR',
       flagBlue: 'AZUL (PASO)', flagCheckered: 'ÚLTIMA VUELTA', flagBlack: 'NEGRA',
@@ -51,7 +84,7 @@ export const translations = {
       weatherLocError: '❌ No se pudo detectar la ubicación de esta PC. Revisá la conexión a internet.',
       weatherHereTitle: 'Obtener clima en la ubicación actual de esta PC',
       trackAlertYellow: '⚠️ AMARILLA', trackAlertIncident: '🚨 INCIDENTE', emitAlert: '🔴 EMITIR ALERTA',
-      gridSection: 'GRILLA', gridPrev: '◀ ANT', showGrid: 'MOSTRAR GRILLA', gridNext: 'SIG ▶',
+      gridSection: 'GRILLA', gridPrev: '[[skip_previous]] ANT', showGrid: 'MOSTRAR GRILLA', gridNext: 'SIG [[skip_next]]',
       autoScrapeStop: '⏹ DETENER (1s)', autoScrapeStart: '▶ AUTO-CARGA',
       lightsGo: '🟢 LARGAR (DAR SALIDA)', lightsCounting: '🔴 ENCENDIENDO ({step}/5)', lightsStart: '🚦 INICIAR SEMÁFORO',
       graphicsSection: 'GRÁFICOS', towerShort: 'TORRE', lapsShort: 'VUELTAS', recordLapShort: 'RECORD VUELTA', showBranding: 'MOSTRAR LOGOS', hideBranding: 'OCULTAR LOGOS', branding_both: 'AMBOS', branding_producer: 'PRODUCTORA', branding_category: 'CATEGORÍA', brandingNote: 'Los logos se cargan en la pestaña {tab}.', brandingNoLogos: '⚠️ Todavía no hay logos cargados. Cargalos en la pestaña {tab}.', splitTitle: 'Arrastrá para cambiar el tamaño de cada zona (doble clic: tamaño original)',
@@ -247,7 +280,7 @@ export const translations = {
     tabs: {
       panel: 'PANEL', campeonato: 'STANDINGS', votaciones: 'VOTING', sanciones: 'PENALTIES',
       cloud: 'CLOUD', zocalos: 'LOWER THIRDS', disenos: 'DESIGNS', circuito: 'TRACK',
-      ajustes: 'SETTINGS', personalizar: 'CUSTOMIZE', manual: 'MANUAL'
+      ajustes: 'SETTINGS', personalizar: 'CUSTOMIZE', editor: 'EDITOR', manual: 'MANUAL'
     },
     graphics: {
       relator: 'COMMENTATOR', comentarista: 'CO-COMMENTATOR', notero1: 'REPORTER 1', notero2: 'REPORTER 2',
@@ -261,12 +294,43 @@ export const translations = {
       trackAlert: 'CORNER ALERT', penaltyAlert: 'PENALTY / INVESTIGATION',
       branding: 'PRODUCER & CATEGORY LOGOS'
     },
+    editor: {
+      title: 'GRAPHICS EDITOR',
+      description: 'Pick a graphic and drag its objects (logo, title, table…) from one place to another to customize it. Changes are saved automatically and show up instantly on the overlay.',
+      selectGraphic: 'Graphic',
+      detailTitle: 'Level of detail',
+      detail1: 'BLOCKS',
+      detail2: 'ELEMENTS',
+      detail3: 'DETAIL',
+      detailHint: 'Blocks moves the big parts; Detail splits every text or image.',
+      objectsTitle: 'Graphic objects ({n})',
+      noObjects: 'This graphic is not showing anything right now (for example, data or logos are missing).',
+      objectImage: 'Image',
+      objectBlock: 'Block',
+      offsetLabel: 'Object offset',
+      resetObject: '[[restart_alt]] RESET OBJECT',
+      resetObjectTitle: 'Put this object back in its original place',
+      undoBtn: '[[undo]] UNDO',
+      resetGraphic: '[[restart_alt]] RESET GRAPHIC',
+      confirmReset: 'Put every object of this graphic back in its original place?',
+      edited: 'Has moved objects',
+      tips: 'Drag a box to move the object · Shift: move in a straight line · Alt: no snapping · Arrows: 1 px fine tuning (Shift: 10 px) · Del: reset object · Ctrl + Z: undo'
+    },
     header: {
       title: 'RACE DYNAMICS DASHBOARD', bestLap: 'FASTEST LAP', laps: 'LAPS',
       totalTime: 'TOTAL TIME', live: '🟢 LIVE', paused: 'PAUSED',
       sysTempHint: 'No temperature data: Windows does not expose it on this PC. Open LibreHardwareMonitor to see it.'
     },
     panel: {
+      flagGreen: 'GREEN',
+      finalPrevTitle: 'Previous page of the final results',
+      finalNextTitle: 'Next page of the final results (switches to manual: automatic rotation stops)',
+      weatherCircuitTitle: 'Get the weather for the selected circuit',
+      lightsOff: 'Lights off',
+      lightsPreparing: 'Getting ready…',
+      lightsRedCount: 'Red {step} of 5',
+      lightsReadyToGo: 'Red 5 of 5 · ready to go',
+      lightsGreen: 'Green · go!',
       autoFlags: 'Automatic flags (Race Monitor / Speedhive)', autoFlagsHint: 'Yellow = Safety car, Red = Red flag, Green = clears them.',
       flagsSection: 'RACE FLAGS', flagRed: 'RED', flagTricolor: 'SAFETY CAR',
       flagBlue: 'BLUE (LET PASS)', flagCheckered: 'LAST LAP', flagBlack: 'BLACK',
@@ -278,7 +342,7 @@ export const translations = {
       weatherLocError: '❌ Could not detect the location of this PC. Check your internet connection.',
       weatherHereTitle: 'Get weather for the current location of this PC',
       trackAlertYellow: '⚠️ YELLOW', trackAlertIncident: '🚨 INCIDENT', emitAlert: '🔴 SEND ALERT',
-      gridSection: 'STARTING GRID', gridPrev: '◀ PREV', showGrid: 'SHOW GRID', gridNext: 'NEXT ▶',
+      gridSection: 'STARTING GRID', gridPrev: '[[skip_previous]] PREV', showGrid: 'SHOW GRID', gridNext: 'NEXT [[skip_next]]',
       autoScrapeStop: '⏹ STOP (1s)', autoScrapeStart: '▶ AUTO-REFRESH',
       lightsGo: '🟢 GO (RELEASE START)', lightsCounting: '🔴 LIGHTING UP ({step}/5)', lightsStart: '🚦 START LIGHTS SEQUENCE',
       graphicsSection: 'GRAPHICS', towerShort: 'TOWER', lapsShort: 'LAPS', recordLapShort: 'FASTEST LAP', showBranding: 'SHOW LOGOS', hideBranding: 'HIDE LOGOS', branding_both: 'BOTH', branding_producer: 'PRODUCER', branding_category: 'CATEGORY', brandingNote: 'Logos are loaded in the {tab} tab.', brandingNoLogos: '⚠️ No logos loaded yet. Load them in the {tab} tab.', splitTitle: 'Drag to resize each area (double-click: original size)',
@@ -474,7 +538,7 @@ export const translations = {
     tabs: {
       panel: 'PAINEL', campeonato: 'CAMPEONATO', votaciones: 'VOTAÇÃO', sanciones: 'PUNIÇÕES',
       cloud: 'NUVEM', zocalos: 'TARJAS', disenos: 'DESIGNS', circuito: 'CIRCUITO',
-      ajustes: 'AJUSTES', personalizar: 'PERSONALIZAR', manual: 'MANUAL'
+      ajustes: 'AJUSTES', personalizar: 'PERSONALIZAR', editor: 'EDITOR', manual: 'MANUAL'
     },
     graphics: {
       relator: 'NARRADOR', comentarista: 'COMENTARISTA', notero1: 'REPÓRTER 1', notero2: 'REPÓRTER 2',
@@ -488,12 +552,43 @@ export const translations = {
       trackAlert: 'ALERTA DE CURVA', penaltyAlert: 'PUNIÇÃO / INVESTIGAÇÃO',
       branding: 'LOGOS PRODUTORA E CATEGORIA'
     },
+    editor: {
+      title: 'EDITOR DE GRÁFICOS',
+      description: 'Escolha um gráfico e arraste seus objetos (logo, título, tabela…) de um lugar para outro para personalizá-lo. As alterações são salvas sozinhas e aparecem na hora no overlay.',
+      selectGraphic: 'Gráfico',
+      detailTitle: 'Nível de detalhe',
+      detail1: 'BLOCOS',
+      detail2: 'ELEMENTOS',
+      detail3: 'DETALHE',
+      detailHint: 'Blocos move as partes grandes; Detalhe separa cada texto ou imagem.',
+      objectsTitle: 'Objetos do gráfico ({n})',
+      noObjects: 'Este gráfico não mostra nada por enquanto (por exemplo, faltam dados ou logos).',
+      objectImage: 'Imagem',
+      objectBlock: 'Bloco',
+      offsetLabel: 'Deslocamento do objeto',
+      resetObject: '[[restart_alt]] REDEFINIR OBJETO',
+      resetObjectTitle: 'Voltar este objeto ao lugar original',
+      undoBtn: '[[undo]] DESFAZER',
+      resetGraphic: '[[restart_alt]] REDEFINIR GRÁFICO',
+      confirmReset: 'Voltar todos os objetos deste gráfico ao lugar original?',
+      edited: 'Com objetos movidos',
+      tips: 'Arraste uma caixa para mover o objeto · Shift: mover em linha reta · Alt: sem ímã · Setas: ajuste fino de 1 px (Shift: 10 px) · Del: redefinir objeto · Ctrl + Z: desfazer'
+    },
     header: {
       title: 'RACE DYNAMICS DASHBOARD', bestLap: 'VOLTA MAIS RÁPIDA', laps: 'VOLTAS',
       totalTime: 'TEMPO TOTAL', live: '🟢 AO VIVO', paused: 'PAUSADO',
       sysTempHint: 'Sem dado de temperatura: o Windows não a expõe neste PC. Abra o LibreHardwareMonitor para vê-la.'
     },
     panel: {
+      flagGreen: 'VERDE',
+      finalPrevTitle: 'Página anterior dos resultados finais',
+      finalNextTitle: 'Próxima página dos resultados finais (passa para manual: a rotação automática para)',
+      weatherCircuitTitle: 'Obter o clima do circuito selecionado',
+      lightsOff: 'Semáforo apagado',
+      lightsPreparing: 'Preparando…',
+      lightsRedCount: 'Vermelho {step} de 5',
+      lightsReadyToGo: 'Vermelho 5 de 5 · pronto para largar',
+      lightsGreen: 'Verde · largada!',
       autoFlags: 'Bandeiras automáticas (Race Monitor / Speedhive)', autoFlagsHint: 'Amarela = Safety car, Vermelha = Bandeira vermelha, Verde = remove.',
       flagsSection: 'BANDEIRAS DE CORRIDA', flagRed: 'VERMELHA', flagTricolor: 'SAFETY CAR',
       flagBlue: 'AZUL (CEDER PASSAGEM)', flagCheckered: 'ÚLTIMA VOLTA', flagBlack: 'PRETA',
@@ -505,7 +600,7 @@ export const translations = {
       weatherLocError: '❌ Não foi possível detectar a localização deste PC. Verifique a conexão com a internet.',
       weatherHereTitle: 'Obter o clima na localização atual deste PC',
       trackAlertYellow: '⚠️ AMARELA', trackAlertIncident: '🚨 INCIDENTE', emitAlert: '🔴 EMITIR ALERTA',
-      gridSection: 'GRID', gridPrev: '◀ ANT', showGrid: 'MOSTRAR GRID', gridNext: 'PRÓX ▶',
+      gridSection: 'GRID', gridPrev: '[[skip_previous]] ANT', showGrid: 'MOSTRAR GRID', gridNext: 'PRÓX [[skip_next]]',
       autoScrapeStop: '⏹ PARAR (1s)', autoScrapeStart: '▶ ATUALIZAÇÃO AUTOMÁTICA',
       lightsGo: '🟢 LARGAR (DAR PARTIDA)', lightsCounting: '🔴 ACENDENDO ({step}/5)', lightsStart: '🚦 INICIAR SEMÁFORO',
       graphicsSection: 'GRÁFICOS', towerShort: 'TORRE', lapsShort: 'VOLTAS', recordLapShort: 'VOLTA RÁPIDA', showBranding: 'MOSTRAR LOGOS', hideBranding: 'OCULTAR LOGOS', branding_both: 'AMBOS', branding_producer: 'PRODUTORA', branding_category: 'CATEGORIA', brandingNote: 'Os logos são carregados na aba {tab}.', brandingNoLogos: '⚠️ Ainda não há logos carregados. Carregue-os na aba {tab}.', splitTitle: 'Arraste para redimensionar cada área (clique duplo: tamanho original)',
@@ -701,7 +796,7 @@ export const translations = {
     tabs: {
       panel: 'PANEL', campeonato: 'MEISTERSCHAFT', votaciones: 'ABSTIMMUNG', sanciones: 'STRAFEN',
       cloud: 'CLOUD', zocalos: 'BAUCHBINDEN', disenos: 'DESIGNS', circuito: 'STRECKE',
-      ajustes: 'EINSTELLUNGEN', personalizar: 'ANPASSEN', manual: 'HANDBUCH'
+      ajustes: 'EINSTELLUNGEN', personalizar: 'ANPASSEN', editor: 'EDITOR', manual: 'HANDBUCH'
     },
     graphics: {
       relator: 'KOMMENTATOR', comentarista: 'CO-KOMMENTATOR', notero1: 'REPORTER 1', notero2: 'REPORTER 2',
@@ -715,12 +810,43 @@ export const translations = {
       trackAlert: 'KURVEN-ALARM', penaltyAlert: 'STRAFE / UNTERSUCHUNG',
       branding: 'LOGOS PRODUKTION & KATEGORIE'
     },
+    editor: {
+      title: 'GRAFIK-EDITOR',
+      description: 'Wähle eine Grafik und ziehe ihre Objekte (Logo, Titel, Tabelle …) von einem Ort zum anderen, um sie anzupassen. Änderungen werden automatisch gespeichert und erscheinen sofort im Overlay.',
+      selectGraphic: 'Grafik',
+      detailTitle: 'Detailgrad',
+      detail1: 'BLÖCKE',
+      detail2: 'ELEMENTE',
+      detail3: 'DETAIL',
+      detailHint: 'Blöcke verschiebt die großen Teile; Detail trennt jeden Text und jedes Bild.',
+      objectsTitle: 'Objekte der Grafik ({n})',
+      noObjects: 'Diese Grafik zeigt im Moment nichts an (z. B. fehlen Daten oder Logos).',
+      objectImage: 'Bild',
+      objectBlock: 'Block',
+      offsetLabel: 'Versatz des Objekts',
+      resetObject: '[[restart_alt]] OBJEKT ZURÜCKSETZEN',
+      resetObjectTitle: 'Dieses Objekt an seinen ursprünglichen Platz zurücksetzen',
+      undoBtn: '[[undo]] RÜCKGÄNGIG',
+      resetGraphic: '[[restart_alt]] GRAFIK ZURÜCKSETZEN',
+      confirmReset: 'Alle Objekte dieser Grafik an ihren ursprünglichen Platz zurücksetzen?',
+      edited: 'Mit verschobenen Objekten',
+      tips: 'Rahmen ziehen, um das Objekt zu verschieben · Shift: geradlinig · Alt: ohne Einrasten · Pfeile: 1 px Feinabstimmung (Shift: 10 px) · Entf: Objekt zurücksetzen · Strg + Z: rückgängig'
+    },
     header: {
       title: 'RACE DYNAMICS DASHBOARD', bestLap: 'SCHNELLSTE RUNDE', laps: 'RUNDEN',
       totalTime: 'GESAMTZEIT', live: '🟢 LIVE', paused: 'PAUSIERT',
       sysTempHint: 'Keine Temperaturdaten: Windows stellt sie auf diesem PC nicht bereit. Öffne LibreHardwareMonitor, um sie zu sehen.'
     },
     panel: {
+      flagGreen: 'GRÜN',
+      finalPrevTitle: 'Vorherige Seite des Endergebnisses',
+      finalNextTitle: 'Nächste Seite des Endergebnisses (wechselt auf manuell: die automatische Rotation stoppt)',
+      weatherCircuitTitle: 'Wetter der gewählten Strecke abrufen',
+      lightsOff: 'Ampel aus',
+      lightsPreparing: 'Bereitmachen…',
+      lightsRedCount: 'Rot {step} von 5',
+      lightsReadyToGo: 'Rot 5 von 5 · startbereit',
+      lightsGreen: 'Grün · Start!',
       autoFlags: 'Automatische Flaggen (Race Monitor / Speedhive)', autoFlagsHint: 'Gelb = Safety Car, Rot = Rote Flagge, Grün = nimmt sie weg.',
       flagsSection: 'RENNFLAGGEN', flagRed: 'ROT', flagTricolor: 'SAFETY CAR',
       flagBlue: 'BLAU (DURCHLASSEN)', flagCheckered: 'LETZTE RUNDE', flagBlack: 'SCHWARZ',
@@ -732,7 +858,7 @@ export const translations = {
       weatherLocError: '❌ Standort dieses PCs konnte nicht ermittelt werden. Internetverbindung prüfen.',
       weatherHereTitle: 'Wetter für den aktuellen Standort dieses PCs abrufen',
       trackAlertYellow: '⚠️ GELB', trackAlertIncident: '🚨 ZWISCHENFALL', emitAlert: '🔴 ALARM SENDEN',
-      gridSection: 'STARTAUFSTELLUNG', gridPrev: '◀ ZURÜCK', showGrid: 'GRID ANZEIGEN', gridNext: 'WEITER ▶',
+      gridSection: 'STARTAUFSTELLUNG', gridPrev: '[[skip_previous]] ZURÜCK', showGrid: 'GRID ANZEIGEN', gridNext: 'WEITER [[skip_next]]',
       autoScrapeStop: '⏹ STOPPEN (1s)', autoScrapeStart: '▶ AUTO-AKTUALISIERUNG',
       lightsGo: '🟢 START (FREIGABE)', lightsCounting: '🔴 SCHALTET AUF ({step}/5)', lightsStart: '🚦 STARTAMPEL STARTEN',
       graphicsSection: 'GRAFIKEN', towerShort: 'TURM', lapsShort: 'RUNDEN', recordLapShort: 'SCHNELLSTE RUNDE', showBranding: 'LOGOS ANZEIGEN', hideBranding: 'LOGOS AUSBLENDEN', branding_both: 'BEIDE', branding_producer: 'PRODUKTION', branding_category: 'KATEGORIE', brandingNote: 'Die Logos werden im Tab {tab} geladen.', brandingNoLogos: '⚠️ Noch keine Logos geladen. Lade sie im Tab {tab}.', splitTitle: 'Ziehen, um die Größe der Bereiche zu ändern (Doppelklick: Originalgröße)',
@@ -928,7 +1054,7 @@ export const translations = {
     tabs: {
       panel: 'PANNEAU', campeonato: 'CHAMPIONNAT', votaciones: 'VOTE', sanciones: 'SANCTIONS',
       cloud: 'CLOUD', zocalos: 'BANDEAUX', disenos: 'DESIGNS', circuito: 'CIRCUIT',
-      ajustes: 'RÉGLAGES', personalizar: 'PERSONNALISER', manual: 'MANUEL'
+      ajustes: 'RÉGLAGES', personalizar: 'PERSONNALISER', editor: 'ÉDITEUR', manual: 'MANUEL'
     },
     graphics: {
       relator: 'COMMENTATEUR', comentarista: 'CONSULTANT', notero1: 'JOURNALISTE 1', notero2: 'JOURNALISTE 2',
@@ -942,12 +1068,43 @@ export const translations = {
       trackAlert: 'ALERTE VIRAGE', penaltyAlert: 'SANCTION / ENQUÊTE',
       branding: 'LOGOS PRODUCTION ET CATÉGORIE'
     },
+    editor: {
+      title: 'ÉDITEUR DE GRAPHIQUES',
+      description: 'Choisissez un graphique et faites glisser ses objets (logo, titre, tableau…) d’un endroit à l’autre pour le personnaliser. Les changements sont enregistrés automatiquement et apparaissent aussitôt dans l’overlay.',
+      selectGraphic: 'Graphique',
+      detailTitle: 'Niveau de détail',
+      detail1: 'BLOCS',
+      detail2: 'ÉLÉMENTS',
+      detail3: 'DÉTAIL',
+      detailHint: 'Blocs déplace les grandes parties ; Détail sépare chaque texte ou image.',
+      objectsTitle: 'Objets du graphique ({n})',
+      noObjects: 'Ce graphique n’affiche rien pour le moment (par exemple, il manque des données ou des logos).',
+      objectImage: 'Image',
+      objectBlock: 'Bloc',
+      offsetLabel: 'Décalage de l’objet',
+      resetObject: '[[restart_alt]] RÉINITIALISER L’OBJET',
+      resetObjectTitle: 'Remettre cet objet à sa place d’origine',
+      undoBtn: '[[undo]] ANNULER',
+      resetGraphic: '[[restart_alt]] RÉINITIALISER LE GRAPHIQUE',
+      confirmReset: 'Remettre tous les objets de ce graphique à leur place d’origine ?',
+      edited: 'Avec des objets déplacés',
+      tips: 'Faites glisser un cadre pour déplacer l’objet · Maj : déplacement en ligne droite · Alt : sans aimant · Flèches : réglage fin de 1 px (Maj : 10 px) · Suppr : réinitialiser l’objet · Ctrl + Z : annuler'
+    },
     header: {
       title: 'RACE DYNAMICS DASHBOARD', bestLap: 'MEILLEUR TOUR', laps: 'TOURS',
       totalTime: 'TEMPS TOTAL', live: '🟢 EN DIRECT', paused: 'EN PAUSE',
       sysTempHint: 'Pas de donnée de température : Windows ne la fournit pas sur ce PC. Ouvrez LibreHardwareMonitor pour la voir.'
     },
     panel: {
+      flagGreen: 'VERT',
+      finalPrevTitle: 'Page précédente des résultats finaux',
+      finalNextTitle: 'Page suivante des résultats finaux (passe en manuel : la rotation automatique s’arrête)',
+      weatherCircuitTitle: 'Obtenir la météo du circuit sélectionné',
+      lightsOff: 'Feux éteints',
+      lightsPreparing: 'Préparation…',
+      lightsRedCount: 'Rouge {step} sur 5',
+      lightsReadyToGo: 'Rouge 5 sur 5 · prêt à partir',
+      lightsGreen: 'Vert · départ !',
       autoFlags: 'Drapeaux automatiques (Race Monitor / Speedhive)', autoFlagsHint: 'Jaune = Voiture de sécurité, Rouge = Drapeau rouge, Vert = les retire.',
       flagsSection: 'DRAPEAUX DE COURSE', flagRed: 'ROUGE', flagTricolor: 'VOITURE DE SÉCURITÉ',
       flagBlue: 'BLEU (LAISSER PASSER)', flagCheckered: 'DERNIER TOUR', flagBlack: 'NOIR',
@@ -959,7 +1116,7 @@ export const translations = {
       weatherLocError: '❌ Impossible de détecter la position de ce PC. Vérifiez la connexion internet.',
       weatherHereTitle: 'Obtenir la météo à la position actuelle de ce PC',
       trackAlertYellow: '⚠️ JAUNE', trackAlertIncident: '🚨 INCIDENT', emitAlert: '🔴 ENVOYER L\'ALERTE',
-      gridSection: 'GRILLE', gridPrev: '◀ PRÉC', showGrid: 'AFFICHER LA GRILLE', gridNext: 'SUIV ▶',
+      gridSection: 'GRILLE', gridPrev: '[[skip_previous]] PRÉC', showGrid: 'AFFICHER LA GRILLE', gridNext: 'SUIV [[skip_next]]',
       autoScrapeStop: '⏹ ARRÊTER (1s)', autoScrapeStart: '▶ ACTUALISATION AUTO',
       lightsGo: '🟢 DÉPART (LANCER)', lightsCounting: '🔴 ALLUMAGE ({step}/5)', lightsStart: '🚦 DÉMARRER LES FEUX',
       graphicsSection: 'GRAPHIQUES', towerShort: 'TOUR', lapsShort: 'TOURS', recordLapShort: 'MEILLEUR TOUR', showBranding: 'AFFICHER LES LOGOS', hideBranding: 'MASQUER LES LOGOS', branding_both: 'LES DEUX', branding_producer: 'PRODUCTION', branding_category: 'CATÉGORIE', brandingNote: 'Les logos se chargent dans l\'onglet {tab}.', brandingNoLogos: '⚠️ Aucun logo chargé pour le moment. Chargez-les dans l\'onglet {tab}.', splitTitle: 'Glisser pour redimensionner chaque zone (double-clic : taille d\'origine)',
@@ -1145,7 +1302,7 @@ export const translations = {
 
 export function createTranslator(language) {
   const dict = translations[language] || translations.es;
-  return function t(key, vars) {
+  function t(key, vars) {
     const parts = key.split('.');
     let val = parts.reduce((acc, k) => (acc && acc[k] !== undefined ? acc[k] : undefined), dict);
     if (val === undefined) {
@@ -1156,5 +1313,8 @@ export function createTranslator(language) {
       Object.keys(vars).forEach(k => { val = val.split(`{${k}}`).join(vars[k]); });
     }
     return val;
-  };
+  }
+  // t.i(...) = lo mismo que t(...), pero los emojis / marcadores [[ícono]] salen como íconos de Google (para texto dentro de botones y etiquetas)
+  t.i = (key, vars) => withIcons(t(key, vars));
+  return t;
 }

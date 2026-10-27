@@ -1,3 +1,5 @@
+const { icon } = require('./webIcons.cjs');
+
 function getLoginHtml() {
   return `<!DOCTYPE html>
 <html lang="es">
@@ -37,7 +39,7 @@ function getLoginHtml() {
 </head>
 <body>
   <div class="card">
-    <h1>🏁 OVERLAY RACING</h1>
+    <h1>${icon('sports_score')} OVERLAY RACING</h1>
     <p class="subtitle">Ingresá tu usuario y contraseña</p>
 
     <label for="username">USUARIO</label>

@@ -2,7 +2,7 @@ import banderaCuadrosImg from '../assets/bandera cuadros.jpg';
 import { getSkinStyle } from '../utils/skinStyles';
 import { getAnimDuration, getRollClip } from '../utils/animationTiming';
 
-const FLAG_GLOW_COLOR = { red: '#e74c3c', black: '#ffcc00', blue: '#3498db', tricolor: '#ffffff', checkered: '#ffffff' };
+const FLAG_GLOW_COLOR = { red: '#e74c3c', black: '#ffcc00', blue: '#3498db', tricolor: '#ffffff', checkered: '#ffffff', green: '#2ecc71' };
 
 export default function Flags({ activeFlags, config, id = 'flags' }) {
   let activeFlagType = null;
@@ -11,6 +11,7 @@ export default function Flags({ activeFlags, config, id = 'flags' }) {
   else if (activeFlags?.black) activeFlagType = 'black';
   else if (activeFlags?.blue) activeFlagType = 'blue';
   else if (activeFlags?.checkered) activeFlagType = 'checkered';
+  else if (activeFlags?.green) activeFlagType = 'green';
 
   const isVisible = !!activeFlagType;
   const pos = config?.positions?.[id] || { x: 320, y: 50, scale: 1 };
@@ -35,6 +36,7 @@ export default function Flags({ activeFlags, config, id = 'flags' }) {
     red: { bg: '#e74c3c', text: 'BANDERA ROJA', color: themeNormalText },
     black: { bg: '#111111', text: blackText, color: themeNormalText },
     blue: { bg: '#2980b9', text: 'BANDERA AZUL - DEJAR PASAR', color: themeNormalText },
+    green: { bg: '#27ae60', text: 'BANDERA VERDE - PISTA LIBRE', color: themeNormalText },
     tricolor: {
       bg: 'linear-gradient(90deg, #0033a0 33.3%, #ffffff 33.3%, #ffffff 66.6%, #ff8200 66.6%)',
       text: 'AUTO DE SEGURIDAD', color: '#000', textShadow: '0px 0px 8px rgba(255,255,255,0.8)'

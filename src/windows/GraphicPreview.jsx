@@ -21,6 +21,7 @@ import LapTimeEvolution from '../graphics/LapTimeEvolution';
 import TrackAlert from '../graphics/TrackAlert';
 import PenaltyAlert from '../graphics/PenaltyAlert';
 import Branding from '../graphics/Branding';
+import LayoutEdits from '../components/LayoutEdits';
 import { formatDriverName } from '../utils/formatDriverName';
 
 // Datos de ejemplo para mostrar la gráfica real en PERSONALIZAR cuando todavía no hay carrera cargada.
@@ -48,7 +49,7 @@ const DEMO_HISTORY = (() => {
 const ROLE_BY_ID = { relator: 'Relator', comentarista: 'Comentarista', notero1: 'Notero', notero2: 'Notero', circuito: 'Circuito' };
 
 // Renderiza la gráfica REAL indicada por `id`, siempre visible y con datos reales (si hay) o de ejemplo.
-export default function GraphicPreview({ id, config, positions, drivers, sessionInfo }) {
+function GraphicPreviewContent({ id, config, positions, drivers, sessionInfo }) {
   const realDrivers = Array.isArray(drivers) && drivers.length > 0;
   const session = sessionInfo && sessionInfo.name ? sessionInfo : (realDrivers ? (sessionInfo || {}) : DEMO_SESSION);
   const eventName = session.name || config?.campeonato || '';
@@ -116,4 +117,13 @@ export default function GraphicPreview({ id, config, positions, drivers, session
     default:
       return null;
   }
+}
+
+// Con los objetos movidos desde la pestaña EDITOR (config.layoutEdits_<id>), igual que en el overlay real
+export default function GraphicPreview(props) {
+  return (
+    <LayoutEdits id={props.id} config={props.config}>
+      <GraphicPreviewContent {...props} />
+    </LayoutEdits>
+  );
 }

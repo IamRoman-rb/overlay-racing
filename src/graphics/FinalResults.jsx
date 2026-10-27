@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { getSkinStyle } from '../utils/skinStyles';
 import pilotoAnonimo from '../assets/piloto_anonimo.png';
 import { getAnimDuration, getRollClip } from '../utils/animationTiming';
@@ -13,7 +13,8 @@ function parseLapSeconds(str) {
   return isNaN(val) || val <= 0 ? null : val;
 }
 
-export default function FinalResults({ drivers, config, isVisible, id = 'finalResults' }) {
+// navSignal: { dir: 1 | -1, n } -> el operador pasó de página a mano (botones ANT / SIG del panel). n cuenta los pedidos.
+export default function FinalResults({ drivers, config, isVisible, id = 'finalResults', navSignal = null }) {
   const pos = config?.positions?.[id] || { x: 240, y: 40, scale: 1 };
 
   const themeBg = config?.themeBg || 'rgba(0,0,0,0.95)';
@@ -63,20 +64,36 @@ export default function FinalResults({ drivers, config, isVisible, id = 'finalRe
   if (animStyle === 'flip') transformHidden = `scale(${pos.scale}) scaleY(0.05)`;
   if (animStyle === 'rotate') transformHidden = `scale(${pos.scale * 0.85}) rotate(-15deg)`;
 
+  // Al usar ANT / SIG el pase de páginas pasa a manual: la rotación automática se detiene hasta que se oculte la gráfica
+  const [manualPaging, setManualPaging] = useState(false);
+
   useEffect(() => {
     if (!isVisible || drivers.length <= itemsPerPage) {
       setPage(0);
+      setManualPaging(false);
       return;
     }
+    if (manualPaging) return;
     const totalPages = Math.ceil(drivers.length / itemsPerPage);
     const interval = setInterval(() => {
       setPage(prev => (prev + 1) % totalPages);
     }, 8000);
     return () => clearInterval(interval);
-  }, [isVisible, drivers.length, itemsPerPage]);
+  }, [isVisible, drivers.length, itemsPerPage, manualPaging]);
+
+  const totalPages = Math.ceil(drivers.length / itemsPerPage);
+
+  // Pedido manual de página (llega una vez por cada clic: se distingue por el contador n)
+  const lastNavRef = useRef(navSignal?.n || 0);
+  useEffect(() => {
+    if (!navSignal || navSignal.n === lastNavRef.current) return;
+    lastNavRef.current = navSignal.n;
+    if (!isVisible || totalPages <= 1) return;
+    setManualPaging(true);
+    setPage(prev => (prev + navSignal.dir + totalPages) % totalPages);
+  }, [navSignal, isVisible, totalPages]);
 
   const currentDrivers = drivers.slice(page * itemsPerPage, (page + 1) * itemsPerPage);
-  const totalPages = Math.ceil(drivers.length / itemsPerPage);
 
   // FORMATO BROADCAST: estilo transmisión TV (F1/MotoGP) — tabla a la izquierda, foto del ganador a la derecha
   if (isBroadcast) {

@@ -1,5 +1,7 @@
 // src/windows/DriversTable.jsx
 import { useState, useEffect } from 'react';
+import Icon from '../components/Icon';
+import { withIcons } from '../components/withIcons';
 
 let ipcRenderer = null;
 if (typeof window !== 'undefined' && typeof window.require === 'function') {
@@ -103,7 +105,7 @@ export default function DriversTable({ drivers, colors, activeDriverNumber, onTo
                       }}
                       title={t('driversTable.lapTimesTitle')}
                     >
-                      ⏱️ {selectedLapTimesNumber === d.number ? t('driversTable.lapTimesRemove') : t('driversTable.lapTimesShow')}
+                      <Icon name="timer" /> {selectedLapTimesNumber === d.number ? t('driversTable.lapTimesRemove') : t('driversTable.lapTimesShow')}
                     </button>
                   )}
 
@@ -129,7 +131,7 @@ export default function DriversTable({ drivers, colors, activeDriverNumber, onTo
                       minWidth: '70px', transition: 'background-color 0.2s'
                     }}
                   >
-                    {pitBtnText}
+                    {withIcons(pitBtnText)}
                   </button>
                 </td>
               </tr>

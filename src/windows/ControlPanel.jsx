@@ -6,6 +6,8 @@ import DriversTable from '../windows/DriversTable';
 import TrackMapPanel from '../windows/TrackMapPanel';
 import UserManual from '../windows/UserManual';
 import VoteHistory from '../windows/VoteHistory';
+import GraphicEditor from '../windows/GraphicEditor';
+import Icon from '../components/Icon';
 import banderaCuadrosImg from '../assets/bandera cuadros.jpg';
 import { createTranslator } from '../i18n/translations';
 
@@ -22,7 +24,16 @@ const colors = {
 };
 
 const inputStyle = { backgroundColor: colors.bgInput, border: `1px solid ${colors.border}`, color: colors.textMain, padding: '8px', fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', width: '100%', boxSizing: 'border-box', outline: 'none' };
-const btnStyle = (isActive = false) => ({ backgroundColor: isActive ? colors.yellow : colors.bgInput, color: isActive ? '#000' : colors.textMain, border: `1px solid ${isActive ? colors.yellow : colors.border}`, padding: '12px 10px', fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', cursor: 'pointer', width: '100%', textAlign: 'center', transition: 'all 0.2s ease' });
+// Botón encendido (isActive) = "hundido" y de color; apagado = "en relieve". Además index.css les da feedback al pasar el mouse y al presionarlos.
+const btnStyle = (isActive = false, glow = 'rgba(255,204,0,0.35)') => ({
+  backgroundColor: isActive ? colors.yellow : colors.bgInput, color: isActive ? '#000' : colors.textMain,
+  border: `1px solid ${isActive ? colors.yellow : colors.border}`, padding: '12px 10px', fontSize: '11px', fontWeight: 'bold',
+  textTransform: 'uppercase', cursor: 'pointer', width: '100%', textAlign: 'center',
+  display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
+  boxShadow: isActive ? `inset 0 3px 8px rgba(0,0,0,0.4), 0 0 12px ${glow}` : '0 2px 0 rgba(0,0,0,0.55)',
+  transition: 'transform 0.08s ease, filter 0.12s ease, box-shadow 0.12s ease, background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease'
+});
+const NO_FLAGS = { red: false, tricolor: false, black: false, blue: false, checkered: false, green: false };
 const sectionTitleStyle = { fontSize: '10px', color: colors.textMuted, textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '8px', marginTop: 0 };
 
 // Distribuciones de la pestaña PANEL (se elige en PERSONALIZAR): dónde van los botones respecto de la tabla de pilotos.
@@ -71,8 +82,8 @@ const SearchSelectControl = ({ id, label, value, options, isActive, onChange, on
         {value ? (
           <span
             onMouseDown={(e) => { e.preventDefault(); pick(''); }}
-            style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', color: colors.textMuted, cursor: 'pointer', fontSize: '12px', lineHeight: 1 }}
-          >✕</span>
+            style={{ position: 'absolute', right: '6px', top: '50%', transform: 'translateY(-50%)', color: colors.textMuted, cursor: 'pointer', fontSize: '14px', lineHeight: 1 }}
+          ><Icon name="close" /></span>
         ) : null}
         {open && matches.length > 0 && (
           <ul style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 50, margin: 0, padding: 0, listStyle: 'none', maxHeight: '220px', overflowY: 'auto', backgroundColor: colors.bgInput, border: `1px solid ${colors.border}`, borderTop: 'none', boxShadow: '0 8px 20px rgba(0,0,0,0.6)' }}>
@@ -136,6 +147,37 @@ const SystemMonitor = ({ t }) => {
       <Meter label="RAM" value={stats?.ram ?? null} text={pct(stats?.ram)} color={usageColor(stats?.ram ?? 0)}
         title={stats ? `${stats.ramUsedGb.toFixed(1)} / ${stats.ramTotalGb.toFixed(1)} GB` : undefined} />
       <Meter label="TEMP" value={temp} text={temp === null ? '--' : `${Math.round(temp)}°C`} color={tempColor(temp ?? 0)} title={tempTitle} />
+    </div>
+  );
+};
+
+// Semáforo en vivo: repite en el panel lo que sale al aire (luces rojas que se encienden de a una y el cambio a verde al largar)
+const StartingLightsIndicator = ({ visible, step, t }) => {
+  const isGo = visible && step >= 6;
+  const label = !visible ? t('panel.lightsOff')
+    : isGo ? t('panel.lightsGreen')
+    : step === 0 ? t('panel.lightsPreparing')
+    : step === 5 ? t('panel.lightsReadyToGo')
+    : t('panel.lightsRedCount', { step });
+  const labelColor = !visible ? colors.textMuted : isGo ? colors.green : '#ff5533';
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', backgroundColor: '#0c0c0c', border: `1px solid ${isGo ? colors.green : colors.border}`, borderRadius: '6px', padding: '10px 8px', marginBottom: '8px', transition: 'border-color 0.2s ease, box-shadow 0.2s ease', boxShadow: isGo ? '0 0 14px rgba(46,204,113,0.45)' : 'none' }}>
+      <div style={{ display: 'flex', gap: '10px', backgroundColor: '#111', padding: '8px 12px', borderRadius: '24px', border: '2px solid #000' }}>
+        {[1, 2, 3, 4, 5].map(i => {
+          const lit = visible && (isGo || step >= i);
+          const on = isGo ? '#2ecc71' : '#ff2200';
+          const glow = isGo ? '46,204,113' : '255,34,0';
+          return (
+            <span key={i} style={{
+              width: '24px', height: '24px', borderRadius: '50%', border: '2px solid #000', boxSizing: 'border-box',
+              backgroundColor: lit ? on : '#3a0a0a',
+              boxShadow: lit ? `0 0 12px 3px rgba(${glow},0.8)` : 'inset 0 0 6px rgba(0,0,0,0.8)',
+              transition: 'background-color 0.15s ease, box-shadow 0.15s ease'
+            }} />
+          );
+        })}
+      </div>
+      <span style={{ fontSize: '10px', fontWeight: 'bold', letterSpacing: '1px', color: labelColor, textTransform: 'uppercase' }}>{label}</span>
     </div>
   );
 };
@@ -211,17 +253,17 @@ const WeatherControl = ({ id, label, config, isActive, onToggle, setConfig, t })
     <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
       <div style={{ display: 'flex', gap: '2px' }}>
         <button onClick={() => onToggle(id)} style={{ ...btnStyle(isActive), flex: 1 }}>{label}</button>
-        <button onClick={fetchWeather} disabled={loading} style={{ backgroundColor: colors.bgInput, color: colors.yellow, border: `1px solid ${colors.border}`, cursor: 'pointer', padding: '0 10px' }}>
-          {loading ? '⏳' : '☁️'}
+        <button onClick={fetchWeather} disabled={loading} title={t('panel.weatherCircuitTitle')} style={{ backgroundColor: colors.bgInput, color: colors.yellow, border: `1px solid ${colors.border}`, cursor: 'pointer', padding: '0 10px', boxShadow: '0 2px 0 rgba(0,0,0,0.55)' }}>
+          <Icon name={loading ? 'hourglass_top' : 'cloud'} size="1.5em" />
         </button>
-        <button onClick={fetchWeatherHere} disabled={loading} title={t('panel.weatherHereTitle')} style={{ backgroundColor: colors.bgInput, color: colors.yellow, border: `1px solid ${colors.border}`, cursor: 'pointer', padding: '0 10px' }}>
-          📍
+        <button onClick={fetchWeatherHere} disabled={loading} title={t('panel.weatherHereTitle')} style={{ backgroundColor: colors.bgInput, color: colors.yellow, border: `1px solid ${colors.border}`, cursor: 'pointer', padding: '0 10px', boxShadow: '0 2px 0 rgba(0,0,0,0.55)' }}>
+          <Icon name="location_on" size="1.5em" />
         </button>
       </div>
       <div style={{ ...inputStyle, textTransform: 'none', cursor: 'default', display: 'flex', alignItems: 'center', minHeight: '32px' }}>
         {wd ? (
           <span style={{ fontSize: '10px' }}>
-            {Math.round(wd.temp)}°C · ST {wd.feelsLike !== null ? Math.round(wd.feelsLike) + '°' : '-'} · 💨 {wd.windSpeed !== undefined ? Math.round(wd.windSpeed) : '-'}km/h · 💧 {wd.humidity !== null ? Math.round(wd.humidity) + '%' : '-'} · 🌧 {wd.precipProb !== null ? Math.round(wd.precipProb) + '%' : '-'}{wd.place ? ` · 📍 ${wd.place}` : ''}
+            {Math.round(wd.temp)}°C · ST {wd.feelsLike !== null ? Math.round(wd.feelsLike) + '°' : '-'} · <Icon name="air" /> {wd.windSpeed !== undefined ? Math.round(wd.windSpeed) : '-'}km/h · <Icon name="water_drop" /> {wd.humidity !== null ? Math.round(wd.humidity) + '%' : '-'} · <Icon name="rainy" /> {wd.precipProb !== null ? Math.round(wd.precipProb) + '%' : '-'}{wd.place ? <> · <Icon name="location_on" /> {wd.place}</> : ''}
           </span>
         ) : (
           <span style={{ color: colors.textMuted, fontSize: '10px' }}>{t('panel.weatherNoData')}</span>
@@ -254,7 +296,7 @@ const GRAPHIC_IDS = [
   'lapTimesHistory', 'trackAlert', 'penaltyAlert', 'branding'
 ];
 
-const TAB_IDS = ['panel', 'campeonato', 'votaciones', 'sanciones', 'cloud', 'zocalos', 'disenos', 'circuito', 'ajustes', 'personalizar', 'manual'];
+const TAB_IDS = ['panel', 'campeonato', 'votaciones', 'sanciones', 'cloud', 'zocalos', 'disenos', 'circuito', 'ajustes', 'personalizar', 'editor', 'manual'];
 
 export default function ControlPanel() {
   const [config, setConfig] = useState({
@@ -280,7 +322,7 @@ export default function ControlPanel() {
   const [activeDriverInfo, setActiveDriverInfo] = useState(null);
   const [showWinner, setShowWinner] = useState(false);
   const [showFastestLap, setShowFastestLap] = useState(false);
-  const [activeFlags, setActiveFlags] = useState({ red: false, tricolor: false, black: false, blue: false, checkered: false });
+  const [activeFlags, setActiveFlags] = useState(NO_FLAGS);
   const [graphics, setGraphics] = useState({ relator: false, comentarista: false, notero1: false, notero2: false, circuito: false, clima: false });
   const [showLapCounter, setShowLapCounter] = useState(false);
   const panelContainerRef = useRef(null);
@@ -293,6 +335,7 @@ export default function ControlPanel() {
   const [showLapTimesHistory, setShowLapTimesHistory] = useState(false);
   const [selectedCurveId, setSelectedCurveId] = useState(null);
   const [trackAlertType, setTrackAlertType] = useState('yellow');
+  const [trackAlertVisible, setTrackAlertVisible] = useState(false); // la alerta de curva está al aire
   const [selectedLapTimesDriver, setSelectedLapTimesDriver] = useState(null);
   const [autoScrape, setAutoScrape] = useState(false);
   const [scrapeProgress, setScrapeProgress] = useState(0);
@@ -368,6 +411,7 @@ export default function ControlPanel() {
       ipcRenderer.invoke('get-initial-state').then(state => {
         const sl = state?.broadcastState?.startingLights;
         if (sl) { setStartingLightsVisible(sl.isVisible); setStartingLightsStep(sl.step); }
+        setTrackAlertVisible(!!state?.broadcastState?.trackAlert?.isVisible);
         const pa = state?.broadcastState?.penaltyAlert;
         if (pa) setPenaltyAlertState(pa);
       }).catch(() => { });
@@ -385,6 +429,7 @@ export default function ControlPanel() {
         if (data) { setStartingLightsVisible(data.isVisible); setStartingLightsStep(data.step); }
       };
       const handleUpdatePenalty = (event, data) => { if (data) setPenaltyAlertState(data); };
+      const handleUpdateTrackAlert = (event, data) => { if (data) setTrackAlertVisible(!!data.isVisible); };
       const handleCloudStatus = (event, data) => { if (data) setCloudConnected(!!data.connected); };
       const handleUpdateChampionship = (event, data) => { if (data) setChampionship(data); };
 
@@ -392,6 +437,7 @@ export default function ControlPanel() {
       ipcRenderer.on('update-ip', handleUpdateIp);
       ipcRenderer.on('update-starting-lights', handleStartingLights);
       ipcRenderer.on('update-penalty', handleUpdatePenalty);
+      ipcRenderer.on('update-track-alert', handleUpdateTrackAlert);
       ipcRenderer.on('cloud-status', handleCloudStatus);
       ipcRenderer.on('update-championship', handleUpdateChampionship);
 
@@ -400,6 +446,7 @@ export default function ControlPanel() {
         ipcRenderer.removeListener('update-ip', handleUpdateIp);
         ipcRenderer.removeListener('update-starting-lights', handleStartingLights);
         ipcRenderer.removeListener('update-penalty', handleUpdatePenalty);
+        ipcRenderer.removeListener('update-track-alert', handleUpdateTrackAlert);
         ipcRenderer.removeListener('cloud-status', handleCloudStatus);
         ipcRenderer.removeListener('update-championship', handleUpdateChampionship);
       }
@@ -749,7 +796,7 @@ export default function ControlPanel() {
   };
 
   const handleToggleFlag = (type) => {
-    const newFlags = { red: false, tricolor: false, black: false, blue: false, checkered: false };
+    const newFlags = { ...NO_FLAGS };
     if (!activeFlags[type]) newFlags[type] = true;
     autoFlagRef.current = null; // el operador toma el control: el modo automático ya no toca esta bandera
     applyFlags(newFlags);
@@ -767,11 +814,11 @@ export default function ControlPanel() {
     const target = flag.includes('red') ? 'red' : (flag.includes('yellow') ? 'tricolor' : null);
     if (target) {
       autoFlagRef.current = target;
-      applyFlags({ red: false, tricolor: false, black: false, blue: false, checkered: false, [target]: true });
+      applyFlags({ ...NO_FLAGS, [target]: true });
     } else if (autoFlagRef.current) {
       const own = autoFlagRef.current;
       autoFlagRef.current = null;
-      if (activeFlagsRef.current?.[own]) applyFlags({ red: false, tricolor: false, black: false, blue: false, checkered: false });
+      if (activeFlagsRef.current?.[own]) applyFlags({ ...NO_FLAGS });
     }
   };
 
@@ -903,7 +950,7 @@ export default function ControlPanel() {
           {fastestDriver && fastestDriver.bestLap !== '-' && (
             <div style={{ textAlign: 'right', borderRight: `1px solid ${colors.border}`, paddingRight: '20px' }}>
               <div style={{ fontSize: '9px', color: colors.textMuted, fontWeight: 'bold', letterSpacing: '1px' }}>
-                {t('header.bestLap')} {newRecordAlert && '🔥'}
+                {t('header.bestLap')} {newRecordAlert && <Icon name="local_fire_department" color={colors.red} />}
               </div>
               <div style={{ fontSize: '14px', color: newRecordAlert ? colors.red : colors.yellow, fontWeight: 'bold', transition: 'color 0.3s' }}>
                 #{fastestDriver.number} {fastestDriver.name.toUpperCase()} <span style={{ color: colors.textMain, marginLeft: '5px' }}>{fastestDriver.bestLap}</span>
@@ -924,14 +971,14 @@ export default function ControlPanel() {
             </div>
           )}
           <div style={{ border: `1px solid ${autoScrape ? colors.green : colors.textMuted}`, color: autoScrape ? colors.green : colors.textMuted, backgroundColor: autoScrape ? 'rgba(46, 204, 113, 0.1)' : 'transparent', padding: '6px 12px', fontSize: '11px', fontWeight: 'bold', borderRadius: '4px', letterSpacing: '1px', marginLeft: '10px' }}>
-            {autoScrape ? t('header.live') : t('header.paused')}
+            {autoScrape ? t.i('header.live') : t('header.paused')}
           </div>
         </div>
       </div>
 
-      <div style={{ display: 'flex', borderBottom: `1px solid ${colors.border}` }}>
+      <div style={{ display: 'flex', overflowX: 'auto', flexShrink: 0, borderBottom: `1px solid ${colors.border}` }}>
         {TAB_IDS.map(tabId => (
-          <div key={tabId} onClick={() => setActiveTab(tabId)} style={{ padding: '12px 25px', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer', borderBottom: activeTab === tabId ? `3px solid ${colors.textMain}` : '3px solid transparent', color: activeTab === tabId ? colors.textMain : colors.textMuted, display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <div key={tabId} onClick={() => setActiveTab(tabId)} style={{ padding: '12px 18px', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0, borderBottom: activeTab === tabId ? `3px solid ${colors.textMain}` : '3px solid transparent', color: activeTab === tabId ? colors.textMain : colors.textMuted, display: 'flex', alignItems: 'center', gap: '6px' }}>
             {t(`tabs.${tabId}`)}
             {tabId === 'sanciones' && penaltyAlertState.isVisible && (
               <span style={{ width: '7px', height: '7px', borderRadius: '50%', backgroundColor: colors.red, animation: 'pulsePenaltyDot 1s infinite' }} />
@@ -950,9 +997,10 @@ export default function ControlPanel() {
             <div className="panel-section" style={panelSectionStyle}>
             <div style={sectionTitleStyle}>{t('panel.flagsSection')}</div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(110px, 1fr))', gap: '5px', marginBottom: '20px' }}>
-              <button onClick={() => handleToggleFlag('red')} style={{ ...btnStyle(activeFlags.red), backgroundColor: activeFlags.red ? '#e74c3c' : colors.bgInput, color: activeFlags.red ? '#fff' : colors.textMain, borderColor: activeFlags.red ? '#c0392b' : colors.border }}>{t('panel.flagRed')}</button>
-              <button onClick={() => handleToggleFlag('tricolor')} style={{ ...btnStyle(activeFlags.tricolor), background: activeFlags.tricolor ? 'linear-gradient(90deg, #0033a0, #fff, #ff8200)' : colors.bgInput, color: activeFlags.tricolor ? '#000' : colors.textMain, textShadow: activeFlags.tricolor ? '0 0 3px #fff' : 'none' }}>{t('panel.flagTricolor')}</button>
-              <button onClick={() => handleToggleFlag('blue')} style={{ ...btnStyle(activeFlags.blue), backgroundColor: activeFlags.blue ? '#3498db' : colors.bgInput, color: activeFlags.blue ? '#fff' : colors.textMain, borderColor: activeFlags.blue ? '#2980b9' : colors.border }}>{t('panel.flagBlue')}</button>
+              <button onClick={() => handleToggleFlag('red')} style={{ ...btnStyle(activeFlags.red), backgroundColor: activeFlags.red ? '#e74c3c' : colors.bgInput, color: activeFlags.red ? '#fff' : colors.textMain, borderColor: activeFlags.red ? '#c0392b' : colors.border }}><Icon name="flag" color={activeFlags.red ? '#fff' : '#e74c3c'} />{t('panel.flagRed')}</button>
+              <button onClick={() => handleToggleFlag('tricolor')} style={{ ...btnStyle(activeFlags.tricolor), background: activeFlags.tricolor ? 'linear-gradient(90deg, #0033a0, #fff, #ff8200)' : colors.bgInput, color: activeFlags.tricolor ? '#000' : colors.textMain, textShadow: activeFlags.tricolor ? '0 0 3px #fff' : 'none' }}><Icon name="flag" color={activeFlags.tricolor ? '#000' : '#f1c40f'} />{t('panel.flagTricolor')}</button>
+              <button onClick={() => handleToggleFlag('blue')} style={{ ...btnStyle(activeFlags.blue), backgroundColor: activeFlags.blue ? '#3498db' : colors.bgInput, color: activeFlags.blue ? '#fff' : colors.textMain, borderColor: activeFlags.blue ? '#2980b9' : colors.border }}><Icon name="flag" color={activeFlags.blue ? '#fff' : '#3498db'} />{t('panel.flagBlue')}</button>
+              <button onClick={() => handleToggleFlag('green')} style={{ ...btnStyle(activeFlags.green, 'rgba(39,174,96,0.55)'), backgroundColor: activeFlags.green ? '#27ae60' : colors.bgInput, color: activeFlags.green ? '#fff' : colors.textMain, borderColor: activeFlags.green ? '#1e8449' : colors.border }}><Icon name="flag" color={activeFlags.green ? '#fff' : '#2ecc71'} />{t('panel.flagGreen')}</button>
               <button
                 onClick={() => handleToggleFlag('checkered')}
                 style={{
@@ -965,10 +1013,10 @@ export default function ControlPanel() {
                   fontWeight: 'bold'
                 }}
               >
-                {t('panel.flagCheckered')}
+                <Icon name="sports_score" />{t('panel.flagCheckered')}
               </button>
               <div style={{ display: 'flex', gap: '2px' }}>
-                <button onClick={() => handleToggleFlag('black')} style={{ ...btnStyle(activeFlags.black), flex: 1, backgroundColor: activeFlags.black ? '#111' : colors.bgInput, color: activeFlags.black ? '#fff' : colors.textMain, borderColor: activeFlags.black ? '#000' : colors.border, padding: '12px 5px' }}>{t('panel.flagBlack')}</button>
+                <button onClick={() => handleToggleFlag('black')} style={{ ...btnStyle(activeFlags.black), flex: 1, backgroundColor: activeFlags.black ? '#111' : colors.bgInput, color: activeFlags.black ? '#fff' : colors.textMain, borderColor: activeFlags.black ? '#000' : colors.border, padding: '12px 5px' }}><Icon name="flag" color={activeFlags.black ? '#fff' : '#bbb'} />{t('panel.flagBlack')}</button>
                 <input name="blackFlagNumber" value={config.blackFlagNumber || ''} onChange={(e) => handleDirectSave('blackFlagNumber', e.target.value)} style={{ ...inputStyle, width: '45px', textAlign: 'center', padding: '0', fontSize: '14px' }} placeholder={t('panel.flagNumberPlaceholder')} title={t('panel.flagNumberTitle')} />
               </div>
               <label title={t('panel.autoFlagsHint')} style={{ gridColumn: '1 / -1', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '11px', color: colors.textMuted, cursor: 'pointer' }}>
@@ -1007,15 +1055,15 @@ export default function ControlPanel() {
     <button
       onClick={() => setTrackAlertType('yellow')}
       style={{ ...btnStyle(trackAlertType === 'yellow'), backgroundColor: trackAlertType === 'yellow' ? '#f1c40f' : colors.bgInput, color: trackAlertType === 'yellow' ? '#000' : colors.textMain }}
-    >{t('panel.trackAlertYellow')}</button>
+    >{t.i('panel.trackAlertYellow')}</button>
     <button
       onClick={() => setTrackAlertType('incident')}
       style={{ ...btnStyle(trackAlertType === 'incident'), backgroundColor: trackAlertType === 'incident' ? '#e74c3c' : colors.bgInput, color: '#fff' }}
-    >{t('panel.trackAlertIncident')}</button>
+    >{t.i('panel.trackAlertIncident')}</button>
   </div>
   <div style={{ display: 'flex', gap: '5px' }}>
-    <button onClick={handleTriggerTrackAlert} style={{ ...btnStyle(false), flex: 2, backgroundColor: '#2ecc71', color: '#fff', borderColor: '#27ae60' }}>
-      {t('panel.emitAlert')}
+    <button onClick={handleTriggerTrackAlert} style={{ ...btnStyle(trackAlertVisible, 'rgba(46,204,113,0.6)'), flex: 2, backgroundColor: trackAlertVisible ? '#1e8449' : '#2ecc71', color: '#fff', borderColor: '#27ae60' }}>
+      {t.i('panel.emitAlert')}
     </button>
     <button onClick={handleHideTrackAlert} style={{ ...btnStyle(false), flex: 1, backgroundColor: '#c0392b', color: '#fff', borderColor: '#e74c3c' }}>
       {t('common.hide')}
@@ -1027,26 +1075,27 @@ export default function ControlPanel() {
             <div className="panel-section" style={panelSectionStyle}>
             <div style={sectionTitleStyle}>{t('panel.gridSection')}</div>
             <div style={{ display: 'flex', gap: '5px', marginBottom: '5px' }}>
-              <button onClick={() => { if (ipcRenderer) ipcRenderer.send('grid-prev'); }} style={{ ...btnStyle(), flex: 1 }}>{t('panel.gridPrev')}</button>
+              <button onClick={() => { if (ipcRenderer) ipcRenderer.send('grid-prev'); }} style={{ ...btnStyle(), flex: 1 }}>{t.i('panel.gridPrev')}</button>
               <button onClick={handleToggleGrid} style={{ ...btnStyle(showGrid), flex: 2 }}>{t('panel.showGrid')}</button>
-              <button onClick={() => { if (ipcRenderer) ipcRenderer.send('grid-next'); }} style={{ ...btnStyle(), flex: 1 }}>{t('panel.gridNext')}</button>
+              <button onClick={() => { if (ipcRenderer) ipcRenderer.send('grid-next'); }} style={{ ...btnStyle(), flex: 1 }}>{t.i('panel.gridNext')}</button>
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '5px' }}>
               <button onClick={() => setAutoScrape(!autoScrape)} style={{ ...btnStyle(autoScrape), color: autoScrape ? '#000' : colors.green, borderColor: autoScrape ? colors.yellow : colors.green }}>
-                {autoScrape ? t('panel.autoScrapeStop') : t('panel.autoScrapeStart')}
+                {autoScrape ? t.i('panel.autoScrapeStop') : t.i('panel.autoScrapeStart')}
               </button>
             </div>
             </div>
 
             <div className="panel-section" style={panelSectionStyle}>
             <div style={sectionTitleStyle}>{t('graphics.startingLights')}</div>
+            <StartingLightsIndicator visible={startingLightsVisible} step={startingLightsStep} t={t} />
             <div style={{ display: 'flex', gap: '5px', marginBottom: '15px' }}>
               {startingLightsStep === 5 ? (
                 <button
                   onClick={handleGoLights}
                   style={{ ...btnStyle(true), flex: 2, backgroundColor: '#2ecc71', color: '#fff', borderColor: '#27ae60', animation: 'pulseStartingLights 0.8s infinite' }}
                 >
-                  {t('panel.lightsGo')}
+                  {t.i('panel.lightsGo')}
                 </button>
               ) : (
                 <button
@@ -1054,13 +1103,13 @@ export default function ControlPanel() {
                   disabled={startingLightsVisible}
                   style={{
                     ...btnStyle(startingLightsVisible), flex: 2,
-                    backgroundColor: startingLightsVisible ? '#ff2200' : '#2ecc71',
+                    backgroundColor: startingLightsVisible && startingLightsStep < 6 ? '#ff2200' : '#2ecc71',
                     color: '#fff',
                     borderColor: startingLightsVisible ? '#c0392b' : '#27ae60',
-                    cursor: startingLightsVisible ? 'default' : 'pointer'
+                    cursor: startingLightsVisible ? 'default' : 'pointer', opacity: 1
                   }}
                 >
-                  {startingLightsVisible ? t('panel.lightsCounting', { step: startingLightsStep }) : t('panel.lightsStart')}
+                  {startingLightsVisible ? (startingLightsStep >= 6 ? t('panel.lightsGreen') : t.i('panel.lightsCounting', { step: startingLightsStep })) : t.i('panel.lightsStart')}
                 </button>
               )}
               <button onClick={handleHideLights} style={{ ...btnStyle(false), flex: 1, backgroundColor: '#c0392b', color: '#fff', borderColor: '#e74c3c' }}>
@@ -1103,7 +1152,7 @@ export default function ControlPanel() {
               ))}
             </div>
             <div style={{ fontSize: '10px', color: (config.logo || config.categoryLogo) ? colors.textMuted : '#e67e22', marginBottom: '15px' }}>
-              {(config.logo || config.categoryLogo) ? t('panel.brandingNote', { tab: t('tabs.personalizar') }) : t('panel.brandingNoLogos', { tab: t('tabs.personalizar') })}
+              {(config.logo || config.categoryLogo) ? t('panel.brandingNote', { tab: t('tabs.personalizar') }) : t.i('panel.brandingNoLogos', { tab: t('tabs.personalizar') })}
             </div>
             </div>
 
@@ -1143,12 +1192,12 @@ export default function ControlPanel() {
                 {showLapTimesHistory ? t('panel.hideChart') : t('panel.showChart')}
               </button>
               <button onClick={handleResetLapTimesHistory} style={{ ...btnStyle(false), flex: 1, backgroundColor: '#c0392b', color: '#fff', borderColor: '#e74c3c' }}>
-                {t('panel.resetShort')}
+                {t.i('panel.resetShort')}
               </button>
             </div>
             {selectedLapTimesDriver && (
               <div style={{ fontSize: '10px', color: '#00b8cc', fontWeight: 'bold', marginTop: '-8px', marginBottom: '15px' }}>
-                {t('panel.lapTimesFocusNote', { number: selectedLapTimesDriver })}
+                {t.i('panel.lapTimesFocusNote', { number: selectedLapTimesDriver })}
               </div>
             )}
             </div>
@@ -1176,10 +1225,10 @@ export default function ControlPanel() {
             <div style={sectionTitleStyle}>{t('panel.backupSection')}</div>
             <div style={{ display: 'flex', gap: '5px', marginBottom: '15px' }}>
               <button onClick={handleSaveBackup} style={{ ...btnStyle(), flex: 1, backgroundColor: '#8e44ad', color: '#fff', borderColor: '#9b59b6' }}>
-                {t('panel.saveCurrent')}
+                {t.i('panel.saveCurrent')}
               </button>
               <button onClick={handleLoadBackup} style={{ ...btnStyle(), flex: 1, backgroundColor: '#d35400', color: '#fff', borderColor: '#e67e22' }}>
-                {t('panel.loadSaved')}
+                {t.i('panel.loadSaved')}
               </button>
             </div>
             </div>
@@ -1187,7 +1236,11 @@ export default function ControlPanel() {
             <div className="panel-section" style={panelSectionStyle}>
             <div style={sectionTitleStyle}>{t('panel.closingSection')}</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', marginBottom: '20px' }}>
-              <button onClick={handleToggleFinalResults} style={btnStyle(showFinalResults)}>{t('panel.finalResultBtn')}</button>
+              <div style={{ display: 'flex', gap: '5px' }}>
+                <button onClick={() => { if (ipcRenderer) ipcRenderer.send('final-results-prev'); }} title={t('panel.finalPrevTitle')} style={{ ...btnStyle(), flex: 1 }}>{t.i('panel.gridPrev')}</button>
+                <button onClick={handleToggleFinalResults} style={{ ...btnStyle(showFinalResults), flex: 2 }}>{t('panel.finalResultBtn')}</button>
+                <button onClick={() => { if (ipcRenderer) ipcRenderer.send('final-results-next'); }} title={t('panel.finalNextTitle')} style={{ ...btnStyle(), flex: 1 }}>{t.i('panel.gridNext')}</button>
+              </div>
               <button onClick={handleToggleWinner} style={btnStyle(showWinner)}>{t('panel.showWinnerBtn')}</button>
             </div>
             </div>
@@ -1213,7 +1266,7 @@ export default function ControlPanel() {
             )}
             {scrapeError && (
               <div style={{ backgroundColor: 'rgba(231, 76, 60, 0.1)', border: `1px solid ${colors.red}`, borderRadius: '6px', padding: '12px 16px', marginBottom: '15px', color: colors.red, fontSize: '12px', fontWeight: 'bold', lineHeight: '1.5', wordBreak: 'break-word' }}>
-                ⚠️ {scrapeErrorText}
+                <Icon name="warning" color="#f1c40f" /> {scrapeErrorText}
               </div>
             )}
             <DriversTable
@@ -1233,7 +1286,7 @@ export default function ControlPanel() {
         <div style={{ padding: '30px', flex: 1, backgroundColor: colors.bgApp, overflowY: 'auto' }}>
 
           <h2 style={{ color: colors.yellow, marginTop: 0, borderBottom: `1px solid ${colors.border}`, paddingBottom: '10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span>{t('campeonato.title')}</span>
+            <span>{t.i('campeonato.title')}</span>
             <span style={{ fontSize: '14px', color: colors.textMuted, fontWeight: 'normal' }}>
               {t('campeonato.driversLoaded')} <span style={{ color: colors.textMain, fontWeight: 'bold' }}>{championship.length}</span>
             </span>
@@ -1249,10 +1302,10 @@ export default function ControlPanel() {
               disabled={loadingExcel}
               style={{ ...btnStyle(false), width: 'auto', padding: '12px 20px', backgroundColor: '#2ecc71', color: 'white', borderColor: '#27ae60', cursor: loadingExcel ? 'wait' : 'pointer', opacity: loadingExcel ? 0.7 : 1 }}
             >
-              {loadingExcel ? t('campeonato.loadingExcelBtn') : t('campeonato.loadExcelBtn')}
+              {loadingExcel ? t.i('campeonato.loadingExcelBtn') : t.i('campeonato.loadExcelBtn')}
             </button>
             <button onClick={handleSaveExcelTemplate} style={{ ...btnStyle(false), width: 'auto', padding: '12px 20px' }}>
-              {t('campeonato.templateBtn')}
+              {t.i('campeonato.templateBtn')}
             </button>
             <button onClick={handleToggleVirtualChamp} style={{ ...btnStyle(showVirtualChamp), width: 'auto', padding: '12px 20px' }}>
               {showVirtualChamp ? t('panel.hideChampTable') : t('panel.showChampTable')}
@@ -1261,7 +1314,7 @@ export default function ControlPanel() {
 
           {championship.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '40px', color: colors.textMuted, fontStyle: 'italic', backgroundColor: colors.bgPanel, borderRadius: '8px', border: `1px solid ${colors.border}` }}>
-              {t('campeonato.emptyState', { btn: t('campeonato.loadExcelBtn') })}
+              {t('campeonato.emptyState', { btn: t.i('campeonato.loadExcelBtn') })}
             </div>
           ) : (
             <div style={{ width: '100%', overflowX: 'auto', backgroundColor: colors.bgPanel, borderRadius: '8px', border: `1px solid ${colors.border}` }}>
@@ -1300,7 +1353,7 @@ export default function ControlPanel() {
         <div style={{ padding: '30px', flex: 1, backgroundColor: colors.bgApp, overflowY: 'auto' }}>
 
           <h2 style={{ color: colors.yellow, marginTop: 0, borderBottom: `1px solid ${colors.border}`, paddingBottom: '10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span>{t('votaciones.title')}</span>
+            <span>{t.i('votaciones.title')}</span>
             <span style={{ fontSize: '14px', color: colors.textMuted, fontWeight: 'normal' }}>
               {t('votaciones.totalVotes')} <span style={{ color: colors.textMain, fontWeight: 'bold' }}>{Object.values(votes).reduce((a, b) => a + b, 0)}</span>
             </span>
@@ -1313,7 +1366,7 @@ export default function ControlPanel() {
             borderRadius: '6px', padding: '14px 18px', marginBottom: '25px'
           }}>
             <span style={{ fontSize: '22px', animation: isTunnelReady ? 'none' : 'pulseTunnelDot 1.2s infinite' }}>
-              {isTunnelReady ? '✅' : '⏳'}
+              {isTunnelReady ? <Icon name="check_circle" color={colors.green} size="1.1em" /> : <Icon name="hourglass_top" color={colors.yellow} size="1.1em" />}
             </span>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
               <span style={{ fontSize: '12px', fontWeight: 'bold', color: isTunnelReady ? colors.green : colors.yellow, letterSpacing: '0.5px' }}>
@@ -1328,7 +1381,7 @@ export default function ControlPanel() {
           <div style={{ display: 'flex', gap: '10px', marginBottom: '30px' }}>
             <button onClick={handleToggleVotingQR} style={{ ...btnStyle(showVotingQR), flex: 1 }}>{showVotingQR ? t('votaciones.hideQr') : t('votaciones.showQr')}</button>
             <button onClick={handleToggleVotingResults} style={{ ...btnStyle(showVotingResults), flex: 1 }}>{showVotingResults ? t('votaciones.hideResults') : t('votaciones.showResults')}</button>
-            <button onClick={handleResetVotes} style={{ ...btnStyle(), backgroundColor: '#c0392b', color: '#fff', borderColor: '#e74c3c', flex: 1 }}>{t('votaciones.resetVotesBtn')}</button>
+            <button onClick={handleResetVotes} style={{ ...btnStyle(), backgroundColor: '#c0392b', color: '#fff', borderColor: '#e74c3c', flex: 1 }}>{t.i('votaciones.resetVotesBtn')}</button>
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
@@ -1389,7 +1442,7 @@ export default function ControlPanel() {
         <div style={{ padding: '30px', flex: 1, backgroundColor: colors.bgApp, overflowY: 'auto' }}>
 
           <h2 style={{ color: colors.yellow, marginTop: 0, borderBottom: `1px solid ${colors.border}`, paddingBottom: '10px' }}>
-            {t('sanciones.title')}
+            {t.i('sanciones.title')}
           </h2>
           <p style={{ color: colors.textMuted, fontSize: '13px', marginBottom: '25px', maxWidth: '700px' }}>
             {t('sanciones.description')}
@@ -1430,7 +1483,7 @@ export default function ControlPanel() {
                   onClick={() => { navigator.clipboard?.writeText(stewardUrl); }}
                   style={{ ...btnStyle(false), width: 'fit-content', padding: '6px 14px', fontSize: '10px', marginTop: '4px' }}
                 >
-                  {t('sanciones.copyLink')}
+                  {t.i('sanciones.copyLink')}
                 </button>
               )}
             </div>
@@ -1473,13 +1526,13 @@ export default function ControlPanel() {
                   onClick={() => setPenaltyType('investigation')}
                   style={{ ...btnStyle(penaltyType === 'investigation'), flex: 1, backgroundColor: penaltyType === 'investigation' ? colors.yellow : colors.bgInput, color: penaltyType === 'investigation' ? '#000' : colors.textMain }}
                 >
-                  {t('sanciones.investigationBtn')}
+                  {t.i('sanciones.investigationBtn')}
                 </button>
                 <button
                   onClick={() => setPenaltyType('penalty')}
                   style={{ ...btnStyle(penaltyType === 'penalty'), flex: 1, backgroundColor: penaltyType === 'penalty' ? colors.red : colors.bgInput, color: '#fff', borderColor: penaltyType === 'penalty' ? '#c0392b' : colors.border }}
                 >
-                  {t('sanciones.penaltyBtn')}
+                  {t.i('sanciones.penaltyBtn')}
                 </button>
               </div>
             </div>
@@ -1508,8 +1561,8 @@ export default function ControlPanel() {
           </div>
 
           <div style={{ display: 'flex', gap: '10px', maxWidth: '700px' }}>
-            <button onClick={handleTriggerPenalty} style={{ ...btnStyle(false), flex: 2, backgroundColor: '#2ecc71', color: '#fff', borderColor: '#27ae60', padding: '14px' }}>
-              {t('sanciones.emitBtn')}
+            <button onClick={handleTriggerPenalty} style={{ ...btnStyle(penaltyAlertState.isVisible, 'rgba(46,204,113,0.6)'), flex: 2, backgroundColor: penaltyAlertState.isVisible ? '#1e8449' : '#2ecc71', color: '#fff', borderColor: '#27ae60', padding: '14px' }}>
+              {t.i('sanciones.emitBtn')}
             </button>
             <button onClick={handleHidePenalty} style={{ ...btnStyle(false), flex: 1, backgroundColor: '#c0392b', color: '#fff', borderColor: '#e74c3c', padding: '14px' }}>
               {t('common.hide')}
@@ -1522,7 +1575,7 @@ export default function ControlPanel() {
         <div style={{ padding: '30px', flex: 1, backgroundColor: colors.bgApp, overflowY: 'auto' }}>
 
           <h2 style={{ color: colors.yellow, marginTop: 0, borderBottom: `1px solid ${colors.border}`, paddingBottom: '10px' }}>
-            {t('cloud.title')}
+            {t.i('cloud.title')}
           </h2>
           <div style={{
             display: 'flex', alignItems: 'center', gap: '10px',
@@ -1569,10 +1622,10 @@ export default function ControlPanel() {
                 disabled={cloudSaving}
                 style={{ ...btnStyle(false), flex: 1, backgroundColor: '#2ecc71', color: '#fff', borderColor: '#27ae60', padding: '14px' }}
               >
-                {cloudSaving ? t('cloud.saving') : t('cloud.saveBtn')}
+                {cloudSaving ? t('cloud.saving') : t.i('cloud.saveBtn')}
               </button>
               {cloudSavedFlash && (
-                <span style={{ fontSize: '12px', color: colors.green, fontWeight: 'bold' }}>{t('cloud.savedFlash')}</span>
+                <span style={{ fontSize: '12px', color: colors.green, fontWeight: 'bold' }}>{t.i('cloud.savedFlash')}</span>
               )}
             </div>
           </div>
@@ -1585,6 +1638,10 @@ export default function ControlPanel() {
 
       {activeTab === 'personalizar' && (
         <CustomizePanel drivers={drivers} sessionInfo={sessionInfo} config={config} positions={positions} defaultPositions={defaultPositions} onUpdatePositions={handleUpdatePositions} onSelectLogo={handleSelectLogo} onSelectCategoryLogo={handleSelectCategoryLogo} onSelectPhotosFolder={handleSelectPhotosFolder} onClearLogo={() => handleDirectSave('logo', null)} onClearCategoryLogo={() => handleDirectSave('categoryLogo', null)} onClearPhotosFolder={() => handleDirectSave('photosPath', null)} onConfigChange={handleDirectSave} colors={colors} inputStyle={inputStyle} btnStyle={btnStyle} t={t} />
+      )}
+
+      {activeTab === 'editor' && (
+        <GraphicEditor drivers={drivers} sessionInfo={sessionInfo} config={config} positions={positions} onConfigChange={handleDirectSave} colors={colors} inputStyle={inputStyle} btnStyle={btnStyle} t={t} />
       )}
 
       {activeTab === 'circuito' && (
@@ -1609,7 +1666,7 @@ export default function ControlPanel() {
                 <textarea value={zocalo.text} onChange={(e) => handleZocaloChange(index, 'text', e.target.value)} onBlur={handleSave} style={{ ...inputStyle, fontSize: '14px', padding: '10px', flex: 1, minHeight: '80px', resize: 'vertical' }} placeholder={t('zocalos.textPlaceholder')} />
               </div>
               <button onClick={() => handleToggleZocalo(index)} style={{ ...btnStyle(activeZocaloIndex === index), padding: '12px', fontSize: '13px', marginTop: '5px', backgroundColor: activeZocaloIndex === index ? colors.red : colors.bgInput, color: activeZocaloIndex === index ? '#fff' : colors.textMain, borderColor: activeZocaloIndex === index ? colors.red : colors.border }}>
-                {activeZocaloIndex === index ? t('zocalos.removeFromAir') : t('zocalos.putOnAir')}
+                {activeZocaloIndex === index ? t.i('zocalos.removeFromAir') : t.i('zocalos.putOnAir')}
               </button>
             </div>
           ))}
@@ -1634,8 +1691,8 @@ export default function ControlPanel() {
                     {hasDesign ? <img src={config[configKey]} alt={graphicLabel} style={{ maxHeight: '70px', maxWidth: '90%', objectFit: 'contain' }} /> : <span style={{ fontSize: '10px', color: '#444' }}>{t('disenos.standardDesign')}</span>}
                   </div>
                   <div style={{ display: 'flex', gap: '5px' }}>
-                    <button onClick={async () => { if (ipcRenderer) { const imgData = await ipcRenderer.invoke('select-design-image', graphicLabel); if (imgData) handleDirectSave(configKey, imgData); } }} style={{ ...btnStyle(false), flex: 1, padding: '8px', fontSize: '10px' }}>{t('disenos.loadBtn')}</button>
-                    {hasDesign && <button onClick={() => handleDirectSave(configKey, null)} style={{ ...btnStyle(false), flex: 1, backgroundColor: '#c0392b', color: 'white', border: 'none', padding: '8px', fontSize: '10px' }}>{t('common.removeBtn')}</button>}
+                    <button onClick={async () => { if (ipcRenderer) { const imgData = await ipcRenderer.invoke('select-design-image', graphicLabel); if (imgData) handleDirectSave(configKey, imgData); } }} style={{ ...btnStyle(false), flex: 1, padding: '8px', fontSize: '10px' }}>{t.i('disenos.loadBtn')}</button>
+                    {hasDesign && <button onClick={() => handleDirectSave(configKey, null)} style={{ ...btnStyle(false), flex: 1, backgroundColor: '#c0392b', color: 'white', border: 'none', padding: '8px', fontSize: '10px' }}>{t.i('common.removeBtn')}</button>}
                   </div>
                 </div>
               );

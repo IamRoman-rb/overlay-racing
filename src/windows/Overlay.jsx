@@ -22,6 +22,8 @@ import LapTimeEvolution from '../graphics/LapTimeEvolution';
 import TrackAlert from '../graphics/TrackAlert';
 import PenaltyAlert from '../graphics/PenaltyAlert';
 import Branding from '../graphics/Branding';
+import LayoutEdits from '../components/LayoutEdits';
+import Icon from '../components/Icon';
 
 let ipcRenderer = null;
 if (typeof window !== 'undefined' && typeof window.require === 'function') {
@@ -41,7 +43,7 @@ function buildEventHandlers(setters) {
     setBattleData, setCustomZocaloData, setIsVotingQRVisible, setIsVotingResultsVisible,
     setVotes, setIsLapCounterVisible, setIsVirtualChampVisible, setPitStopState,
     setStartingLightsState, setIsLapTimesHistoryVisible, setLapTimesHistory,
-    setLapTimesFocus, setTrackAlert, setPenaltyAlert
+    setLapTimesFocus, setTrackAlert, setPenaltyAlert, setFinalResultsNav
   } = setters;
 
   return {
@@ -60,6 +62,9 @@ function buildEventHandlers(setters) {
     },
     'set-grid-visibility': (data) => setIsGridVisible(!!data),
     'set-final-results-visibility': (data) => setIsFinalResultsVisible(!!data),
+    // ANT / SIG del panel: pasan la página de los resultados finales a mano (n cuenta los pedidos para distinguir clics seguidos)
+    'final-results-next': () => setFinalResultsNav(prev => ({ dir: 1, n: prev.n + 1 })),
+    'final-results-prev': () => setFinalResultsNav(prev => ({ dir: -1, n: prev.n + 1 })),
     'set-winner-visibility': (data) => {
       if (data) { setIsWinnerVisible(data.isVisible); if (data.driver) setWinnerData(data.driver); }
     },
@@ -92,13 +97,14 @@ export default function Overlay() {
   const [positions, setPositions] = useState({});
   const [battleData, setBattleData] = useState({ isVisible: false, pos: 1 });
   const [isFinalResultsVisible, setIsFinalResultsVisible] = useState(false);
+  const [finalResultsNav, setFinalResultsNav] = useState({ dir: 1, n: 0 });
   const [isWinnerVisible, setIsWinnerVisible] = useState(false);
   const [winnerData, setWinnerData] = useState(null);
   const [isTickerVisible, setIsTickerVisible] = useState(false);
   const [isTowerVisible, setIsTowerVisible] = useState(false);
   const [graphics, setGraphics] = useState({});
   const [isGridVisible, setIsGridVisible] = useState(false);
-  const [activeFlags, setActiveFlags] = useState({ red: false, tricolor: false, black: false, blue: false, checkered: false });
+  const [activeFlags, setActiveFlags] = useState({ red: false, tricolor: false, black: false, blue: false, checkered: false, green: false });
   const [isFastestLapVisible, setIsFastestLapVisible] = useState(false);
   const [isDriverInfoVisible, setIsDriverInfoVisible] = useState(false);
   const [driverInfoData, setDriverInfoData] = useState(null);
@@ -132,7 +138,7 @@ export default function Overlay() {
       setBattleData, setCustomZocaloData, setIsVotingQRVisible, setIsVotingResultsVisible,
       setVotes, setIsLapCounterVisible, setIsVirtualChampVisible, setPitStopState,
       setStartingLightsState, setIsLapTimesHistoryVisible, setLapTimesHistory,
-      setLapTimesFocus, setTrackAlert, setPenaltyAlert
+      setLapTimesFocus, setTrackAlert, setPenaltyAlert, setFinalResultsNav
     });
 
     if (ipcRenderer) {
@@ -246,40 +252,93 @@ export default function Overlay() {
 
       {!inBrowserMode && (
         <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '30px', WebkitAppRegion: 'drag', zIndex: 9999, display: 'flex', justifyContent: 'flex-end', opacity: isHovered ? 1 : 0, transition: 'opacity 0.3s ease' }}>
-          <button onClick={() => ipcRenderer.send('overlay-control', 'minimize')} style={{ backgroundColor: 'rgba(0,0,0,0.5)', border: 'none', color: 'white', width: '40px', height: '30px', cursor: 'pointer', WebkitAppRegion: 'no-drag' }}>—</button>
-          <button onClick={() => ipcRenderer.send('overlay-control', 'maximize')} style={{ backgroundColor: 'rgba(0,0,0,0.5)', border: 'none', color: 'white', width: '40px', height: '30px', cursor: 'pointer', WebkitAppRegion: 'no-drag' }}>🗖</button>
-          <button onClick={() => ipcRenderer.send('overlay-control', 'close')} style={{ backgroundColor: 'rgba(231, 76, 60, 0.8)', border: 'none', color: 'white', width: '40px', height: '30px', cursor: 'pointer', WebkitAppRegion: 'no-drag' }}>✕</button>
+          <button onClick={() => ipcRenderer.send('overlay-control', 'minimize')} style={{ backgroundColor: 'rgba(0,0,0,0.5)', border: 'none', color: 'white', width: '40px', height: '30px', cursor: 'pointer', WebkitAppRegion: 'no-drag' }}><Icon name="minimize" /></button>
+          <button onClick={() => ipcRenderer.send('overlay-control', 'maximize')} style={{ backgroundColor: 'rgba(0,0,0,0.5)', border: 'none', color: 'white', width: '40px', height: '30px', cursor: 'pointer', WebkitAppRegion: 'no-drag' }}><Icon name="crop_square" /></button>
+          <button onClick={() => ipcRenderer.send('overlay-control', 'close')} style={{ backgroundColor: 'rgba(231, 76, 60, 0.8)', border: 'none', color: 'white', width: '40px', height: '30px', cursor: 'pointer', WebkitAppRegion: 'no-drag' }}><Icon name="close" /></button>
         </div>
       )}
 
-      <StartingLights isVisible={startingLightsState?.isVisible} step={startingLightsState?.step} config={combinedConfig} />
-      <CustomZocalo isVisible={customZocaloData?.isVisible} title={customZocaloData?.title} text={customZocaloData?.text} config={combinedConfig} />
-      <Ticker drivers={formattedDrivers} config={combinedConfig} isVisible={isTickerVisible} sessionInfo={sessionInfo} />
-      <TimingTower drivers={formattedDrivers} config={combinedConfig} isVisible={isTowerVisible} sessionInfo={sessionInfo} />
-      <Battle drivers={formattedDrivers} config={combinedConfig} isVisible={battleData?.isVisible} battleFocusPos={battleData?.pos} />
-      <StartingGrid drivers={formattedDrivers} config={combinedConfig} isVisible={isGridVisible} />
-      <FinalResults drivers={formattedDrivers} config={combinedConfig} isVisible={isFinalResultsVisible} />
-      <WinnerGraphic driver={formattedWinnerData} config={combinedConfig} isVisible={isWinnerVisible} sessionInfo={sessionInfo} />
-      <Flags activeFlags={activeFlags} config={combinedConfig} />
+      {/* Cada gráfica va dentro de LayoutEdits: aplica los objetos que se movieron desde la pestaña EDITOR */}
+      <LayoutEdits id="startingLights" config={combinedConfig}>
+        <StartingLights isVisible={startingLightsState?.isVisible} step={startingLightsState?.step} config={combinedConfig} />
+      </LayoutEdits>
+      <LayoutEdits id="customZocalo" config={combinedConfig}>
+        <CustomZocalo isVisible={customZocaloData?.isVisible} title={customZocaloData?.title} text={customZocaloData?.text} config={combinedConfig} />
+      </LayoutEdits>
+      <LayoutEdits id="ticker" config={combinedConfig}>
+        <Ticker drivers={formattedDrivers} config={combinedConfig} isVisible={isTickerVisible} sessionInfo={sessionInfo} />
+      </LayoutEdits>
+      <LayoutEdits id="tower" config={combinedConfig}>
+        <TimingTower drivers={formattedDrivers} config={combinedConfig} isVisible={isTowerVisible} sessionInfo={sessionInfo} />
+      </LayoutEdits>
+      <LayoutEdits id="battle" config={combinedConfig}>
+        <Battle drivers={formattedDrivers} config={combinedConfig} isVisible={battleData?.isVisible} battleFocusPos={battleData?.pos} />
+      </LayoutEdits>
+      <LayoutEdits id="grid" config={combinedConfig}>
+        <StartingGrid drivers={formattedDrivers} config={combinedConfig} isVisible={isGridVisible} />
+      </LayoutEdits>
+      <LayoutEdits id="finalResults" config={combinedConfig}>
+        <FinalResults drivers={formattedDrivers} config={combinedConfig} isVisible={isFinalResultsVisible} navSignal={finalResultsNav} />
+      </LayoutEdits>
+      <LayoutEdits id="winner" config={combinedConfig}>
+        <WinnerGraphic driver={formattedWinnerData} config={combinedConfig} isVisible={isWinnerVisible} sessionInfo={sessionInfo} />
+      </LayoutEdits>
+      <LayoutEdits id="flags" config={combinedConfig}>
+        <Flags activeFlags={activeFlags} config={combinedConfig} />
+      </LayoutEdits>
 
-      <LowerThird id="relator" role="Relator" name={safeConfig.relator} isVisible={graphics?.relator} config={combinedConfig} />
-      <LowerThird id="comentarista" role="Comentarista" name={safeConfig.comentarista} isVisible={graphics?.comentarista} config={combinedConfig} />
-      <LowerThird id="notero1" role="Notero" name={safeConfig.notero1} isVisible={graphics?.notero1} config={combinedConfig} />
-      <LowerThird id="notero2" role="Notero" name={safeConfig.notero2} isVisible={graphics?.notero2} config={combinedConfig} />
-      <LowerThird id="circuito" role="Circuito" name={safeConfig.circuito} isVisible={graphics?.circuito} config={combinedConfig} />
-      <Weather data={safeConfig.weatherData} isVisible={graphics?.clima} config={combinedConfig} />
+      <LayoutEdits id="relator" config={combinedConfig}>
+        <LowerThird id="relator" role="Relator" name={safeConfig.relator} isVisible={graphics?.relator} config={combinedConfig} />
+      </LayoutEdits>
+      <LayoutEdits id="comentarista" config={combinedConfig}>
+        <LowerThird id="comentarista" role="Comentarista" name={safeConfig.comentarista} isVisible={graphics?.comentarista} config={combinedConfig} />
+      </LayoutEdits>
+      <LayoutEdits id="notero1" config={combinedConfig}>
+        <LowerThird id="notero1" role="Notero" name={safeConfig.notero1} isVisible={graphics?.notero1} config={combinedConfig} />
+      </LayoutEdits>
+      <LayoutEdits id="notero2" config={combinedConfig}>
+        <LowerThird id="notero2" role="Notero" name={safeConfig.notero2} isVisible={graphics?.notero2} config={combinedConfig} />
+      </LayoutEdits>
+      <LayoutEdits id="circuito" config={combinedConfig}>
+        <LowerThird id="circuito" role="Circuito" name={safeConfig.circuito} isVisible={graphics?.circuito} config={combinedConfig} />
+      </LayoutEdits>
+      <LayoutEdits id="clima" config={combinedConfig}>
+        <Weather data={safeConfig.weatherData} isVisible={graphics?.clima} config={combinedConfig} />
+      </LayoutEdits>
 
-      <FastestLap drivers={formattedDrivers} config={combinedConfig} isVisible={isFastestLapVisible} />
-      <DriverInfo driver={formattedDriverInfoData} config={combinedConfig} isVisible={isDriverInfoVisible} />
-      <VotingQR isVisible={isVotingQRVisible} config={combinedConfig} localIp={localIp} />
-      <VotingResults isVisible={isVotingResultsVisible} drivers={formattedDrivers} votes={votes} config={combinedConfig} />
-      <LapCounter isVisible={isLapCounterVisible} config={combinedConfig} sessionInfo={sessionInfo} />
-      <VirtualChamp isVisible={isVirtualChampVisible} config={combinedConfig} />
-      <LapTimeEvolution history={lapTimesHistory} drivers={formattedDrivers} config={combinedConfig} isVisible={isLapTimesHistoryVisible} focusDriver={lapTimesFocus} />
-      <PitStopTimer isVisible={pitStopState?.isVisible} pitState={pitStopState} config={combinedConfig} />
-      <TrackAlert alert={trackAlert} config={combinedConfig} />
-      <PenaltyAlert alert={penaltyAlert} config={combinedConfig} />
-      <Branding isVisible={graphics?.branding} config={combinedConfig} />
+      <LayoutEdits id="fastestLap" config={combinedConfig}>
+        <FastestLap drivers={formattedDrivers} config={combinedConfig} isVisible={isFastestLapVisible} />
+      </LayoutEdits>
+      <LayoutEdits id="driverInfo" config={combinedConfig}>
+        <DriverInfo driver={formattedDriverInfoData} config={combinedConfig} isVisible={isDriverInfoVisible} />
+      </LayoutEdits>
+      <LayoutEdits id="votingQR" config={combinedConfig}>
+        <VotingQR isVisible={isVotingQRVisible} config={combinedConfig} localIp={localIp} />
+      </LayoutEdits>
+      <LayoutEdits id="votingResults" config={combinedConfig}>
+        <VotingResults isVisible={isVotingResultsVisible} drivers={formattedDrivers} votes={votes} config={combinedConfig} />
+      </LayoutEdits>
+      <LayoutEdits id="lapCounter" config={combinedConfig}>
+        <LapCounter isVisible={isLapCounterVisible} config={combinedConfig} sessionInfo={sessionInfo} />
+      </LayoutEdits>
+      <LayoutEdits id="virtualChamp" config={combinedConfig}>
+        <VirtualChamp isVisible={isVirtualChampVisible} config={combinedConfig} />
+      </LayoutEdits>
+      <LayoutEdits id="lapTimesHistory" config={combinedConfig}>
+        <LapTimeEvolution history={lapTimesHistory} drivers={formattedDrivers} config={combinedConfig} isVisible={isLapTimesHistoryVisible} focusDriver={lapTimesFocus} />
+      </LayoutEdits>
+      <LayoutEdits id="pitStop" config={combinedConfig}>
+        <PitStopTimer isVisible={pitStopState?.isVisible} pitState={pitStopState} config={combinedConfig} />
+      </LayoutEdits>
+      <LayoutEdits id="trackAlert" config={combinedConfig}>
+        <TrackAlert alert={trackAlert} config={combinedConfig} />
+      </LayoutEdits>
+      <LayoutEdits id="penaltyAlert" config={combinedConfig}>
+        <PenaltyAlert alert={penaltyAlert} config={combinedConfig} />
+      </LayoutEdits>
+      <LayoutEdits id="branding" config={combinedConfig}>
+        <Branding isVisible={graphics?.branding} config={combinedConfig} />
+      </LayoutEdits>
     </div>
   );
 }

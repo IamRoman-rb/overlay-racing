@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { getSkinStyle } from '../utils/skinStyles';
+import Icon from '../components/Icon';
 import { getAnimDuration, getRollClip } from '../utils/animationTiming';
 
 const PODIUM_COLORS = { 1: '#ffd700', 2: '#c0c0c0', 3: '#cd7f32' };
@@ -75,8 +76,8 @@ export default function TimingTower({ drivers, config, isVisible, id = 'tower', 
   }, [drivers]);
 
   const renderTrend = (trend) => {
-    if (trend === 'up') return <span style={{ color: '#2ecc71', fontSize: '12px' }}>▲</span>;
-    if (trend === 'down') return <span style={{ color: themeMain, fontSize: '12px' }}>▼</span>; 
+    if (trend === 'up') return <span style={{ color: '#2ecc71', fontSize: '16px', lineHeight: 1 }}><Icon name="arrow_drop_up" size="1.4em" /></span>;
+    if (trend === 'down') return <span style={{ color: themeMain, fontSize: '16px', lineHeight: 1 }}><Icon name="arrow_drop_down" size="1.4em" /></span>; 
     return <span style={{ color: '#7f8c8d', fontSize: '12px' }}>-</span>;
   };
 

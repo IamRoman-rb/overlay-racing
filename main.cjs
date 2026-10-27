@@ -443,7 +443,7 @@ let broadcastState = {
   lapTimesHistory: false,
   lapTimesFocus: null,
   winner: { isVisible: false, driver: null },
-  flags: { red: false, tricolor: false, black: false, blue: false },
+  flags: { red: false, tricolor: false, black: false, blue: false, checkered: false, green: false },
   driverInfo: { isVisible: false, driver: null },
   battle: { isVisible: false, pos: 1 },
   customZocalo: { isVisible: false, title: '', text: '' },
@@ -614,6 +614,8 @@ ipcMain.on('toggle-grid', (e, data) => { broadcastState.grid = data; broadcast('
 ipcMain.on('grid-next', () => broadcast('grid-next'));
 ipcMain.on('grid-prev', () => broadcast('grid-prev'));
 ipcMain.on('toggle-final-results', (e, data) => { broadcastState.finalResults = data; broadcast('set-final-results-visibility', data); });
+ipcMain.on('final-results-next', () => broadcast('final-results-next'));
+ipcMain.on('final-results-prev', () => broadcast('final-results-prev'));
 ipcMain.on('toggle-winner', (e, data) => { broadcastState.winner = data; broadcast('set-winner-visibility', data); });
 ipcMain.on('toggle-flag', (e, data) => { broadcastState.flags = data; broadcast('set-flag-visibility', data); });
 ipcMain.on('toggle-fastest-lap', (e, data) => { broadcastState.fastestLap = data; broadcast('set-fastest-lap-visibility', data); });

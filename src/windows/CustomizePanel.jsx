@@ -69,7 +69,9 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
       const k = stageRect.width / 1920;
 
       let left = Infinity, top = Infinity, right = -Infinity, bottom = -Infinity;
-      Array.from(wrap.children).forEach(child => {
+      // GraphicPreview envuelve la gráfica en un contenedor sin caja (display: contents): se mide lo que hay adentro
+      const contentRoot = wrap.querySelector('[data-le-wrap]') || wrap;
+      Array.from(contentRoot.children).forEach(child => {
         if (child.tagName === 'STYLE' || child.tagName === 'SCRIPT') return;
         const r = child.getBoundingClientRect();
         if (r.width <= 0 || r.height <= 0) return;
@@ -826,7 +828,7 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
               <div><label style={{ fontSize: '9px', color: colors.textMuted }}>{t('personalizar.axisY')}</label><input type="number" value={positions[selectedGraphic].y} onChange={(e) => handlePosChange('y', e.target.value)} style={inputStyle} /></div>
               <div><label style={{ fontSize: '9px', color: colors.textMuted }}>{t('personalizar.scaleLabel')}</label><input type="number" step="0.1" value={positions[selectedGraphic].scale} onChange={(e) => handlePosChange('scale', e.target.value)} style={inputStyle} /></div>
             </div>
-            <button onClick={handleResetPosition} style={{ ...btnStyle(false), backgroundColor: '#c0392b', color: 'white', border: '1px solid #e74c3c' }}> {t('personalizar.resetPositionBtn')} </button>
+            <button onClick={handleResetPosition} style={{ ...btnStyle(false), backgroundColor: '#c0392b', color: 'white', border: '1px solid #e74c3c' }}> {t.i('personalizar.resetPositionBtn')} </button>
           </div>
         )}
 
@@ -837,8 +839,8 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
             <div style={{ backgroundColor: '#000', height: '60px', borderRadius: '4px', border: `1px solid ${colors.border}`, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
               {config.logo ? <img src={config.logo} alt="Logo" style={{ maxHeight: '50px', maxWidth: '90%', objectFit: 'contain' }} /> : <span style={{ fontSize: '10px', color: '#444' }}>{t('common.emptyLabel')}</span>}
             </div>
-            <button onClick={onSelectLogo} style={{ ...btnStyle(false), padding: '6px', fontSize: '9px' }}>{t('common.loadBtn')}</button>
-            {config.logo && <button onClick={onClearLogo} style={{ ...btnStyle(false), backgroundColor: '#c0392b', color: 'white', border: 'none', padding: '6px', fontSize: '9px' }}>{t('common.removeBtn')}</button>}
+            <button onClick={onSelectLogo} style={{ ...btnStyle(false), padding: '6px', fontSize: '9px' }}>{t.i('common.loadBtn')}</button>
+            {config.logo && <button onClick={onClearLogo} style={{ ...btnStyle(false), backgroundColor: '#c0392b', color: 'white', border: 'none', padding: '6px', fontSize: '9px' }}>{t.i('common.removeBtn')}</button>}
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
@@ -846,8 +848,8 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
             <div style={{ backgroundColor: '#000', height: '60px', borderRadius: '4px', border: `1px solid ${colors.border}`, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
               {config.categoryLogo ? <img src={config.categoryLogo} alt="Logo" style={{ maxHeight: '50px', maxWidth: '90%', objectFit: 'contain' }} /> : <span style={{ fontSize: '10px', color: '#444' }}>{t('common.emptyLabel')}</span>}
             </div>
-            <button onClick={onSelectCategoryLogo} style={{ ...btnStyle(false), padding: '6px', fontSize: '9px' }}>{t('common.loadBtn')}</button>
-            {config.categoryLogo && <button onClick={onClearCategoryLogo} style={{ ...btnStyle(false), backgroundColor: '#c0392b', color: 'white', border: 'none', padding: '6px', fontSize: '9px' }}>{t('common.removeBtn')}</button>}
+            <button onClick={onSelectCategoryLogo} style={{ ...btnStyle(false), padding: '6px', fontSize: '9px' }}>{t.i('common.loadBtn')}</button>
+            {config.categoryLogo && <button onClick={onClearCategoryLogo} style={{ ...btnStyle(false), backgroundColor: '#c0392b', color: 'white', border: 'none', padding: '6px', fontSize: '9px' }}>{t.i('common.removeBtn')}</button>}
           </div>
         </div>
 
@@ -856,8 +858,8 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
           <div style={{ fontSize: '10px', color: config.photosPath ? colors.green : '#555', wordBreak: 'break-all', marginBottom: '5px' }}>
             {config.photosPath ? config.photosPath : t('personalizar.noFolderSelected')}
           </div>
-          <button onClick={onSelectPhotosFolder} style={{ ...btnStyle(false), padding: '8px', fontSize: '10px' }}>{t('personalizar.chooseFolderBtn')}</button>
-          {config.photosPath && <button onClick={onClearPhotosFolder} style={{ ...btnStyle(false), backgroundColor: '#c0392b', color: 'white', border: 'none', padding: '8px', fontSize: '10px' }}>{t('personalizar.removeFolderBtn')}</button>}
+          <button onClick={onSelectPhotosFolder} style={{ ...btnStyle(false), padding: '8px', fontSize: '10px' }}>{t.i('personalizar.chooseFolderBtn')}</button>
+          {config.photosPath && <button onClick={onClearPhotosFolder} style={{ ...btnStyle(false), backgroundColor: '#c0392b', color: 'white', border: 'none', padding: '8px', fontSize: '10px' }}>{t.i('personalizar.removeFolderBtn')}</button>}
         </div>
 
       </div>
@@ -877,9 +879,9 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
             </label>
           ))}
           <span style={{ flex: 1 }} />
-          <button onClick={() => handleCenter('x')} style={{ ...btnStyle(false), width: 'auto', padding: '6px 12px', fontSize: '9px' }}>{t('personalizar.centerH')}</button>
-          <button onClick={() => handleCenter('y')} style={{ ...btnStyle(false), width: 'auto', padding: '6px 12px', fontSize: '9px' }}>{t('personalizar.centerV')}</button>
-          <button onClick={() => handleCenter('both')} style={{ ...btnStyle(false), width: 'auto', padding: '6px 12px', fontSize: '9px' }}>{t('personalizar.centerBoth')}</button>
+          <button onClick={() => handleCenter('x')} style={{ ...btnStyle(false), width: 'auto', padding: '6px 12px', fontSize: '9px' }}>{t.i('personalizar.centerH')}</button>
+          <button onClick={() => handleCenter('y')} style={{ ...btnStyle(false), width: 'auto', padding: '6px 12px', fontSize: '9px' }}>{t.i('personalizar.centerV')}</button>
+          <button onClick={() => handleCenter('both')} style={{ ...btnStyle(false), width: 'auto', padding: '6px 12px', fontSize: '9px' }}>{t.i('personalizar.centerBoth')}</button>
         </div>
 
         <div ref={previewAreaRef} style={{ flex: 1, minHeight: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>

@@ -15,6 +15,11 @@ export default function StartingLights({ isVisible, step = 0, config }) {
 
   const lightsCount = 5;
   const isGo = step >= 6;
+  // Secuencia: las luces se encienden en rojo de a una y, al dar la salida, TODAS cambian a verde
+  const RED = { on: '#ff2200', glow: '255,34,0' };
+  const GREEN = { on: '#2ecc71', glow: '46,204,113' };
+  const lightColor = isGo ? GREEN : RED;
+  const isLitAt = (litIndex) => isGo || step >= litIndex;
 
   let animName = 'slideInLights';
   if (animStyle === 'fade') animName = 'fadeInLights';
@@ -55,14 +60,14 @@ export default function StartingLights({ isVisible, step = 0, config }) {
         }}>
           {Array.from({ length: lightsCount }).map((_, i) => {
             const litIndex = i + 1;
-            const isLit = !isGo && step >= litIndex;
+            const isLit = isLitAt(litIndex);
             return (
               <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 {[0, 1].map(j => (
                   <div key={j} style={{
                     width: '38px', height: '38px', borderRadius: '50%',
-                    backgroundColor: isLit ? '#ff2200' : '#3a0a0a',
-                    boxShadow: isLit ? '0 0 20px 6px rgba(255,34,0,0.85)' : 'inset 0 0 8px rgba(0,0,0,0.8)',
+                    backgroundColor: isLit ? lightColor.on : '#3a0a0a',
+                    boxShadow: isLit ? `0 0 20px 6px rgba(${lightColor.glow},0.85)` : 'inset 0 0 8px rgba(0,0,0,0.8)',
                     border: '3px solid #000',
                     transition: 'background-color 0.15s ease, box-shadow 0.15s ease'
                   }} />
@@ -93,12 +98,12 @@ export default function StartingLights({ isVisible, step = 0, config }) {
         <div style={{ display: 'flex', gap: '10px' }}>
           {Array.from({ length: lightsCount }).map((_, i) => {
             const litIndex = i + 1;
-            const isLit = !isGo && step >= litIndex;
+            const isLit = isLitAt(litIndex);
             return (
               <div key={i} style={{
                 width: '32px', height: '32px', borderRadius: '50%',
-                backgroundColor: isLit ? '#ff2200' : 'rgba(58,10,10,0.6)',
-                boxShadow: isLit ? '0 0 18px 6px rgba(255,34,0,0.85)' : 'none',
+                backgroundColor: isLit ? lightColor.on : 'rgba(58,10,10,0.6)',
+                boxShadow: isLit ? `0 0 18px 6px rgba(${lightColor.glow},0.85)` : 'none',
                 border: '2px solid rgba(0,0,0,0.6)',
                 transition: 'background-color 0.15s ease, box-shadow 0.15s ease'
               }} />
@@ -116,26 +121,17 @@ export default function StartingLights({ isVisible, step = 0, config }) {
         }}>
           {Array.from({ length: lightsCount }).map((_, i) => {
             const litIndex = i + 1;
-            const isLit = !isGo && step >= litIndex;
+            const isLit = isLitAt(litIndex);
             return (
               <div key={i} style={{
                 width: '50px', height: '50px', borderRadius: '50%',
-                backgroundColor: isLit ? '#ff2200' : '#3a0a0a',
-                boxShadow: isLit ? '0 0 25px 8px rgba(255,34,0,0.85)' : 'inset 0 0 8px rgba(0,0,0,0.8)',
+                backgroundColor: isLit ? lightColor.on : '#3a0a0a',
+                boxShadow: isLit ? `0 0 25px 8px rgba(${lightColor.glow},0.85)` : 'inset 0 0 8px rgba(0,0,0,0.8)',
                 border: '3px solid #000',
                 transition: 'background-color 0.15s ease, box-shadow 0.15s ease'
               }} />
             );
           })}
-        </div>
-      )}
-
-      {isGo && lightsFormat !== 'countdown' && (
-        <div style={{
-          textAlign: 'center', marginTop: '15px', fontSize: '38px', fontWeight: 900,
-          color: '#2ecc71', textShadow: '0 0 20px rgba(46, 204, 113, 0.9)',
-          letterSpacing: '4px', animation: 'goFlash 0.6s ease-in-out 2'
-        }}>
         </div>
       )}
     </div>
