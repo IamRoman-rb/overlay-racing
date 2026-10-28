@@ -7,9 +7,12 @@ import TrackMapPanel from '../windows/TrackMapPanel';
 import UserManual from '../windows/UserManual';
 import VoteHistory from '../windows/VoteHistory';
 import GraphicEditor from '../windows/GraphicEditor';
+import HotkeysPanel from '../windows/HotkeysPanel';
 import Icon from '../components/Icon';
 import banderaCuadrosImg from '../assets/bandera cuadros.jpg';
 import { createTranslator } from '../i18n/translations';
+import { findMostRelevantBattle } from '../utils/battle';
+import { comboFromEvent, shouldIgnoreHotkey, findHotkeyAction } from '../utils/hotkeys';
 
 let ipcRenderer = null;
 if (typeof window !== 'undefined' && typeof window.require === 'function') {
@@ -296,7 +299,7 @@ const GRAPHIC_IDS = [
   'lapTimesHistory', 'trackAlert', 'penaltyAlert', 'branding'
 ];
 
-const TAB_IDS = ['panel', 'campeonato', 'votaciones', 'sanciones', 'cloud', 'zocalos', 'disenos', 'circuito', 'ajustes', 'personalizar', 'editor', 'manual'];
+const TAB_IDS = ['panel', 'campeonato', 'votaciones', 'sanciones', 'cloud', 'zocalos', 'disenos', 'circuito', 'ajustes', 'personalizar', 'editor', 'atajos', 'manual'];
 
 export default function ControlPanel() {
   const [config, setConfig] = useState({
@@ -618,7 +621,17 @@ export default function ControlPanel() {
   };
   const handleSave = async () => { if (ipcRenderer) await ipcRenderer.invoke('save-config', config); };
   const handleCommitCircuit = async (name) => { const next = { ...config, circuito: name }; setConfig(next); if (ipcRenderer) await ipcRenderer.invoke('save-config', next); };
-  const handleToggleBattle = () => { const newState = !showBattle; setShowBattle(newState); if (ipcRenderer) ipcRenderer.send('toggle-battle', { isVisible: newState, pos: battleTarget }); };
+  // Batalla recomendada: el par de pilotos con el menor intervalo. Con la opción automática, la posición del campo la sigue
+  // mientras la gráfica NO está al aire (al aire no se cambia sola: se vería saltar la gráfica en transmisión).
+  const recommendedBattle = useMemo(() => findMostRelevantBattle(drivers), [drivers]);
+  const battleAuto = config.battleAuto !== false;
+  const battlePos = battleAuto && !showBattle && recommendedBattle?.isClose ? recommendedBattle.pos : battleTarget;
+  const handleToggleBattle = () => {
+    const newState = !showBattle;
+    if (newState) setBattleTarget(battlePos);
+    setShowBattle(newState);
+    if (ipcRenderer) ipcRenderer.send('toggle-battle', { isVisible: newState, pos: newState ? battlePos : battleTarget });
+  };
   const handleToggleVirtualChamp = () => { setShowVirtualChamp(!showVirtualChamp); if (ipcRenderer) ipcRenderer.send('toggle-virtual-champ', !showVirtualChamp); };
   const handleToggleLapTimesHistory = () => {
     const newState = !showLapTimesHistory;
@@ -859,6 +872,49 @@ export default function ControlPanel() {
     }
   };
   const handleHidePenalty = () => { if (ipcRenderer) ipcRenderer.send('hide-penalty'); };
+
+  // --- ATAJOS DE TECLADO (pestaña ATAJOS): config.hotkeys = { idDeAcción: 'Ctrl+Shift+A' } ---
+  // El listener se registra una sola vez y lee las acciones de este ref, que se renueva en cada render (así nunca usa estados viejos).
+  const hotkeyActionsRef = useRef({});
+  useEffect(() => {
+    hotkeyActionsRef.current = {
+      relator: () => handleToggleGraphic('relator'), comentarista: () => handleToggleGraphic('comentarista'),
+      notero1: () => handleToggleGraphic('notero1'), notero2: () => handleToggleGraphic('notero2'),
+      circuito: () => handleToggleGraphic('circuito'), clima: () => handleToggleGraphic('clima'),
+      flagRed: () => handleToggleFlag('red'), flagTricolor: () => handleToggleFlag('tricolor'),
+      flagBlue: () => handleToggleFlag('blue'), flagGreen: () => handleToggleFlag('green'),
+      flagCheckered: () => handleToggleFlag('checkered'), flagBlack: () => handleToggleFlag('black'),
+      trackAlertEmit: handleTriggerTrackAlert, trackAlertHide: handleHideTrackAlert, penaltyHide: handleHidePenalty,
+      lightsStart: () => { if (startingLightsStep === 5) handleGoLights(); else if (!startingLightsVisible) handleStartLights(); },
+      lightsHide: handleHideLights,
+      grid: handleToggleGrid,
+      gridPrev: () => { if (ipcRenderer) ipcRenderer.send('grid-prev'); },
+      gridNext: () => { if (ipcRenderer) ipcRenderer.send('grid-next'); },
+      ticker: handleToggleTicker, tower: handleToggleTower, lapCounter: handleToggleLapCounter, fastestLap: handleToggleFastestLap,
+      branding: () => handleToggleGraphic('branding'), battle: handleToggleBattle, virtualChamp: handleToggleVirtualChamp,
+      lapTimesHistory: handleToggleLapTimesHistory, votingQR: handleToggleVotingQR, votingResults: handleToggleVotingResults,
+      finalResults: handleToggleFinalResults,
+      finalPrev: () => { if (ipcRenderer) ipcRenderer.send('final-results-prev'); },
+      finalNext: () => { if (ipcRenderer) ipcRenderer.send('final-results-next'); },
+      winner: handleToggleWinner,
+      zocalo1: () => handleToggleZocalo(0), zocalo2: () => handleToggleZocalo(1), zocalo3: () => handleToggleZocalo(2),
+      zocalo4: () => handleToggleZocalo(3), zocalo5: () => handleToggleZocalo(4), zocalo6: () => handleToggleZocalo(5)
+    };
+  });
+
+  useEffect(() => {
+    const onKeyDown = (e) => {
+      if (e.repeat || e.defaultPrevented || shouldIgnoreHotkey(e)) return; // escribiendo en un campo: las teclas son del campo
+      const combo = comboFromEvent(e);
+      const actionId = findHotkeyAction(configRef.current.hotkeys, combo);
+      const run = actionId && hotkeyActionsRef.current[actionId];
+      if (!run) return;
+      e.preventDefault();
+      run();
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, []);
 
   // --- DIAGNÓSTICO (AJUSTES): información del scraper y log para PCs de clientes ---
   const handleGetNetworkUrls = async () => (ipcRenderer ? ipcRenderer.invoke('get-network-urls') : []);
@@ -1164,14 +1220,37 @@ export default function ControlPanel() {
               <div style={{ display: 'flex', alignItems: 'center', backgroundColor: colors.bgInput, border: `1px solid ${colors.border}`, padding: '0 10px', borderRadius: '4px' }}>
                 <span style={{ color: colors.textMuted, fontSize: '12px', marginRight: '5px' }}>{t('panel.posLabel')}</span>
                 <input
-                  type="number" min="1" value={battleTarget}
-                  onChange={(e) => setBattleTarget(e.target.value)}
+                  type="number" min="1" value={battlePos}
+                  onChange={(e) => { setBattleTarget(e.target.value); if (battleAuto) handleDirectSave('battleAuto', false); }}
                   style={{ ...inputStyle, width: '40px', border: 'none', padding: 0 }}
                 />
               </div>
               <button onClick={handleToggleBattle} style={{ ...btnStyle(showBattle), flex: 1 }}>
                 {showBattle ? t('panel.hideBattle') : t('panel.showBattle')}
               </button>
+            </div>
+            <div style={{ marginTop: '-8px', marginBottom: '15px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              {recommendedBattle?.isClose ? (
+                <div style={{ fontSize: '11px', color: colors.textMain, lineHeight: 1.4 }}>
+                  <span style={{ color: colors.yellow, fontWeight: 'bold' }}>{t('panel.battleRecommended')}</span>{' '}
+                  {t('panel.battleRecommendedInfo', {
+                    front: `P${recommendedBattle.front.pos} #${recommendedBattle.front.number} ${recommendedBattle.front.name}`,
+                    back: `P${recommendedBattle.back.pos} #${recommendedBattle.back.number} ${recommendedBattle.back.name}`,
+                    gap: recommendedBattle.gap.toFixed(3)
+                  })}
+                </div>
+              ) : (
+                <div style={{ fontSize: '11px', color: colors.textMuted }}>{t('panel.battleNone')}</div>
+              )}
+              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '11px', color: colors.textMuted, cursor: 'pointer' }}>
+                <input type="checkbox" checked={battleAuto} onChange={(e) => handleDirectSave('battleAuto', e.target.checked)} />
+                {t('panel.battleAuto')}
+              </label>
+              {!battleAuto && recommendedBattle?.isClose && recommendedBattle.pos !== parseInt(battlePos, 10) && !showBattle && (
+                <button onClick={() => setBattleTarget(recommendedBattle.pos)} style={{ ...btnStyle(false), padding: '8px', fontSize: '11px' }}>
+                  {t('panel.battleUse', { pos: recommendedBattle.pos })}
+                </button>
+              )}
             </div>
             </div>
 
@@ -1648,6 +1727,10 @@ export default function ControlPanel() {
 
       {activeTab === 'editor' && (
         <GraphicEditor drivers={drivers} sessionInfo={sessionInfo} config={config} positions={positions} onConfigChange={handleDirectSave} colors={colors} inputStyle={inputStyle} btnStyle={btnStyle} t={t} />
+      )}
+
+      {activeTab === 'atajos' && (
+        <HotkeysPanel config={config} onConfigChange={handleDirectSave} colors={colors} btnStyle={btnStyle} t={t} />
       )}
 
       {activeTab === 'circuito' && (

@@ -106,6 +106,13 @@ function getModulesHtml() {
     return 'VERSIÓN DISPONIBLE ' + m.version + ' · SE DESCARGA AL ABRIR';
   }
 
+  // Cada módulo se llama "Overlay <módulo>" (Overlay Racing, Overlay Fútbol, Overlay Streaming); funciona igual si el servidor ya manda el nombre completo
+  const MODULE_LABELS = { racing: 'Racing', football: 'Fútbol', events: 'Streaming' };
+  function moduleTitle(m) {
+    const base = MODULE_LABELS[m.id] || m.name || m.id;
+    return base.toLowerCase().startsWith('overlay') ? base : 'Overlay ' + base;
+  }
+
   function makeButton(className, html, onClick) {
     const btn = document.createElement('button');
     btn.className = 'open ' + className;
@@ -121,7 +128,7 @@ function getModulesHtml() {
     ico.className = 'ico';
     ico.innerHTML = ICONS[m.icon] || ICONS.extension || '';
     const title = document.createElement('h3');
-    title.textContent = m.name || m.id;
+    title.textContent = moduleTitle(m);
     const desc = document.createElement('p');
     desc.textContent = m.description || '';
     const meta = document.createElement('div');

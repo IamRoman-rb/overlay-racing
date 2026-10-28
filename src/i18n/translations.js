@@ -22,7 +22,7 @@ export const translations = {
     tabs: {
       panel: 'PANEL', campeonato: 'CAMPEONATO', votaciones: 'VOTACIONES', sanciones: 'SANCIONES',
       cloud: 'CLOUD', zocalos: 'ZÓCALOS', disenos: 'DISEÑOS', circuito: 'CIRCUITO',
-      ajustes: 'AJUSTES', personalizar: 'PERSONALIZAR', editor: 'EDITOR', manual: 'MANUAL'
+      ajustes: 'AJUSTES', personalizar: 'PERSONALIZAR', editor: 'EDITOR', manual: 'MANUAL', atajos: 'ATAJOS'
     },
     graphics: {
       relator: 'RELATOR', comentarista: 'COMENTARISTA', notero1: 'NOTERO 1', notero2: 'NOTERO 2',
@@ -64,6 +64,8 @@ export const translations = {
       sysTempHint: 'Sin dato de temperatura: Windows no la expone en esta PC. Abrí LibreHardwareMonitor para verla.'
     },
     panel: {
+      battleRecommended: 'Batalla más cercana:', battleRecommendedInfo: '{front} vs {back} · intervalo {gap} s',
+      battleNone: 'Sin batallas cercanas por ahora.', battleAuto: 'Elegir la posición automáticamente (mientras no está al aire)', battleUse: 'USAR BATALLA RECOMENDADA (POS {pos})',
       flagGreen: 'VERDE',
       finalPrevTitle: 'Página anterior de los resultados finales',
       finalNextTitle: 'Página siguiente de los resultados finales (pasa a manual: se detiene la rotación automática)',
@@ -241,6 +243,16 @@ export const translations = {
       graphicSizeHint: "Vacío = tamaño original de la gráfica. Se aplica al recuadro de la gráfica; el contenido mantiene su tamaño. Confirmá con Enter o al salir del campo.",
       overlaySizeTitle: "TAMAÑO DEL OVERLAY", overlaySizeDesc: "Ancho y alto del lienzo en píxeles (por defecto 1920 × 1080). La ventana del overlay se ajusta sola; en OBS o vMix poné la fuente de navegador con la misma medida. Las posiciones de las gráficas no cambian: reacomodalas si hace falta.", overlayPreset: "Medidas comunes…", overlayReset: "Restaurar 1920 × 1080"
     },
+    hotkeys: {
+      title: 'ATAJOS DE TECLADO',
+      description: 'Hacé click en el recuadro de una gráfica y apretá la tecla o combinación que quieras usar (por ejemplo F1 o Ctrl+Shift+B). Cada atajo prende o apaga esa gráfica. Esc cancela y Supr / Retroceso quita el atajo. Funcionan con esta ventana del programa activa y NO se activan mientras escribís en un campo de texto.',
+      clearAll: 'QUITAR TODOS', confirmClearAll: '¿Quitar todos los atajos asignados?',
+      pressKey: 'Presioná una tecla…', unassigned: 'Sin asignar', clear: 'Quitar atajo',
+      captureTitle: 'Click y apretá la tecla o combinación',
+      moved: '«{combo}» ya estaba asignada a: {name}. Se la quitamos a esa acción.',
+      group: { personal: 'PERSONAL / ENTORNO', flags: 'BANDERAS', alerts: 'ALERTAS', lights: 'SEMÁFORO DE LARGADA', grid: 'GRILLA', graphics: 'GRÁFICOS', closing: 'CIERRE', zocalos: 'ZÓCALOS' },
+      act: { trackAlertEmit: 'Alerta de curva: emitir', trackAlertHide: 'Alerta de curva: ocultar', penaltyHide: 'Sanción: ocultar', lightsStart: 'Semáforo: iniciar / dar salida', lightsHide: 'Semáforo: ocultar', gridPrev: 'Grilla: anterior', gridNext: 'Grilla: siguiente', finalPrev: 'Resultados finales: página anterior', finalNext: 'Resultados finales: página siguiente', zocalo: 'Zócalo {n}' }
+    },
     circuito: {
       confirmRemoveMap: '¿Seguro que querés quitar el mapa del circuito? Se perderán las curvas marcadas.',
       title: 'MAPA DEL CIRCUITO', loadImageBtn: '📷 CARGAR IMAGEN',
@@ -285,7 +297,7 @@ export const translations = {
     tabs: {
       panel: 'PANEL', campeonato: 'STANDINGS', votaciones: 'VOTING', sanciones: 'PENALTIES',
       cloud: 'CLOUD', zocalos: 'LOWER THIRDS', disenos: 'DESIGNS', circuito: 'TRACK',
-      ajustes: 'SETTINGS', personalizar: 'CUSTOMIZE', editor: 'EDITOR', manual: 'MANUAL'
+      ajustes: 'SETTINGS', personalizar: 'CUSTOMIZE', editor: 'EDITOR', manual: 'MANUAL', atajos: 'SHORTCUTS'
     },
     graphics: {
       relator: 'COMMENTATOR', comentarista: 'CO-COMMENTATOR', notero1: 'REPORTER 1', notero2: 'REPORTER 2',
@@ -327,6 +339,8 @@ export const translations = {
       sysTempHint: 'No temperature data: Windows does not expose it on this PC. Open LibreHardwareMonitor to see it.'
     },
     panel: {
+      battleRecommended: 'Closest battle:', battleRecommendedInfo: '{front} vs {back} · gap {gap} s',
+      battleNone: 'No close battles right now.', battleAuto: 'Pick the position automatically (while it is off air)', battleUse: 'USE RECOMMENDED BATTLE (POS {pos})',
       flagGreen: 'GREEN',
       finalPrevTitle: 'Previous page of the final results',
       finalNextTitle: 'Next page of the final results (switches to manual: automatic rotation stops)',
@@ -504,6 +518,16 @@ export const translations = {
       graphicSizeHint: "Empty = the graphic's original size. It applies to the graphic's box; the content keeps its size. Confirm with Enter or by leaving the field.",
       overlaySizeTitle: "OVERLAY SIZE", overlaySizeDesc: "Canvas width and height in pixels (default 1920 × 1080). The overlay window resizes itself; in OBS or vMix set the browser source to the same size. Graphic positions do not change: rearrange them if needed.", overlayPreset: "Common sizes…", overlayReset: "Restore 1920 × 1080"
     },
+    hotkeys: {
+      title: 'KEYBOARD SHORTCUTS',
+      description: 'Click a graphic\'s box and press the key or combination you want to use (for example F1 or Ctrl+Shift+B). Each shortcut turns that graphic on or off. Esc cancels and Del / Backspace removes the shortcut. They work while this program window is active and are NOT triggered while you are typing in a text field.',
+      clearAll: 'CLEAR ALL', confirmClearAll: 'Remove all assigned shortcuts?',
+      pressKey: 'Press a key…', unassigned: 'Unassigned', clear: 'Remove shortcut',
+      captureTitle: 'Click and press the key or combination',
+      moved: '"{combo}" was already assigned to: {name}. It was removed from that action.',
+      group: { personal: 'PEOPLE / SETTING', flags: 'FLAGS', alerts: 'ALERTS', lights: 'STARTING LIGHTS', grid: 'GRID', graphics: 'GRAPHICS', closing: 'CLOSING', zocalos: 'LOWER THIRDS' },
+      act: { trackAlertEmit: 'Track alert: show', trackAlertHide: 'Track alert: hide', penaltyHide: 'Penalty: hide', lightsStart: 'Lights: start / go', lightsHide: 'Lights: hide', gridPrev: 'Grid: previous', gridNext: 'Grid: next', finalPrev: 'Final results: previous page', finalNext: 'Final results: next page', zocalo: 'Lower third {n}' }
+    },
     circuito: {
       confirmRemoveMap: 'Are you sure you want to remove the track map? The marked corners will be lost.',
       title: 'TRACK MAP', loadImageBtn: '📷 LOAD IMAGE',
@@ -548,7 +572,7 @@ export const translations = {
     tabs: {
       panel: 'PAINEL', campeonato: 'CAMPEONATO', votaciones: 'VOTAÇÃO', sanciones: 'PUNIÇÕES',
       cloud: 'NUVEM', zocalos: 'TARJAS', disenos: 'DESIGNS', circuito: 'CIRCUITO',
-      ajustes: 'AJUSTES', personalizar: 'PERSONALIZAR', editor: 'EDITOR', manual: 'MANUAL'
+      ajustes: 'AJUSTES', personalizar: 'PERSONALIZAR', editor: 'EDITOR', manual: 'MANUAL', atajos: 'ATALHOS'
     },
     graphics: {
       relator: 'NARRADOR', comentarista: 'COMENTARISTA', notero1: 'REPÓRTER 1', notero2: 'REPÓRTER 2',
@@ -590,6 +614,8 @@ export const translations = {
       sysTempHint: 'Sem dado de temperatura: o Windows não a expõe neste PC. Abra o LibreHardwareMonitor para vê-la.'
     },
     panel: {
+      battleRecommended: 'Batalha mais próxima:', battleRecommendedInfo: '{front} vs {back} · intervalo {gap} s',
+      battleNone: 'Sem batalhas próximas por enquanto.', battleAuto: 'Escolher a posição automaticamente (enquanto não está no ar)', battleUse: 'USAR BATALHA RECOMENDADA (POS {pos})',
       flagGreen: 'VERDE',
       finalPrevTitle: 'Página anterior dos resultados finais',
       finalNextTitle: 'Próxima página dos resultados finais (passa para manual: a rotação automática para)',
@@ -767,6 +793,16 @@ export const translations = {
       graphicSizeHint: "Vazio = tamanho original do gráfico. Aplica-se à caixa do gráfico; o conteúdo mantém seu tamanho. Confirme com Enter ou ao sair do campo.",
       overlaySizeTitle: "TAMANHO DO OVERLAY", overlaySizeDesc: "Largura e altura da tela em pixels (padrão 1920 × 1080). A janela do overlay se ajusta sozinha; no OBS ou vMix coloque a fonte de navegador com a mesma medida. As posições dos gráficos não mudam: reorganize-as se necessário.", overlayPreset: "Medidas comuns…", overlayReset: "Restaurar 1920 × 1080"
     },
+    hotkeys: {
+      title: 'ATALHOS DE TECLADO',
+      description: 'Clique na caixa de um gráfico e pressione a tecla ou combinação que quiser usar (por exemplo F1 ou Ctrl+Shift+B). Cada atalho liga ou desliga esse gráfico. Esc cancela e Del / Backspace remove o atalho. Funcionam com esta janela do programa ativa e NÃO são acionados enquanto você digita em um campo de texto.',
+      clearAll: 'REMOVER TODOS', confirmClearAll: 'Remover todos os atalhos atribuídos?',
+      pressKey: 'Pressione uma tecla…', unassigned: 'Sem atalho', clear: 'Remover atalho',
+      captureTitle: 'Clique e pressione a tecla ou combinação',
+      moved: '"{combo}" já estava atribuída a: {name}. Foi removida dessa ação.',
+      group: { personal: 'PESSOAL / AMBIENTE', flags: 'BANDEIRAS', alerts: 'ALERTAS', lights: 'SEMÁFORO DE LARGADA', grid: 'GRID', graphics: 'GRÁFICOS', closing: 'ENCERRAMENTO', zocalos: 'ZÓCALOS' },
+      act: { trackAlertEmit: 'Alerta de curva: emitir', trackAlertHide: 'Alerta de curva: ocultar', penaltyHide: 'Punição: ocultar', lightsStart: 'Semáforo: iniciar / largar', lightsHide: 'Semáforo: ocultar', gridPrev: 'Grid: anterior', gridNext: 'Grid: próximo', finalPrev: 'Resultados finais: página anterior', finalNext: 'Resultados finais: próxima página', zocalo: 'Zócalo {n}' }
+    },
     circuito: {
       confirmRemoveMap: 'Tem certeza de que deseja remover o mapa do circuito? As curvas marcadas serão perdidas.',
       title: 'MAPA DO CIRCUITO', loadImageBtn: '📷 CARREGAR IMAGEM',
@@ -811,7 +847,7 @@ export const translations = {
     tabs: {
       panel: 'PANEL', campeonato: 'MEISTERSCHAFT', votaciones: 'ABSTIMMUNG', sanciones: 'STRAFEN',
       cloud: 'CLOUD', zocalos: 'BAUCHBINDEN', disenos: 'DESIGNS', circuito: 'STRECKE',
-      ajustes: 'EINSTELLUNGEN', personalizar: 'ANPASSEN', editor: 'EDITOR', manual: 'HANDBUCH'
+      ajustes: 'EINSTELLUNGEN', personalizar: 'ANPASSEN', editor: 'EDITOR', manual: 'HANDBUCH', atajos: 'TASTENKÜRZEL'
     },
     graphics: {
       relator: 'KOMMENTATOR', comentarista: 'CO-KOMMENTATOR', notero1: 'REPORTER 1', notero2: 'REPORTER 2',
@@ -853,6 +889,8 @@ export const translations = {
       sysTempHint: 'Keine Temperaturdaten: Windows stellt sie auf diesem PC nicht bereit. Öffne LibreHardwareMonitor, um sie zu sehen.'
     },
     panel: {
+      battleRecommended: 'Engster Kampf:', battleRecommendedInfo: '{front} vs {back} · Abstand {gap} s',
+      battleNone: 'Im Moment keine engen Duelle.', battleAuto: 'Position automatisch wählen (solange nicht auf Sendung)', battleUse: 'EMPFOHLENES DUELL VERWENDEN (POS {pos})',
       flagGreen: 'GRÜN',
       finalPrevTitle: 'Vorherige Seite des Endergebnisses',
       finalNextTitle: 'Nächste Seite des Endergebnisses (wechselt auf manuell: die automatische Rotation stoppt)',
@@ -1030,6 +1068,16 @@ export const translations = {
       graphicSizeHint: "Leer = Originalgröße der Grafik. Gilt für den Rahmen der Grafik; der Inhalt behält seine Größe. Mit Enter oder beim Verlassen des Felds bestätigen.",
       overlaySizeTitle: "OVERLAY-GRÖSSE", overlaySizeDesc: "Breite und Höhe der Zeichenfläche in Pixeln (Standard 1920 × 1080). Das Overlay-Fenster passt sich selbst an; in OBS oder vMix die Browserquelle auf dieselbe Größe stellen. Die Positionen der Grafiken ändern sich nicht: bei Bedarf neu anordnen.", overlayPreset: "Gängige Größen…", overlayReset: "1920 × 1080 wiederherstellen"
     },
+    hotkeys: {
+      title: 'TASTENKÜRZEL',
+      description: 'Klicke auf das Feld einer Grafik und drücke die gewünschte Taste oder Tastenkombination (zum Beispiel F1 oder Strg+Umschalt+B). Jedes Kürzel blendet die Grafik ein oder aus. Esc bricht ab, Entf / Rücktaste entfernt das Kürzel. Sie funktionieren, wenn dieses Programmfenster aktiv ist, und werden NICHT ausgelöst, während du in ein Textfeld tippst.',
+      clearAll: 'ALLE ENTFERNEN', confirmClearAll: 'Alle zugewiesenen Kürzel entfernen?',
+      pressKey: 'Taste drücken…', unassigned: 'Nicht zugewiesen', clear: 'Kürzel entfernen',
+      captureTitle: 'Klicken und Taste oder Kombination drücken',
+      moved: '„{combo}“ war bereits zugewiesen an: {name}. Sie wurde dort entfernt.',
+      group: { personal: 'PERSONEN / UMFELD', flags: 'FLAGGEN', alerts: 'WARNUNGEN', lights: 'STARTAMPEL', grid: 'STARTAUFSTELLUNG', graphics: 'GRAFIKEN', closing: 'ABSCHLUSS', zocalos: 'EINBLENDUNGEN' },
+      act: { trackAlertEmit: 'Streckenwarnung: anzeigen', trackAlertHide: 'Streckenwarnung: ausblenden', penaltyHide: 'Strafe: ausblenden', lightsStart: 'Ampel: starten / Start freigeben', lightsHide: 'Ampel: ausblenden', gridPrev: 'Aufstellung: zurück', gridNext: 'Aufstellung: weiter', finalPrev: 'Endergebnis: vorherige Seite', finalNext: 'Endergebnis: nächste Seite', zocalo: 'Einblendung {n}' }
+    },
     circuito: {
       confirmRemoveMap: 'Bist du sicher, dass du die Streckenkarte entfernen möchtest? Die markierten Kurven gehen dabei verloren.',
       title: 'STRECKENKARTE', loadImageBtn: '📷 BILD LADEN',
@@ -1074,7 +1122,7 @@ export const translations = {
     tabs: {
       panel: 'PANNEAU', campeonato: 'CHAMPIONNAT', votaciones: 'VOTE', sanciones: 'SANCTIONS',
       cloud: 'CLOUD', zocalos: 'BANDEAUX', disenos: 'DESIGNS', circuito: 'CIRCUIT',
-      ajustes: 'RÉGLAGES', personalizar: 'PERSONNALISER', editor: 'ÉDITEUR', manual: 'MANUEL'
+      ajustes: 'RÉGLAGES', personalizar: 'PERSONNALISER', editor: 'ÉDITEUR', manual: 'MANUEL', atajos: 'RACCOURCIS'
     },
     graphics: {
       relator: 'COMMENTATEUR', comentarista: 'CONSULTANT', notero1: 'JOURNALISTE 1', notero2: 'JOURNALISTE 2',
@@ -1116,6 +1164,8 @@ export const translations = {
       sysTempHint: 'Pas de donnée de température : Windows ne la fournit pas sur ce PC. Ouvrez LibreHardwareMonitor pour la voir.'
     },
     panel: {
+      battleRecommended: 'Bataille la plus serrée :', battleRecommendedInfo: '{front} vs {back} · écart {gap} s',
+      battleNone: 'Aucune bataille serrée pour le moment.', battleAuto: 'Choisir la position automatiquement (tant qu\'elle n\'est pas à l\'antenne)', battleUse: 'UTILISER LA BATAILLE RECOMMANDÉE (POS {pos})',
       flagGreen: 'VERT',
       finalPrevTitle: 'Page précédente des résultats finaux',
       finalNextTitle: 'Page suivante des résultats finaux (passe en manuel : la rotation automatique s’arrête)',
@@ -1292,6 +1342,16 @@ export const translations = {
       graphicWidthLabel: "LARGEUR (PX)", graphicHeightLabel: "HAUTEUR (PX)", graphicSizeAuto: "auto",
       graphicSizeHint: "Vide = taille d'origine du graphique. S'applique au cadre du graphique ; le contenu garde sa taille. Valider avec Entrée ou en quittant le champ.",
       overlaySizeTitle: "TAILLE DE L'OVERLAY", overlaySizeDesc: "Largeur et hauteur du canevas en pixels (par défaut 1920 × 1080). La fenêtre de l'overlay s'ajuste seule ; dans OBS ou vMix, réglez la source navigateur à la même taille. Les positions des graphiques ne changent pas : réorganisez-les si besoin.", overlayPreset: "Tailles courantes…", overlayReset: "Rétablir 1920 × 1080"
+    },
+    hotkeys: {
+      title: 'RACCOURCIS CLAVIER',
+      description: 'Cliquez sur la case d\'un graphique et appuyez sur la touche ou la combinaison à utiliser (par exemple F1 ou Ctrl+Maj+B). Chaque raccourci affiche ou masque ce graphique. Échap annule et Suppr / Retour arrière retire le raccourci. Ils fonctionnent quand cette fenêtre du programme est active et ne se déclenchent PAS pendant la saisie dans un champ de texte.',
+      clearAll: 'TOUT RETIRER', confirmClearAll: 'Retirer tous les raccourcis attribués ?',
+      pressKey: 'Appuyez sur une touche…', unassigned: 'Non attribué', clear: 'Retirer le raccourci',
+      captureTitle: 'Cliquez puis appuyez sur la touche ou la combinaison',
+      moved: '« {combo} » était déjà attribuée à : {name}. Elle a été retirée de cette action.',
+      group: { personal: 'PERSONNES / DÉCOR', flags: 'DRAPEAUX', alerts: 'ALERTES', lights: 'FEUX DE DÉPART', grid: 'GRILLE', graphics: 'GRAPHIQUES', closing: 'CLÔTURE', zocalos: 'BANDEAUX' },
+      act: { trackAlertEmit: 'Alerte de virage : afficher', trackAlertHide: 'Alerte de virage : masquer', penaltyHide: 'Pénalité : masquer', lightsStart: 'Feux : démarrer / donner le départ', lightsHide: 'Feux : masquer', gridPrev: 'Grille : précédente', gridNext: 'Grille : suivante', finalPrev: 'Résultats finaux : page précédente', finalNext: 'Résultats finaux : page suivante', zocalo: 'Bandeau {n}' }
     },
     circuito: {
       confirmRemoveMap: 'Êtes-vous sûr de vouloir retirer le plan du circuit ? Les virages marqués seront perdus.',
