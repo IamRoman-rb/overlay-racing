@@ -8,6 +8,8 @@ export default function HotkeysPanel({ config, onConfigChange, colors, btnStyle,
   const [notice, setNotice] = useState('');
 
   const labelOf = (action) => t(action.label, action.n ? { n: action.n } : undefined);
+  const nameOf = (actionId) => labelOf(HOTKEY_ACTIONS.find(a => a.id === actionId) || { label: actionId });
+  const recordingAction = HOTKEY_ACTIONS.find(a => a.id === recording);
   const save = (next) => {
     const clean = Object.fromEntries(Object.entries(next).filter(([, combo]) => combo));
     onConfigChange('hotkeys', Object.keys(clean).length ? clean : null);
@@ -19,16 +21,17 @@ export default function HotkeysPanel({ config, onConfigChange, colors, btnStyle,
     const taken = Object.keys(next).filter(id => id !== actionId && next[id] === combo);
     taken.forEach(id => { delete next[id]; });
     next[actionId] = combo;
+    const done = t('hotkeys.assignedOk', { name: nameOf(actionId), combo });
     setNotice(taken.length
-      ? t('hotkeys.moved', { combo, name: taken.map(id => labelOf(HOTKEY_ACTIONS.find(a => a.id === id) || { label: id })).join(', ') })
-      : '');
+      ? `${done} ${t('hotkeys.moved', { combo, name: taken.map(nameOf).join(', ') })}`
+      : done);
     save(next);
   };
 
   const clear = (actionId) => {
     const next = { ...hotkeys };
     delete next[actionId];
-    setNotice('');
+    setNotice(t('hotkeys.removedOk', { name: nameOf(actionId) }));
     save(next);
   };
 
@@ -65,11 +68,20 @@ export default function HotkeysPanel({ config, onConfigChange, colors, btnStyle,
         </button>
       </h2>
       <p style={{ color: colors.textMuted, fontSize: '13px', marginTop: 0, lineHeight: 1.5 }}>{t('hotkeys.description')}</p>
-      {notice && (
-        <div style={{ backgroundColor: 'rgba(241, 196, 15, 0.1)', border: `1px solid ${colors.yellow}`, color: colors.yellow, borderRadius: '6px', padding: '10px 14px', fontSize: '12px', fontWeight: 'bold', marginBottom: '20px' }}>
-          {notice}
-        </div>
-      )}
+      {/* Cartel fijo: dice qué gráfica está seleccionada para asignarle el atajo, o el resultado de la última acción */}
+      <div style={{ position: 'sticky', top: 0, zIndex: 5, margin: '0 -30px 20px', padding: '12px 30px', backgroundColor: colors.bgApp, borderBottom: `1px solid ${colors.border}` }}>
+        {recordingAction ? (
+          <div style={{ backgroundColor: 'rgba(241, 196, 15, 0.12)', border: `2px solid ${colors.yellow}`, borderRadius: '6px', padding: '10px 14px', display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+            <span style={{ fontSize: '11px', fontWeight: 'bold', letterSpacing: '1px', color: colors.textMuted }}>{t('hotkeys.assigningTo')}</span>
+            <span style={{ fontSize: '16px', fontWeight: '900', color: colors.yellow }}>{labelOf(recordingAction)}</span>
+            <span style={{ fontSize: '12px', color: colors.textMain }}>{t('hotkeys.assigningHint')}</span>
+          </div>
+        ) : (
+          <div style={{ border: `1px solid ${colors.border}`, borderRadius: '6px', padding: '10px 14px', fontSize: '12px', fontWeight: 'bold', color: notice ? colors.green : colors.textMuted }}>
+            {notice || t('hotkeys.selectHint')}
+          </div>
+        )}
+      </div>
 
       {HOTKEY_GROUPS.map(group => (
         <div key={group.id} style={{ marginBottom: '26px' }}>
@@ -81,8 +93,8 @@ export default function HotkeysPanel({ config, onConfigChange, colors, btnStyle,
               const combo = hotkeys[action.id];
               const isRecording = recording === action.id;
               return (
-                <div key={action.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', backgroundColor: colors.bgPanel, border: `1px solid ${isRecording ? colors.yellow : colors.border}`, borderRadius: '6px', padding: '8px 10px' }}>
-                  <span style={{ flex: 1, minWidth: 0, fontSize: '12px', fontWeight: 'bold', color: colors.textMain, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={labelOf(action)}>
+                <div key={action.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', backgroundColor: colors.bgPanel, border: `1px solid ${isRecording ? colors.yellow : colors.border}`, borderRadius: '6px', padding: '8px 10px', boxShadow: isRecording ? `0 0 0 2px ${colors.yellow}` : 'none' }}>
+                  <span style={{ flex: 1, minWidth: 0, fontSize: '12px', fontWeight: 'bold', color: isRecording ? colors.yellow : colors.textMain, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={labelOf(action)}>
                     {labelOf(action)}
                   </span>
                   <button
