@@ -1,4 +1,4 @@
-// Instalador / lanzador de Race Dynamics.
+// Instalador / lanzador de Overlay Studio.
 //
 // Es lo único que se instala en la PC del cliente: inicia sesión con la licencia, muestra los módulos que esa licencia
 // incluye (Carrera, ...) y al elegir uno descarga su última versión del servidor y lo abre. El código y la interfaz

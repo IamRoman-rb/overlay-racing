@@ -5,7 +5,7 @@ function getLoginHtml() {
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>Overlay Racing — Iniciar sesión</title>
+<title>Overlay Studio — Iniciar sesión</title>
 <style>
   * { box-sizing: border-box; }
   body {
@@ -39,7 +39,7 @@ function getLoginHtml() {
 </head>
 <body>
   <div class="card">
-    <h1>${icon('sports_score')} OVERLAY RACING</h1>
+    <h1>${icon('sports_score')} OVERLAY STUDIO</h1>
     <p class="subtitle">Ingresá tu usuario y contraseña</p>
 
     <label for="username">USUARIO</label>

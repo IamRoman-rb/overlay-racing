@@ -46,7 +46,7 @@
   },
   "build": {
     "appId": "com.productora.overlay",
-    "productName": "Race Dynamics",
+    "productName": "Overlay Studio",
     "directories": {
       "output": "release"
     },
@@ -54,7 +54,7 @@
       "target": "nsis",
       "icon": "src/assets/icon.ico",
       "requestedExecutionLevel": "asInvoker",
-      "legalTrademarks": "Race Dynamics"
+      "legalTrademarks": "Overlay Studio"
     },
     "asarUnpack": [
       "**/node_modules/puppeteer/**/*",
@@ -66,7 +66,7 @@
         "to": "chromium"
       }
     ],
-    "copyright": "Copyright © Race Dynamics",
+    "copyright": "Copyright © Overlay Studio",
     "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
@@ -78,20 +78,20 @@
       "installerHeaderIcon": "src/assets/icon.ico",
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
-      "shortcutName": "Race Dynamics",
+      "shortcutName": "Overlay Studio",
       "runAfterFinish": true,
       "deleteAppDataOnUninstall": false,
-      "artifactName": "Race-Dynamics-Setup-${version}.${ext}"
+      "artifactName": "Overlay-Studio-Setup-${version}.${ext}"
     },
     "portable": {
-      "artifactName": "Race-Dynamics-Portable-${version}.${ext}"
+      "artifactName": "Overlay-Studio-Portable-${version}.${ext}"
     },
     "files": [
       "launcher/**/*",
       "package.json"
     ]
   },
-  "description": "Race Dynamics: instalador con los módulos del software (carrera, ...), que se descargan del servidor según la licencia",
+  "description": "Overlay Studio: instalador con los módulos del software (carrera, ...), que se descargan del servidor según la licencia",
   "author": {
     "name": "Roman Manuel Borla"
   }

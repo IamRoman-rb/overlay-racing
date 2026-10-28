@@ -59,7 +59,7 @@ cliente lo ve en su lista como "Próximamente".
 ## Generar el instalador
 
 ```bash
-npm run dist            # instalador (Race-Dynamics-Setup-x.y.z.exe) en release/ — solo el lanzador, sin los módulos
+npm run dist            # instalador (Overlay-Studio-Setup-x.y.z.exe) en release/ — solo el lanzador, sin los módulos
 npm run dist:portable   # versión portable (más propensa a avisos del antivirus)
 ```
 

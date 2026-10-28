@@ -68,7 +68,7 @@ export default function SettingsPanel({ config, handleDirectSave, handleScrape, 
     const d = await onGetDiagnostics?.();
     if (!d) { setDiagText(t('ajustes.diagUnavailable')); return; }
     setDiagText([
-      `Race Dynamics v${d.version} (${d.packaged ? 'instalada' : 'desarrollo'})`,
+      `Overlay Studio v${d.version} (${d.packaged ? 'instalada' : 'desarrollo'})`,
       `Sistema: ${d.platform}`,
       `Navegador del scraper: ${d.browser?.executablePath || 'NO ENCONTRADO'}`,
       `Chromium incluido en la app: ${d.browser?.bundledPresent ? 'sí' : 'no'}`,

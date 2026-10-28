@@ -82,7 +82,7 @@ export default function UserManual({ colors, t, language }) {
           "localhost" es la PC de vMix y no esta. Usá la dirección con la IP de esta PC, que figura lista para copiar en la pestaña
           <b> AJUSTES</b>, sección "CONEXIÓN CON VMIX" (por ejemplo <span style={code}>http://192.168.1.10:8080/#/overlay</span>). Ambas PC
           tienen que estar en la misma red; si las conectás con un cable directo, asignale una IP fija a cada una (por ejemplo 192.168.1.10 y
-          192.168.1.11, máscara 255.255.255.0). Si no conecta, permití Race Dynamics en el Firewall de Windows para redes privadas.
+          192.168.1.11, máscara 255.255.255.0). Si no conecta, permití Overlay Studio en el Firewall de Windows para redes privadas.
         </div>
         <div style={note}>
           <Icon name="warning" color="#f1c40f" /> La Opción B solo funciona con el programa ya instalado (el .exe empaquetado), no mientras se está
