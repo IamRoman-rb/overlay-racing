@@ -1241,6 +1241,10 @@ export default function ControlPanel() {
                 <button onClick={handleToggleFinalResults} style={{ ...btnStyle(showFinalResults), flex: 2 }}>{t('panel.finalResultBtn')}</button>
                 <button onClick={() => { if (ipcRenderer) ipcRenderer.send('final-results-next'); }} title={t('panel.finalNextTitle')} style={{ ...btnStyle(), flex: 1 }}>{t.i('panel.gridNext')}</button>
               </div>
+              <label title={t('panel.finalAutoPageHint')} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '11px', color: colors.textMuted, cursor: 'pointer' }}>
+                <input type="checkbox" checked={config.finalResultsAutoPage !== false} onChange={(e) => handleDirectSave('finalResultsAutoPage', e.target.checked)} />
+                {t('panel.finalAutoPage')}
+              </label>
               <button onClick={handleToggleWinner} style={btnStyle(showWinner)}>{t('panel.showWinnerBtn')}</button>
             </div>
             </div>

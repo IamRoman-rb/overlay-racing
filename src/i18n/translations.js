@@ -67,6 +67,8 @@ export const translations = {
       flagGreen: 'VERDE',
       finalPrevTitle: 'Página anterior de los resultados finales',
       finalNextTitle: 'Página siguiente de los resultados finales (pasa a manual: se detiene la rotación automática)',
+      finalAutoPage: 'Pasar de página automáticamente',
+      finalAutoPageHint: 'Si está activado, los resultados finales cambian de página solos cada 8 segundos. Si no, se queda en la primera y se pasa a mano con ANT / SIG.',
       weatherCircuitTitle: 'Obtener el clima del circuito seleccionado',
       lightsOff: 'Semáforo apagado',
       lightsPreparing: 'Preparando…',
@@ -234,7 +236,9 @@ export const translations = {
       photosFolder: 'CARPETA FOTOS DE PILOTOS', noFolderSelected: 'Ninguna carpeta seleccionada.',
       chooseFolderBtn: '📁 ELEGIR CARPETA', removeFolderBtn: '🗑️ QUITAR CARPETA',
       previewPlaceholder: 'ÁREA DE GRÁFICA',
-      brandingShowLabel: 'LOGOS A MOSTRAR', brandingHint: 'Los logos se cargan más abajo, en Recursos multimedia.'
+      brandingShowLabel: 'LOGOS A MOSTRAR', brandingHint: 'Los logos se cargan más abajo, en Recursos multimedia.',
+      finalWidthLabel: 'ANCHO (PX)', finalHeightLabel: 'ALTO (PX)',
+      finalSizeHint: 'Medida fija de la gráfica: no se achica aunque haya pocos pilotos. Dejalo vacío para usar la medida por defecto (se muestra en gris).'
     },
     circuito: {
       confirmRemoveMap: '¿Seguro que querés quitar el mapa del circuito? Se perderán las curvas marcadas.',
@@ -325,6 +329,8 @@ export const translations = {
       flagGreen: 'GREEN',
       finalPrevTitle: 'Previous page of the final results',
       finalNextTitle: 'Next page of the final results (switches to manual: automatic rotation stops)',
+      finalAutoPage: 'Turn pages automatically',
+      finalAutoPageHint: 'When on, the final results switch pages by themselves every 8 seconds. When off, it stays on the first page and you turn pages by hand with PREV / NEXT.',
       weatherCircuitTitle: 'Get the weather for the selected circuit',
       lightsOff: 'Lights off',
       lightsPreparing: 'Getting ready…',
@@ -492,7 +498,9 @@ export const translations = {
       photosFolder: 'DRIVER PHOTOS FOLDER', noFolderSelected: 'No folder selected.',
       chooseFolderBtn: '📁 CHOOSE FOLDER', removeFolderBtn: '🗑️ REMOVE FOLDER',
       previewPlaceholder: 'GRAPHIC AREA',
-      brandingShowLabel: 'LOGOS TO SHOW', brandingHint: 'Logos are loaded below, in Media Resources.'
+      brandingShowLabel: 'LOGOS TO SHOW', brandingHint: 'Logos are loaded below, in Media Resources.',
+      finalWidthLabel: 'WIDTH (PX)', finalHeightLabel: 'HEIGHT (PX)',
+      finalSizeHint: 'Fixed size of the graphic: it does not shrink when there are few drivers. Leave empty to use the default size (shown in gray).'
     },
     circuito: {
       confirmRemoveMap: 'Are you sure you want to remove the track map? The marked corners will be lost.',
@@ -583,6 +591,8 @@ export const translations = {
       flagGreen: 'VERDE',
       finalPrevTitle: 'Página anterior dos resultados finais',
       finalNextTitle: 'Próxima página dos resultados finais (passa para manual: a rotação automática para)',
+      finalAutoPage: 'Passar de página automaticamente',
+      finalAutoPageHint: 'Ativado, os resultados finais trocam de página sozinhos a cada 8 segundos. Desativado, fica na primeira e você passa à mão com ANT / PRÓX.',
       weatherCircuitTitle: 'Obter o clima do circuito selecionado',
       lightsOff: 'Semáforo apagado',
       lightsPreparing: 'Preparando…',
@@ -750,7 +760,9 @@ export const translations = {
       photosFolder: 'PASTA DE FOTOS DOS PILOTOS', noFolderSelected: 'Nenhuma pasta selecionada.',
       chooseFolderBtn: '📁 ESCOLHER PASTA', removeFolderBtn: '🗑️ REMOVER PASTA',
       previewPlaceholder: 'ÁREA DO GRÁFICO',
-      brandingShowLabel: 'LOGOS A MOSTRAR', brandingHint: 'Os logos são carregados abaixo, em Recursos de mídia.'
+      brandingShowLabel: 'LOGOS A MOSTRAR', brandingHint: 'Os logos são carregados abaixo, em Recursos de mídia.',
+      finalWidthLabel: 'LARGURA (PX)', finalHeightLabel: 'ALTURA (PX)',
+      finalSizeHint: 'Tamanho fixo do gráfico: não encolhe mesmo com poucos pilotos. Deixe vazio para usar o tamanho padrão (mostrado em cinza).'
     },
     circuito: {
       confirmRemoveMap: 'Tem certeza de que deseja remover o mapa do circuito? As curvas marcadas serão perdidas.',
@@ -841,6 +853,8 @@ export const translations = {
       flagGreen: 'GRÜN',
       finalPrevTitle: 'Vorherige Seite des Endergebnisses',
       finalNextTitle: 'Nächste Seite des Endergebnisses (wechselt auf manuell: die automatische Rotation stoppt)',
+      finalAutoPage: 'Seiten automatisch wechseln',
+      finalAutoPageHint: 'Wenn aktiv, wechselt das Endergebnis alle 8 Sekunden von selbst die Seite. Sonst bleibt es auf der ersten Seite und du blätterst von Hand mit ZURÜCK / WEITER.',
       weatherCircuitTitle: 'Wetter der gewählten Strecke abrufen',
       lightsOff: 'Ampel aus',
       lightsPreparing: 'Bereitmachen…',
@@ -1008,7 +1022,9 @@ export const translations = {
       photosFolder: 'ORDNER MIT FAHRERFOTOS', noFolderSelected: 'Kein Ordner ausgewählt.',
       chooseFolderBtn: '📁 ORDNER WÄHLEN', removeFolderBtn: '🗑️ ORDNER ENTFERNEN',
       previewPlaceholder: 'GRAFIKBEREICH',
-      brandingShowLabel: 'ANZUZEIGENDE LOGOS', brandingHint: 'Die Logos werden weiter unten unter Medienressourcen geladen.'
+      brandingShowLabel: 'ANZUZEIGENDE LOGOS', brandingHint: 'Die Logos werden weiter unten unter Medienressourcen geladen.',
+      finalWidthLabel: 'BREITE (PX)', finalHeightLabel: 'HÖHE (PX)',
+      finalSizeHint: 'Feste Größe der Grafik: sie schrumpft nicht, auch wenn wenige Fahrer da sind. Leer lassen für die Standardgröße (grau angezeigt).'
     },
     circuito: {
       confirmRemoveMap: 'Bist du sicher, dass du die Streckenkarte entfernen möchtest? Die markierten Kurven gehen dabei verloren.',
@@ -1099,6 +1115,8 @@ export const translations = {
       flagGreen: 'VERT',
       finalPrevTitle: 'Page précédente des résultats finaux',
       finalNextTitle: 'Page suivante des résultats finaux (passe en manuel : la rotation automatique s’arrête)',
+      finalAutoPage: 'Changer de page automatiquement',
+      finalAutoPageHint: 'Activé, les résultats finaux changent de page seuls toutes les 8 secondes. Sinon, ils restent sur la première page et on tourne à la main avec PRÉC / SUIV.',
       weatherCircuitTitle: 'Obtenir la météo du circuit sélectionné',
       lightsOff: 'Feux éteints',
       lightsPreparing: 'Préparation…',
@@ -1266,7 +1284,9 @@ export const translations = {
       photosFolder: 'DOSSIER DES PHOTOS DES PILOTES', noFolderSelected: 'Aucun dossier sélectionné.',
       chooseFolderBtn: '📁 CHOISIR UN DOSSIER', removeFolderBtn: '🗑️ RETIRER LE DOSSIER',
       previewPlaceholder: 'ZONE DU GRAPHIQUE',
-      brandingShowLabel: 'LOGOS À AFFICHER', brandingHint: 'Les logos se chargent plus bas, dans Ressources multimédias.'
+      brandingShowLabel: 'LOGOS À AFFICHER', brandingHint: 'Les logos se chargent plus bas, dans Ressources multimédias.',
+      finalWidthLabel: 'LARGEUR (PX)', finalHeightLabel: 'HAUTEUR (PX)',
+      finalSizeHint: 'Taille fixe du graphique : il ne rétrécit pas même avec peu de pilotes. Laisser vide pour la taille par défaut (affichée en gris).'
     },
     circuito: {
       confirmRemoveMap: 'Êtes-vous sûr de vouloir retirer le plan du circuit ? Les virages marqués seront perdus.',

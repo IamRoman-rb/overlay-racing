@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { getSkinStyle } from '../utils/skinStyles';
 import pilotoAnonimo from '../assets/piloto_anonimo.png';
 import { getAnimDuration, getRollClip } from '../utils/animationTiming';
+import { getFinalResultsSize } from '../utils/finalResultsSize';
 
 const PODIUM_COLORS = { 1: '#ffd700', 2: '#c0c0c0', 3: '#cd7f32' };
 
@@ -43,6 +44,10 @@ export default function FinalResults({ drivers, config, isVisible, id = 'finalRe
   const [page, setPage] = useState(0);
   const itemsPerPage = isCompact ? 14 : 10;
 
+  // Tamaño fijo (editable en PERSONALIZAR): no se achica cuando la última página tiene pocos pilotos
+  const size = getFinalResultsSize(config, resultsFormat);
+  const autoPaging = config?.finalResultsAutoPage !== false;
+
   // FORMATO BROADCAST: foto del ganador servida por el mini-servidor local (misma fuente que WinnerGraphic)
   const winnerDriver = drivers.find(d => String(d.pos) === '1') || drivers[0];
   const [winnerPhoto, setWinnerPhoto] = useState(pilotoAnonimo);
@@ -73,13 +78,13 @@ export default function FinalResults({ drivers, config, isVisible, id = 'finalRe
       setManualPaging(false);
       return;
     }
-    if (manualPaging) return;
+    if (manualPaging || !autoPaging) return;
     const totalPages = Math.ceil(drivers.length / itemsPerPage);
     const interval = setInterval(() => {
       setPage(prev => (prev + 1) % totalPages);
     }, 8000);
     return () => clearInterval(interval);
-  }, [isVisible, drivers.length, itemsPerPage, manualPaging]);
+  }, [isVisible, drivers.length, itemsPerPage, manualPaging, autoPaging]);
 
   const totalPages = Math.ceil(drivers.length / itemsPerPage);
 
@@ -118,7 +123,7 @@ export default function FinalResults({ drivers, config, isVisible, id = 'finalRe
       }}>
         <style>{`@keyframes fadePageBroadcast { 0% { opacity: 0; transform: translateY(10px); } 100% { opacity: 1; transform: translateY(0); } }`}</style>
         <div style={{
-          width: '1500px', display: 'flex', flexDirection: 'column',
+          width: `${size.width}px`, height: `${size.height}px`, boxSizing: 'border-box', display: 'flex', flexDirection: 'column',
           backgroundColor: themeHeaderBg, borderRadius: bRad, overflow: 'hidden',
           border: '1px solid rgba(255,255,255,0.1)', boxShadow: '0 20px 60px rgba(0,0,0,0.8)'
         }}>
@@ -130,9 +135,9 @@ export default function FinalResults({ drivers, config, isVisible, id = 'finalRe
             </span>
           </div>
 
-          <div style={{ display: 'flex' }}>
-            {/* COLUMNA IZQUIERDA: TABLA DE RESULTADOS */}
-            <div style={{ flex: '0 0 940px', padding: '24px 26px', display: 'flex', flexDirection: 'column' }}>
+          <div style={{ display: 'flex', flex: 1, minHeight: 0 }}>
+            {/* COLUMNA IZQUIERDA: TABLA DE RESULTADOS (62,67 % del ancho, como los 940 de 1500 px originales) */}
+            <div style={{ flex: '0 0 62.67%', minWidth: 0, boxSizing: 'border-box', padding: '24px 26px', display: 'flex', flexDirection: 'column' }}>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: '10px', marginBottom: '14px' }}>
                 <span style={{ fontSize: '30px', fontWeight: 900, color: themeNormalText, letterSpacing: '1px', maxWidth: '700px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', textTransform: 'uppercase' }}>{config.eventName || 'CARRERA'}</span>
                 {broadcastPages > 1 && (
@@ -193,7 +198,7 @@ export default function FinalResults({ drivers, config, isVisible, id = 'finalRe
             </div>
 
             {/* COLUMNA DERECHA: FOTO DEL GANADOR */}
-            <div style={{ flex: '1 1 auto', position: 'relative', backgroundColor: themeBg, overflow: 'hidden', minHeight: '520px' }}>
+            <div style={{ flex: '1 1 auto', position: 'relative', backgroundColor: themeBg, overflow: 'hidden' }}>
               <div style={{
                 position: 'absolute', top: '10px', right: '20px', fontSize: '22px', fontWeight: 900,
                 color: themeNormalText, letterSpacing: '2px'
@@ -255,6 +260,7 @@ export default function FinalResults({ drivers, config, isVisible, id = 'finalRe
              backgroundColor: skin ? skin.background : (transparent ? 'transparent' : themeBg),
              backgroundImage: hasCustomBg ? `url(${customBg})` : (skin?.backgroundImage || 'none'),
              backgroundSize: '100% 100%', backgroundRepeat: 'no-repeat', backgroundPosition: 'center',
+             width: `${size.width}px`, height: `${size.height}px`, boxSizing: 'border-box', overflow: 'hidden',
              padding: isMinimal ? '10px' : '40px', display: 'flex', flexDirection: 'column',
              alignItems: 'center', boxShadow: skin ? skin.boxShadow : (transparent ? 'none' : '0 15px 50px rgba(0,0,0,0.8)'),
              border: skin ? skin.border : (transparent ? 'none' : `2px solid ${themeMain}`),
@@ -277,7 +283,7 @@ export default function FinalResults({ drivers, config, isVisible, id = 'finalRe
 
              {/* CONTENEDOR DE LA TABLA */}
              <div style={{
-               width: '1050px', backgroundColor: (skin || transparent) ? 'transparent' : themeHeaderBg,
+               width: '100%', boxSizing: 'border-box', flex: 1, minHeight: 0, backgroundColor: (skin || transparent) ? 'transparent' : themeHeaderBg,
                borderRadius: bRad,
                padding: '10px 20px 20px 20px', border: (skin || transparent) ? 'none' : '1px solid rgba(255,255,255,0.1)', position: 'relative'
              }}>
@@ -322,7 +328,7 @@ export default function FinalResults({ drivers, config, isVisible, id = 'finalRe
                 {/* INDICADOR DE PÁGINA */}
                 {totalPages > 1 && (
                   <div style={{ 
-                    position: 'absolute', bottom: '-15px', right: '15px', 
+                    position: 'absolute', bottom: isMinimal ? '-9px' : '-15px', right: '15px',
                     fontSize: '11px', color: themeTitleText, fontWeight: 'bold', letterSpacing: '1px' 
                   }}>
                     PÁGINA {page + 1} DE {totalPages}

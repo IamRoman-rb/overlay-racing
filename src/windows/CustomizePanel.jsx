@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { SKIN_FORMATS } from '../utils/skinStyles';
+import { getFinalResultsDefaultSize } from '../utils/finalResultsSize';
 import GraphicPreview from './GraphicPreview';
 
 export default function CustomizePanel({ config, positions, defaultPositions, onUpdatePositions, onSelectLogo, onSelectCategoryLogo, onSelectPhotosFolder, onClearLogo, onClearCategoryLogo, onClearPhotosFolder, onConfigChange, colors, inputStyle, btnStyle, t, drivers, sessionInfo }) {
@@ -610,6 +611,21 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
               <option value="broadcast">Broadcast (Tabla + Foto del Ganador, Estilo F1)</option>
               {renderSkinOptions()}
             </select>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginTop: '15px' }}>
+              {[['finalResultsWidth', 'width', 'finalWidthLabel'], ['finalResultsHeight', 'height', 'finalHeightLabel']].map(([key, dim, labelKey]) => (
+                <div key={key} style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                  <label style={{ fontSize: '10px', color: colors.textMuted, fontWeight: 'bold' }}>{t(`personalizar.${labelKey}`)}</label>
+                  <input
+                    type="number" min="100" step="1"
+                    value={config[key] ?? ''}
+                    placeholder={String(getFinalResultsDefaultSize(config.finalResultsFormat || 'standard')[dim])}
+                    onChange={(e) => onConfigChange(key, e.target.value)}
+                    style={{ ...inputStyle, padding: '10px', fontSize: '11px' }}
+                  />
+                </div>
+              ))}
+            </div>
+            <span style={{ fontSize: '10px', color: colors.textMuted, lineHeight: '1.5', marginTop: '5px' }}>{t('personalizar.finalSizeHint')}</span>
           </div>
         )}
 
