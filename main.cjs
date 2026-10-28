@@ -816,9 +816,30 @@ ipcMain.handle('get-config', () => {
   try { if (fs.existsSync(dbPath)) return JSON.parse(fs.readFileSync(dbPath, 'utf-8')); } catch (e) {}
   return { campeonato: '', relator: '', comentarista: '' };
 });
+// Tamaño del lienzo del overlay (config.overlayWidth / overlayHeight); por defecto 1920x1080
+function getOverlaySize(cfg) {
+  const dim = (raw, fallback) => {
+    const n = Math.round(parseFloat(raw));
+    return Number.isFinite(n) ? Math.min(7680, Math.max(320, n)) : fallback;
+  };
+  return { width: dim(cfg && cfg.overlayWidth, 1920), height: dim(cfg && cfg.overlayHeight, 1080) };
+}
+
+function applyOverlaySize(cfg) {
+  if (!overlayWindow || overlayWindow.isDestroyed()) return;
+  const { width, height } = getOverlaySize(cfg);
+  const [curW, curH] = overlayWindow.getContentSize();
+  if (curW === width && curH === height) return;
+  // La ventana del overlay no es redimensionable a mano: se habilita un instante para poder cambiarle el tamaño por código
+  overlayWindow.setResizable(true);
+  overlayWindow.setContentSize(width, height);
+  overlayWindow.setResizable(false);
+}
+
 ipcMain.handle('save-config', (event, data) => {
   try {
     fs.writeFileSync(dbPath, JSON.stringify(data, null, 2));
+    applyOverlaySize(data);
     broadcast('update-config', data);
     return true;
   } catch (e) { return false; }
@@ -1030,7 +1051,10 @@ function createWindows() {
   const iconPath = path.join(__dirname, 'src', 'assets', 'logo.png');
 
   controlWindow = new BrowserWindow({ width: 1050, height: 700, icon: iconPath, webPreferences: { nodeIntegration: true, contextIsolation: false }, autoHideMenuBar: true });
-  overlayWindow = new BrowserWindow({ width: 1920, height: 1080, icon: iconPath, frame: false, resizable: false, transparent: true, hasShadow: false, webPreferences: { nodeIntegration: true, contextIsolation: false } });
+  let savedConfig = {};
+  try { if (fs.existsSync(dbPath)) savedConfig = JSON.parse(fs.readFileSync(dbPath, 'utf-8')); } catch (e) { savedConfig = {}; }
+  const overlaySize = getOverlaySize(savedConfig);
+  overlayWindow = new BrowserWindow({ width: overlaySize.width, height: overlaySize.height, useContentSize: true, icon: iconPath, frame: false, resizable: false, transparent: true, hasShadow: false, webPreferences: { nodeIntegration: true, contextIsolation: false } });
 
   if (isDev) {
     controlWindow.loadURL('http://localhost:5173/#/');

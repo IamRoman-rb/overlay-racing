@@ -237,8 +237,9 @@ export const translations = {
       chooseFolderBtn: '📁 ELEGIR CARPETA', removeFolderBtn: '🗑️ QUITAR CARPETA',
       previewPlaceholder: 'ÁREA DE GRÁFICA',
       brandingShowLabel: 'LOGOS A MOSTRAR', brandingHint: 'Los logos se cargan más abajo, en Recursos multimedia.',
-      finalWidthLabel: 'ANCHO (PX)', finalHeightLabel: 'ALTO (PX)',
-      finalSizeHint: 'Medida fija de la gráfica: no se achica aunque haya pocos pilotos. Dejalo vacío para usar la medida por defecto (se muestra en gris).'
+      graphicWidthLabel: "ANCHO (PX)", graphicHeightLabel: "ALTO (PX)", graphicSizeAuto: "auto",
+      graphicSizeHint: "Vacío = tamaño original de la gráfica. Se aplica al recuadro de la gráfica; el contenido mantiene su tamaño. Confirmá con Enter o al salir del campo.",
+      overlaySizeTitle: "TAMAÑO DEL OVERLAY", overlaySizeDesc: "Ancho y alto del lienzo en píxeles (por defecto 1920 × 1080). La ventana del overlay se ajusta sola; en OBS o vMix poné la fuente de navegador con la misma medida. Las posiciones de las gráficas no cambian: reacomodalas si hace falta.", overlayPreset: "Medidas comunes…", overlayReset: "Restaurar 1920 × 1080"
     },
     circuito: {
       confirmRemoveMap: '¿Seguro que querés quitar el mapa del circuito? Se perderán las curvas marcadas.',
@@ -499,8 +500,9 @@ export const translations = {
       chooseFolderBtn: '📁 CHOOSE FOLDER', removeFolderBtn: '🗑️ REMOVE FOLDER',
       previewPlaceholder: 'GRAPHIC AREA',
       brandingShowLabel: 'LOGOS TO SHOW', brandingHint: 'Logos are loaded below, in Media Resources.',
-      finalWidthLabel: 'WIDTH (PX)', finalHeightLabel: 'HEIGHT (PX)',
-      finalSizeHint: 'Fixed size of the graphic: it does not shrink when there are few drivers. Leave empty to use the default size (shown in gray).'
+      graphicWidthLabel: "WIDTH (PX)", graphicHeightLabel: "HEIGHT (PX)", graphicSizeAuto: "auto",
+      graphicSizeHint: "Empty = the graphic's original size. It applies to the graphic's box; the content keeps its size. Confirm with Enter or by leaving the field.",
+      overlaySizeTitle: "OVERLAY SIZE", overlaySizeDesc: "Canvas width and height in pixels (default 1920 × 1080). The overlay window resizes itself; in OBS or vMix set the browser source to the same size. Graphic positions do not change: rearrange them if needed.", overlayPreset: "Common sizes…", overlayReset: "Restore 1920 × 1080"
     },
     circuito: {
       confirmRemoveMap: 'Are you sure you want to remove the track map? The marked corners will be lost.',
@@ -761,8 +763,9 @@ export const translations = {
       chooseFolderBtn: '📁 ESCOLHER PASTA', removeFolderBtn: '🗑️ REMOVER PASTA',
       previewPlaceholder: 'ÁREA DO GRÁFICO',
       brandingShowLabel: 'LOGOS A MOSTRAR', brandingHint: 'Os logos são carregados abaixo, em Recursos de mídia.',
-      finalWidthLabel: 'LARGURA (PX)', finalHeightLabel: 'ALTURA (PX)',
-      finalSizeHint: 'Tamanho fixo do gráfico: não encolhe mesmo com poucos pilotos. Deixe vazio para usar o tamanho padrão (mostrado em cinza).'
+      graphicWidthLabel: "LARGURA (PX)", graphicHeightLabel: "ALTURA (PX)", graphicSizeAuto: "auto",
+      graphicSizeHint: "Vazio = tamanho original do gráfico. Aplica-se à caixa do gráfico; o conteúdo mantém seu tamanho. Confirme com Enter ou ao sair do campo.",
+      overlaySizeTitle: "TAMANHO DO OVERLAY", overlaySizeDesc: "Largura e altura da tela em pixels (padrão 1920 × 1080). A janela do overlay se ajusta sozinha; no OBS ou vMix coloque a fonte de navegador com a mesma medida. As posições dos gráficos não mudam: reorganize-as se necessário.", overlayPreset: "Medidas comuns…", overlayReset: "Restaurar 1920 × 1080"
     },
     circuito: {
       confirmRemoveMap: 'Tem certeza de que deseja remover o mapa do circuito? As curvas marcadas serão perdidas.',
@@ -1023,8 +1026,9 @@ export const translations = {
       chooseFolderBtn: '📁 ORDNER WÄHLEN', removeFolderBtn: '🗑️ ORDNER ENTFERNEN',
       previewPlaceholder: 'GRAFIKBEREICH',
       brandingShowLabel: 'ANZUZEIGENDE LOGOS', brandingHint: 'Die Logos werden weiter unten unter Medienressourcen geladen.',
-      finalWidthLabel: 'BREITE (PX)', finalHeightLabel: 'HÖHE (PX)',
-      finalSizeHint: 'Feste Größe der Grafik: sie schrumpft nicht, auch wenn wenige Fahrer da sind. Leer lassen für die Standardgröße (grau angezeigt).'
+      graphicWidthLabel: "BREITE (PX)", graphicHeightLabel: "HÖHE (PX)", graphicSizeAuto: "auto",
+      graphicSizeHint: "Leer = Originalgröße der Grafik. Gilt für den Rahmen der Grafik; der Inhalt behält seine Größe. Mit Enter oder beim Verlassen des Felds bestätigen.",
+      overlaySizeTitle: "OVERLAY-GRÖSSE", overlaySizeDesc: "Breite und Höhe der Zeichenfläche in Pixeln (Standard 1920 × 1080). Das Overlay-Fenster passt sich selbst an; in OBS oder vMix die Browserquelle auf dieselbe Größe stellen. Die Positionen der Grafiken ändern sich nicht: bei Bedarf neu anordnen.", overlayPreset: "Gängige Größen…", overlayReset: "1920 × 1080 wiederherstellen"
     },
     circuito: {
       confirmRemoveMap: 'Bist du sicher, dass du die Streckenkarte entfernen möchtest? Die markierten Kurven gehen dabei verloren.',
@@ -1285,8 +1289,9 @@ export const translations = {
       chooseFolderBtn: '📁 CHOISIR UN DOSSIER', removeFolderBtn: '🗑️ RETIRER LE DOSSIER',
       previewPlaceholder: 'ZONE DU GRAPHIQUE',
       brandingShowLabel: 'LOGOS À AFFICHER', brandingHint: 'Les logos se chargent plus bas, dans Ressources multimédias.',
-      finalWidthLabel: 'LARGEUR (PX)', finalHeightLabel: 'HAUTEUR (PX)',
-      finalSizeHint: 'Taille fixe du graphique : il ne rétrécit pas même avec peu de pilotes. Laisser vide pour la taille par défaut (affichée en gris).'
+      graphicWidthLabel: "LARGEUR (PX)", graphicHeightLabel: "HAUTEUR (PX)", graphicSizeAuto: "auto",
+      graphicSizeHint: "Vide = taille d'origine du graphique. S'applique au cadre du graphique ; le contenu garde sa taille. Valider avec Entrée ou en quittant le champ.",
+      overlaySizeTitle: "TAILLE DE L'OVERLAY", overlaySizeDesc: "Largeur et hauteur du canevas en pixels (par défaut 1920 × 1080). La fenêtre de l'overlay s'ajuste seule ; dans OBS ou vMix, réglez la source navigateur à la même taille. Les positions des graphiques ne changent pas : réorganisez-les si besoin.", overlayPreset: "Tailles courantes…", overlayReset: "Rétablir 1920 × 1080"
     },
     circuito: {
       confirmRemoveMap: 'Êtes-vous sûr de vouloir retirer le plan du circuit ? Les virages marqués seront perdus.',

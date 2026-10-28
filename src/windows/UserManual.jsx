@@ -66,7 +66,7 @@ export default function UserManual({ colors, t, language }) {
         <div style={h4}>Opción A — Capturar la ventana + Chroma Key (recomendado)</div>
         <ol style={ol}>
           <li style={li}>Andá a la pestaña <b>AJUSTES</b> y elegí el "COLOR DE FONDO (CHROMA KEY)" que vas a usar (por defecto es verde).</li>
-          <li style={li}>Dejá la ventana <b>Overlay</b> abierta en un monitor, idealmente a 1920×1080 sin escalar.</li>
+          <li style={li}>Dejá la ventana <b>Overlay</b> abierta en un monitor, idealmente a 1920×1080 (o la medida que definas en PERSONALIZAR) sin escalar.</li>
           <li style={li}>En vMix, agregá un input de tipo <b>Capture</b> (o capturá directamente el monitor/pantalla) apuntando a la ventana "Overlay".</li>
           <li style={li}>Aplicále a ese input el filtro <b>Chroma Key</b> de vMix, seleccionando el mismo color que elegiste en AJUSTES.</li>
         </ol>

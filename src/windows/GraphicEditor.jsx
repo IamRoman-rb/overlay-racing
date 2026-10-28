@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import GraphicPreview from './GraphicPreview';
 import Icon from '../components/Icon';
+import { getCanvasSize } from '../utils/canvasSize';
 import { LAYOUT_EDITS_PREFIX, detectObjects, resolvePath, describeObject } from '../utils/layoutEdit';
 
 const EDITABLE_GRAPHICS = [
@@ -10,9 +11,7 @@ const EDITABLE_GRAPHICS = [
   'lapTimesHistory', 'trackAlert', 'penaltyAlert', 'branding'
 ];
 
-const SNAP_THRESHOLD = 8; // px del escenario (1920x1080)
-const STAGE_SAFE_X = [96, 1824];
-const STAGE_SAFE_Y = [54, 1026];
+const SNAP_THRESHOLD = 8; // px del escenario (el lienzo del overlay)
 
 // Descarta los desplazamientos en cero para no ensuciar el archivo de configuración
 const cleanEdits = (edits) => {
@@ -58,6 +57,8 @@ export default function GraphicEditor({ config, positions, drivers, sessionInfo,
   const edits = useMemo(() => draft || savedEdits || {}, [draft, savedEdits]);
   const previewConfig = useMemo(() => ({ ...config, [editsKey]: edits }), [config, editsKey, edits]);
   const accent = config.themeAccent || '#ffcc00';
+  const { width: CW, height: CH } = getCanvasSize(config); // lienzo del overlay (por defecto 1920x1080)
+  const SAFE_X = Math.round(CW * 0.05), SAFE_Y = Math.round(CH * 0.05); // zona segura: 5 % de cada borde
 
   const getWrapper = useCallback(() => (stageRef.current ? stageRef.current.querySelector('[data-le-wrap]') : null), []);
 
@@ -66,12 +67,12 @@ export default function GraphicEditor({ config, positions, drivers, sessionInfo,
     const el = areaRef.current;
     if (!el || typeof ResizeObserver === 'undefined') return undefined;
     const ro = new ResizeObserver(() => {
-      const scale = Math.min((el.clientWidth - 48) / 1920, (el.clientHeight - 48) / 1080);
+      const scale = Math.min((el.clientWidth - 48) / CW, (el.clientHeight - 48) / CH);
       setPreviewScale(Math.max(0.2, Math.min(1, scale)));
     });
     ro.observe(el);
     return () => ro.disconnect();
-  }, []);
+  }, [CW, CH]);
 
   // Detecta los objetos de la gráfica ya dibujada (y vuelve a mirar cada tanto: aparecen datos, cambia la página, etc.)
   useEffect(() => {
@@ -104,7 +105,7 @@ export default function GraphicEditor({ config, positions, drivers, sessionInfo,
       if (!stage || !wrapper) return;
       const stageRect = stage.getBoundingClientRect();
       if (stageRect.width === 0) return;
-      const k = stageRect.width / 1920;
+      const k = stageRect.width / CW;
       objects.forEach(({ key }) => {
         const box = boxRefs.current[key];
         const el = resolvePath(wrapper, key);
@@ -120,7 +121,7 @@ export default function GraphicEditor({ config, positions, drivers, sessionInfo,
     };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-  }, [objects, getWrapper]);
+  }, [objects, getWrapper, CW]);
 
   const commit = useCallback((next, { remember = true } = {}) => {
     const cleaned = cleanEdits(next);
@@ -144,7 +145,7 @@ export default function GraphicEditor({ config, positions, drivers, sessionInfo,
     stage.parentElement?.focus();
 
     const stageRect = stage.getBoundingClientRect();
-    const stageK = stageRect.width / 1920;
+    const stageK = stageRect.width / CW;
     const toStage = (r) => ({ left: (r.left - stageRect.left) / stageK, top: (r.top - stageRect.top) / stageK, w: r.width / stageK, h: r.height / stageK });
     const rect = toStage(el.getBoundingClientRect());
 
@@ -153,8 +154,8 @@ export default function GraphicEditor({ config, positions, drivers, sessionInfo,
     const graphicScale = own > 0 && stageK > 0 ? own / stageK : (positions?.[selected]?.scale || 1);
 
     // Líneas a las que se "pega": bordes / centro / zona segura del cuadro y de los demás objetos
-    const targetsX = [0, 960, 1920, ...STAGE_SAFE_X];
-    const targetsY = [0, 540, 1080, ...STAGE_SAFE_Y];
+    const targetsX = [0, CW / 2, CW, SAFE_X, CW - SAFE_X];
+    const targetsY = [0, CH / 2, CH, SAFE_Y, CH - SAFE_Y];
     objects.forEach(({ key }) => {
       if (key === obj.key) return;
       const other = resolvePath(wrapper, key);
@@ -367,8 +368,8 @@ export default function GraphicEditor({ config, positions, drivers, sessionInfo,
             onKeyDown={handleStageKeyDown}
             onKeyUp={handleStageKeyUp}
             style={{
-              width: 1920 * previewScale, height: 1080 * previewScale,
-              minWidth: 1920 * previewScale, minHeight: 1080 * previewScale,
+              width: CW * previewScale, height: CH * previewScale,
+              minWidth: CW * previewScale, minHeight: CH * previewScale,
               flexShrink: 0, position: 'relative', outline: 'none',
               boxShadow: '0 0 0 2px #555, 0 0 30px rgba(0,0,0,1)'
             }}
@@ -378,7 +379,7 @@ export default function GraphicEditor({ config, positions, drivers, sessionInfo,
               className="ge-stage"
               onPointerDown={() => setSelectedKey(null)}
               style={{
-                width: '1920px', height: '1080px', backgroundColor: config.chromaColor || '#00FF00',
+                width: `${CW}px`, height: `${CH}px`, backgroundColor: config.chromaColor || '#00FF00',
                 position: 'absolute', top: 0, left: 0, transform: `scale(${previewScale})`, transformOrigin: 'top left',
                 overflow: 'hidden', fontFamily: config.fontFamily || 'Arial, sans-serif'
               }}
@@ -388,23 +389,23 @@ export default function GraphicEditor({ config, positions, drivers, sessionInfo,
                   .ge-stage * { transition: none !important; }`}
               </style>
 
-              <div style={{ position: 'absolute', left: 0, top: 0, width: '1920px', height: '1080px', pointerEvents: 'none', zIndex: 10 }}>
+              <div style={{ position: 'absolute', left: 0, top: 0, width: `${CW}px`, height: `${CH}px`, pointerEvents: 'none', zIndex: 10 }}>
                 <GraphicPreview id={selected} config={previewConfig} positions={positions} drivers={drivers} sessionInfo={sessionInfo} />
               </div>
 
               {showGuides && (
                 <>
-                  <div style={{ position: 'absolute', left: '959px', top: 0, width: '2px', height: '1080px', backgroundColor: 'rgba(0, 229, 255, 0.55)', pointerEvents: 'none', zIndex: 20 }} />
-                  <div style={{ position: 'absolute', left: 0, top: '539px', width: '1920px', height: '2px', backgroundColor: 'rgba(0, 229, 255, 0.55)', pointerEvents: 'none', zIndex: 20 }} />
-                  <div style={{ position: 'absolute', left: '96px', top: '54px', width: '1728px', height: '972px', border: '2px dashed rgba(255,255,255,0.35)', boxSizing: 'border-box', pointerEvents: 'none', zIndex: 20 }} />
+                  <div style={{ position: 'absolute', left: `${CW / 2 - 1}px`, top: 0, width: '2px', height: `${CH}px`, backgroundColor: 'rgba(0, 229, 255, 0.55)', pointerEvents: 'none', zIndex: 20 }} />
+                  <div style={{ position: 'absolute', left: 0, top: `${CH / 2 - 1}px`, width: `${CW}px`, height: '2px', backgroundColor: 'rgba(0, 229, 255, 0.55)', pointerEvents: 'none', zIndex: 20 }} />
+                  <div style={{ position: 'absolute', left: `${SAFE_X}px`, top: `${SAFE_Y}px`, width: `${CW - 2 * SAFE_X}px`, height: `${CH - 2 * SAFE_Y}px`, border: '2px dashed rgba(255,255,255,0.35)', boxSizing: 'border-box', pointerEvents: 'none', zIndex: 20 }} />
                 </>
               )}
 
               {snapLines.x.map(x => (
-                <div key={`sx${x}`} style={{ position: 'absolute', left: `${x - 2}px`, top: 0, width: '4px', height: '1080px', backgroundColor: '#ff2bd6', pointerEvents: 'none', zIndex: 600 }} />
+                <div key={`sx${x}`} style={{ position: 'absolute', left: `${x - 2}px`, top: 0, width: '4px', height: `${CH}px`, backgroundColor: '#ff2bd6', pointerEvents: 'none', zIndex: 600 }} />
               ))}
               {snapLines.y.map(y => (
-                <div key={`sy${y}`} style={{ position: 'absolute', left: 0, top: `${y - 2}px`, width: '1920px', height: '4px', backgroundColor: '#ff2bd6', pointerEvents: 'none', zIndex: 600 }} />
+                <div key={`sy${y}`} style={{ position: 'absolute', left: 0, top: `${y - 2}px`, width: `${CW}px`, height: '4px', backgroundColor: '#ff2bd6', pointerEvents: 'none', zIndex: 600 }} />
               ))}
 
               {/* RECUADROS DE LOS OBJETOS: cada uno se arrastra para moverlo */}

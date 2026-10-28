@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { getSkinStyle } from '../utils/skinStyles';
 import MarqueeText from './MarqueeText';
 import { getAnimDuration, getRollClip } from '../utils/animationTiming';
+import { getCanvasSize } from '../utils/canvasSize';
 
 const PODIUM_COLORS = { 1: '#ffd700', 2: '#c0c0c0', 3: '#cd7f32' };
 
@@ -77,7 +78,7 @@ export default function Ticker({ drivers, isVisible, config, id = 'ticker', sess
     return (
       <div style={{
         position: 'absolute', left: `${pos.x}px`, top: `${pos.y}px`,
-        transformOrigin: 'top left', zIndex: 20, width: '1920px',
+        transformOrigin: 'top left', zIndex: 20, width: `${getCanvasSize(config).width}px`,
         transition: `all ${animDur}s cubic-bezier(0.175, 0.885, 0.32, 1.275)`,
         opacity: isVisible || animStyle === 'roll' ? 1 : 0,
         transform: isVisible || animStyle === 'roll' ? `scale(${pos.scale}) translateY(0)` : transformHidden, ...getRollClip(animStyle, isVisible),
@@ -173,7 +174,7 @@ export default function Ticker({ drivers, isVisible, config, id = 'ticker', sess
     <div style={{
       position: 'absolute', left: `${pos.x}px`, top: `${pos.y}px`,
       transformOrigin: 'top left',
-      zIndex: 20, width: '1920px',
+      zIndex: 20, width: `${getCanvasSize(config).width}px`,
       height: barHeight,
       backgroundImage: hasCustomBg ? `url(${customBg})` : 'none',
       backgroundSize: '100% 100%', backgroundRepeat: 'no-repeat', backgroundPosition: 'center',

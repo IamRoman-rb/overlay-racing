@@ -1,5 +1,6 @@
 import { getSkinStyle } from '../utils/skinStyles';
 import { getAnimDuration, getRollClip } from '../utils/animationTiming';
+import { getCanvasSize } from '../utils/canvasSize';
 
 export default function TrackAlert({ alert, config, id = 'trackAlert' }) {
   const pos = config?.positions?.[id] || { x: 1500, y: 500, scale: 1 };
@@ -60,7 +61,7 @@ export default function TrackAlert({ alert, config, id = 'trackAlert' }) {
   // FORMATO BANNER: barra completa de ancho de pantalla
   if (alertFormat === 'banner') {
     return (
-      <div style={{ ...wrapperStyle, width: '1920px' }}>
+      <div style={{ ...wrapperStyle, width: `${getCanvasSize(config).width}px` }}>
         <style>{sharedStyles}</style>
         <div style={{
           backgroundColor: accentColor, padding: '12px 0', textAlign: 'center', width: '100%',

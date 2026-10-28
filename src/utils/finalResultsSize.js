@@ -14,8 +14,9 @@ export function getFinalResultsDefaultSize(format) {
 // Ancho y alto con los que se dibuja la gráfica: lo que el operador cargó en PERSONALIZAR o, si está vacío o inválido, el defecto.
 export function getFinalResultsSize(config, format) {
   const def = getFinalResultsDefaultSize(format);
-  const w = parseFloat(config?.finalResultsWidth);
-  const h = parseFloat(config?.finalResultsHeight);
+  // sizeW_/sizeH_ son las claves genéricas de PERSONALIZAR; finalResultsWidth/Height son las de la versión 1.0.1
+  const w = parseFloat(config?.sizeW_finalResults ?? config?.finalResultsWidth);
+  const h = parseFloat(config?.sizeH_finalResults ?? config?.finalResultsHeight);
   return {
     width: Number.isFinite(w) && w > 0 ? w : def.width,
     height: Number.isFinite(h) && h > 0 ? h : def.height

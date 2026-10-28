@@ -1,5 +1,6 @@
 import { getSkinStyle } from '../utils/skinStyles';
 import { getAnimDuration, getRollClip } from '../utils/animationTiming';
+import { getCanvasSize } from '../utils/canvasSize';
 
 export default function CustomZocalo({ isVisible, title, text, config, id = 'customZocalo' }) {
   const pos = config?.positions?.[id] || { x: 20, y: 550, scale: 1 };
@@ -42,7 +43,7 @@ export default function CustomZocalo({ isVisible, title, text, config, id = 'cus
   // FORMATO BANNER: barra completa de ancho de pantalla, texto centrado
   if (zocaloFormat === 'banner') {
     return (
-      <div style={{ ...wrapperStyle, width: '1920px' }}>
+      <div style={{ ...wrapperStyle, width: `${getCanvasSize(config).width}px` }}>
         <div style={{
           backgroundColor: hasCustomBg ? 'transparent' : themeBg,
           backgroundImage: hasCustomBg ? `url(${customBg})` : 'none',

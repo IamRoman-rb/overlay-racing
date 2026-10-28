@@ -23,6 +23,7 @@ import TrackAlert from '../graphics/TrackAlert';
 import PenaltyAlert from '../graphics/PenaltyAlert';
 import Branding from '../graphics/Branding';
 import LayoutEdits from '../components/LayoutEdits';
+import { getCanvasSize } from '../utils/canvasSize';
 import Icon from '../components/Icon';
 
 let ipcRenderer = null;
@@ -219,6 +220,7 @@ export default function Overlay() {
   // "125cc 4T Libre - 1era Manga"); si todavía no hay sesión cargada, el campeonato escrito a mano.
   const eventName = (sessionInfo && sessionInfo.name) || safeConfig.campeonato || '';
   const combinedConfig = { ...safeConfig, positions: positions || {}, eventName };
+  const canvas = getCanvasSize(safeConfig); // tamaño del overlay (por defecto 1920x1080)
 
   const formattedDrivers = useMemo(() => {
     return drivers.map(d => ({ ...d, name: formatDriverName(d.name, safeConfig.nameFormat) }));
@@ -237,7 +239,7 @@ export default function Overlay() {
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       style={{
-        width: '100vw', height: '100vh',
+        width: `${canvas.width}px`, height: `${canvas.height}px`,
         backgroundColor: inBrowserMode ? 'transparent' : (safeConfig.chromaColor || '#00FF00'),
         color: 'white', fontFamily: safeConfig.fontFamily || 'Arial, sans-serif',
         overflow: 'hidden', position: 'relative'

@@ -3,6 +3,7 @@ import pilotoAnonimo from '../assets/piloto_anonimo.png';
 import { getSkinStyle } from '../utils/skinStyles';
 import MarqueeText from './MarqueeText';
 import { getAnimDuration, getRollClip } from '../utils/animationTiming';
+import { getCanvasSize } from '../utils/canvasSize';
 
 let ipcRenderer = null;
 if (typeof window !== 'undefined' && typeof window.require === 'function') {
@@ -86,8 +87,8 @@ export default function StartingGrid({ drivers, config, isVisible, id = 'grid' }
     <div style={{
       position: 'absolute', left: `${pos.x}px`, top: `${pos.y}px`,
       transformOrigin: 'top left',
-      width: (gridFormat === 'photos' || gridFormat === 'cinematic') ? '1920px' : '1280px',
-      height: (gridFormat === 'photos' || gridFormat === 'cinematic') ? '1080px' : '720px',
+      width: (gridFormat === 'photos' || gridFormat === 'cinematic') ? `${getCanvasSize(config).width}px` : '1280px',
+      height: (gridFormat === 'photos' || gridFormat === 'cinematic') ? `${getCanvasSize(config).height}px` : '720px',
       display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
       backgroundColor: 'transparent',
       zIndex: 30,
@@ -336,7 +337,7 @@ function CinematicGridView({ allDrivers, currentDriver, page, config, bRad, them
   // --- ESCALADO AUTOMÁTICO DE FILAS ---
   // Con pocos pilotos las filas se ven a tamaño normal; con muchos (ej. 50 autos)
   // se van achicando para que la grilla ENTRE COMPLETA sin cortarse arriba ni abajo.
-  const PANEL_HEIGHT = 1080;
+  const PANEL_HEIGHT = getCanvasSize(config).height;
   const HEADER_RESERVED = 110; // espacio fijo arriba para el título/logo, nunca se pisa
   const BOTTOM_MARGIN = 30;
   const AVAILABLE_HEIGHT = PANEL_HEIGHT - HEADER_RESERVED - BOTTOM_MARGIN;

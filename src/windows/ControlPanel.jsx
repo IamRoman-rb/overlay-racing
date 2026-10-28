@@ -657,8 +657,10 @@ export default function ControlPanel() {
     }
   };
 
+  // key puede ser un objeto { clave: valor, ... } para guardar varias claves juntas
   const handleDirectSave = async (key, value) => {
-    const newConfig = { ...config, [key]: value };
+    const patch = key !== null && typeof key === 'object' ? key : { [key]: value };
+    const newConfig = { ...config, ...patch };
     setConfig(newConfig);
     if (ipcRenderer) await ipcRenderer.invoke('save-config', newConfig);
   };

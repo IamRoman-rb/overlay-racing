@@ -1,7 +1,26 @@
 import { useState, useRef, useEffect } from 'react';
 import { SKIN_FORMATS } from '../utils/skinStyles';
 import { getFinalResultsDefaultSize } from '../utils/finalResultsSize';
+import { getCanvasSize } from '../utils/canvasSize';
 import GraphicPreview from './GraphicPreview';
+
+// Número que se confirma con Enter o al salir del campo (no en cada tecla: evita redimensionar a medio escribir).
+// Vacío = vuelve al valor original. `key` fuerza a mostrar el valor guardado cuando cambia desde afuera.
+function CommitNumberInput({ value, placeholder, onCommit, style }) {
+  return (
+    <input
+      key={String(value ?? '')}
+      type="number" min="1" step="1"
+      defaultValue={value ?? ''}
+      placeholder={placeholder}
+      onBlur={(e) => { if (e.target.value !== String(value ?? '')) onCommit(e.target.value); }}
+      onKeyDown={(e) => { if (e.key === 'Enter') e.currentTarget.blur(); }}
+      style={style}
+    />
+  );
+}
+
+const OVERLAY_PRESETS = [[1920, 1080, 'Full HD'], [1280, 720, 'HD'], [3840, 2160, '4K'], [1080, 1920, ''], [1080, 1080, '']];
 
 export default function CustomizePanel({ config, positions, defaultPositions, onUpdatePositions, onSelectLogo, onSelectCategoryLogo, onSelectPhotosFolder, onClearLogo, onClearCategoryLogo, onClearPhotosFolder, onConfigChange, colors, inputStyle, btnStyle, t, drivers, sessionInfo }) {
   const [selectedGraphic, setSelectedGraphic] = useState('relator');
@@ -22,8 +41,10 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
     <option key={value} value={value}>{skinLabels[value] || value}</option>
   ));
 
+  const { width: CW, height: CH } = getCanvasSize(config); // lienzo del overlay (por defecto 1920x1080)
+  const SAFE_X = Math.round(CW * 0.05), SAFE_Y = Math.round(CH * 0.05); // zona segura: 5 % de cada borde
   const dragInfo = useRef({ isDragging: false, id: null, startX: 0, startY: 0, initialX: 0, initialY: 0, offX: 0, offY: 0, width: 0, height: 0 });
-  const previewRef = useRef(null);       // escenario de 1920x1080 (escalado)
+  const previewRef = useRef(null);       // escenario del tamaño del overlay (escalado)
   const previewAreaRef = useRef(null);   // zona disponible, para ajustar la escala
   const graphicWrapRef = useRef(null);   // contenedor de la gráfica real
   const fallbackRef = useRef(null);      // rectángulo de reemplazo si la gráfica no muestra nada
@@ -40,8 +61,8 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
   const hasContent = contentState.id === selectedGraphic ? contentState.has : true;
 
   // Líneas a las que "se pega" la gráfica al arrastrarla: bordes, centro y zona segura (5 %) del cuadro
-  const SNAP_X = [0, 96, 960, 1824, 1920];
-  const SNAP_Y = [0, 54, 540, 1026, 1080];
+  const SNAP_X = [0, SAFE_X, CW / 2, CW - SAFE_X, CW];
+  const SNAP_Y = [0, SAFE_Y, CH / 2, CH - SAFE_Y, CH];
   const SNAP_THRESHOLD = 10;
 
   // Ajusta la escala del escenario al espacio disponible (el ResizeObserver avisa también al montar)
@@ -49,12 +70,12 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
     const el = previewAreaRef.current;
     if (!el || typeof ResizeObserver === 'undefined') return undefined;
     const ro = new ResizeObserver(() => {
-      const scale = Math.min((el.clientWidth - 48) / 1920, (el.clientHeight - 48) / 1080);
+      const scale = Math.min((el.clientWidth - 48) / CW, (el.clientHeight - 48) / CH);
       setPreviewScale(Math.max(0.2, Math.min(1, scale)));
     });
     ro.observe(el);
     return () => ro.disconnect();
-  }, []);
+  }, [CW, CH]);
 
   // Mide la gráfica real seleccionada en cada cuadro y mueve el recuadro de selección sobre ella
   useEffect(() => {
@@ -67,7 +88,7 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
       if (!wrap || !stage || !box) return;
       const stageRect = stage.getBoundingClientRect();
       if (stageRect.width === 0) return;
-      const k = stageRect.width / 1920;
+      const k = stageRect.width / CW;
 
       let left = Infinity, top = Infinity, right = -Infinity, bottom = -Infinity;
       // GraphicPreview envuelve la gráfica en un contenedor sin caja (display: contents): se mide lo que hay adentro
@@ -98,7 +119,7 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
     };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-  }, [selectedGraphic]);
+  }, [selectedGraphic, CW]);
 
   // Clic normal: una sola gráfica. Ctrl + clic: suma (o quita) gráficas para verlas todas juntas.
   const handleGraphicButtonClick = (e, id) => {
@@ -155,7 +176,7 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
     const { id, startX, startY, initialX, initialY, offX, offY, width, height } = dragInfo.current;
 
     const rect = previewRef.current.getBoundingClientRect();
-    const actualScale = rect.width / 1920;
+    const actualScale = rect.width / CW;
 
     const dx = (e.clientX - startX) / actualScale;
     const dy = (e.clientY - startY) / actualScale;
@@ -191,8 +212,8 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
     if (!b) return;
     const pos = getCurrentPos(selectedGraphic);
     const next = { ...pos };
-    if (axis === 'x' || axis === 'both') next.x = Math.round(pos.x + (960 - (b.x + b.w / 2)));
-    if (axis === 'y' || axis === 'both') next.y = Math.round(pos.y + (540 - (b.y + b.h / 2)));
+    if (axis === 'x' || axis === 'both') next.x = Math.round(pos.x + (CW / 2 - (b.x + b.w / 2)));
+    if (axis === 'y' || axis === 'both') next.y = Math.round(pos.y + (CH / 2 - (b.y + b.h / 2)));
     onUpdatePositions({ ...positions, [selectedGraphic]: next }, true);
   };
 
@@ -306,6 +327,36 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
             );
           })}
         </div>
+
+        <h3 style={{ color: colors.yellow, marginBottom: '8px' }}>{t('personalizar.overlaySizeTitle')}</h3>
+        <p style={{ fontSize: '10px', color: colors.textMuted, lineHeight: '1.5', marginTop: 0, marginBottom: '12px' }}>{t('personalizar.overlaySizeDesc')}</p>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '10px', backgroundColor: '#111', padding: '15px', borderRadius: '8px', border: `1px solid ${colors.border}` }}>
+          {[['overlayWidth', 'graphicWidthLabel', 1920], ['overlayHeight', 'graphicHeightLabel', 1080]].map(([key, labelKey, def]) => (
+            <div key={key} style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+              <label style={{ fontSize: '9px', color: colors.textMuted, fontWeight: 'bold' }}>{t(`personalizar.${labelKey}`)}</label>
+              <CommitNumberInput
+                value={config[key]}
+                placeholder={String(def)}
+                onCommit={(v) => onConfigChange(key, v === '' ? '' : getCanvasSize({ [key]: v })[key === 'overlayWidth' ? 'width' : 'height'])}
+                style={{ ...inputStyle, padding: '10px', fontSize: '11px' }}
+              />
+            </div>
+          ))}
+          <select
+            value=""
+            onChange={(e) => {
+              if (!e.target.value) return;
+              const [w, h] = e.target.value.split('x').map(Number);
+              onConfigChange({ overlayWidth: w, overlayHeight: h });
+            }}
+            style={{ ...inputStyle, padding: '10px', fontSize: '11px', cursor: 'pointer', gridColumn: '1 / -1' }}
+          >
+            <option value="">{t('personalizar.overlayPreset')}</option>
+            {OVERLAY_PRESETS.map(([w, h, name]) => <option key={`${w}x${h}`} value={`${w}x${h}`}>{name ? `${name} ` : ''}{w} × {h}</option>)}
+          </select>
+          <button onClick={() => onConfigChange({ overlayWidth: '', overlayHeight: '' })} style={{ ...btnStyle(false), gridColumn: '1 / -1', padding: '8px', fontSize: '10px' }}>{t.i('personalizar.overlayReset')}</button>
+        </div>
+        <div style={{ marginBottom: '30px' }} />
 
         <h3 style={{ color: colors.yellow, marginBottom: '15px' }}>{t('personalizar.themeConfig')}</h3>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '15px', backgroundColor: '#111', padding: '15px', borderRadius: '8px', border: `1px solid ${colors.border}` }}>
@@ -611,21 +662,6 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
               <option value="broadcast">Broadcast (Tabla + Foto del Ganador, Estilo F1)</option>
               {renderSkinOptions()}
             </select>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginTop: '15px' }}>
-              {[['finalResultsWidth', 'width', 'finalWidthLabel'], ['finalResultsHeight', 'height', 'finalHeightLabel']].map(([key, dim, labelKey]) => (
-                <div key={key} style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
-                  <label style={{ fontSize: '10px', color: colors.textMuted, fontWeight: 'bold' }}>{t(`personalizar.${labelKey}`)}</label>
-                  <input
-                    type="number" min="100" step="1"
-                    value={config[key] ?? ''}
-                    placeholder={String(getFinalResultsDefaultSize(config.finalResultsFormat || 'standard')[dim])}
-                    onChange={(e) => onConfigChange(key, e.target.value)}
-                    style={{ ...inputStyle, padding: '10px', fontSize: '11px' }}
-                  />
-                </div>
-              ))}
-            </div>
-            <span style={{ fontSize: '10px', color: colors.textMuted, lineHeight: '1.5', marginTop: '5px' }}>{t('personalizar.finalSizeHint')}</span>
           </div>
         )}
 
@@ -805,6 +841,20 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
             </select>
           </div>
 
+          {/* Ancho y alto propios de la gráfica (vacío = tamaño original; resultados finales tiene medidas por defecto) */}
+          {[['sizeW_', 'graphicWidthLabel', 'width'], ['sizeH_', 'graphicHeightLabel', 'height']].map(([prefix, labelKey, dim]) => (
+            <div key={prefix} style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+              <label style={{ fontSize: '9px', color: colors.textMuted, fontWeight: 'bold' }}>{t(`personalizar.${labelKey}`)}</label>
+              <CommitNumberInput
+                value={config[`${prefix}${selectedGraphic}`] ?? (selectedGraphic === 'finalResults' ? config[dim === 'width' ? 'finalResultsWidth' : 'finalResultsHeight'] : undefined)}
+                placeholder={selectedGraphic === 'finalResults' ? String(getFinalResultsDefaultSize(config.finalResultsFormat || 'standard')[dim]) : t('personalizar.graphicSizeAuto')}
+                onCommit={(v) => onConfigChange(`${prefix}${selectedGraphic}`, v === '' ? '' : Math.max(1, Math.round(Number(v))))}
+                style={{ ...inputStyle, padding: '10px', fontSize: '11px' }}
+              />
+            </div>
+          ))}
+          <span style={{ gridColumn: '1 / -1', fontSize: '10px', color: colors.textMuted, lineHeight: '1.5' }}>{t('personalizar.graphicSizeHint')}</span>
+
           {/* Alineación del texto de los zócalos (relator, comentarista, notero, circuito y zócalo libre) */}
           {['relator', 'comentarista', 'notero1', 'notero2', 'circuito', 'customZocalo'].includes(selectedGraphic) && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
@@ -906,8 +956,8 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
             onKeyDown={handleStageKeyDown}
             onKeyUp={handleStageKeyUp}
             style={{
-              width: 1920 * previewScale, height: 1080 * previewScale,
-              minWidth: 1920 * previewScale, minHeight: 1080 * previewScale,
+              width: CW * previewScale, height: CH * previewScale,
+              minWidth: CW * previewScale, minHeight: CH * previewScale,
               flexShrink: 0, position: 'relative', outline: 'none',
               boxShadow: '0 0 0 2px #555, 0 0 30px rgba(0,0,0,1)'
             }}
@@ -915,7 +965,7 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
             <div
               ref={previewRef}
               style={{
-                width: '1920px', height: '1080px',
+                width: `${CW}px`, height: `${CH}px`,
                 backgroundColor: config.chromaColor || '#00FF00',
                 position: 'absolute', top: 0, left: 0,
                 transform: `scale(${previewScale})`, transformOrigin: 'top left',
@@ -930,16 +980,16 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
               {/* CUADRÍCULA Y EJES (debajo de la gráfica) */}
               {showGrid && (
                 <div style={{
-                  position: 'absolute', left: 0, top: 0, width: '1920px', height: '1080px', pointerEvents: 'none', zIndex: 1,
+                  position: 'absolute', left: 0, top: 0, width: `${CW}px`, height: `${CH}px`, pointerEvents: 'none', zIndex: 1,
                   backgroundImage: 'linear-gradient(to right, rgba(255,255,255,0.22) 2px, transparent 2px), linear-gradient(to bottom, rgba(255,255,255,0.22) 2px, transparent 2px)',
                   backgroundSize: '100px 100px'
                 }} />
               )}
 
               {/* LA GRÁFICA REAL (con datos de la carrera si los hay, o de ejemplo) */}
-              <div ref={graphicWrapRef} style={{ position: 'absolute', left: 0, top: 0, width: '1920px', height: '1080px', pointerEvents: 'none', zIndex: 10 }}>
+              <div ref={graphicWrapRef} style={{ position: 'absolute', left: 0, top: 0, width: `${CW}px`, height: `${CH}px`, pointerEvents: 'none', zIndex: 10 }}>
                 {shownIds.map(gid => (
-                  <div key={gid} data-gid={gid} style={{ position: 'absolute', left: 0, top: 0, width: '1920px', height: '1080px' }}>
+                  <div key={gid} data-gid={gid} style={{ position: 'absolute', left: 0, top: 0, width: `${CW}px`, height: `${CH}px` }}>
                     <GraphicPreview id={gid} config={config} positions={positions} drivers={drivers} sessionInfo={sessionInfo} />
                   </div>
                 ))}
@@ -950,18 +1000,18 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
 
               {showGuides && (
                 <>
-                  <div style={{ position: 'absolute', left: '959px', top: 0, width: '2px', height: '1080px', backgroundColor: 'rgba(0, 229, 255, 0.75)', pointerEvents: 'none', zIndex: 900 }} />
-                  <div style={{ position: 'absolute', left: 0, top: '539px', width: '1920px', height: '2px', backgroundColor: 'rgba(0, 229, 255, 0.75)', pointerEvents: 'none', zIndex: 900 }} />
-                  <div style={{ position: 'absolute', left: '96px', top: '54px', width: '1728px', height: '972px', border: '2px dashed rgba(255,255,255,0.45)', boxSizing: 'border-box', pointerEvents: 'none', zIndex: 900 }} />
+                  <div style={{ position: 'absolute', left: `${CW / 2 - 1}px`, top: 0, width: '2px', height: `${CH}px`, backgroundColor: 'rgba(0, 229, 255, 0.75)', pointerEvents: 'none', zIndex: 900 }} />
+                  <div style={{ position: 'absolute', left: 0, top: `${CH / 2 - 1}px`, width: `${CW}px`, height: '2px', backgroundColor: 'rgba(0, 229, 255, 0.75)', pointerEvents: 'none', zIndex: 900 }} />
+                  <div style={{ position: 'absolute', left: `${SAFE_X}px`, top: `${SAFE_Y}px`, width: `${CW - 2 * SAFE_X}px`, height: `${CH - 2 * SAFE_Y}px`, border: '2px dashed rgba(255,255,255,0.45)', boxSizing: 'border-box', pointerEvents: 'none', zIndex: 900 }} />
                 </>
               )}
 
               {/* LÍNEAS DE IMÁN ACTIVAS mientras se arrastra */}
               {snapLines.x.map(x => (
-                <div key={`sx${x}`} style={{ position: 'absolute', left: `${x - 2}px`, top: 0, width: '4px', height: '1080px', backgroundColor: '#ff2bd6', pointerEvents: 'none', zIndex: 950 }} />
+                <div key={`sx${x}`} style={{ position: 'absolute', left: `${x - 2}px`, top: 0, width: '4px', height: `${CH}px`, backgroundColor: '#ff2bd6', pointerEvents: 'none', zIndex: 950 }} />
               ))}
               {snapLines.y.map(y => (
-                <div key={`sy${y}`} style={{ position: 'absolute', left: 0, top: `${y - 2}px`, width: '1920px', height: '4px', backgroundColor: '#ff2bd6', pointerEvents: 'none', zIndex: 950 }} />
+                <div key={`sy${y}`} style={{ position: 'absolute', left: 0, top: `${y - 2}px`, width: `${CW}px`, height: '4px', backgroundColor: '#ff2bd6', pointerEvents: 'none', zIndex: 950 }} />
               ))}
 
               {/* RECUADRO DE SELECCIÓN: se posiciona solo sobre la gráfica y sirve para arrastrarla */}

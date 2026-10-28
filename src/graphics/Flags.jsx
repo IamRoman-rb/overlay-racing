@@ -1,6 +1,7 @@
 import banderaCuadrosImg from '../assets/bandera cuadros.jpg';
 import { getSkinStyle } from '../utils/skinStyles';
 import { getAnimDuration, getRollClip } from '../utils/animationTiming';
+import { getCanvasSize } from '../utils/canvasSize';
 
 const FLAG_GLOW_COLOR = { red: '#e74c3c', black: '#ffcc00', blue: '#3498db', tricolor: '#ffffff', checkered: '#ffffff', green: '#2ecc71' };
 
@@ -79,7 +80,7 @@ export default function Flags({ activeFlags, config, id = 'flags' }) {
       <div style={{
         position: 'absolute', left: `${pos.x}px`, top: `${pos.y}px`,
         transform: `scale(${pos.scale})`, transformOrigin: 'top left',
-        zIndex: 60, pointerEvents: 'none', width: '1920px'
+        zIndex: 60, pointerEvents: 'none', width: `${getCanvasSize(config).width}px`
       }}>
         <div style={{
           background: useImageBg ? 'transparent' : currentStyle.bg,
