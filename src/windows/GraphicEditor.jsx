@@ -391,7 +391,7 @@ export default function GraphicEditor({ config, positions, drivers, sessionInfo,
               </style>
 
               <div style={{ position: 'absolute', left: 0, top: 0, width: `${CW}px`, height: `${CH}px`, pointerEvents: 'none', zIndex: 10 }}>
-                <GraphicPreview id={selected} config={previewConfig} positions={positions} drivers={drivers} sessionInfo={sessionInfo} />
+                <GraphicPreview noCover id={selected} config={previewConfig} positions={positions} drivers={drivers} sessionInfo={sessionInfo} />
               </div>
 
               {showGuides && (

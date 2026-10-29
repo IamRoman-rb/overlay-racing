@@ -11,7 +11,8 @@ export const LAYOUT_EDITS_PREFIX = 'layoutEdits_';
 const MAX_SPLIT = 8;
 const SKIP_TAGS = new Set(['STYLE', 'SCRIPT', 'LINK']);
 
-const kidsOf = (el) => Array.from(el.children).filter(c => !SKIP_TAGS.has(c.tagName));
+// El tapado con logo (data-logo-cover) vive dentro de la gráfica pero no es un objeto de ella
+const kidsOf = (el) => Array.from(el.children).filter(c => !SKIP_TAGS.has(c.tagName) && !c.hasAttribute('data-logo-cover'));
 const hasOwnText = (el) => Array.from(el.childNodes).some(n => n.nodeType === 3 && n.textContent.trim() !== '');
 const isRendered = (el) => {
   const display = getComputedStyle(el).display;

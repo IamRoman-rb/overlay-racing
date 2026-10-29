@@ -32,7 +32,7 @@ export function applyGraphicSize(wrapper, width, height) {
   Array.from(wrapper.children).filter(c => !SKIP_TAGS.has(c.tagName)).forEach(root => {
     setProp(root, 'width', width ? `${width}px` : null);
     setProp(root, 'height', height ? `${height}px` : null);
-    const cards = Array.from(root.children).filter(c => !SKIP_TAGS.has(c.tagName));
+    const cards = Array.from(root.children).filter(c => !SKIP_TAGS.has(c.tagName) && !c.hasAttribute('data-logo-cover'));
     if (cards.length !== 1) return;
     const card = cards[0];
     setProp(card, 'width', width ? '100%' : null);

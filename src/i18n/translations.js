@@ -241,6 +241,7 @@ export const translations = {
       brandingShowLabel: 'LOGOS A MOSTRAR', brandingHint: 'Los logos se cargan más abajo, en Recursos multimedia.',
       graphicWidthLabel: "ANCHO (PX)", graphicHeightLabel: "ALTO (PX)", graphicSizeAuto: "auto",
       graphicSizeHint: "Vacío = tamaño original de la gráfica. Se aplica al recuadro de la gráfica; el contenido mantiene su tamaño. Confirmá con Enter o al salir del campo.",
+      coverTitle: "TRANSICIÓN CON LOGO (TAPA LA GRÁFICA AL APARECER)", coverProducer: "Logo de la productora", coverCategory: "Logo de la categoría", coverTimeLabel: "TIEMPO TAPADO (SEG)", coverTestBtn: "▶ PROBAR", coverApplyAllBtn: "APLICAR A TODAS", coverHint: "La gráfica aparece tapada por el logo, sobre un fondo difuminado con los colores que se detectan en él, y después se descubren los datos. Los logos se ajustan al tamaño de la gráfica y se cargan más abajo, en Recursos multimedia.", coverNoLogos: "Cargá primero un logo en Recursos multimedia (más abajo) para poder usar esta transición.",
       overlaySizeTitle: "TAMAÑO DEL OVERLAY", overlaySizeDesc: "Ancho y alto del lienzo en píxeles (por defecto 1920 × 1080). La ventana del overlay se ajusta sola; en OBS o vMix poné la fuente de navegador con la misma medida. Las posiciones de las gráficas no cambian: reacomodalas si hace falta.", overlayPreset: "Medidas comunes…", overlayReset: "Restaurar 1920 × 1080"
     },
     hotkeys: {
@@ -518,6 +519,7 @@ export const translations = {
       brandingShowLabel: 'LOGOS TO SHOW', brandingHint: 'Logos are loaded below, in Media Resources.',
       graphicWidthLabel: "WIDTH (PX)", graphicHeightLabel: "HEIGHT (PX)", graphicSizeAuto: "auto",
       graphicSizeHint: "Empty = the graphic's original size. It applies to the graphic's box; the content keeps its size. Confirm with Enter or by leaving the field.",
+      coverTitle: "LOGO TRANSITION (COVERS THE GRAPHIC AS IT APPEARS)", coverProducer: "Producer logo", coverCategory: "Category logo", coverTimeLabel: "COVER TIME (SEC)", coverTestBtn: "▶ TEST", coverApplyAllBtn: "APPLY TO ALL", coverHint: "The graphic appears covered by the logo, over a blurred background made from the colors detected in it, and then the data is revealed. Logos are fitted to the graphic's size and are loaded below, in Media resources.", coverNoLogos: "Load a logo first under Media resources (below) to use this transition.",
       overlaySizeTitle: "OVERLAY SIZE", overlaySizeDesc: "Canvas width and height in pixels (default 1920 × 1080). The overlay window resizes itself; in OBS or vMix set the browser source to the same size. Graphic positions do not change: rearrange them if needed.", overlayPreset: "Common sizes…", overlayReset: "Restore 1920 × 1080"
     },
     hotkeys: {
@@ -795,6 +797,7 @@ export const translations = {
       brandingShowLabel: 'LOGOS A MOSTRAR', brandingHint: 'Os logos são carregados abaixo, em Recursos de mídia.',
       graphicWidthLabel: "LARGURA (PX)", graphicHeightLabel: "ALTURA (PX)", graphicSizeAuto: "auto",
       graphicSizeHint: "Vazio = tamanho original do gráfico. Aplica-se à caixa do gráfico; o conteúdo mantém seu tamanho. Confirme com Enter ou ao sair do campo.",
+      coverTitle: "TRANSIÇÃO COM LOGO (COBRE O GRÁFICO AO APARECER)", coverProducer: "Logo da produtora", coverCategory: "Logo da categoria", coverTimeLabel: "TEMPO COBERTO (SEG)", coverTestBtn: "▶ TESTAR", coverApplyAllBtn: "APLICAR A TODOS", coverHint: "O gráfico aparece coberto pelo logo, sobre um fundo desfocado com as cores detectadas nele, e depois os dados são revelados. Os logos se ajustam ao tamanho do gráfico e são carregados abaixo, em Recursos de mídia.", coverNoLogos: "Carregue primeiro um logo em Recursos de mídia (abaixo) para usar esta transição.",
       overlaySizeTitle: "TAMANHO DO OVERLAY", overlaySizeDesc: "Largura e altura da tela em pixels (padrão 1920 × 1080). A janela do overlay se ajusta sozinha; no OBS ou vMix coloque a fonte de navegador com a mesma medida. As posições dos gráficos não mudam: reorganize-as se necessário.", overlayPreset: "Medidas comuns…", overlayReset: "Restaurar 1920 × 1080"
     },
     hotkeys: {
@@ -1072,6 +1075,7 @@ export const translations = {
       brandingShowLabel: 'ANZUZEIGENDE LOGOS', brandingHint: 'Die Logos werden weiter unten unter Medienressourcen geladen.',
       graphicWidthLabel: "BREITE (PX)", graphicHeightLabel: "HÖHE (PX)", graphicSizeAuto: "auto",
       graphicSizeHint: "Leer = Originalgröße der Grafik. Gilt für den Rahmen der Grafik; der Inhalt behält seine Größe. Mit Enter oder beim Verlassen des Felds bestätigen.",
+      coverTitle: "LOGO-ÜBERGANG (VERDECKT DIE GRAFIK BEIM EINBLENDEN)", coverProducer: "Logo des Produzenten", coverCategory: "Logo der Kategorie", coverTimeLabel: "VERDECKUNGSDAUER (SEK)", coverTestBtn: "▶ TESTEN", coverApplyAllBtn: "AUF ALLE ANWENDEN", coverHint: "Die Grafik erscheint zunächst vom Logo verdeckt, auf einem unscharfen Hintergrund in den erkannten Logofarben; danach werden die Daten enthüllt. Die Logos passen sich der Größe der Grafik an und werden unten unter Medien geladen.", coverNoLogos: "Lade zuerst unten unter Medien ein Logo, um diesen Übergang zu nutzen.",
       overlaySizeTitle: "OVERLAY-GRÖSSE", overlaySizeDesc: "Breite und Höhe der Zeichenfläche in Pixeln (Standard 1920 × 1080). Das Overlay-Fenster passt sich selbst an; in OBS oder vMix die Browserquelle auf dieselbe Größe stellen. Die Positionen der Grafiken ändern sich nicht: bei Bedarf neu anordnen.", overlayPreset: "Gängige Größen…", overlayReset: "1920 × 1080 wiederherstellen"
     },
     hotkeys: {
@@ -1349,6 +1353,7 @@ export const translations = {
       brandingShowLabel: 'LOGOS À AFFICHER', brandingHint: 'Les logos se chargent plus bas, dans Ressources multimédias.',
       graphicWidthLabel: "LARGEUR (PX)", graphicHeightLabel: "HAUTEUR (PX)", graphicSizeAuto: "auto",
       graphicSizeHint: "Vide = taille d'origine du graphique. S'applique au cadre du graphique ; le contenu garde sa taille. Valider avec Entrée ou en quittant le champ.",
+      coverTitle: "TRANSITION AVEC LOGO (RECOUVRE LE GRAPHIQUE À L'APPARITION)", coverProducer: "Logo du producteur", coverCategory: "Logo de la catégorie", coverTimeLabel: "DURÉE DU RECOUVREMENT (SEC)", coverTestBtn: "▶ TESTER", coverApplyAllBtn: "APPLIQUER À TOUS", coverHint: "Le graphique apparaît recouvert par le logo, sur un fond flouté aux couleurs détectées dans celui-ci, puis les données sont révélées. Les logos s'adaptent à la taille du graphique et se chargent plus bas, dans Ressources multimédias.", coverNoLogos: "Chargez d'abord un logo dans Ressources multimédias (plus bas) pour utiliser cette transition.",
       overlaySizeTitle: "TAILLE DE L'OVERLAY", overlaySizeDesc: "Largeur et hauteur du canevas en pixels (par défaut 1920 × 1080). La fenêtre de l'overlay s'ajuste seule ; dans OBS ou vMix, réglez la source navigateur à la même taille. Les positions des graphiques ne changent pas : réorganisez-les si besoin.", overlayPreset: "Tailles courantes…", overlayReset: "Rétablir 1920 × 1080"
     },
     hotkeys: {

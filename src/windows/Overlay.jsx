@@ -262,84 +262,84 @@ export default function Overlay() {
       )}
 
       {/* Cada gráfica va dentro de LayoutEdits: aplica los objetos que se movieron desde la pestaña EDITOR */}
-      <LayoutEdits id="startingLights" config={combinedConfig}>
+      <LayoutEdits id="startingLights" config={combinedConfig} visible={!!(startingLightsState?.isVisible)}>
         <StartingLights isVisible={startingLightsState?.isVisible} step={startingLightsState?.step} config={combinedConfig} />
       </LayoutEdits>
-      <LayoutEdits id="customZocalo" config={combinedConfig}>
+      <LayoutEdits id="customZocalo" config={combinedConfig} visible={!!(customZocaloData?.isVisible)}>
         <CustomZocalo isVisible={customZocaloData?.isVisible} title={customZocaloData?.title} text={customZocaloData?.text} config={combinedConfig} />
       </LayoutEdits>
-      <LayoutEdits id="ticker" config={combinedConfig}>
+      <LayoutEdits id="ticker" config={combinedConfig} visible={!!(isTickerVisible)}>
         <Ticker drivers={formattedDrivers} config={combinedConfig} isVisible={isTickerVisible} sessionInfo={sessionInfo} />
       </LayoutEdits>
-      <LayoutEdits id="tower" config={combinedConfig}>
+      <LayoutEdits id="tower" config={combinedConfig} visible={!!(isTowerVisible)}>
         <TimingTower drivers={formattedDrivers} config={combinedConfig} isVisible={isTowerVisible} sessionInfo={sessionInfo} />
       </LayoutEdits>
-      <LayoutEdits id="battle" config={combinedConfig}>
+      <LayoutEdits id="battle" config={combinedConfig} visible={!!(battleData?.isVisible)}>
         <Battle drivers={formattedDrivers} config={combinedConfig} isVisible={battleData?.isVisible} battleFocusPos={battleData?.pos} />
       </LayoutEdits>
-      <LayoutEdits id="grid" config={combinedConfig}>
+      <LayoutEdits id="grid" config={combinedConfig} visible={!!(isGridVisible)}>
         <StartingGrid drivers={formattedDrivers} config={combinedConfig} isVisible={isGridVisible} />
       </LayoutEdits>
-      <LayoutEdits id="finalResults" config={combinedConfig}>
+      <LayoutEdits id="finalResults" config={combinedConfig} visible={!!(isFinalResultsVisible)}>
         <FinalResults drivers={formattedDrivers} config={combinedConfig} isVisible={isFinalResultsVisible} navSignal={finalResultsNav} />
       </LayoutEdits>
-      <LayoutEdits id="winner" config={combinedConfig}>
+      <LayoutEdits id="winner" config={combinedConfig} visible={!!(isWinnerVisible)}>
         <WinnerGraphic driver={formattedWinnerData} config={combinedConfig} isVisible={isWinnerVisible} sessionInfo={sessionInfo} />
       </LayoutEdits>
-      <LayoutEdits id="flags" config={combinedConfig}>
+      <LayoutEdits id="flags" config={combinedConfig} visible={!!(Object.values(activeFlags).some(Boolean))}>
         <Flags activeFlags={activeFlags} config={combinedConfig} />
       </LayoutEdits>
 
-      <LayoutEdits id="relator" config={combinedConfig}>
+      <LayoutEdits id="relator" config={combinedConfig} visible={!!(graphics?.relator)}>
         <LowerThird id="relator" role="Relator" name={safeConfig.relator} isVisible={graphics?.relator} config={combinedConfig} />
       </LayoutEdits>
-      <LayoutEdits id="comentarista" config={combinedConfig}>
+      <LayoutEdits id="comentarista" config={combinedConfig} visible={!!(graphics?.comentarista)}>
         <LowerThird id="comentarista" role="Comentarista" name={safeConfig.comentarista} isVisible={graphics?.comentarista} config={combinedConfig} />
       </LayoutEdits>
-      <LayoutEdits id="notero1" config={combinedConfig}>
+      <LayoutEdits id="notero1" config={combinedConfig} visible={!!(graphics?.notero1)}>
         <LowerThird id="notero1" role="Notero" name={safeConfig.notero1} isVisible={graphics?.notero1} config={combinedConfig} />
       </LayoutEdits>
-      <LayoutEdits id="notero2" config={combinedConfig}>
+      <LayoutEdits id="notero2" config={combinedConfig} visible={!!(graphics?.notero2)}>
         <LowerThird id="notero2" role="Notero" name={safeConfig.notero2} isVisible={graphics?.notero2} config={combinedConfig} />
       </LayoutEdits>
-      <LayoutEdits id="circuito" config={combinedConfig}>
+      <LayoutEdits id="circuito" config={combinedConfig} visible={!!(graphics?.circuito)}>
         <LowerThird id="circuito" role="Circuito" name={safeConfig.circuito} isVisible={graphics?.circuito} config={combinedConfig} />
       </LayoutEdits>
-      <LayoutEdits id="clima" config={combinedConfig}>
+      <LayoutEdits id="clima" config={combinedConfig} visible={!!(graphics?.clima)}>
         <Weather data={safeConfig.weatherData} isVisible={graphics?.clima} config={combinedConfig} />
       </LayoutEdits>
 
-      <LayoutEdits id="fastestLap" config={combinedConfig}>
+      <LayoutEdits id="fastestLap" config={combinedConfig} visible={!!(isFastestLapVisible)}>
         <FastestLap drivers={formattedDrivers} config={combinedConfig} isVisible={isFastestLapVisible} />
       </LayoutEdits>
-      <LayoutEdits id="driverInfo" config={combinedConfig}>
+      <LayoutEdits id="driverInfo" config={combinedConfig} visible={!!(isDriverInfoVisible)}>
         <DriverInfo driver={formattedDriverInfoData} config={combinedConfig} isVisible={isDriverInfoVisible} />
       </LayoutEdits>
-      <LayoutEdits id="votingQR" config={combinedConfig}>
+      <LayoutEdits id="votingQR" config={combinedConfig} visible={!!(isVotingQRVisible)}>
         <VotingQR isVisible={isVotingQRVisible} config={combinedConfig} localIp={localIp} />
       </LayoutEdits>
-      <LayoutEdits id="votingResults" config={combinedConfig}>
+      <LayoutEdits id="votingResults" config={combinedConfig} visible={!!(isVotingResultsVisible)}>
         <VotingResults isVisible={isVotingResultsVisible} drivers={formattedDrivers} votes={votes} config={combinedConfig} />
       </LayoutEdits>
-      <LayoutEdits id="lapCounter" config={combinedConfig}>
+      <LayoutEdits id="lapCounter" config={combinedConfig} visible={!!(isLapCounterVisible)}>
         <LapCounter isVisible={isLapCounterVisible} config={combinedConfig} sessionInfo={sessionInfo} />
       </LayoutEdits>
-      <LayoutEdits id="virtualChamp" config={combinedConfig}>
+      <LayoutEdits id="virtualChamp" config={combinedConfig} visible={!!(isVirtualChampVisible)}>
         <VirtualChamp isVisible={isVirtualChampVisible} config={combinedConfig} />
       </LayoutEdits>
-      <LayoutEdits id="lapTimesHistory" config={combinedConfig}>
+      <LayoutEdits id="lapTimesHistory" config={combinedConfig} visible={!!(isLapTimesHistoryVisible)}>
         <LapTimeEvolution history={lapTimesHistory} drivers={formattedDrivers} config={combinedConfig} isVisible={isLapTimesHistoryVisible} focusDriver={lapTimesFocus} />
       </LayoutEdits>
-      <LayoutEdits id="pitStop" config={combinedConfig}>
+      <LayoutEdits id="pitStop" config={combinedConfig} visible={!!(pitStopState?.isVisible)}>
         <PitStopTimer isVisible={pitStopState?.isVisible} pitState={pitStopState} config={combinedConfig} />
       </LayoutEdits>
-      <LayoutEdits id="trackAlert" config={combinedConfig}>
+      <LayoutEdits id="trackAlert" config={combinedConfig} visible={!!(trackAlert?.isVisible)}>
         <TrackAlert alert={trackAlert} config={combinedConfig} />
       </LayoutEdits>
-      <LayoutEdits id="penaltyAlert" config={combinedConfig}>
+      <LayoutEdits id="penaltyAlert" config={combinedConfig} visible={!!(penaltyAlert?.isVisible)}>
         <PenaltyAlert alert={penaltyAlert} config={combinedConfig} />
       </LayoutEdits>
-      <LayoutEdits id="branding" config={combinedConfig}>
+      <LayoutEdits id="branding" config={combinedConfig} visible={!!(graphics?.branding)}>
         <Branding isVisible={graphics?.branding} config={combinedConfig} />
       </LayoutEdits>
     </div>

@@ -3,6 +3,7 @@ import { SKIN_FORMATS } from '../utils/skinStyles';
 import { getFinalResultsDefaultSize } from '../utils/finalResultsSize';
 import { getCanvasSize } from '../utils/canvasSize';
 import GraphicPreview from './GraphicPreview';
+import { COVER_PRODUCER_PREFIX, COVER_CATEGORY_PREFIX, COVER_TIME_PREFIX, COVER_DEFAULT_TIME } from '../utils/logoCover';
 import { EXTRA_FONTS, fontCssValue, GOOGLE_FONTS_URL } from '../utils/fonts';
 
 // Número que se confirma con Enter o al salir del campo (no en cada tecla: evita redimensionar a medio escribir).
@@ -25,6 +26,7 @@ const OVERLAY_PRESETS = [[1920, 1080, 'Full HD'], [1280, 720, 'HD'], [3840, 2160
 
 export default function CustomizePanel({ config, positions, defaultPositions, onUpdatePositions, onSelectLogo, onSelectCategoryLogo, onSelectPhotosFolder, onClearLogo, onClearCategoryLogo, onClearPhotosFolder, onConfigChange, colors, inputStyle, btnStyle, t, drivers, sessionInfo }) {
   const [selectedGraphic, setSelectedGraphic] = useState('relator');
+  const [coverReplay, setCoverReplay] = useState(0); // sube al pulsar "probar transición"
   // Gráficas acumuladas con Ctrl + clic para verlas juntas en la previsualización (vacío = se ve solo la seleccionada)
   const [groupIds, setGroupIds] = useState([]);
 
@@ -888,6 +890,47 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
               />
             </div>
           )}
+
+          {/* Transición con logo: la gráfica aparece tapada por el logo (con sus colores difuminados) y después se descubren los datos */}
+          <div style={{ gridColumn: '1 / -1', display: 'flex', flexDirection: 'column', gap: '8px', borderTop: `1px solid ${colors.border}`, paddingTop: '12px' }}>
+            <label style={{ fontSize: '9px', color: colors.textMuted, fontWeight: 'bold' }}>{t('personalizar.coverTitle')}</label>
+            <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
+              {[[COVER_PRODUCER_PREFIX, 'coverProducer', config.logo], [COVER_CATEGORY_PREFIX, 'coverCategory', config.categoryLogo]].map(([prefix, labelKey, logo]) => (
+                <label key={prefix} style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', color: logo ? 'white' : colors.textMuted, cursor: logo ? 'pointer' : 'not-allowed' }}>
+                  <input
+                    type="checkbox" disabled={!logo}
+                    checked={!!config[`${prefix}${selectedGraphic}`]}
+                    onChange={(e) => onConfigChange(`${prefix}${selectedGraphic}`, e.target.checked)}
+                  />
+                  {t(`personalizar.${labelKey}`)}
+                </label>
+              ))}
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+              <label style={{ fontSize: '9px', color: colors.textMuted, fontWeight: 'bold' }}>{t('personalizar.coverTimeLabel')}</label>
+              <input
+                type="number" min="0.3" max="10" step="0.1"
+                value={config[`${COVER_TIME_PREFIX}${selectedGraphic}`] ?? ''}
+                placeholder={String(COVER_DEFAULT_TIME)}
+                onChange={(e) => onConfigChange(`${COVER_TIME_PREFIX}${selectedGraphic}`, e.target.value)}
+                style={{ ...inputStyle, padding: '8px', fontSize: '11px', width: '80px' }}
+              />
+              <button onClick={() => setCoverReplay(n => n + 1)} style={{ ...btnStyle(false), padding: '8px 12px', fontSize: '10px' }}>{t('personalizar.coverTestBtn')}</button>
+              <button
+                onClick={() => {
+                  const patch = {};
+                  GRAPHIC_IDS.forEach(gid => {
+                    patch[`${COVER_PRODUCER_PREFIX}${gid}`] = !!config[`${COVER_PRODUCER_PREFIX}${selectedGraphic}`];
+                    patch[`${COVER_CATEGORY_PREFIX}${gid}`] = !!config[`${COVER_CATEGORY_PREFIX}${selectedGraphic}`];
+                    patch[`${COVER_TIME_PREFIX}${gid}`] = config[`${COVER_TIME_PREFIX}${selectedGraphic}`] ?? '';
+                  });
+                  onConfigChange(patch);
+                }}
+                style={{ ...btnStyle(false), padding: '8px 12px', fontSize: '10px' }}
+              >{t('personalizar.coverApplyAllBtn')}</button>
+            </div>
+            <span style={{ fontSize: '10px', color: colors.textMuted, lineHeight: '1.5' }}>{(config.logo || config.categoryLogo) ? t('personalizar.coverHint') : t('personalizar.coverNoLogos')}</span>
+          </div>
         </div>
 
         <h3 style={{ color: colors.yellow, marginBottom: '15px' }}>{t('personalizar.coordsTitle')}</h3>
@@ -994,7 +1037,7 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
               <div ref={graphicWrapRef} style={{ position: 'absolute', left: 0, top: 0, width: `${CW}px`, height: `${CH}px`, pointerEvents: 'none', zIndex: 10 }}>
                 {shownIds.map(gid => (
                   <div key={gid} data-gid={gid} style={{ position: 'absolute', left: 0, top: 0, width: `${CW}px`, height: `${CH}px` }}>
-                    <GraphicPreview id={gid} config={config} positions={positions} drivers={drivers} sessionInfo={sessionInfo} />
+                    <GraphicPreview id={gid} coverReplay={coverReplay} config={config} positions={positions} drivers={drivers} sessionInfo={sessionInfo} />
                   </div>
                 ))}
               </div>

@@ -119,10 +119,11 @@ function GraphicPreviewContent({ id, config, positions, drivers, sessionInfo }) 
   }
 }
 
-// Con los objetos movidos desde la pestaña EDITOR (config.layoutEdits_<id>), igual que en el overlay real
+// Con los objetos movidos desde la pestaña EDITOR (config.layoutEdits_<id>), igual que en el overlay real.
+// El tapado con logo solo se ve al pedir "probar" (coverReplay) y nunca en el editor (noCover).
 export default function GraphicPreview(props) {
   return (
-    <LayoutEdits id={props.id} config={props.config}>
+    <LayoutEdits id={props.id} config={props.config} coverReplay={props.coverReplay} noCover={props.noCover}>
       <GraphicPreviewContent {...props} />
     </LayoutEdits>
   );
