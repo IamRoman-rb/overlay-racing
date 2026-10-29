@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import banderaCuadrosImg from '../assets/bandera cuadros.jpg';
 import { getSkinStyle } from '../utils/skinStyles';
 import { getAnimDuration, getRollClip } from '../utils/animationTiming';
@@ -15,6 +16,12 @@ export default function Flags({ activeFlags, config, id = 'flags' }) {
   else if (activeFlags?.green) activeFlagType = 'green';
 
   const isVisible = !!activeFlagType;
+
+  // Al sacar la bandera, la transición de salida tiene que seguir mostrando ESA bandera (y no otra por defecto):
+  // se recuerda la última que estuvo activa.
+  const [lastFlagType, setLastFlagType] = useState(null);
+  if (activeFlagType && activeFlagType !== lastFlagType) setLastFlagType(activeFlagType);
+  const shownFlagType = activeFlagType || lastFlagType;
   const pos = config?.positions?.[id] || { x: 320, y: 50, scale: 1 };
 
   const themeAccent = config?.themeAccent || '#f39c12';
@@ -48,7 +55,7 @@ export default function Flags({ activeFlags, config, id = 'flags' }) {
     }
   };
 
-  const currentStyle = activeFlagType ? flagStyles[activeFlagType] : flagStyles.red;
+  const currentStyle = shownFlagType ? flagStyles[shownFlagType] : flagStyles.red;
 
   // La bandera a cuadros usa la foto subida por el usuario como fondo (salvo que haya un diseño custom propio)
   const bgUrl = customBg || currentStyle.image || null;
@@ -56,7 +63,7 @@ export default function Flags({ activeFlags, config, id = 'flags' }) {
   const bgSize = customBg ? '100% 100%' : 'cover';
 
   // Skins (broadcast pro/degradé/cristal): el acento usa el color propio de cada bandera para no perder su significado
-  const flagGlowColor = FLAG_GLOW_COLOR[activeFlagType] || themeAccent;
+  const flagGlowColor = FLAG_GLOW_COLOR[shownFlagType] || themeAccent;
   const skin = getSkinStyle(flagsFormat, { themeMain: '#000000', themeAccent: flagGlowColor });
 
   // Animación de entrada (Las banderas suelen caer de arriba)
