@@ -27,10 +27,13 @@ const analysisCache = new Map(); // src -> Promise<{ colors, luminance }>
 export function analyzeLogo(src) {
   if (analysisCache.has(src)) return analysisCache.get(src);
   const job = new Promise((resolve) => {
-    const fallback = { colors: [], luminance: 0.5 };
+    const fallback = { colors: [], luminance: 0.5, aspect: 1 };
     const img = new Image();
     img.onerror = () => resolve(fallback);
     img.onload = () => {
+      // proporción ancho/alto del logo (un SVG sin medidas propias puede dar 0: se toma cuadrado)
+      const aspect = img.naturalWidth > 0 && img.naturalHeight > 0 ? img.naturalWidth / img.naturalHeight : 1;
+      fallback.aspect = aspect;
       try {
         const scale = Math.min(1, 64 / Math.max(img.naturalWidth, img.naturalHeight, 1));
         const w = Math.max(1, Math.round(img.naturalWidth * scale));
@@ -67,7 +70,7 @@ export function analyzeLogo(src) {
           if (colors.every(p => dist(p, c) > 70)) colors.push(c.map(Math.round));
           if (colors.length === 3) break;
         }
-        resolve({ colors, luminance: lumSum / lumCount });
+        resolve({ colors, luminance: lumSum / lumCount, aspect });
       } catch {
         resolve(fallback);
       }
@@ -92,4 +95,30 @@ export function buildCoverBackground(infos, fallbackColor) {
   const gradient = `linear-gradient(120deg, ${stops.map(css).join(', ')})`;
   const glow = `radial-gradient(ellipse at 50% 40%, rgba(255,255,255,${lightBase ? 0.5 : 0.16}), rgba(255,255,255,0) 65%)`;
   return { background: `${glow}, ${gradient}`, lightBase };
+}
+
+// Medidas (px) de cada logo dentro de la caja de la gráfica (width x height): todos juntos, centrados y sin pasarse ni del ancho
+// ni del alto. En una caja más alta que ancha se apilan; en una más ancha que alta van en fila. Se calcula con la proporción de cada
+// logo y con margen en px (un margen en % se mide siempre sobre el ancho y en una tira baja y ancha no dejaba lugar al logo).
+export function layoutLogos(aspects, width, height, cap = 320) {
+  const vertical = height > width;
+  const short = Math.min(width, height);
+  const pad = Math.max(2, short * 0.14);
+  const gapWanted = Math.max(4, short * 0.1);
+  const availW = Math.max(1, width - pad * 2);
+  const availH = Math.max(1, height - pad * 2);
+  const n = aspects.length;
+
+  const sizes = aspects.map((ar) => {
+    const base = vertical ? { w: availW, h: availW / ar } : { w: availH * ar, h: availH };
+    const k = Math.min(1, cap / base.w, cap / base.h);
+    return { w: base.w * k, h: base.h * k };
+  });
+
+  const limit = vertical ? availH : availW;
+  const gap = Math.min(gapWanted, Math.max(0, (limit - 1) / Math.max(1, n - 1) / 2));
+  const total = sizes.reduce((s, z) => s + (vertical ? z.h : z.w), 0);
+  const room = Math.max(1, limit - gap * (n - 1));
+  const fit = total > room ? room / total : 1;
+  return { vertical, gap, sizes: sizes.map(z => ({ w: Math.max(1, z.w * fit), h: Math.max(1, z.h * fit) })) };
 }

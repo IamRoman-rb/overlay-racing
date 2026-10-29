@@ -1,6 +1,6 @@
 import { useState, useEffect, useLayoutEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { analyzeLogo, buildCoverBackground } from '../utils/logoCover';
+import { analyzeLogo, buildCoverBackground, layoutLogos } from '../utils/logoCover';
 import { getAnimDuration } from '../utils/animationTiming';
 
 export const COVER_ATTR = 'data-logo-cover';
@@ -20,7 +20,7 @@ function hexToRgb(hex) {
 export default function LogoCover({ root, logos, time, visible, replay, config, id }) {
   const [infos, setInfos] = useState([]);
   const [mode, setMode] = useState('idle'); // idle | on | onSoft | fade
-  const [vertical, setVertical] = useState(false);
+  const [dims, setDims] = useState({ w: 0, h: 0 }); // medidas de la caja de la gráfica (sin escala ni animación)
   const wasVisible = useRef(false);
   const logosKey = logos.join('|');
   const animDur = getAnimDuration(config, id);
@@ -32,11 +32,21 @@ export default function LogoCover({ root, logos, time, visible, replay, config, 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [logosKey]);
 
+  // Mantiene al día el tamaño de la caja (cambia con el ancho/alto de PERSONALIZAR, el formato de la gráfica, etc.)
+  useLayoutEffect(() => {
+    if (!root) return undefined;
+    const measure = () => setDims(prev => (prev.w === root.offsetWidth && prev.h === root.offsetHeight ? prev : { w: root.offsetWidth, h: root.offsetHeight }));
+    measure();
+    if (typeof ResizeObserver === 'undefined') return undefined;
+    const ro = new ResizeObserver(measure);
+    ro.observe(root);
+    return () => ro.disconnect();
+  }, [root]);
+
   useLayoutEffect(() => {
     const timers = [];
     const later = (fn, s) => timers.push(setTimeout(fn, s * 1000));
     const playIn = () => {
-      setVertical(root.offsetHeight > root.offsetWidth);
       setMode('on');
       later(() => setMode('fade'), animDur + time * (1 - FADE_SHARE));
       later(() => setMode('idle'), animDur + time + 0.1);
@@ -64,7 +74,8 @@ export default function LogoCover({ root, logos, time, visible, replay, config, 
   const revealing = mode === 'fade';
   const opacity = mode === 'on' || mode === 'onSoft' ? 1 : 0;
   const transition = mode === 'fade' ? `opacity ${fadeS}s ease-in-out` : mode === 'onSoft' ? `opacity ${EXIT_COVER_SECONDS}s ease-out` : 'none';
-  const blurPx = Math.max(8, Math.min(40, Math.round(Math.min(root.offsetWidth, root.offsetHeight) * 0.35)));
+  const blurPx = Math.max(6, Math.min(40, Math.round(Math.min(dims.w, dims.h) * 0.35)));
+  const { vertical, gap, sizes } = layoutLogos(logos.map((_, i) => infos[i]?.aspect || 1), dims.w || 1, dims.h || 1);
 
   const cover = (
     <div
@@ -86,20 +97,18 @@ export default function LogoCover({ root, logos, time, visible, replay, config, 
         ))}
       </div>
 
-      {/* Logos nítidos: cada uno en su celda y contenido en ella (object-fit), así nunca superan el ancho ni el alto de la gráfica */}
+      {/* Logos nítidos: medidas en px calculadas para que queden juntos, centrados y dentro del ancho y el alto de la gráfica */}
       <div style={{
-        position: 'absolute', inset: 0, boxSizing: 'border-box', padding: '6%', display: 'flex',
-        flexDirection: vertical ? 'column' : 'row', gap: '4%',
+        position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
+        flexDirection: vertical ? 'column' : 'row', gap: `${gap}px`,
         transform: revealing ? 'scale(1.12)' : 'scale(1)', filter: revealing ? 'blur(6px)' : 'none',
         transition: revealing ? `transform ${fadeS}s ease-in, filter ${fadeS}s ease-in` : 'none'
       }}>
         {logos.map((src, i) => (
-          <div key={i} style={{ flex: '1 1 0', minWidth: 0, minHeight: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <img src={src} alt="" style={{
-              display: 'block', width: '100%', height: '100%', maxWidth: '320px', maxHeight: '320px', objectFit: 'contain',
-              filter: lightBase ? 'drop-shadow(0 2px 6px rgba(255,255,255,0.5))' : 'drop-shadow(0 3px 10px rgba(0,0,0,0.5))'
-            }} />
-          </div>
+          <img key={i} src={src} alt="" style={{
+            display: 'block', flex: 'none', width: `${sizes[i].w}px`, height: `${sizes[i].h}px`, objectFit: 'contain',
+            filter: lightBase ? 'drop-shadow(0 2px 6px rgba(255,255,255,0.5))' : 'drop-shadow(0 3px 10px rgba(0,0,0,0.5))'
+          }} />
         ))}
       </div>
     </div>
