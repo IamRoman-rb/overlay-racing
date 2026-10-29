@@ -25,6 +25,7 @@ import Branding from '../graphics/Branding';
 import LayoutEdits from '../components/LayoutEdits';
 import { getCanvasSize } from '../utils/canvasSize';
 import Icon from '../components/Icon';
+import { GOOGLE_FONTS_URL } from '../utils/fonts';
 
 let ipcRenderer = null;
 if (typeof window !== 'undefined' && typeof window.require === 'function') {
@@ -248,7 +249,7 @@ export default function Overlay() {
       <style>
         {`
           html, body, #root { background-color: transparent !important; background: transparent !important; margin: 0 !important; padding: 0 !important; overflow: hidden !important; }
-          @import url('https://fonts.googleapis.com/css2?family=Exo+2:ital,wght@0,400;0,700;0,900;1,900&family=Montserrat:ital,wght@0,400;0,700;0,900;1,900&family=Oswald:wght@400;700&family=Teko:wght@400;600;700&display=swap');
+          @import url('${GOOGLE_FONTS_URL}');
         `}
       </style>
 

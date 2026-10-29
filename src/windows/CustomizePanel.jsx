@@ -3,6 +3,7 @@ import { SKIN_FORMATS } from '../utils/skinStyles';
 import { getFinalResultsDefaultSize } from '../utils/finalResultsSize';
 import { getCanvasSize } from '../utils/canvasSize';
 import GraphicPreview from './GraphicPreview';
+import { EXTRA_FONTS, fontCssValue, GOOGLE_FONTS_URL } from '../utils/fonts';
 
 // Número que se confirma con Enter o al salir del campo (no en cada tecla: evita redimensionar a medio escribir).
 // Vacío = vuelve al valor original. `key` fuerza a mostrar el valor guardado cuando cambia desde afuera.
@@ -381,6 +382,9 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
               <option value="'Montserrat', sans-serif">{t('personalizar.fontMontserrat')}</option>
               <option value="'Teko', sans-serif">{t('personalizar.fontTeko')}</option>
               <option value="'Exo 2', sans-serif">{t('personalizar.fontExo')}</option>
+              {EXTRA_FONTS.map(f => (
+                <option key={f.name} value={fontCssValue(f)} style={{ fontFamily: fontCssValue(f) }}>{f.name}</option>
+              ))}
             </select>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
@@ -974,7 +978,7 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
               }}
             >
               <style>
-                {`@import url('https://fonts.googleapis.com/css2?family=Exo+2:ital,wght@0,400;0,700;0,900;1,900&family=Montserrat:ital,wght@0,400;0,700;0,900;1,900&family=Oswald:wght@400;700&family=Teko:wght@400;600;700&display=swap');`}
+                {`@import url('${GOOGLE_FONTS_URL}');`}
               </style>
 
               {/* CUADRÍCULA Y EJES (debajo de la gráfica) */}

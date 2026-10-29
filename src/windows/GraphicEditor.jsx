@@ -3,6 +3,7 @@ import GraphicPreview from './GraphicPreview';
 import Icon from '../components/Icon';
 import { getCanvasSize } from '../utils/canvasSize';
 import { LAYOUT_EDITS_PREFIX, detectObjects, resolvePath, describeObject } from '../utils/layoutEdit';
+import { GOOGLE_FONTS_URL } from '../utils/fonts';
 
 const EDITABLE_GRAPHICS = [
   'relator', 'comentarista', 'notero1', 'notero2', 'circuito', 'clima', 'ticker', 'tower',
@@ -385,7 +386,7 @@ export default function GraphicEditor({ config, positions, drivers, sessionInfo,
               }}
             >
               <style>
-                {`@import url('https://fonts.googleapis.com/css2?family=Exo+2:ital,wght@0,400;0,700;0,900;1,900&family=Montserrat:ital,wght@0,400;0,700;0,900;1,900&family=Oswald:wght@400;700&family=Teko:wght@400;600;700&display=swap');
+                {`@import url('${GOOGLE_FONTS_URL}');
                   .ge-stage * { transition: none !important; }`}
               </style>
 
