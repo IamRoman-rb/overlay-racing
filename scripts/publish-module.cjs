@@ -6,14 +6,18 @@
 //   $env:OVERLAY_ADMIN_USER = "roman"
 //   $env:OVERLAY_ADMIN_PASSWORD = "..."
 //   npm run module:publish -- "notas de la versión"             (las notas son opcionales)
+//   npm run football:publish -- "notas de la versión"           (módulo de fútbol)
 const fs = require('fs');
 const path = require('path');
 
 const root = path.join(__dirname, '..');
-const manifest = JSON.parse(fs.readFileSync(path.join(root, 'module.json'), 'utf-8'));
+const args = process.argv.slice(2);
+const isFootball = args[0] === 'football';
+if (isFootball) args.shift();
+const manifest = JSON.parse(fs.readFileSync(path.join(isFootball ? path.join(root, 'football') : root, 'module.json'), 'utf-8'));
 const server = (process.env.OVERLAY_SERVER_URL || 'https://overlayracing.site').replace(/\/+$/, '');
 const { OVERLAY_ADMIN_USER: user, OVERLAY_ADMIN_PASSWORD: password } = process.env;
-const notes = process.argv.slice(2).join(' ').trim();
+const notes = args.join(' ').trim();
 
 async function main() {
   if (!user || !password) throw new Error('Definí OVERLAY_ADMIN_USER y OVERLAY_ADMIN_PASSWORD (el usuario admin del servidor).');

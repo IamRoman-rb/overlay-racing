@@ -15,9 +15,9 @@ const modulesRoot = () => path.join(app.getPath('userData'), 'modules');
 const COMPLETE_MARK = '.complete';
 const KEEP_VERSIONS = 2;
 
-// En desarrollo (npm start) el módulo de carrera se abre directo desde el código de este repo, sin descargar nada.
+// En desarrollo (npm start) los módulos de carrera y fútbol se abren directo desde el código de este repo, sin descargar nada.
 // OVERLAY_FORCE_DOWNLOAD=1 fuerza la descarga real para probar el circuito completo.
-const DEV_MODULE_DIRS = { racing: path.join(__dirname, '..') };
+const DEV_MODULE_DIRS = { racing: path.join(__dirname, '..'), football: path.join(__dirname, '..', 'football') };
 const useLocalSource = (moduleId) => !app.isPackaged && !process.env.OVERLAY_FORCE_DOWNLOAD && DEV_MODULE_DIRS[moduleId];
 
 const compareVersions = (a, b) => {

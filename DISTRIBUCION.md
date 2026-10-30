@@ -54,6 +54,18 @@ Se agregan en el servidor (`MODULE_CATALOG` en `backend/src/licensePlans.js` del
 Carrera: un `module.json` con su `id` y un `main.cjs` que exporte `start(ctx)`. Mientras no tenga una versión publicada, el
 cliente lo ve en su lista como "Próximamente".
 
+## Módulo Fútbol (`football/`)
+
+Sin proveedor de datos: equipos, plantel, cuerpo técnico, escudos, marcador y reloj se cargan a mano en el panel y se guardan en
+`football-data.json` (en `football/` en desarrollo, en la carpeta de datos del usuario instalado). Tiene cuatro gráficas
+(marcador + reloj, alineación, presentación del partido y alerta de gol / cambio / tarjeta) con el estilo de cinco ligas:
+Bundesliga, Premier League, LaLiga, Liga Argentina y MLS (`football/src/leagues.js` y `football/src/graphics/`).
+
+- `npm start` levanta además el Vite del fútbol (puerto 5174); al elegir **Fútbol** en el instalador se abre desde `football/`.
+- Overlay: ventana propia del programa (fondo verde croma) o `http://<IP de la PC>:8080/#/overlay` como Browser source en OBS / vMix.
+- `npm run football:pack` arma `release-modules/football-<versión>.zip` (versión en `football/module.json`) y
+  `npm run football:publish -- "notas"` lo sube, con las mismas variables de entorno que Carrera.
+
 # Cómo generar y distribuir el instalador
 
 ## Generar el instalador
