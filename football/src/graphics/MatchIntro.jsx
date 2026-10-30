@@ -1,5 +1,6 @@
 import { Crest } from './common';
 import { formatDate } from '../state';
+import { borderCss } from '../leagues';
 
 // Presentación del partido: competición, ambos equipos, estadio, fecha, hora y árbitro.
 function TeamBlock({ info, t }) {
@@ -17,7 +18,7 @@ export default function MatchIntro({ home, away, match, comp, theme: t }) {
   const details = [match.stadium, formatDate(match.date), match.time && `${match.time} hs`].filter(Boolean);
 
   return (
-    <div style={{ position: 'relative', width: 1620, height: 680, fontFamily: t.font, fontWeight: t.weight, color: t.text, background: t.bg, borderRadius: t.radius + 6, boxShadow: '0 24px 70px rgba(0,0,0,0.65)', overflow: 'hidden' }}>
+    <div style={{ position: 'relative', width: 1620, height: 680, fontFamily: t.font, fontWeight: t.weight, color: t.text, background: t.bg, borderRadius: t.panelRadius, boxShadow: '0 24px 70px rgba(0,0,0,0.65)', overflow: 'hidden', ...borderCss(t) }}>
       <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(100deg, ${home.color}55 0%, transparent 42%, transparent 58%, ${away.color}55 100%)` }} />
       <div style={{ position: 'relative', height: '100%', display: 'flex', flexDirection: 'column', padding: '34px 50px' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 22, minHeight: 72 }}>

@@ -1,22 +1,24 @@
 import { Crest, Avatar } from './common';
 import { formationSlots, playerById, displayName, readable } from '../state';
+import { borderCss } from '../leagues';
 
 // Alineación: cancha con los 11 titulares en su formación, banco de suplentes, DT y cuerpo técnico.
 // El dibujo de cada jugador depende de la liga (theme.marker).
-const PITCH = { w: 1180, h: 700, pad: 22 };
+// La cancha se dibuja en un lienzo fijo (viewBox) que se estira al espacio disponible; los jugadores van en porcentajes.
+const PITCH = { w: 1180, h: 740, pad: 22 };
 
 function Pitch({ pitch }) {
   const { w, h, pad } = PITCH;
   const stripes = 12;
-  const line = { stroke: pitch.line, strokeWidth: 3, fill: 'none' };
+  const line = { stroke: pitch.line, strokeWidth: 3, fill: 'none', vectorEffect: 'non-scaling-stroke' };
   return (
-    <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} style={{ position: 'absolute', inset: 0, borderRadius: 12 }}>
+    <svg width="100%" height="100%" viewBox={`0 0 ${w} ${h}`} preserveAspectRatio="none" style={{ position: 'absolute', inset: 0, borderRadius: 12 }}>
       {Array.from({ length: stripes }).map((_, i) => (
         <rect key={i} x={(w / stripes) * i} y={0} width={w / stripes + 1} height={h} fill={i % 2 ? pitch.b : pitch.a} />
       ))}
       <rect x={pad} y={pad} width={w - pad * 2} height={h - pad * 2} {...line} />
       <line x1={w / 2} y1={pad} x2={w / 2} y2={h - pad} {...line} />
-      <circle cx={w / 2} cy={h / 2} r={86} {...line} />
+      <ellipse cx={w / 2} cy={h / 2} rx={86} ry={86} {...line} />
       <circle cx={w / 2} cy={h / 2} r={5} fill={pitch.line} />
       {/* áreas grandes y chicas de cada arco */}
       <rect x={pad} y={h / 2 - 190} width={190} height={380} {...line} />
@@ -82,11 +84,11 @@ export default function Lineup({ info, roster, sideData, theme: t, comp }) {
   const upper = (s) => (t.upper ? String(s).toUpperCase() : s);
 
   return (
-    <div style={{ position: 'relative', width: 1800, height: 900, fontFamily: t.font, fontWeight: t.weight, color: t.text, background: t.bg, borderRadius: t.radius + 6, boxShadow: '0 20px 60px rgba(0,0,0,0.6)', overflow: 'hidden' }}>
+    <div style={{ position: 'relative', width: 1800, height: 900, display: 'flex', flexDirection: 'column', fontFamily: t.font, fontWeight: t.weight, color: t.text, background: t.bg, borderRadius: t.panelRadius, boxShadow: '0 20px 60px rgba(0,0,0,0.6)', overflow: 'hidden', ...borderCss(t) }}>
       {/* franja de color del equipo */}
       <div style={{ height: 10, background: `linear-gradient(90deg, ${info.color}, ${info.color2})` }} />
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: 26, height: 112, padding: '0 40px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 26, height: 112, padding: '0 40px', flex: 'none' }}>
         <Crest team={info} size={84} />
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontSize: 56, lineHeight: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{upper(info.name)}</div>
@@ -100,20 +102,20 @@ export default function Lineup({ info, roster, sideData, theme: t, comp }) {
         </div>
       </div>
 
-      <div style={{ display: 'flex', gap: 36, padding: '0 40px' }}>
-        <div style={{ position: 'relative', width: PITCH.w, height: PITCH.h, flex: 'none' }}>
+      <div style={{ flex: 1, minHeight: 0, display: 'flex', gap: 36, padding: '0 40px 36px' }}>
+        <div style={{ position: 'relative', flex: 1, minWidth: 0 }}>
           <Pitch pitch={t.pitch} />
           {slots.map((s, i) => {
             const player = playerById(roster, sideData.xi[i]);
             if (!player) return null;
             return (
               <Marker key={i} kind={t.marker} team={info} player={player} t={t}
-                left={PITCH.pad + s.x * (PITCH.w - PITCH.pad * 2)} top={PITCH.pad + s.y * (PITCH.h - PITCH.pad * 2)} />
+                left={`${((PITCH.pad + s.x * (PITCH.w - PITCH.pad * 2)) / PITCH.w) * 100}%`} top={`${((PITCH.pad + s.y * (PITCH.h - PITCH.pad * 2)) / PITCH.h) * 100}%`} />
             );
           })}
         </div>
 
-        <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 20 }}>
+        <div style={{ width: 540, flex: 'none', minHeight: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column', gap: 12 }}>
           <div>
             <SectionTitle t={t}>{upper('Director técnico')}</SectionTitle>
             <div style={{ display: 'flex', alignItems: 'center', gap: 18 }}>
@@ -126,7 +128,7 @@ export default function Lineup({ info, roster, sideData, theme: t, comp }) {
             <SectionTitle t={t}>{upper('Suplentes')}</SectionTitle>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 4 }}>
               {bench.slice(0, 9).map(p => (
-                <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 14, fontSize: 27, padding: '3px 10px', background: t.panel, borderRadius: Math.min(t.radius, 8) }}>
+                <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 14, fontSize: 25, padding: '1px 10px', background: t.panel, borderRadius: Math.min(t.radius, 8) }}>
                   <span style={{ minWidth: 38, textAlign: 'right', color: t.accent }}>{p.number}</span>
                   <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{upper(displayName(p))}</span>
                 </div>

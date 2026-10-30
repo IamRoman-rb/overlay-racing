@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { readable } from '../state';
+import LogoCover from './LogoCover';
 
 // Escudo del equipo; sin escudo cargado muestra un círculo con el color del equipo y la inicial
 export function Crest({ team, size = 40, style }) {
@@ -31,12 +32,34 @@ export function Avatar({ photo, size = 100, ring, bg = 'rgba(255,255,255,0.15)' 
   );
 }
 
-// Aparece y desaparece con una transición (el contenido queda montado hasta terminar de salir).
-// Todas las gráficas ocupan el lienzo completo y se posicionan adentro con coordenadas de 1920x1080.
-// instant: sin transición (la vista previa de PERSONALIZAR mide la gráfica ya asentada).
-export function Anim({ visible, kind = 'fade', ms = 450, instant, children }) {
+// Cómo sale cada transición mientras la gráfica está oculta (al mostrarse pasa a "sin transformar"). El deslizado va hacia
+// el lado de donde viene cada gráfica.
+const SLIDE_FROM = { scorebug: [-60, 0], lineup: [-70, 0], intro: [0, 40], alert: [0, 70], branding: [60, 0] };
+function hiddenStyle(style, id) {
+  switch (style) {
+    case 'fade': return { opacity: 0 };
+    case 'zoom': return { opacity: 0, transform: 'scale(0.9)' };
+    case 'bounce': return { opacity: 0, transform: 'scale(0.3)' };
+    case 'flip': return { opacity: 0, transform: 'scaleY(0.05)' };
+    case 'rotate': return { opacity: 0, transform: 'scale(0.85) rotate(-15deg)' };
+    // "enrollar": se va descubriendo de arriba hacia abajo (el margen negativo no corta sombras)
+    case 'roll': return { clipPath: 'inset(0px -100px 100% -100px)' };
+    default: { const [x, y] = SLIDE_FROM[id] || [-40, 0]; return { opacity: 0, transform: `translate(${x}px, ${y}px)` }; }
+  }
+}
+
+// Una gráfica en el lienzo: la ubica (posición, escala, opacidad y ancho/alto elegidos en PERSONALIZAR), la anima al aparecer y
+// desaparecer con el estilo y la duración propios, y la tapa un momento con los logos si así está configurado.
+//   pos     : { x, y, scale, opacity, w, h, anim, animMs, cover, coverMs }
+//   radius  : esquinas de la gráfica (el tapado con logo las respeta)
+//   logos   : data URIs con los que se tapa (vacío = sin tapado)
+//   instant : sin transición ni tapado (vista previa de PERSONALIZAR, que mide la gráfica ya asentada)
+// El contenedor lleva data-gid para poder medirlo desde el panel.
+export function Graphic({ id, pos, visible, instant, radius = 0, logos = [], color, children }) {
   const [shown, setShown] = useState(false);
   const [exited, setExited] = useState(!visible);
+  const [root, setRoot] = useState(null);
+  const ms = Math.max(0, Number(pos.animMs) || 0);
   const mounted = visible || !exited;
 
   useEffect(() => {
@@ -44,34 +67,33 @@ export function Anim({ visible, kind = 'fade', ms = 450, instant, children }) {
     const timer = setTimeout(() => {
       if (visible) { setExited(false); setShown(true); } else setShown(false);
     }, visible ? 30 : 0);
-    const leave = visible ? null : setTimeout(() => setExited(true), ms);
+    const leave = visible ? null : setTimeout(() => setExited(true), ms + 50);
     return () => { clearTimeout(timer); clearTimeout(leave); };
   }, [visible, ms]);
 
-  if (instant) return visible ? <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}>{children}</div> : null;
-  if (!mounted) return null;
-  const hidden = {
-    fade: { opacity: 0 },
-    left: { opacity: 0, transform: 'translateX(-70px)' },
-    up: { opacity: 0, transform: 'translateY(70px)' },
-    scale: { opacity: 0, transform: 'scale(0.94)' }
-  }[kind];
-  return (
-    <div style={{
-      position: 'absolute', inset: 0, pointerEvents: 'none',
-      transition: `opacity ${ms}ms ease, transform ${ms}ms cubic-bezier(0.2, 0.8, 0.2, 1)`,
-      ...(shown && visible ? { opacity: 1, transform: 'none' } : hidden)
-    }}>{children}</div>
-  );
-}
+  if (instant ? !visible : !mounted) return null;
 
-// Ubica una gráfica en el lienzo con la posición, escala y opacidad elegidas en PERSONALIZAR (esquina superior izquierda).
-// data-gid permite medirla desde el panel para dibujar el recuadro de arrastre.
-export function Place({ id, pos, children }) {
+  const sized = (pos.w > 0 ? ' gfx-w' : '') + (pos.h > 0 ? ' gfx-h' : '');
+  const on = instant || (shown && visible);
+  const animStyle = on
+    ? { opacity: 1, transform: 'none', ...(pos.anim === 'roll' ? { clipPath: 'inset(-100px)' } : {}) }
+    : hiddenStyle(pos.anim, id);
+
   return (
-    <div data-gid={id} style={{
+    <div data-gid={id} className={`gfx${sized}`} style={{
       position: 'absolute', left: pos.x, top: pos.y, transform: `scale(${pos.scale})`, transformOrigin: 'top left',
-      opacity: pos.opacity
-    }}>{children}</div>
+      opacity: pos.opacity, width: pos.w > 0 ? pos.w : undefined, height: pos.h > 0 ? pos.h : undefined
+    }}>
+      <div ref={setRoot} className="gfx-anim" style={{
+        position: 'relative', transformOrigin: 'top left', borderRadius: radius,
+        width: pos.w > 0 ? '100%' : undefined, height: pos.h > 0 ? '100%' : undefined,
+        transition: instant ? 'none' : `all ${ms}ms cubic-bezier(0.175, 0.885, 0.32, 1.275)`, ...animStyle
+      }}>
+        {children}
+        {!instant && logos.length > 0 && (
+          <LogoCover root={root} logos={logos} time={Math.max(0.3, (Number(pos.coverMs) || 1400) / 1000)} animDur={ms / 1000} visible={!!visible} color={color} />
+        )}
+      </div>
+    </div>
   );
 }

@@ -60,26 +60,49 @@ export const emptyTeam = () => ({
 });
 export const emptySide = () => ({ formation: '4-4-2', xi: Array(11).fill(null), bench: [] });
 
-// Gráficas que se pueden mover, escalar y personalizar. x / y son la esquina superior izquierda en px del lienzo de 1920x1080.
+// Gráficas independientes: cada una tiene su propia posición, tamaño, transición, tapado con logo y estilo (look).
 export const GRAPHICS = [
   { id: 'scorebug', label: 'Marcador + reloj' },
   { id: 'lineup', label: 'Alineación' },
   { id: 'intro', label: 'Presentación del partido' },
-  { id: 'alert', label: 'Evento (gol, cambio, tarjeta)' }
+  { id: 'alert', label: 'Evento (gol, cambio, tarjeta)' },
+  { id: 'branding', label: 'Logos (liga / productora)' }
 ];
+// x / y: esquina superior izquierda en px del lienzo de 1920x1080. w / h: ancho y alto en px (0 = tamaño original).
+// anim: estilo de transición (ver ANIM_STYLES); animMs: duración. cover: logos que tapan la gráfica al aparecer
+// ('none' | 'league' | 'producer' | 'both') durante coverMs.
+export const DEFAULT_GFX = { scale: 1, opacity: 1, w: 0, h: 0, anim: 'slide', animMs: 450, cover: 'none', coverMs: 1400 };
 export const DEFAULT_LAYOUT = {
-  scorebug: { x: 56, y: 44, scale: 1, opacity: 1 },
-  lineup: { x: 60, y: 124, scale: 1, opacity: 1 },
-  intro: { x: 150, y: 200, scale: 1, opacity: 1 },
-  alert: { x: 300, y: 790, scale: 1, opacity: 1 }
+  scorebug: { ...DEFAULT_GFX, x: 56, y: 44 },
+  lineup: { ...DEFAULT_GFX, x: 60, y: 124 },
+  intro: { ...DEFAULT_GFX, x: 150, y: 200 },
+  alert: { ...DEFAULT_GFX, x: 300, y: 790 },
+  branding: { ...DEFAULT_GFX, x: 1640, y: 900 }
 };
-// Cambios de estilo que pisan los de la liga (cadena vacía = usar el de la liga)
-export const DEFAULT_STYLE = { font: '', accent: '', accent2: '' };
+export const ANIM_STYLES = [
+  { id: 'slide', label: 'Deslizar' },
+  { id: 'fade', label: 'Aparecer (fundido)' },
+  { id: 'zoom', label: 'Zoom' },
+  { id: 'bounce', label: 'Rebote' },
+  { id: 'flip', label: 'Giro vertical' },
+  { id: 'rotate', label: 'Rotar' },
+  { id: 'roll', label: 'Enrollar (de arriba a abajo)' }
+];
+export const COVER_OPTIONS = [
+  { id: 'none', label: 'Sin logo' },
+  { id: 'league', label: 'Logo de la liga' },
+  { id: 'producer', label: 'Logo de la productora' },
+  { id: 'both', label: 'Ambos logos' }
+];
+// Distribución de los controles del panel respecto de la vista previa
+export const PANEL_LAYOUTS = ['right', 'left', 'top', 'bottom'];
 
 export function defaultState() {
   return {
     layout: { ...DEFAULT_LAYOUT },
-    style: { ...DEFAULT_STYLE },
+    look: Object.fromEntries(GRAPHICS.map(g => [g.id, {}])),
+    brand: { producerLogo: null },
+    ui: { panelLayout: 'right' },
     teams: [],
     match: {
       league: 'premier', competition: '', competitionLogo: null, round: '', stadium: '', date: '', time: '', referee: '',
@@ -89,7 +112,7 @@ export function defaultState() {
       clock: { running: false, base: 0, startedAt: null, period: 'PRE', added: 0 },
       events: []
     },
-    live: { scorebug: false, intro: false, lineup: { visible: false, side: 'home' }, alert: null }
+    live: { scorebug: false, intro: false, branding: { visible: false, mode: 'both' }, lineup: { visible: false, side: 'home' }, alert: null }
   };
 }
 
@@ -105,11 +128,20 @@ export function normalizeState(raw) {
   match.events = Array.isArray(match.events) ? match.events : [];
   const live = { ...base.live, ...(raw.live || {}) };
   live.lineup = { ...base.live.lineup, ...(live.lineup || {}) };
+  live.branding = { ...base.live.branding, ...(typeof live.branding === 'object' && live.branding ? live.branding : {}) };
   // Cada gráfica conserva lo que tenga guardado y completa lo que falte (así una gráfica nueva no rompe archivos viejos)
   const layout = {};
-  GRAPHICS.forEach(({ id }) => { layout[id] = { ...DEFAULT_LAYOUT[id], ...(raw.layout?.[id] || {}) }; });
-  const style = { ...DEFAULT_STYLE, ...(raw.style || {}) };
-  return { layout, style, teams: Array.isArray(raw.teams) ? raw.teams : [], match, live };
+  const look = {};
+  GRAPHICS.forEach(({ id }) => {
+    layout[id] = { ...DEFAULT_LAYOUT[id], ...(raw.layout?.[id] || {}) };
+    // Versiones anteriores guardaban un solo estilo para todas las gráficas: pasa a ser el de cada una
+    const merged = { ...(raw.style || {}), ...(raw.look?.[id] || {}) };
+    look[id] = Object.fromEntries(Object.entries(merged).filter(([, v]) => v !== '' && v !== null && v !== undefined));
+  });
+  const brand = { ...base.brand, ...(raw.brand || {}) };
+  const ui = { ...base.ui, ...(raw.ui || {}) };
+  if (!PANEL_LAYOUTS.includes(ui.panelLayout)) ui.panelLayout = 'right';
+  return { layout, look, brand, ui, teams: Array.isArray(raw.teams) ? raw.teams : [], match, live };
 }
 
 export const teamById = (state, id) => state.teams.find(t => t.id === id) || null;

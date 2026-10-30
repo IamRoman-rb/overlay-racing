@@ -1,5 +1,6 @@
 import { Crest, Avatar } from './common';
 import { displayName } from '../state';
+import { borderCss } from '../leagues';
 
 // Alerta de evento del partido (gol, cambio, tarjeta amarilla o roja) en la parte baja de la pantalla.
 const KIND = {
@@ -27,7 +28,7 @@ export default function EventAlert({ alert, info, player, outPlayer, score, them
   const isSub = alert.kind === 'sub';
 
   return (
-    <div style={{ position: 'relative', width: 1320, height: 190, display: 'flex', fontFamily: t.font, fontWeight: t.weight, color: t.text, boxShadow: '0 16px 40px rgba(0,0,0,0.6)', borderRadius: t.radius, overflow: 'hidden' }}>
+    <div style={{ position: 'relative', width: 1320, height: 190, display: 'flex', fontFamily: t.font, fontWeight: t.weight, color: t.text, boxShadow: '0 16px 40px rgba(0,0,0,0.6)', borderRadius: t.panelRadius > 0 ? Math.min(t.panelRadius, 40) : 0, overflow: 'hidden', ...borderCss(t) }}>
       <div style={{ width: 300, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 10, background: labelBg, color: labelText }}>
         <div style={{ fontSize: alert.kind === 'goal' ? 64 : 38, letterSpacing: 2, lineHeight: 1 }}>{kind.label}</div>
         {alert.minute !== '' && alert.minute != null && <div style={{ fontSize: 34, opacity: 0.9 }}>{alert.minute}'</div>}

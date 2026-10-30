@@ -48,7 +48,10 @@ export default function MatchTab({ state, update }) {
         <div className="row">
           <Field label="Competición (texto en las gráficas)" grow={3}><input value={match.competition} placeholder="Ej: Liga Profesional" onChange={e => patchMatch({ competition: e.target.value })} /></Field>
           <Field label="Fecha / ronda" grow={2}><input value={match.round} placeholder="Ej: Fecha 12" onChange={e => patchMatch({ round: e.target.value })} /></Field>
-          <Field label="Logo de la competición"><ImagePicker value={match.competitionLogo} onChange={competitionLogo => patchMatch({ competitionLogo })} label="logo" /></Field>
+        </div>
+        <div className="row">
+          <Field label="Logo de la liga / competición"><ImagePicker value={match.competitionLogo} onChange={competitionLogo => patchMatch({ competitionLogo })} label="logo" /></Field>
+          <Field label="Logo de la productora"><ImagePicker value={state.brand.producerLogo} onChange={producerLogo => update(s => ({ ...s, brand: { ...s.brand, producerLogo } }))} label="logo" /></Field>
         </div>
         <div className="row">
           <Field label="Estadio" grow={3}><input value={match.stadium} onChange={e => patchMatch({ stadium: e.target.value })} /></Field>

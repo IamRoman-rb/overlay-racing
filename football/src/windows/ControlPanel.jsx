@@ -20,18 +20,18 @@ const PREVIEWS = [
   { id: 'lineup-home', label: 'Alineación local' },
   { id: 'lineup-away', label: 'Alineación visitante' },
   { id: 'intro', label: 'Presentación' },
+  { id: 'branding', label: 'Logos' },
   { id: 'alert', label: 'Último evento' }
 ];
 
-const PREVIEW_WIDTH = 620;
-const SCALE = PREVIEW_WIDTH / CANVAS.width;
 
 // Lo que muestra la vista previa: lo que está al aire, o una gráfica elegida aunque no esté al aire
 function previewLive(state, id) {
   if (id === 'live') return state.live;
-  const off = { scorebug: false, intro: false, lineup: { visible: false, side: 'home' }, alert: null };
+  const off = { scorebug: false, intro: false, branding: { visible: false, mode: 'both' }, lineup: { visible: false, side: 'home' }, alert: null };
   if (id === 'scorebug') return { ...off, scorebug: true };
   if (id === 'intro') return { ...off, intro: true };
+  if (id === 'branding') return { ...off, branding: { visible: true, mode: 'both' } };
   if (id === 'lineup-home') return { ...off, lineup: { visible: true, side: 'home' } };
   if (id === 'lineup-away') return { ...off, lineup: { visible: true, side: 'away' } };
   const last = state.match.events[state.match.events.length - 1];
@@ -65,6 +65,10 @@ export default function ControlPanel() {
   if (!state) return <div className="loading">Cargando…</div>;
 
   const api = { state, update };
+  // Con la vista previa arriba o abajo se achica para dejar lugar a los botones
+  const layout = state.ui.panelLayout;
+  const previewWidth = layout === 'top' || layout === 'bottom' ? 440 : 620;
+  const scale = previewWidth / CANVAS.width;
   return (
     <div className="app">
       <header className="topbar">
@@ -77,7 +81,7 @@ export default function ControlPanel() {
         </span>
       </header>
 
-      <div className="body">
+      <div className={`body layout-${layout}`}>
         <main className={`content ${tab === 'custom' ? 'flush' : ''}`}>
           {tab === 'live' && <LiveTab {...api} />}
           {tab === 'match' && <MatchTab {...api} />}
@@ -91,8 +95,8 @@ export default function ControlPanel() {
           <div className="seg wrap">
             {PREVIEWS.map(p => <button key={p.id} className={`btn small ${previewId === p.id ? 'primary' : ''}`} onClick={() => setPreviewId(p.id)}>{p.label}</button>)}
           </div>
-          <div className="preview-frame" style={{ width: PREVIEW_WIDTH, height: CANVAS.height * SCALE }}>
-            <div style={{ width: CANVAS.width, height: CANVAS.height, transform: `scale(${SCALE})`, transformOrigin: 'top left' }}>
+          <div className="preview-frame" style={{ width: previewWidth, height: CANVAS.height * scale }}>
+            <div style={{ width: CANVAS.width, height: CANVAS.height, transform: `scale(${scale})`, transformOrigin: 'top left' }}>
               <Stage state={state} live={previewLive(state, previewId)} />
             </div>
           </div>

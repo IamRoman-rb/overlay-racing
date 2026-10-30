@@ -1,17 +1,21 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Stage from '../graphics/Stage';
 import { Field } from './ui';
-import { GRAPHICS, DEFAULT_LAYOUT, DEFAULT_STYLE, CANVAS, teamOfSide } from '../state';
-import { FONT_OPTIONS, getLeague } from '../leagues';
+import { GRAPHICS, DEFAULT_LAYOUT, ANIM_STYLES, COVER_OPTIONS, PANEL_LAYOUTS, CANVAS, teamOfSide } from '../state';
+import { getLeague, COLOR_FIELDS } from '../leagues';
+import { FONT_OPTIONS } from '../fonts';
 
-// PERSONALIZAR: cada gráfica se arrastra con el mouse sobre una vista previa del lienzo completo (1920x1080),
-// se escala, se hace más o menos transparente y se le cambia la tipografía y los colores. Todo se ve al instante en el overlay.
+// PERSONALIZAR: cada gráfica es independiente. Se arrastra con el mouse sobre una vista previa del lienzo completo (1920x1080)
+// y tiene su propio tamaño (escala, ancho y alto), transición (con o sin logo), tipografía, colores, bordes y esquinas.
+// Todo se ve al instante en el overlay.
 const SAFE_X = Math.round(CANVAS.width * 0.05);
 const SAFE_Y = Math.round(CANVAS.height * 0.05);
 // Líneas a las que "se pega" la gráfica al arrastrarla: bordes, centro y zona segura (5 %)
 const SNAP_X = [0, SAFE_X, CANVAS.width / 2, CANVAS.width - SAFE_X, CANVAS.width];
 const SNAP_Y = [0, SAFE_Y, CANVAS.height / 2, CANVAS.height - SAFE_Y, CANVAS.height];
 const SNAP_THRESHOLD = 10;
+
+const PANEL_LAYOUT_LABELS = { right: 'Vista previa a la derecha', left: 'Vista previa a la izquierda', top: 'Vista previa arriba', bottom: 'Vista previa abajo' };
 
 // Cuánto hay que correr la gráfica para que su borde o su centro caiga sobre una línea guía
 function snapAxis(start, size, targets) {
@@ -25,6 +29,43 @@ function snapAxis(start, size, targets) {
   return best;
 }
 
+// Primer color #rrggbb que aparezca en un valor de CSS (los fondos de la liga son degradés); para mostrarlo en el selector de color
+function hexOf(value, fallback = '#808080') {
+  const m = /#([0-9a-f]{6}|[0-9a-f]{3})\b/i.exec(String(value || ''));
+  if (!m) return fallback;
+  const h = m[1];
+  return `#${h.length === 3 ? h.split('').map(c => c + c).join('') : h}`.toLowerCase();
+}
+
+// Valor de la liga para cada color (lo que se ve si la gráfica no lo pisa)
+function leagueDefault(league, key) {
+  if (key === 'pitchA') return league.pitch.a;
+  if (key === 'pitchB') return league.pitch.b;
+  if (key === 'pitchLine') return league.pitch.line;
+  if (key === 'borderColor') return league.accent;
+  return league[key];
+}
+
+// Número que se confirma con Enter o al salir del campo (no en cada tecla: evita redimensionar a medio escribir)
+function CommitNumber({ value, placeholder, onCommit, min = 0, step = 1, style }) {
+  return (
+    <input
+      key={String(value)} type="number" min={min} step={step} defaultValue={value || ''} placeholder={placeholder} style={style}
+      onBlur={(e) => { if (e.target.value !== String(value || '')) onCommit(e.target.value); }}
+      onKeyDown={(e) => { if (e.key === 'Enter') e.currentTarget.blur(); }}
+    />
+  );
+}
+
+function Section({ title, children, open = true }) {
+  return (
+    <details className="custom-section" open={open}>
+      <summary>{title}</summary>
+      <div className="custom-section-body">{children}</div>
+    </details>
+  );
+}
+
 export default function CustomizeTab({ state, update }) {
   const [selected, setSelected] = useState('scorebug');
   const [group, setGroup] = useState([]);       // gráficas sumadas con Ctrl + clic para verlas juntas
@@ -34,6 +75,7 @@ export default function CustomizeTab({ state, update }) {
   const [showGrid, setShowGrid] = useState(false);
   const [snap, setSnap] = useState(true);
   const [snapLines, setSnapLines] = useState({ x: [], y: [] });
+  const [test, setTest] = useState(null);       // prueba de transición: { id, hidden }
   const [stamp] = useState(() => Date.now());
 
   const areaRef = useRef(null);
@@ -41,9 +83,11 @@ export default function CustomizeTab({ state, update }) {
   const boxesRef = useRef({});
   const lastSig = useRef('');
   const drag = useRef(null);
+  const testTimers = useRef([]);
 
   const shown = group.length ? group : [selected];
   const pos = state.layout[selected] || DEFAULT_LAYOUT[selected];
+  const look = state.look[selected] || {};
   const league = getLeague(state.match.league);
 
   // Qué mostrar en la vista previa: las gráficas elegidas, siempre en pantalla y sin transiciones
@@ -52,11 +96,15 @@ export default function CustomizeTab({ state, update }) {
     const player = team?.players.find(p => p.id === state.match.home.xi[9]) || team?.players[0];
     return { id: 'demo', kind: 'goal', side: 'home', playerId: player?.id || null, outId: null, minute: '67', ownGoal: false, shownAt: stamp, duration: 86400 };
   }, [state, stamp]);
+  const on = (id) => shown.includes(id) && !(test && test.hidden && test.id === id);
   const live = {
-    scorebug: shown.includes('scorebug'), intro: shown.includes('intro'),
-    lineup: { visible: shown.includes('lineup'), side: 'home' },
-    alert: shown.includes('alert') ? demoAlert : null
+    scorebug: on('scorebug'), intro: on('intro'),
+    lineup: { visible: on('lineup'), side: 'home' },
+    branding: { visible: on('branding'), mode: 'both' },
+    alert: on('alert') ? demoAlert : null
   };
+
+  useEffect(() => () => testTimers.current.forEach(clearTimeout), []);
 
   // La escala de la vista previa se ajusta al espacio disponible
   useEffect(() => {
@@ -95,7 +143,13 @@ export default function CustomizeTab({ state, update }) {
   }, []);
 
   const patchLayout = (id, patch) => update(s => ({ ...s, layout: { ...s.layout, [id]: { ...(s.layout[id] || DEFAULT_LAYOUT[id]), ...patch } } }));
-  const patchStyle = (patch) => update(s => ({ ...s, style: { ...s.style, ...patch } }));
+  // Estilo propio: un valor vacío vuelve al de la liga (se borra la clave)
+  const patchLook = (id, patch) => update(s => {
+    const next = { ...(s.look[id] || {}) };
+    Object.entries(patch).forEach(([k, v]) => { if (v === '' || v === null || v === undefined) delete next[k]; else next[k] = v; });
+    return { ...s, look: { ...s.look, [id]: next } };
+  });
+  const num = (v, fallback) => { const n = parseFloat(v); return Number.isFinite(n) ? n : fallback; };
 
   // Clic normal: una sola gráfica. Ctrl + clic: suma (o quita) gráficas para verlas todas juntas.
   const pick = (e, id) => {
@@ -164,9 +218,43 @@ export default function CustomizeTab({ state, update }) {
     patchLayout(selected, patch);
   };
 
-  const num = (v, fallback) => { const n = parseFloat(v); return Number.isFinite(n) ? n : fallback; };
-  const resetAll = () => update(s => ({ ...s, layout: { ...DEFAULT_LAYOUT }, style: { ...DEFAULT_STYLE } }));
-  const fontValue = FONT_OPTIONS.some(f => f.value === state.style.font) ? state.style.font : '';
+  // ---------- Prueba de transición ----------
+  // La gráfica se oculta, y se vuelve a mostrar con su transición (y su tapado con logo, si lo tiene)
+  const runTest = () => {
+    testTimers.current.forEach(clearTimeout);
+    const id = selected;
+    const out = Math.max(400, pos.animMs + 150);
+    const total = out + pos.animMs + (pos.cover !== 'none' ? pos.coverMs : 0) + 600;
+    setTest({ id, hidden: true });
+    testTimers.current = [setTimeout(() => setTest({ id, hidden: false }), out), setTimeout(() => setTest(null), total)];
+  };
+
+  const copyLookToAll = () => update(s => {
+    const next = { ...s.look };
+    GRAPHICS.forEach(g => { next[g.id] = { ...(s.look[selected] || {}) }; });
+    return { ...s, look: next };
+  });
+  const resetSelected = () => update(s => ({
+    ...s, layout: { ...s.layout, [selected]: { ...DEFAULT_LAYOUT[selected] } }, look: { ...s.look, [selected]: {} }
+  }));
+  const resetAll = () => update(s => ({ ...s, layout: { ...DEFAULT_LAYOUT }, look: Object.fromEntries(GRAPHICS.map(g => [g.id, {}])) }));
+
+  const fontValue = FONT_OPTIONS.some(f => f.value === look.font) ? look.font : '';
+  const colorFields = COLOR_FIELDS.filter(f => f.group === 'base' || f.group === selected);
+  const box = boxes[selected];
+  const hasRadius = look.radius !== undefined && look.radius !== '';
+
+  const renderColor = (field) => {
+    const current = look[field.key];
+    const def = leagueDefault(league, field.key);
+    return (
+      <div className="color-row" key={field.key}>
+        <span>{field.label}</span>
+        <input type="color" value={hexOf(current || def, field.key.endsWith('Bg') || field.key === 'bg' ? '#222222' : '#808080')} onChange={e => patchLook(selected, { [field.key]: e.target.value })} />
+        <button className="btn small ghost" disabled={!current} title="Volver al color de la liga" onClick={() => patchLook(selected, { [field.key]: '' })}>Liga</button>
+      </div>
+    );
+  };
 
   return (
     <div className="custom" onMouseMove={onMove} onMouseUp={endDrag} onMouseLeave={endDrag}>
@@ -177,24 +265,85 @@ export default function CustomizeTab({ state, update }) {
             <button key={g.id} className={`btn small ${selected === g.id ? 'primary' : ''} ${group.includes(g.id) && selected !== g.id ? 'grouped' : ''}`} onClick={(e) => pick(e, g.id)}>{g.label}</button>
           ))}
         </div>
-        <p className="hint">Ctrl + clic para ver varias juntas. Arrastrá la gráfica sobre la vista previa; con las flechas movés 1 px (Shift: 10 px). Alt desactiva el imán.</p>
+        <p className="hint">Cada gráfica es independiente: lo que cambies acá sólo afecta a la seleccionada. Ctrl + clic para ver varias juntas. Arrastrala sobre la vista previa; con las flechas movés 1 px (Shift: 10 px). Alt desactiva el imán.</p>
 
-        <h3>Posición y tamaño</h3>
-        <div className="row">
-          <Field label="X (px)"><input type="number" value={pos.x} onChange={e => patchLayout(selected, { x: Math.round(num(e.target.value, pos.x)) })} /></Field>
-          <Field label="Y (px)"><input type="number" value={pos.y} onChange={e => patchLayout(selected, { y: Math.round(num(e.target.value, pos.y)) })} /></Field>
-        </div>
-        <Field label={`Escala: ${Math.round(pos.scale * 100)} %`}>
-          <input type="range" min="0.3" max="2.5" step="0.05" value={pos.scale} onChange={e => patchLayout(selected, { scale: num(e.target.value, 1) })} />
-        </Field>
-        <Field label={`Opacidad: ${Math.round(pos.opacity * 100)} %`}>
-          <input type="range" min="0.1" max="1" step="0.05" value={pos.opacity} onChange={e => patchLayout(selected, { opacity: num(e.target.value, 1) })} />
-        </Field>
-        <div className="seg" style={{ marginTop: 12 }}>
-          <button className="btn small" onClick={() => center('x')}>Centrar ↔</button>
-          <button className="btn small" onClick={() => center('y')}>Centrar ↕</button>
-          <button className="btn small" onClick={() => center('both')}>Centrar</button>
-          <button className="btn small ghost" onClick={() => patchLayout(selected, DEFAULT_LAYOUT[selected])}>Restablecer</button>
+        <Section title="Posición y tamaño">
+          <div className="row">
+            <Field label="X (px)"><input type="number" value={pos.x} onChange={e => patchLayout(selected, { x: Math.round(num(e.target.value, pos.x)) })} /></Field>
+            <Field label="Y (px)"><input type="number" value={pos.y} onChange={e => patchLayout(selected, { y: Math.round(num(e.target.value, pos.y)) })} /></Field>
+          </div>
+          <Field label={`Escala: ${Math.round(pos.scale * 100)} %`}>
+            <input type="range" min="0.3" max="2.5" step="0.05" value={pos.scale} onChange={e => patchLayout(selected, { scale: num(e.target.value, 1) })} />
+          </Field>
+          <div className="row" style={{ marginTop: 10 }}>
+            <Field label="Ancho (px)"><CommitNumber value={pos.w} min={1} placeholder="auto" onCommit={v => patchLayout(selected, { w: Math.max(0, Math.round(num(v, 0))) })} /></Field>
+            <Field label="Alto (px)"><CommitNumber value={pos.h} min={1} placeholder="auto" onCommit={v => patchLayout(selected, { h: Math.max(0, Math.round(num(v, 0))) })} /></Field>
+          </div>
+          <p className="hint">Vacío = tamaño original{box ? ` (ahora ${Math.round(box.w / pos.scale)} × ${Math.round(box.h / pos.scale)} px sin escala)` : ''}. Se confirma con Enter.</p>
+          <Field label={`Opacidad: ${Math.round(pos.opacity * 100)} %`}>
+            <input type="range" min="0.1" max="1" step="0.05" value={pos.opacity} onChange={e => patchLayout(selected, { opacity: num(e.target.value, 1) })} />
+          </Field>
+          <div className="seg" style={{ marginTop: 12 }}>
+            <button className="btn small" onClick={() => center('x')}>Centrar ↔</button>
+            <button className="btn small" onClick={() => center('y')}>Centrar ↕</button>
+            <button className="btn small" onClick={() => center('both')}>Centrar</button>
+            <button className="btn small ghost" onClick={() => patchLayout(selected, { x: DEFAULT_LAYOUT[selected].x, y: DEFAULT_LAYOUT[selected].y, scale: 1, opacity: 1, w: 0, h: 0 })}>Restablecer</button>
+          </div>
+        </Section>
+
+        <Section title="Transición">
+          <Field label="Efecto">
+            <select value={pos.anim} onChange={e => patchLayout(selected, { anim: e.target.value })}>
+              {ANIM_STYLES.map(a => <option key={a.id} value={a.id}>{a.label}</option>)}
+            </select>
+          </Field>
+          <div className="row" style={{ marginTop: 10 }}>
+            <Field label="Duración (seg)"><CommitNumber value={pos.animMs / 1000} min={0} step={0.1} onCommit={v => patchLayout(selected, { animMs: Math.round(Math.min(10, Math.max(0, num(v, 0.45))) * 1000) })} /></Field>
+          </div>
+          <Field label="Tapado con logo al aparecer">
+            <select value={pos.cover} onChange={e => patchLayout(selected, { cover: e.target.value })}>
+              {COVER_OPTIONS.map(c => <option key={c.id} value={c.id}>{c.label}</option>)}
+            </select>
+          </Field>
+          {pos.cover !== 'none' && (
+            <div className="row" style={{ marginTop: 10 }}>
+              <Field label="Tiempo del tapado (seg)"><CommitNumber value={pos.coverMs / 1000} min={0.3} step={0.1} onCommit={v => patchLayout(selected, { coverMs: Math.round(Math.min(10, Math.max(0.3, num(v, 1.4))) * 1000) })} /></Field>
+            </div>
+          )}
+          <p className="hint">El tapado cubre la gráfica con el logo (sobre un fondo con sus colores) y luego descubre los datos. Los logos se cargan en PARTIDO.</p>
+          <button className="btn small primary" onClick={runTest} disabled={!!test}>▶ Probar transición</button>
+        </Section>
+
+        <Section title="Tipografía">
+          <Field label="Fuente de esta gráfica">
+            <select value={fontValue} onChange={e => patchLook(selected, { font: e.target.value })}>
+              <option value="">La de la liga ({league.name})</option>
+              {FONT_OPTIONS.map(f => <option key={f.label} value={f.value} style={{ fontFamily: f.value }}>{f.label}</option>)}
+            </select>
+          </Field>
+        </Section>
+
+        <Section title="Colores">
+          {colorFields.map(renderColor)}
+        </Section>
+
+        <Section title="Bordes y esquinas">
+          <Field label={`Grosor del borde: ${look.borderWidth || 0} px`}>
+            <input type="range" min="0" max="12" step="1" value={look.borderWidth || 0} onChange={e => patchLook(selected, { borderWidth: num(e.target.value, 0) || '' })} />
+          </Field>
+          <Field label={hasRadius ? `Esquinas: ${look.radius} px` : 'Esquinas: las de la liga'}>
+            <input type="range" min="0" max="60" step="1" value={hasRadius ? look.radius : 12} onChange={e => patchLook(selected, { radius: num(e.target.value, 0) })} />
+          </Field>
+          <div className="seg" style={{ marginTop: 10 }}>
+            <button className="btn small" onClick={() => patchLook(selected, { radius: 0 })}>Rectas</button>
+            <button className="btn small" onClick={() => patchLook(selected, { radius: 60 })}>Muy redondeadas</button>
+            <button className="btn small ghost" disabled={!hasRadius} onClick={() => patchLook(selected, { radius: '' })}>Liga</button>
+          </div>
+        </Section>
+
+        <div className="seg" style={{ marginTop: 16 }}>
+          <button className="btn small" onClick={copyLookToAll}>Copiar este estilo a todas</button>
+          <button className="btn small ghost" onClick={resetSelected}>Restablecer esta gráfica</button>
         </div>
 
         <h3>Vista previa</h3>
@@ -202,28 +351,18 @@ export default function CustomizeTab({ state, update }) {
         <label className="check"><input type="checkbox" checked={showGuides} onChange={e => setShowGuides(e.target.checked)} /> Mostrar zona segura y ejes</label>
         <label className="check"><input type="checkbox" checked={showGrid} onChange={e => setShowGrid(e.target.checked)} /> Mostrar cuadrícula</label>
 
-        <h3>Estilo</h3>
-        <Field label="Tipografía">
-          <select value={fontValue} onChange={e => patchStyle({ font: e.target.value })}>
-            <option value="">La de la liga ({league.name})</option>
-            {FONT_OPTIONS.map(f => <option key={f.label} value={f.value}>{f.label}</option>)}
-          </select>
-        </Field>
-        <div className="row" style={{ marginTop: 10 }}>
-          <Field label="Color principal">
-            <div className="inline">
-              <input type="color" value={state.style.accent || league.accent} onChange={e => patchStyle({ accent: e.target.value })} />
-              {state.style.accent && <button className="btn small ghost" onClick={() => patchStyle({ accent: '' })}>Liga</button>}
-            </div>
-          </Field>
-          <Field label="Color secundario">
-            <div className="inline">
-              <input type="color" value={state.style.accent2 || league.accent2} onChange={e => patchStyle({ accent2: e.target.value })} />
-              {state.style.accent2 && <button className="btn small ghost" onClick={() => patchStyle({ accent2: '' })}>Liga</button>}
-            </div>
-          </Field>
+        <h3>Distribución del panel</h3>
+        <p className="hint">Dónde queda la vista previa respecto de los botones en las pestañas EN VIVO y PARTIDO.</p>
+        <div className="layout-grid">
+          {PANEL_LAYOUTS.map(id => (
+            <button key={id} className={`layout-btn ${state.ui.panelLayout === id ? 'active' : ''}`} onClick={() => update(s => ({ ...s, ui: { ...s.ui, panelLayout: id } }))}>
+              <span className={`layout-diagram ${id}`}><i /><i /></span>
+              <small>{PANEL_LAYOUT_LABELS[id]}</small>
+            </button>
+          ))}
         </div>
-        <button className="btn small danger" style={{ marginTop: 18 }} onClick={resetAll}>Restablecer todo</button>
+
+        <button className="btn small danger" style={{ marginTop: 18 }} onClick={resetAll}>Restablecer todas las gráficas</button>
       </aside>
 
       <div className="custom-area" ref={areaRef}>
@@ -233,7 +372,7 @@ export default function CustomizeTab({ state, update }) {
             className="custom-stage"
             style={{ width: CANVAS.width, height: CANVAS.height, transform: `scale(${scale})`, transformOrigin: 'top left' }}
           >
-            <Stage state={state} live={live} instant />
+            <Stage state={state} live={live} instant instantExcept={test ? test.id : undefined} />
 
             {showGrid && <div className="stage-layer" style={{ inset: 0, backgroundImage: 'linear-gradient(rgba(255,255,255,0.12) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.12) 1px, transparent 1px)', backgroundSize: '80px 80px' }} />}
             {showGuides && (
@@ -246,7 +385,7 @@ export default function CustomizeTab({ state, update }) {
             {snapLines.x.map(x => <div key={`x${x}`} className="stage-layer" style={{ left: x - 1, width: 3, top: 0, bottom: 0, background: '#ff3b6b' }} />)}
             {snapLines.y.map(y => <div key={`y${y}`} className="stage-layer" style={{ top: y - 1, height: 3, left: 0, right: 0, background: '#ff3b6b' }} />)}
 
-            {shown.map(id => boxes[id] && (
+            {!test && shown.map(id => boxes[id] && (
               <div
                 key={id} data-hit={id} onMouseDown={(e) => startDrag(e, id)}
                 className={`hit ${id === selected ? 'selected' : ''}`}

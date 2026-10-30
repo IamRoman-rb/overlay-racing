@@ -61,6 +61,10 @@ Sin proveedor de datos: equipos, plantel, cuerpo técnico, escudos, marcador y r
 (marcador + reloj, alineación, presentación del partido y alerta de gol / cambio / tarjeta) con el estilo de cinco ligas:
 Bundesliga, Premier League, LaLiga, Liga Argentina y MLS (`football/src/leagues.js` y `football/src/graphics/`).
 
+- Cada gráfica es independiente (pestaña PERSONALIZAR): posición arrastrando, escala, ancho y alto, opacidad, transición (con o sin
+  tapado con el logo de la liga / productora), tipografía (41 de Google Fonts), todos los colores, borde y esquinas. La distribución
+  de los botones del panel (vista previa a la derecha, izquierda, arriba o abajo) también se elige ahí.
+- Los logos de la liga y de la productora se cargan en PARTIDO y se ponen al aire desde EN VIVO (liga, productora o ambos).
 - `npm start` levanta además el Vite del fútbol (puerto 5174); al elegir **Fútbol** en el instalador se abre desde `football/`.
 - Overlay: ventana propia del programa (fondo verde croma) o `http://<IP de la PC>:8080/#/overlay` como Browser source en OBS / vMix.
 - `npm run football:pack` arma `release-modules/football-<versión>.zip` (versión en `football/module.json`) y

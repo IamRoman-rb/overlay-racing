@@ -46,7 +46,12 @@ export default function LiveTab({ state, update }) {
     const same = live.lineup.visible && live.lineup.side === side;
     patchLive({ lineup: { side, visible: !same }, intro: false });
   };
-  const hideAll = () => patchLive({ scorebug: false, intro: false, lineup: { ...live.lineup, visible: false }, alert: live.alert ? { ...live.alert, shownAt: 0 } : null });
+  // Logos: liga, productora o ambos. Pulsar el que ya está al aire lo saca.
+  const toggleBranding = (mode) => {
+    const same = live.branding.visible && live.branding.mode === mode;
+    patchLive({ branding: { mode, visible: !same } });
+  };
+  const hideAll = () => patchLive({ scorebug: false, intro: false, branding: { ...live.branding, visible: false }, lineup: { ...live.lineup, visible: false }, alert: live.alert ? { ...live.alert, shownAt: 0 } : null });
 
   // ---------- Eventos ----------
   const [draft, setDraft] = useState({ kind: 'goal', side: 'home', playerId: '', outId: '', minute: '', ownGoal: false, duration: 7 });
@@ -166,6 +171,12 @@ export default function LiveTab({ state, update }) {
           <button className={`toggle ${live.lineup.visible && live.lineup.side === 'away' ? 'on' : ''}`} onClick={() => toggleLineup('away')}>Alineación visitante</button>
           <button className={`toggle ${live.intro ? 'on' : ''}`} onClick={toggleIntro}>Presentación</button>
           <button className="toggle off" onClick={hideAll}>Sacar todo</button>
+        </div>
+        <h3 style={{ marginTop: 16 }}>Logos en pantalla</h3>
+        <div className="toggles">
+          <button className={`toggle ${live.branding.visible && live.branding.mode === 'league' ? 'on' : ''}`} onClick={() => toggleBranding('league')}>Logo de la liga</button>
+          <button className={`toggle ${live.branding.visible && live.branding.mode === 'producer' ? 'on' : ''}`} onClick={() => toggleBranding('producer')}>Logo de la productora</button>
+          <button className={`toggle ${live.branding.visible && live.branding.mode === 'both' ? 'on' : ''}`} onClick={() => toggleBranding('both')}>Ambos logos</button>
         </div>
       </div>
 
