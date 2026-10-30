@@ -75,7 +75,7 @@ Bundesliga, Premier League, LaLiga, Liga Argentina y MLS (`football/src/leagues.
 ## Generar el instalador
 
 ```bash
-npm run dist            # instalador (Overlay-Studio-Setup-x.y.z.exe) en release/ — solo el lanzador, sin los módulos
+npm run dist            # instalador (Overlay-Graphics-Setup-x.y.z.exe) en release/ — solo el lanzador, sin los módulos
 npm run dist:portable   # versión portable (más propensa a avisos del antivirus)
 ```
 

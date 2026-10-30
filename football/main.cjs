@@ -5,7 +5,7 @@ const http = require('http');
 const express = require('express');
 const { Server } = require('socket.io');
 
-// MÓDULO OVERLAY FÚTBOL (Overlay Studio).
+// MÓDULO OVERLAY FÚTBOL (Overlay Graphics).
 // Lo abre el instalador (launcher/main.cjs) después del login, igual que el módulo de carrera: pasa el contexto por
 // global.overlayModuleCtx y llama a start().
 //
@@ -107,9 +107,9 @@ function startServer() {
   server.on('error', (err) => {
     console.error('[football] error del servidor local:', err);
     const message = err.code === 'EADDRINUSE'
-      ? `No se pudo iniciar porque el puerto ${PORT} ya está en uso.\n\nCerrá otras ventanas de Overlay Studio y volvé a abrirlo.`
+      ? `No se pudo iniciar porque el puerto ${PORT} ya está en uso.\n\nCerrá otras ventanas de Overlay Graphics y volvé a abrirlo.`
       : `No se pudo iniciar el servidor local:\n\n${err.message}`;
-    dialog.showErrorBox('Overlay Studio', message);
+    dialog.showErrorBox('Overlay Graphics', message);
     app.exit(1);
   });
   server.listen(PORT, '0.0.0.0');
