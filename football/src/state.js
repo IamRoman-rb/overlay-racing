@@ -60,8 +60,26 @@ export const emptyTeam = () => ({
 });
 export const emptySide = () => ({ formation: '4-4-2', xi: Array(11).fill(null), bench: [] });
 
+// Gráficas que se pueden mover, escalar y personalizar. x / y son la esquina superior izquierda en px del lienzo de 1920x1080.
+export const GRAPHICS = [
+  { id: 'scorebug', label: 'Marcador + reloj' },
+  { id: 'lineup', label: 'Alineación' },
+  { id: 'intro', label: 'Presentación del partido' },
+  { id: 'alert', label: 'Evento (gol, cambio, tarjeta)' }
+];
+export const DEFAULT_LAYOUT = {
+  scorebug: { x: 56, y: 44, scale: 1, opacity: 1 },
+  lineup: { x: 60, y: 124, scale: 1, opacity: 1 },
+  intro: { x: 150, y: 200, scale: 1, opacity: 1 },
+  alert: { x: 300, y: 790, scale: 1, opacity: 1 }
+};
+// Cambios de estilo que pisan los de la liga (cadena vacía = usar el de la liga)
+export const DEFAULT_STYLE = { font: '', accent: '', accent2: '' };
+
 export function defaultState() {
   return {
+    layout: { ...DEFAULT_LAYOUT },
+    style: { ...DEFAULT_STYLE },
     teams: [],
     match: {
       league: 'premier', competition: '', competitionLogo: null, round: '', stadium: '', date: '', time: '', referee: '',
@@ -87,7 +105,11 @@ export function normalizeState(raw) {
   match.events = Array.isArray(match.events) ? match.events : [];
   const live = { ...base.live, ...(raw.live || {}) };
   live.lineup = { ...base.live.lineup, ...(live.lineup || {}) };
-  return { teams: Array.isArray(raw.teams) ? raw.teams : [], match, live };
+  // Cada gráfica conserva lo que tenga guardado y completa lo que falte (así una gráfica nueva no rompe archivos viejos)
+  const layout = {};
+  GRAPHICS.forEach(({ id }) => { layout[id] = { ...DEFAULT_LAYOUT[id], ...(raw.layout?.[id] || {}) }; });
+  const style = { ...DEFAULT_STYLE, ...(raw.style || {}) };
+  return { layout, style, teams: Array.isArray(raw.teams) ? raw.teams : [], match, live };
 }
 
 export const teamById = (state, id) => state.teams.find(t => t.id === id) || null;

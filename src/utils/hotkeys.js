@@ -37,7 +37,7 @@ export const HOTKEY_GROUPS = [
     actions: [
       { id: 'ticker', label: 'graphics.ticker' }, { id: 'tower', label: 'graphics.tower' },
       { id: 'lapCounter', label: 'graphics.lapCounter' }, { id: 'fastestLap', label: 'graphics.fastestLap' },
-      { id: 'branding', label: 'graphics.branding' }, { id: 'battle', label: 'graphics.battle' },
+      { id: 'branding', label: 'graphics.branding' }, { id: 'evento', label: 'graphics.evento' }, { id: 'battle', label: 'graphics.battle' },
       { id: 'virtualChamp', label: 'graphics.virtualChamp' }, { id: 'lapTimesHistory', label: 'graphics.lapTimesHistory' },
       { id: 'votingQR', label: 'graphics.votingQR' }, { id: 'votingResults', label: 'graphics.votingResults' }
     ]

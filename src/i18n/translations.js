@@ -34,7 +34,8 @@ export const translations = {
       virtualChamp: 'CAMPEONATO VIRTUAL', pitStop: 'CRONÓMETRO DE BOXES',
       startingLights: 'SEMÁFORO DE LARGADA', lapTimesHistory: 'EVOLUCIÓN DE TIEMPOS DE VUELTA',
       trackAlert: 'ALERTA EN CURVA', penaltyAlert: 'SANCIÓN / INVESTIGACIÓN',
-      branding: 'LOGOS PRODUCTORA Y CATEGORÍA'
+      branding: 'LOGOS PRODUCTORA Y CATEGORÍA',
+      evento: 'EVENTO'
     },
     editor: {
       title: 'EDITOR DE GRÁFICAS',
@@ -81,7 +82,7 @@ export const translations = {
       flagsSection: 'BANDERAS DE CARRERA', flagRed: 'ROJA', flagTricolor: 'TRICOLOR',
       flagBlue: 'AZUL (PASO)', flagCheckered: 'ÚLTIMA VUELTA', flagBlack: 'NEGRA',
       flagNumberPlaceholder: 'Nº', flagNumberTitle: 'Escribe el número del auto a excluir',
-      personalSection: 'PERSONAL / ENTORNO', namePlaceholder: 'NOMBRE...',
+      personalSection: 'PERSONAL / ENTORNO', namePlaceholder: 'NOMBRE...', productoraPlaceholder: 'PRODUCTORA...', eventoTitle: 'Muestra el nombre de la productora, el circuito y el clima en una sola gráfica',
       weatherNeedCircuit: '⚠️ Selecciona un Circuito primero.',
       weatherError: '❌ No se pudo obtener el clima. Revisá la conexión a internet.',
       weatherNoData: 'SIN DATOS DE CLIMA...',
@@ -312,7 +313,8 @@ export const translations = {
       virtualChamp: 'VIRTUAL STANDINGS', pitStop: 'PIT STOP TIMER',
       startingLights: 'STARTING LIGHTS', lapTimesHistory: 'LAP TIME EVOLUTION',
       trackAlert: 'CORNER ALERT', penaltyAlert: 'PENALTY / INVESTIGATION',
-      branding: 'PRODUCER & CATEGORY LOGOS'
+      branding: 'PRODUCER & CATEGORY LOGOS',
+      evento: 'EVENT'
     },
     editor: {
       title: 'GRAPHICS EDITOR',
@@ -359,7 +361,7 @@ export const translations = {
       flagsSection: 'RACE FLAGS', flagRed: 'RED', flagTricolor: 'SAFETY CAR',
       flagBlue: 'BLUE (LET PASS)', flagCheckered: 'LAST LAP', flagBlack: 'BLACK',
       flagNumberPlaceholder: 'No.', flagNumberTitle: 'Enter the car number to exclude',
-      personalSection: 'PEOPLE / ENVIRONMENT', namePlaceholder: 'NAME...',
+      personalSection: 'PEOPLE / ENVIRONMENT', namePlaceholder: 'NAME...', productoraPlaceholder: 'PRODUCER...', eventoTitle: 'Shows the producer name, the track and the weather in a single graphic',
       weatherNeedCircuit: '⚠️ Select a Track first.',
       weatherError: '❌ Could not fetch the weather. Check your internet connection.',
       weatherNoData: 'NO WEATHER DATA...',
@@ -590,7 +592,8 @@ export const translations = {
       virtualChamp: 'CAMPEONATO VIRTUAL', pitStop: 'CRONÔMETRO DE BOX',
       startingLights: 'SEMÁFORO DE LARGADA', lapTimesHistory: 'EVOLUÇÃO DOS TEMPOS DE VOLTA',
       trackAlert: 'ALERTA DE CURVA', penaltyAlert: 'PUNIÇÃO / INVESTIGAÇÃO',
-      branding: 'LOGOS PRODUTORA E CATEGORIA'
+      branding: 'LOGOS PRODUTORA E CATEGORIA',
+      evento: 'EVENTO'
     },
     editor: {
       title: 'EDITOR DE GRÁFICOS',
@@ -637,7 +640,7 @@ export const translations = {
       flagsSection: 'BANDEIRAS DE CORRIDA', flagRed: 'VERMELHA', flagTricolor: 'SAFETY CAR',
       flagBlue: 'AZUL (CEDER PASSAGEM)', flagCheckered: 'ÚLTIMA VOLTA', flagBlack: 'PRETA',
       flagNumberPlaceholder: 'Nº', flagNumberTitle: 'Digite o número do carro a excluir',
-      personalSection: 'PESSOAL / AMBIENTE', namePlaceholder: 'NOME...',
+      personalSection: 'PESSOAL / AMBIENTE', namePlaceholder: 'NOME...', productoraPlaceholder: 'PRODUTORA...', eventoTitle: 'Mostra o nome da produtora, o circuito e o clima em um único gráfico',
       weatherNeedCircuit: '⚠️ Selecione um Circuito primeiro.',
       weatherError: '❌ Não foi possível obter o clima. Verifique a conexão com a internet.',
       weatherNoData: 'SEM DADOS DO CLIMA...',
@@ -868,7 +871,8 @@ export const translations = {
       virtualChamp: 'VIRTUELLE MEISTERSCHAFT', pitStop: 'BOXENSTOPP-UHR',
       startingLights: 'STARTAMPEL', lapTimesHistory: 'RUNDENZEIT-VERLAUF',
       trackAlert: 'KURVEN-ALARM', penaltyAlert: 'STRAFE / UNTERSUCHUNG',
-      branding: 'LOGOS PRODUKTION & KATEGORIE'
+      branding: 'LOGOS PRODUKTION & KATEGORIE',
+      evento: 'EVENT'
     },
     editor: {
       title: 'GRAFIK-EDITOR',
@@ -915,7 +919,7 @@ export const translations = {
       flagsSection: 'RENNFLAGGEN', flagRed: 'ROT', flagTricolor: 'SAFETY CAR',
       flagBlue: 'BLAU (DURCHLASSEN)', flagCheckered: 'LETZTE RUNDE', flagBlack: 'SCHWARZ',
       flagNumberPlaceholder: 'Nr.', flagNumberTitle: 'Startnummer des auszuschließenden Autos eingeben',
-      personalSection: 'PERSONAL / UMGEBUNG', namePlaceholder: 'NAME...',
+      personalSection: 'PERSONAL / UMGEBUNG', namePlaceholder: 'NAME...', productoraPlaceholder: 'PRODUKTION...', eventoTitle: 'Zeigt Name der Produktion, Strecke und Wetter in einer einzigen Grafik',
       weatherNeedCircuit: '⚠️ Wähle zuerst eine Strecke aus.',
       weatherError: '❌ Wetterdaten konnten nicht abgerufen werden. Internetverbindung prüfen.',
       weatherNoData: 'KEINE WETTERDATEN...',
@@ -1146,7 +1150,8 @@ export const translations = {
       virtualChamp: 'CHAMPIONNAT VIRTUEL', pitStop: 'CHRONO DES STANDS',
       startingLights: 'FEUX DE DÉPART', lapTimesHistory: 'ÉVOLUTION DES TEMPS AU TOUR',
       trackAlert: 'ALERTE VIRAGE', penaltyAlert: 'SANCTION / ENQUÊTE',
-      branding: 'LOGOS PRODUCTION ET CATÉGORIE'
+      branding: 'LOGOS PRODUCTION ET CATÉGORIE',
+      evento: 'ÉVÉNEMENT'
     },
     editor: {
       title: 'ÉDITEUR DE GRAPHIQUES',
@@ -1193,7 +1198,7 @@ export const translations = {
       flagsSection: 'DRAPEAUX DE COURSE', flagRed: 'ROUGE', flagTricolor: 'VOITURE DE SÉCURITÉ',
       flagBlue: 'BLEU (LAISSER PASSER)', flagCheckered: 'DERNIER TOUR', flagBlack: 'NOIR',
       flagNumberPlaceholder: 'N°', flagNumberTitle: 'Indiquez le numéro de la voiture à exclure',
-      personalSection: 'PERSONNEL / ENVIRONNEMENT', namePlaceholder: 'NOM...',
+      personalSection: 'PERSONNEL / ENVIRONNEMENT', namePlaceholder: 'NOM...', productoraPlaceholder: 'PRODUCTION...', eventoTitle: 'Affiche le nom de la production, le circuit et la météo dans un seul graphique',
       weatherNeedCircuit: '⚠️ Sélectionnez d\'abord un circuit.',
       weatherError: '❌ Impossible de récupérer la météo. Vérifiez la connexion internet.',
       weatherNoData: 'AUCUNE DONNÉE MÉTÉO...',

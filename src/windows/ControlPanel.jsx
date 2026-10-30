@@ -289,14 +289,15 @@ export const defaultPositions = {
   startingLights: { x: 775, y: 470, scale: 1 }, lapTimesHistory: { x: 950, y: 350, scale: 1 },
   trackAlert: { x: 950, y: 610, scale: 1 }, penaltyAlert: { x: 950, y: 500, scale: 1 },
   driverInfo: { x: 380, y: 335, scale: 1 },
-  branding: { x: 1640, y: 900, scale: 1 }
+  branding: { x: 1640, y: 900, scale: 1 },
+  evento: { x: 560, y: 20, scale: 1 }
 };
 
 const GRAPHIC_IDS = [
   'relator', 'comentarista', 'notero1', 'notero2', 'circuito', 'clima', 'ticker', 'tower',
   'grid', 'finalResults', 'winner', 'flags', 'fastestLap', 'driverInfo', 'battle', 'customZocalo',
   'votingQR', 'votingResults', 'lapCounter', 'virtualChamp', 'startingLights',
-  'lapTimesHistory', 'trackAlert', 'penaltyAlert', 'branding'
+  'lapTimesHistory', 'trackAlert', 'penaltyAlert', 'branding', 'evento'
 ];
 
 const TAB_IDS = ['panel', 'campeonato', 'votaciones', 'sanciones', 'cloud', 'zocalos', 'disenos', 'circuito', 'ajustes', 'personalizar', 'editor', 'atajos', 'manual'];
@@ -891,7 +892,7 @@ export default function ControlPanel() {
       gridPrev: () => { if (ipcRenderer) ipcRenderer.send('grid-prev'); },
       gridNext: () => { if (ipcRenderer) ipcRenderer.send('grid-next'); },
       ticker: handleToggleTicker, tower: handleToggleTower, lapCounter: handleToggleLapCounter, fastestLap: handleToggleFastestLap,
-      branding: () => handleToggleGraphic('branding'), battle: handleToggleBattle, virtualChamp: handleToggleVirtualChamp,
+      branding: () => handleToggleGraphic('branding'), evento: () => handleToggleGraphic('evento'), battle: handleToggleBattle, virtualChamp: handleToggleVirtualChamp,
       lapTimesHistory: handleToggleLapTimesHistory, votingQR: handleToggleVotingQR, votingResults: handleToggleVotingResults,
       finalResults: handleToggleFinalResults,
       finalPrev: () => { if (ipcRenderer) ipcRenderer.send('final-results-prev'); },
@@ -1093,6 +1094,10 @@ export default function ControlPanel() {
               <GraphicControl id="notero2" label={t('graphics.notero2')} value={config.notero2} isActive={graphics.notero2} onChange={handleChange} onBlur={handleSave} onToggle={handleToggleGraphic} t={t} />
               <SearchSelectControl id="circuito" label={t('graphics.circuito')} value={config.circuito} options={circuitosData} isActive={graphics.circuito} onChange={(v) => setConfig({ ...config, circuito: v })} onCommit={handleCommitCircuit} onToggle={handleToggleGraphic} t={t} />
               <WeatherControl id="clima" label={t('graphics.clima')} config={config} setConfig={setConfig} isActive={graphics.clima} onToggle={handleToggleGraphic} t={t} />
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                <button onClick={() => handleToggleGraphic('evento')} title={t('panel.eventoTitle')} style={btnStyle(!!graphics.evento)}>{t('graphics.evento')}</button>
+                <input name="productora" value={config.productora || ''} onChange={handleChange} onBlur={handleSave} style={inputStyle} placeholder={t('panel.productoraPlaceholder')} />
+              </div>
             </div>
             </div>
 

@@ -33,7 +33,8 @@ export function Avatar({ photo, size = 100, ring, bg = 'rgba(255,255,255,0.15)' 
 
 // Aparece y desaparece con una transición (el contenido queda montado hasta terminar de salir).
 // Todas las gráficas ocupan el lienzo completo y se posicionan adentro con coordenadas de 1920x1080.
-export function Anim({ visible, kind = 'fade', ms = 450, children }) {
+// instant: sin transición (la vista previa de PERSONALIZAR mide la gráfica ya asentada).
+export function Anim({ visible, kind = 'fade', ms = 450, instant, children }) {
   const [shown, setShown] = useState(false);
   const [exited, setExited] = useState(!visible);
   const mounted = visible || !exited;
@@ -47,6 +48,7 @@ export function Anim({ visible, kind = 'fade', ms = 450, children }) {
     return () => { clearTimeout(timer); clearTimeout(leave); };
   }, [visible, ms]);
 
+  if (instant) return visible ? <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}>{children}</div> : null;
   if (!mounted) return null;
   const hidden = {
     fade: { opacity: 0 },
@@ -59,6 +61,17 @@ export function Anim({ visible, kind = 'fade', ms = 450, children }) {
       position: 'absolute', inset: 0, pointerEvents: 'none',
       transition: `opacity ${ms}ms ease, transform ${ms}ms cubic-bezier(0.2, 0.8, 0.2, 1)`,
       ...(shown && visible ? { opacity: 1, transform: 'none' } : hidden)
+    }}>{children}</div>
+  );
+}
+
+// Ubica una gráfica en el lienzo con la posición, escala y opacidad elegidas en PERSONALIZAR (esquina superior izquierda).
+// data-gid permite medirla desde el panel para dibujar el recuadro de arrastre.
+export function Place({ id, pos, children }) {
+  return (
+    <div data-gid={id} style={{
+      position: 'absolute', left: pos.x, top: pos.y, transform: `scale(${pos.scale})`, transformOrigin: 'top left',
+      opacity: pos.opacity
     }}>{children}</div>
   );
 }

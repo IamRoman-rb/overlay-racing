@@ -279,7 +279,7 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
     'relator', 'comentarista', 'notero1', 'notero2', 'circuito', 'clima', 'ticker', 'tower',
     'grid', 'finalResults', 'winner', 'flags', 'fastestLap', 'driverInfo', 'battle', 'customZocalo',
     'votingQR', 'votingResults', 'lapCounter', 'virtualChamp', 'pitStop', 'startingLights',
-    'lapTimesHistory', 'trackAlert', 'penaltyAlert', 'branding'
+    'lapTimesHistory', 'trackAlert', 'penaltyAlert', 'branding', 'evento'
   ];
   const allGraphics = GRAPHIC_IDS.map(id => ({ id, label: t(`graphics.${id}`) }));
 

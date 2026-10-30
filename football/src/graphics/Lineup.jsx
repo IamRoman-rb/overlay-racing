@@ -82,7 +82,7 @@ export default function Lineup({ info, roster, sideData, theme: t, comp }) {
   const upper = (s) => (t.upper ? String(s).toUpperCase() : s);
 
   return (
-    <div style={{ position: 'absolute', left: 60, top: 124, width: 1800, height: 900, fontFamily: t.font, fontWeight: t.weight, color: t.text, background: t.bg, borderRadius: t.radius + 6, boxShadow: '0 20px 60px rgba(0,0,0,0.6)', overflow: 'hidden' }}>
+    <div style={{ position: 'relative', width: 1800, height: 900, fontFamily: t.font, fontWeight: t.weight, color: t.text, background: t.bg, borderRadius: t.radius + 6, boxShadow: '0 20px 60px rgba(0,0,0,0.6)', overflow: 'hidden' }}>
       {/* franja de color del equipo */}
       <div style={{ height: 10, background: `linear-gradient(90deg, ${info.color}, ${info.color2})` }} />
 

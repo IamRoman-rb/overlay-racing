@@ -3,13 +3,15 @@ import Stage from '../graphics/Stage';
 import LiveTab from './LiveTab';
 import MatchTab from './MatchTab';
 import TeamsTab from './TeamsTab';
+import CustomizeTab from './CustomizeTab';
 import { bridge, mode } from '../bridge';
 import { normalizeState, CANVAS } from '../state';
 
 const TABS = [
   { id: 'live', label: 'EN VIVO' },
   { id: 'match', label: 'PARTIDO' },
-  { id: 'teams', label: 'EQUIPOS' }
+  { id: 'teams', label: 'EQUIPOS' },
+  { id: 'custom', label: 'PERSONALIZAR' }
 ];
 
 const PREVIEWS = [
@@ -76,13 +78,14 @@ export default function ControlPanel() {
       </header>
 
       <div className="body">
-        <main className="content">
+        <main className={`content ${tab === 'custom' ? 'flush' : ''}`}>
           {tab === 'live' && <LiveTab {...api} />}
           {tab === 'match' && <MatchTab {...api} />}
           {tab === 'teams' && <TeamsTab {...api} />}
+          {tab === 'custom' && <CustomizeTab {...api} />}
         </main>
 
-        {tab !== 'teams' && (
+        {tab !== 'teams' && tab !== 'custom' && (
         <aside className="preview-col">
           <div className="preview-title">Vista previa</div>
           <div className="seg wrap">

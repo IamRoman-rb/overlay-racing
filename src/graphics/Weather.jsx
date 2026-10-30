@@ -1,5 +1,5 @@
 // Devuelve { label, Icon } según el weathercode de Open-Meteo
-function getWeatherVisual(code) {
+export function getWeatherVisual(code) {
   if (code === 0) return { label: 'DESPEJADO', category: 'clear' };
   if (code >= 1 && code <= 2) return { label: 'ALGO NUBLADO', category: 'partlyCloudy' };
   if (code === 3) return { label: 'NUBLADO', category: 'cloudy' };
@@ -12,7 +12,7 @@ function getWeatherVisual(code) {
   return { label: 'DESPEJADO', category: 'clear' };
 }
 
-function WeatherIcon({ category, color, size = 40 }) {
+export function WeatherIcon({ category, color, size = 40 }) {
   const s = size;
   switch (category) {
     case 'clear':
@@ -77,7 +77,7 @@ function WeatherIcon({ category, color, size = 40 }) {
   }
 }
 
-function getWindDirLabel(deg) {
+export function getWindDirLabel(deg) {
   if (deg === null || deg === undefined) return '';
   const dirs = ['N', 'NE', 'E', 'SE', 'S', 'SO', 'O', 'NO'];
   return dirs[Math.round(deg / 45) % 8];

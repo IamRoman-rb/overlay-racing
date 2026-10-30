@@ -21,6 +21,7 @@ import LapTimeEvolution from '../graphics/LapTimeEvolution';
 import TrackAlert from '../graphics/TrackAlert';
 import PenaltyAlert from '../graphics/PenaltyAlert';
 import Branding from '../graphics/Branding';
+import Evento from '../graphics/Evento';
 import LayoutEdits from '../components/LayoutEdits';
 import { formatDriverName } from '../utils/formatDriverName';
 
@@ -114,6 +115,8 @@ function GraphicPreviewContent({ id, config, positions, drivers, sessionInfo }) 
       return <PenaltyAlert alert={{ isVisible: true, driverNumber: list[1]?.number, driverName: list[1]?.name, type: 'penalty', reason: 'Exceso de velocidad en boxes' }} config={fullConfig} />;
     case 'branding':
       return <Branding isVisible config={fullConfig} />;
+    case 'evento':
+      return <Evento isVisible config={{ ...fullConfig, productora: config?.productora || 'PRODUCTORA DE EJEMPLO', circuito: config?.circuito || 'AUTÓDROMO DE EJEMPLO', weatherData: config?.weatherData || { temp: 22, weathercode: 2, windSpeed: 14, windDir: 200, precipProb: 20, feelsLike: 21 } }} />;
     default:
       return null;
   }

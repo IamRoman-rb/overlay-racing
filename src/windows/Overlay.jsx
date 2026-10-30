@@ -22,6 +22,7 @@ import LapTimeEvolution from '../graphics/LapTimeEvolution';
 import TrackAlert from '../graphics/TrackAlert';
 import PenaltyAlert from '../graphics/PenaltyAlert';
 import Branding from '../graphics/Branding';
+import Evento from '../graphics/Evento';
 import LayoutEdits from '../components/LayoutEdits';
 import { getCanvasSize } from '../utils/canvasSize';
 import Icon from '../components/Icon';
@@ -338,6 +339,9 @@ export default function Overlay() {
       </LayoutEdits>
       <LayoutEdits id="penaltyAlert" config={combinedConfig} visible={!!(penaltyAlert?.isVisible)}>
         <PenaltyAlert alert={penaltyAlert} config={combinedConfig} />
+      </LayoutEdits>
+      <LayoutEdits id="evento" config={combinedConfig} visible={!!(graphics?.evento)}>
+        <Evento isVisible={graphics?.evento} config={combinedConfig} />
       </LayoutEdits>
       <LayoutEdits id="branding" config={combinedConfig} visible={!!(graphics?.branding)}>
         <Branding isVisible={graphics?.branding} config={combinedConfig} />

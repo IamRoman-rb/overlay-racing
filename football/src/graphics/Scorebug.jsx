@@ -137,7 +137,7 @@ const VARIANTS = { bundesliga: Bundesliga, premier: Premier, laliga: LaLiga, arg
 export default function Scorebug({ bug, theme: t }) {
   const Variant = VARIANTS[t.bug] || Premier;
   return (
-    <div style={{ position: 'absolute', left: 56, top: 44, fontFamily: t.font, fontWeight: t.weight, color: t.text, lineHeight: 1 }}>
+    <div style={{ fontFamily: t.font, fontWeight: t.weight, color: t.text, lineHeight: 1 }}>
       <Variant b={bug} t={t} />
     </div>
   );

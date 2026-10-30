@@ -7,6 +7,8 @@
 //   bug                   : qué marcador se dibuja (ver graphics/Scorebug.jsx)
 //   marker                : cómo se dibuja cada jugador en la cancha ('shirt' | 'circle' | 'tag' | 'square')
 //   clock                 : 'mmss' (23:11) o 'min' (24')
+import { readable } from './state';
+
 export const LEAGUES = {
   bundesliga: {
     id: 'bundesliga', name: 'Bundesliga', country: 'Alemania', tag: 'BL',
@@ -57,3 +59,29 @@ export const LEAGUES = {
 
 export const LEAGUE_LIST = Object.values(LEAGUES);
 export const getLeague = (id) => LEAGUES[id] || LEAGUES.premier;
+
+// Tipografías que se pueden elegir en PERSONALIZAR (se cargan desde Google Fonts en index.html)
+export const FONT_OPTIONS = [
+  { label: 'Barlow Condensed', value: "'Barlow Condensed', 'Arial Narrow', sans-serif" },
+  { label: 'Montserrat', value: "'Montserrat', 'Segoe UI', sans-serif" },
+  { label: 'Poppins', value: "'Poppins', 'Segoe UI', sans-serif" },
+  { label: 'Oswald', value: "'Oswald', 'Arial Narrow', sans-serif" },
+  { label: 'Inter', value: "'Inter', 'Segoe UI', sans-serif" },
+  { label: 'Bebas Neue', value: "'Bebas Neue', 'Arial Narrow', sans-serif" },
+  { label: 'Roboto Condensed', value: "'Roboto Condensed', 'Arial Narrow', sans-serif" },
+  { label: 'Titillium Web', value: "'Titillium Web', 'Segoe UI', sans-serif" },
+  { label: 'Anton', value: "'Anton', 'Arial Narrow', sans-serif" },
+  { label: 'Teko', value: "'Teko', 'Arial Narrow', sans-serif" },
+  { label: 'Rajdhani', value: "'Rajdhani', 'Segoe UI', sans-serif" },
+  { label: 'Arial', value: 'Arial, sans-serif' }
+];
+
+// Estilo de la liga con los cambios hechos en PERSONALIZAR por encima (font, accent, accent2; vacío = el de la liga)
+export function applyStyle(theme, style) {
+  if (!style) return theme;
+  const out = { ...theme };
+  if (style.font) out.font = style.font;
+  if (style.accent) { out.accent = style.accent; out.onAccent = readable(style.accent); }
+  if (style.accent2) out.accent2 = style.accent2;
+  return out;
+}
