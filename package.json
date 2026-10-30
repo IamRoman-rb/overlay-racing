@@ -50,7 +50,7 @@
   },
   "build": {
     "appId": "com.productora.overlay",
-    "productName": "Overlay Studio",
+    "productName": "Overlay Graphics",
     "directories": {
       "output": "release"
     },
@@ -58,7 +58,7 @@
       "target": "nsis",
       "icon": "src/assets/icon.ico",
       "requestedExecutionLevel": "asInvoker",
-      "legalTrademarks": "Overlay Studio"
+      "legalTrademarks": "Overlay Graphics"
     },
     "asarUnpack": [
       "**/node_modules/puppeteer/**/*",
@@ -70,7 +70,7 @@
         "to": "chromium"
       }
     ],
-    "copyright": "Copyright © Overlay Studio",
+    "copyright": "Copyright © Overlay Graphics",
     "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
@@ -82,20 +82,20 @@
       "installerHeaderIcon": "src/assets/icon.ico",
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
-      "shortcutName": "Overlay Studio",
+      "shortcutName": "Overlay Graphics",
       "runAfterFinish": true,
       "deleteAppDataOnUninstall": false,
-      "artifactName": "Overlay-Studio-Setup-${version}.${ext}"
+      "artifactName": "Overlay-Graphics-Setup-${version}.${ext}"
     },
     "portable": {
-      "artifactName": "Overlay-Studio-Portable-${version}.${ext}"
+      "artifactName": "Overlay-Graphics-Portable-${version}.${ext}"
     },
     "files": [
       "launcher/**/*",
       "package.json"
     ]
   },
-  "description": "Overlay Studio: instalador con los módulos del software (carrera, ...), que se descargan del servidor según la licencia",
+  "description": "Overlay Graphics: instalador con los módulos del software (carrera, ...), que se descargan del servidor según la licencia",
   "author": {
     "name": "Roman Manuel Borla"
   }

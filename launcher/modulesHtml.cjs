@@ -11,7 +11,7 @@ function getModulesHtml() {
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>Overlay Studio — Módulos</title>
+<title>Overlay Graphics — Módulos</title>
 <style>
   * { box-sizing: border-box; }
   body { margin: 0; min-height: 100vh; background: #121212; color: #fff; font-family: Arial, Helvetica, sans-serif; }
@@ -69,7 +69,7 @@ function getModulesHtml() {
 </head>
 <body>
 <header>
-  <h1>${icon('sports_score', '#e74c3c', '1.2em')} OVERLAY STUDIO</h1>
+  <h1>${icon('sports_score', '#e74c3c', '1.2em')} OVERLAY GRAPHICS</h1>
   <div style="display:flex;align-items:center">
     <div class="account"><b id="username"></b><br><span id="planInfo"></span></div>
     <button class="logout" id="btnLogout">${icon('logout', 'currentColor', '1.2em')} Cerrar sesión</button>

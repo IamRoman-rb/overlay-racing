@@ -1,12 +1,23 @@
-// Instalador / lanzador de Overlay Studio.
+// Instalador / lanzador de Overlay Graphics.
 //
 // Es lo único que se instala en la PC del cliente: inicia sesión con la licencia, muestra los módulos que esa licencia
 // incluye (Carrera, ...) y al elegir uno descarga su última versión del servidor y lo abre. El código y la interfaz
 // de cada módulo NO están acá: viven en el servidor (ver launcher/moduleManager.cjs).
 const { app, BrowserWindow, ipcMain } = require('electron');
 const path = require('path');
+const fs = require('fs');
 const os = require('os');
 const crypto = require('crypto');
+
+// El programa se llamaba "Overlay Studio" y Electron guarda los datos del usuario (módulos descargados, configuración,
+// equipos cargados) en una carpeta con el nombre del programa. Si el cliente ya la tiene, se sigue usando esa para no
+// perder nada al cambiar de nombre; una instalación nueva usa la carpeta "Overlay Graphics". Tiene que ir antes de
+// cargar el log y de pedir la instancia única, que ya leen esa carpeta.
+if (app.isPackaged) {
+  const legacyUserData = path.join(app.getPath('appData'), 'Overlay Studio');
+  if (fs.existsSync(legacyUserData)) app.setPath('userData', legacyUserData);
+}
+
 const { installLogger, logDir, logPath } = require('./logger.cjs');
 const { getLoginHtml } = require('./loginHtml.cjs');
 const { getModulesHtml } = require('./modulesHtml.cjs');

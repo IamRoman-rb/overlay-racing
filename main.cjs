@@ -14,7 +14,7 @@ const xlsx = require('xlsx');
 const os = require('os');
 const { getSystemStats, stopHardwarePoller } = require('./src/scripts/systemStats.cjs');
 
-// MÓDULO OVERLAY RACING (Overlay Studio).
+// MÓDULO OVERLAY RACING (Overlay Graphics).
 // Este archivo ya no es el programa completo: lo abre el instalador (launcher/main.cjs) después del login, tras
 // descargarlo del servidor junto con el resto del módulo. El instalador pasa el contexto por global.overlayModuleCtx
 // y llama a start(); el login, el menú de módulos, la instancia única y el log a archivo viven en el instalador.
@@ -496,9 +496,9 @@ server.on('error', (err) => {
   console.error('Error del servidor local:', err);
   const fatal = () => {
     const message = err.code === 'EADDRINUSE'
-      ? 'No se pudo iniciar porque el puerto 8080 ya está en uso.\n\nCerrá otras ventanas de Overlay Studio (o versiones anteriores del programa) y volvé a abrirlo. Si el problema sigue, reiniciá la computadora.'
+      ? 'No se pudo iniciar porque el puerto 8080 ya está en uso.\n\nCerrá otras ventanas de Overlay Graphics (o versiones anteriores del programa) y volvé a abrirlo. Si el problema sigue, reiniciá la computadora.'
       : `No se pudo iniciar el servidor local:\n\n${err.message}`;
-    dialog.showErrorBox('Overlay Studio', message);
+    dialog.showErrorBox('Overlay Graphics', message);
     app.exit(1);
   };
   if (app.isReady()) fatal(); else app.once('ready', fatal);
