@@ -98,7 +98,8 @@ async function getModuleStatus(entry, sessionToken) {
     updateBlocked: false,
     notes: null
   };
-  if (local) return status;
+  // Con código local el módulo está siempre disponible, aunque el servidor todavía no tenga una versión publicada
+  if (local) return { ...status, available: true };
 
   // Se consulta de nuevo al servidor: así aparecen también las versiones publicadas después de iniciar sesión
   try {
