@@ -30,28 +30,28 @@
     "scale": 1
   },
   "ticker": {
-    "x": -1,
-    "y": 1020,
-    "scale": 1
+    "x": -16,
+    "y": 1026,
+    "scale": 1.01
   },
   "grid": {
-    "x": 160,
-    "y": 73,
-    "scale": 0.8
+    "x": 96,
+    "y": 54,
+    "scale": 0.9
   },
   "finalResults": {
-    "x": 268,
-    "y": 111,
+    "x": 59,
+    "y": 138,
     "scale": 1.2
   },
   "tower": {
-    "x": 20,
-    "y": 20,
+    "x": 17,
+    "y": 41,
     "scale": 0.8
   },
   "winner": {
-    "x": 493,
-    "y": 610,
+    "x": 826,
+    "y": 910,
     "scale": 0.4
   },
   "flags": {
@@ -75,8 +75,8 @@
     "scale": 1
   },
   "votingQR": {
-    "x": 1671,
-    "y": 719,
+    "x": 1645,
+    "y": 557,
     "scale": 0.8
   },
   "votingResults": {
@@ -90,8 +90,13 @@
     "scale": 0.7
   },
   "virtualChamp": {
-    "x": 148,
-    "y": 447,
+    "x": 0,
+    "y": 14,
+    "scale": 1
+  },
+  "pitStop": {
+    "x": 50,
+    "y": 700,
     "scale": 1
   },
   "startingLights": {
@@ -110,12 +115,23 @@
     "scale": 0.7
   },
   "penaltyAlert": {
-    "x": 1500,
-    "y": 750,
+    "x": 680,
+    "y": 0,
     "scale": 1
   },
-  "pitStop": {
-    "x": 993,
-    "y": 364
+  "driverInfo": {
+    "x": 14,
+    "y": 487,
+    "scale": 1
+  },
+  "branding": {
+    "x": 96,
+    "y": 54,
+    "scale": 1
+  },
+  "evento": {
+    "x": 253,
+    "y": 79,
+    "scale": 1
   }
 }

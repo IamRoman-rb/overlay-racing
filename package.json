@@ -1,7 +1,7 @@
 {
   "name": "overlay-racing",
   "private": true,
-  "version": "1.1.1",
+  "version": "2.1.2",
   "type": "module",
   "main": "launcher/main.cjs",
   "scripts": {
