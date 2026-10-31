@@ -400,7 +400,7 @@ function getNetworkConfig(config) {
   try { if (fs.existsSync(dbPath)) version = fs.statSync(dbPath).mtimeMs; } catch (e) {}
   ['logo', 'categoryLogo'].forEach((key) => {
     const value = networkConfig[key];
-    if (typeof value === 'string' && /^data:image\\/[a-zA-Z0-9.+-]+;base64,/.test(value)) {
+    if (typeof value === 'string' && /^data:image\/[a-zA-Z0-9.+-]+;base64,/.test(value)) {
       networkConfig[key] = `/overlay-assets/${key}?v=${version}`;
     }
   });
@@ -415,7 +415,7 @@ expressApp.get('/overlay-assets/:asset', (req, res) => {
   try {
     const config = JSON.parse(fs.readFileSync(dbPath, 'utf-8'));
     const value = config[key];
-    const match = typeof value === 'string' && value.match(/^data:(image\\/[a-zA-Z0-9.+-]+);base64,([\\s\\S]+)$/);
+    const match = typeof value === 'string' && value.match(/^data:(image\/[a-zA-Z0-9.+-]+);base64,([\s\S]+)$/);
     if (!match) return res.sendStatus(404);
     const mime = match[1] === 'image/jpg' ? 'image/jpeg' : match[1];
     res.set('Cache-Control', 'no-store');
