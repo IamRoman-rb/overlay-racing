@@ -55,8 +55,10 @@ export default function GraphicEditor({ config, positions, drivers, sessionInfo,
 
   const editsKey = `${LAYOUT_EDITS_PREFIX}${selected}`;
   const savedEdits = config[editsKey];
+  const textSizesKey = `textSizes_${selected}`;
+  const textSizes = config[textSizesKey] || {};
   const edits = useMemo(() => draft || savedEdits || {}, [draft, savedEdits]);
-  const previewConfig = useMemo(() => ({ ...config, [editsKey]: edits }), [config, editsKey, edits]);
+  const previewConfig = useMemo(() => ({ ...config, [editsKey]: edits, [textSizesKey]: textSizes }), [config, editsKey, edits, textSizesKey, textSizes]);
   const accent = config.themeAccent || '#ffcc00';
   const { width: CW, height: CH } = getCanvasSize(config); // lienzo del overlay (por defecto 1920x1080)
   const SAFE_X = Math.round(CW * 0.05), SAFE_Y = Math.round(CH * 0.05); // zona segura: 5 % de cada borde
@@ -216,13 +218,29 @@ export default function GraphicEditor({ config, positions, drivers, sessionInfo,
   const resetObject = (key) => {
     const next = { ...edits };
     delete next[key];
-    commit(next);
+    const nextSizes = { ...textSizes };
+    delete nextSizes[key];
+    setHistory(prev => ({ ...prev, [selected]: [...(prev[selected] || []).slice(-29), cleanEdits(savedEdits)] }));
+    setDraft(null);
+    onConfigChange({
+      [editsKey]: Object.keys(cleanEdits(next)).length ? cleanEdits(next) : null,
+      [textSizesKey]: Object.keys(nextSizes).length ? nextSizes : null
+    });
+  };
+
+  const setTextSize = (key, rawValue) => {
+    const value = Number.parseFloat(rawValue);
+    if (!Number.isFinite(value)) return;
+    const nextSizes = { ...textSizes, [key]: Math.max(6, Math.min(240, Math.round(value))) };
+    onConfigChange(textSizesKey, nextSizes);
   };
 
   const resetGraphic = () => {
-    if (Object.keys(cleanEdits(edits)).length === 0) return;
+    if (Object.keys(cleanEdits(edits)).length === 0 && Object.keys(textSizes).length === 0) return;
     if (!window.confirm(t('editor.confirmReset'))) return;
-    commit({});
+    setHistory(prev => ({ ...prev, [selected]: [...(prev[selected] || []).slice(-29), cleanEdits(savedEdits)] }));
+    setDraft(null);
+    onConfigChange({ [editsKey]: null, [textSizesKey]: null });
   };
 
   const setOffset = (key, axis, value) => {
@@ -252,10 +270,14 @@ export default function GraphicEditor({ config, positions, drivers, sessionInfo,
     }
   };
 
-  const editedCount = Object.keys(cleanEdits(edits)).length;
+  const editedCount = Object.keys(cleanEdits(edits)).length + Object.keys(textSizes).length;
   const hasHistory = (history[selected] || []).length > 0;
   const borderW = Math.max(2, 2.5 / previewScale);
   const selectedObj = objects.find(o => o.key === selectedKey);
+  const selectedWrapper = selectedKey ? getWrapper() : null;
+  const selectedElement = selectedWrapper ? resolvePath(selectedWrapper, selectedKey) : null;
+  const selectedHasText = !!(selectedElement && (selectedElement.textContent || '').trim());
+  const selectedTextSize = selectedKey && textSizes[selectedKey] ? textSizes[selectedKey] : (selectedHasText ? Math.round(parseFloat(getComputedStyle(selectedElement).fontSize) || 24) : 24);
   const selectedOffset = (selectedKey && edits[selectedKey]) || { x: 0, y: 0 };
   const labelOf = (o, i) => o.label === 'img' ? `${t('editor.objectImage')}` : (o.label || `${t('editor.objectBlock')} ${i + 1}`);
 
@@ -338,6 +360,19 @@ export default function GraphicEditor({ config, positions, drivers, sessionInfo,
               <div><label style={smallLabel}>{t('personalizar.axisX')}</label><input type="number" value={selectedOffset.x} onChange={(e) => setOffset(selectedKey, 'x', e.target.value)} style={inputStyle} /></div>
               <div><label style={smallLabel}>{t('personalizar.axisY')}</label><input type="number" value={selectedOffset.y} onChange={(e) => setOffset(selectedKey, 'y', e.target.value)} style={inputStyle} /></div>
             </div>
+            {selectedHasText && (
+              <div style={{ marginTop: '12px' }}>
+                <label style={{ ...smallLabel, display: 'block', marginBottom: '6px' }}>TAMAÑO DEL TEXTO (PX)</label>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <input type="number" min="6" max="240" step="1" value={selectedTextSize}
+                    onChange={(e) => setTextSize(selectedKey, e.target.value)} style={inputStyle} />
+                  <span style={{ color: colors.textMuted, fontSize: '10px', whiteSpace: 'nowrap' }}>Independiente</span>
+                </div>
+                <p style={{ fontSize: '10px', color: colors.textMuted, lineHeight: '1.4', margin: '6px 0 0' }}>
+                  Este tamaño se guarda solamente para el texto seleccionado.
+                </p>
+              </div>
+            )}
             <button onClick={() => resetObject(selectedKey)} style={{ ...btnStyle(false), marginTop: '10px', padding: '8px', fontSize: '10px' }}>{t.i('editor.resetObject')}</button>
           </div>
         )}

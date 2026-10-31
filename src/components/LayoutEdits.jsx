@@ -1,5 +1,5 @@
 import { useRef, useState, useLayoutEffect } from 'react';
-import { LAYOUT_EDITS_PREFIX, applyLayoutEdits } from '../utils/layoutEdit';
+import { LAYOUT_EDITS_PREFIX, applyLayoutEdits, applyTextSizes } from '../utils/layoutEdit';
 import LogoCover from './LogoCover';
 import { getCoverSettings } from '../utils/logoCover';
 import { SIZE_W_PREFIX, SIZE_H_PREFIX, readSize, applyGraphicSize } from '../utils/graphicSize';
@@ -17,6 +17,8 @@ export default function LayoutEdits({ id, config, children, visible, coverReplay
   const coverOn = cover.logos.length > 0;
   const edits = config?.[`${LAYOUT_EDITS_PREFIX}${id}`];
   const signature = edits ? JSON.stringify(edits) : '';
+  const textSizes = config?.[`textSizes_${id}`];
+  const textSizeSignature = textSizes ? JSON.stringify(textSizes) : '';
   // La gráfica de resultados finales dibuja su propio tamaño (con medidas por defecto), así que acá se la saltea
   const sized = id !== 'finalResults';
   const width = sized ? readSize(config?.[`${SIZE_W_PREFIX}${id}`]) : null;
@@ -26,10 +28,12 @@ export default function LayoutEdits({ id, config, children, visible, coverReplay
     const wrapper = ref.current;
     if (!wrapper) return undefined;
     const current = signature ? JSON.parse(signature) : null;
-    const hasEdits = !!current && Object.keys(current).length > 0;
+    const currentTextSizes = textSizeSignature ? JSON.parse(textSizeSignature) : null;
+    const hasEdits = (!!current && Object.keys(current).length > 0) || (!!currentTextSizes && Object.keys(currentTextSizes).length > 0);
     const apply = () => {
       applyLayoutEdits(wrapper, current);
       if (sized) applyGraphicSize(wrapper, width, height);
+      applyTextSizes(wrapper, currentTextSizes);
     };
     apply();
     if (!hasEdits && !width && !height) return undefined;
@@ -38,7 +42,7 @@ export default function LayoutEdits({ id, config, children, visible, coverReplay
     const observer = new MutationObserver(apply);
     observer.observe(wrapper, { childList: true, subtree: true });
     return () => observer.disconnect();
-  }, [signature, sized, width, height]);
+  }, [signature, textSizeSignature, sized, width, height]);
 
   // Cajas principales de la gráfica (hijos directos del envoltorio): sobre cada una va el tapado con logo
   useLayoutEffect(() => {

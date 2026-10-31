@@ -107,6 +107,38 @@ function clearOffset(el) {
   fallbackOriginals.delete(el);
 }
 
+
+const textSizeOriginals = new WeakMap();
+
+// Aplica tamaños tipográficos por objeto DOM. Se guardan por camino dentro de cada gráfica,
+// por lo que cambiar un texto no afecta a ningún otro.
+export function applyTextSizes(wrapper, sizes) {
+  wrapper.querySelectorAll('[data-le-text-size]').forEach(el => {
+    const original = textSizeOriginals.get(el);
+    if (original) {
+      if (original.value) el.style.setProperty('font-size', original.value, original.priority);
+      else el.style.removeProperty('font-size');
+      textSizeOriginals.delete(el);
+    }
+    el.removeAttribute('data-le-text-size');
+  });
+  if (!sizes) return;
+  Object.entries(sizes).forEach(([key, raw]) => {
+    const size = Number(raw);
+    if (!Number.isFinite(size) || size < 6 || size > 240) return;
+    const el = resolvePath(wrapper, key);
+    if (!el || !el.style) return;
+    if (!textSizeOriginals.has(el)) {
+      textSizeOriginals.set(el, {
+        value: el.style.getPropertyValue('font-size'),
+        priority: el.style.getPropertyPriority('font-size')
+      });
+    }
+    el.style.setProperty('font-size', `${Math.round(size)}px`, 'important');
+    el.setAttribute('data-le-text-size', '1');
+  });
+}
+
 export function applyLayoutEdits(wrapper, edits) {
   wrapper.querySelectorAll('[data-le]').forEach(el => {
     clearOffset(el);
