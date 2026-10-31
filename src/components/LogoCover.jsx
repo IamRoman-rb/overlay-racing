@@ -19,6 +19,7 @@ function hexToRgb(hex) {
 // visible: true/false según la gráfica en el overlay; undefined = vista previa (solo actúa al pedir "probar" con `replay`).
 export default function LogoCover({ root, logos, time, visible, replay, config, id }) {
   const [infos, setInfos] = useState([]);
+  const [logosReady, setLogosReady] = useState(false);
   const [mode, setMode] = useState('idle'); // idle | on | onSoft | fade
   const [dims, setDims] = useState({ w: 0, h: 0 }); // medidas de la caja de la gráfica (sin escala ni animación)
   const wasVisible = useRef(false);
@@ -27,7 +28,12 @@ export default function LogoCover({ root, logos, time, visible, replay, config, 
 
   useEffect(() => {
     let alive = true;
-    Promise.all(logos.map(analyzeLogo)).then(res => { if (alive) setInfos(res); });
+    setLogosReady(false);
+    Promise.all(logos.map(analyzeLogo)).then(res => {
+      if (!alive) return;
+      setInfos(res);
+      setLogosReady(true);
+    });
     return () => { alive = false; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [logosKey]);
@@ -52,6 +58,10 @@ export default function LogoCover({ root, logos, time, visible, replay, config, 
       later(() => setMode('idle'), animDur + time + 0.1);
     };
 
+    // En vMix por IP los logos se descargan por HTTP y pueden tardar más que en Electron.
+    // No iniciar ni consumir la transición hasta que las imágenes estén cargadas y analizadas.
+    if (!logosReady) return undefined;
+
     if (visible === undefined) {
       if (replay) playIn();
     } else if (visible) {
@@ -64,7 +74,7 @@ export default function LogoCover({ root, logos, time, visible, replay, config, 
     }
     return () => timers.forEach(clearTimeout);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [visible, replay, root]);
+  }, [visible, replay, root, logosReady, logosKey, time, animDur]);
 
   if (!root || logos.length === 0) return null;
 
