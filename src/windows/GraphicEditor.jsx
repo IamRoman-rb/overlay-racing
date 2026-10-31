@@ -218,12 +218,14 @@ export default function GraphicEditor({ config, positions, drivers, sessionInfo,
   const resetObject = (key) => {
     const next = { ...edits };
     delete next[key];
-    commit(next);
-    if (Object.prototype.hasOwnProperty.call(textSizes, key)) {
-      const nextSizes = { ...textSizes };
-      delete nextSizes[key];
-      onConfigChange(textSizesKey, Object.keys(nextSizes).length ? nextSizes : null);
-    }
+    const nextSizes = { ...textSizes };
+    delete nextSizes[key];
+    setHistory(prev => ({ ...prev, [selected]: [...(prev[selected] || []).slice(-29), cleanEdits(savedEdits)] }));
+    setDraft(null);
+    onConfigChange({
+      [editsKey]: Object.keys(cleanEdits(next)).length ? cleanEdits(next) : null,
+      [textSizesKey]: Object.keys(nextSizes).length ? nextSizes : null
+    });
   };
 
   const setTextSize = (key, rawValue) => {
@@ -236,8 +238,9 @@ export default function GraphicEditor({ config, positions, drivers, sessionInfo,
   const resetGraphic = () => {
     if (Object.keys(cleanEdits(edits)).length === 0 && Object.keys(textSizes).length === 0) return;
     if (!window.confirm(t('editor.confirmReset'))) return;
-    commit({});
-    onConfigChange(textSizesKey, null);
+    setHistory(prev => ({ ...prev, [selected]: [...(prev[selected] || []).slice(-29), cleanEdits(savedEdits)] }));
+    setDraft(null);
+    onConfigChange({ [editsKey]: null, [textSizesKey]: null });
   };
 
   const setOffset = (key, axis, value) => {
