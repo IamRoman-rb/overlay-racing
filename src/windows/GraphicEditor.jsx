@@ -274,7 +274,8 @@ export default function GraphicEditor({ config, positions, drivers, sessionInfo,
   const hasHistory = (history[selected] || []).length > 0;
   const borderW = Math.max(2, 2.5 / previewScale);
   const selectedObj = objects.find(o => o.key === selectedKey);
-  const selectedElement = selectedKey ? resolvePath(getWrapper(), selectedKey) : null;
+  const selectedWrapper = selectedKey ? getWrapper() : null;
+  const selectedElement = selectedWrapper ? resolvePath(selectedWrapper, selectedKey) : null;
   const selectedHasText = !!(selectedElement && (selectedElement.textContent || '').trim());
   const selectedTextSize = selectedKey && textSizes[selectedKey] ? textSizes[selectedKey] : (selectedHasText ? Math.round(parseFloat(getComputedStyle(selectedElement).fontSize) || 24) : 24);
   const selectedOffset = (selectedKey && edits[selectedKey]) || { x: 0, y: 0 };
