@@ -377,7 +377,12 @@ let broadcastState = {
 
 const expressApp = express();
 const server = http.createServer(expressApp);
-const io = new Server(server, { cors: { origin: '*' } });
+// Los logos se sirven como recursos HTTP para que vMix/OBS por IP no tenga que recibir
+// imágenes Base64 gigantes dentro del paquete Socket.IO de configuración.
+const io = new Server(server, {
+  cors: { origin: '*' },
+  maxHttpBufferSize: 25 * 1024 * 1024
+});
 
 // Necesario para leer el body JSON que manda el panel web de comisarios (fetch POST).
 expressApp.use(express.json());
@@ -386,8 +391,42 @@ if (!isDev) {
   expressApp.use(express.static(path.join(__dirname, 'dist')));
 }
 
+// Reemplaza únicamente los logos Base64 por URLs locales. Electron sigue recibiendo
+// la configuración original por IPC; los navegadores remotos descargan los logos por HTTP.
+function getNetworkConfig(config) {
+  if (!config || typeof config !== 'object') return config;
+  const networkConfig = { ...config };
+  let version = Date.now();
+  try { if (fs.existsSync(dbPath)) version = fs.statSync(dbPath).mtimeMs; } catch (e) {}
+  ['logo', 'categoryLogo'].forEach((key) => {
+    const value = networkConfig[key];
+    if (typeof value === 'string' && /^data:image\\/[a-zA-Z0-9.+-]+;base64,/.test(value)) {
+      networkConfig[key] = `/overlay-assets/${key}?v=${version}`;
+    }
+  });
+  return networkConfig;
+}
+
+// Endpoint seguro: sólo permite servir los dos logos configurados, nunca rutas arbitrarias.
+expressApp.get('/overlay-assets/:asset', (req, res) => {
+  const keys = { logo: 'logo', categoryLogo: 'categoryLogo' };
+  const key = keys[req.params.asset];
+  if (!key) return res.sendStatus(404);
+  try {
+    const config = JSON.parse(fs.readFileSync(dbPath, 'utf-8'));
+    const value = config[key];
+    const match = typeof value === 'string' && value.match(/^data:(image\\/[a-zA-Z0-9.+-]+);base64,([\\s\\S]+)$/);
+    if (!match) return res.sendStatus(404);
+    const mime = match[1] === 'image/jpg' ? 'image/jpeg' : match[1];
+    res.set('Cache-Control', 'no-store');
+    res.type(mime).send(Buffer.from(match[2], 'base64'));
+  } catch (error) {
+    res.sendStatus(404);
+  }
+});
+
 io.on('connection', (socket) => {
-  try { if (fs.existsSync(dbPath)) socket.emit('update-config', JSON.parse(fs.readFileSync(dbPath, 'utf-8'))); } catch (e) {}
+  try { if (fs.existsSync(dbPath)) socket.emit('update-config', getNetworkConfig(JSON.parse(fs.readFileSync(dbPath, 'utf-8')))); } catch (e) {}
   try {
     let savedPos = {};
     if (fs.existsSync(posPath)) savedPos = JSON.parse(fs.readFileSync(posPath, 'utf-8'));
@@ -520,7 +559,9 @@ server.listen(8080, '0.0.0.0', async () => {
 
 // FIX MAESTRO: Enviar a Socket.io Y DIRECTAMENTE a las ventanas de Electron por IPC
 const broadcast = (event, data) => {
-  try { io.emit(event, data); } catch (e) {}
+  // La ventana local recibe Base64 por IPC; los overlays remotos reciben URLs HTTP
+  // para evitar paquetes enormes y permitir que vMix cargue las imágenes desde la LAN.
+  try { io.emit(event, event === 'update-config' ? getNetworkConfig(data) : data); } catch (e) {}
   if (overlayWindow && !overlayWindow.isDestroyed()) {
     overlayWindow.webContents.send(event, data);
   }
