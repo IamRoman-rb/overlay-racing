@@ -975,6 +975,7 @@ export default function ControlPanel() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', backgroundColor: colors.bgApp, color: colors.textMain, fontFamily: 'Arial, sans-serif' }}>
+      {ipcRenderer && <button onClick={() => ipcRenderer.send('return-to-launcher')} title="Volver a elegir software" style={{ position: 'fixed', top: 8, right: 12, zIndex: 1000, background: colors.bgInput, color: colors.textMain, border: `1px solid ${colors.border}`, borderRadius: 4, padding: '7px 10px', fontSize: 10, fontWeight: 'bold', cursor: 'pointer' }}>CAMBIAR SOFTWARE</button>}
       <style>{`
         @keyframes pulseRecordAlert {
           0% { background-color: #e74c3c !important; border-color: #c0392b !important; box-shadow: 0 0 15px rgba(231, 76, 60, 0.8) !important; color: white !important; }

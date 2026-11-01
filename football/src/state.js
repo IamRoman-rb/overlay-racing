@@ -101,6 +101,9 @@ export function defaultState() {
   return {
     layout: { ...DEFAULT_LAYOUT },
     look: Object.fromEntries(GRAPHICS.map(g => [g.id, {}])),
+    // EDITOR: objetos movidos dentro de cada gráfica ({ idGráfica: { camino: { x, y } } }) y tamaños de texto propios
+    edits: {},
+    textSizes: {},
     brand: { producerLogo: null },
     ui: { panelLayout: 'right' },
     teams: [],
@@ -141,7 +144,27 @@ export function normalizeState(raw) {
   const brand = { ...base.brand, ...(raw.brand || {}) };
   const ui = { ...base.ui, ...(raw.ui || {}) };
   if (!PANEL_LAYOUTS.includes(ui.panelLayout)) ui.panelLayout = 'right';
-  return { layout, look, brand, ui, teams: Array.isArray(raw.teams) ? raw.teams : [], match, live };
+  const perGraphic = (obj) => Object.fromEntries(GRAPHICS
+    .filter(({ id }) => obj && obj[id] && typeof obj[id] === 'object' && Object.keys(obj[id]).length)
+    .map(({ id }) => [id, obj[id]]));
+  return {
+    layout, look, edits: perGraphic(raw.edits), textSizes: perGraphic(raw.textSizes), brand, ui,
+    teams: Array.isArray(raw.teams) ? raw.teams : [], match, live
+  };
+}
+
+// Qué se ve en las vistas previas de PERSONALIZAR y EDITOR: las gráficas pedidas, siempre en pantalla. El evento usa un gol de
+// ejemplo (del 10 titular del local, o el primer jugador cargado). `stamp` = momento fijo en que "se mostró" el evento.
+export function demoLive(state, ids, stamp) {
+  const on = (id) => ids.includes(id);
+  const team = teamOfSide(state, 'home');
+  const player = team?.players.find(p => p.id === state.match.home.xi[9]) || team?.players[0];
+  return {
+    scorebug: on('scorebug'), intro: on('intro'),
+    lineup: { visible: on('lineup'), side: 'home' },
+    branding: { visible: on('branding'), mode: 'both' },
+    alert: on('alert') ? { id: 'demo', kind: 'goal', side: 'home', playerId: player?.id || null, outId: null, minute: '67', ownGoal: false, shownAt: stamp, duration: 86400 } : null
+  };
 }
 
 export const teamById = (state, id) => state.teams.find(t => t.id === id) || null;

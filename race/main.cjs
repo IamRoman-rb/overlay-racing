@@ -22,6 +22,15 @@ const moduleCtx = global.overlayModuleCtx || {};
 
 let controlWindow;
 let overlayWindow;
+let returningToLauncher = false;
+ipcMain.on('return-to-launcher', () => {
+  returningToLauncher = true;
+  moduleCtx.returnToLauncher?.();
+  if (controlWindow && !controlWindow.isDestroyed()) controlWindow.close();
+  if (overlayWindow && !overlayWindow.isDestroyed()) overlayWindow.close();
+  io.close();
+  stopHardwarePoller();
+});
 
 const isDev = moduleCtx.isDev !== undefined ? moduleCtx.isDev : !app.isPackaged;
 const userDataPath = isDev ? __dirname : app.getPath('userData');
@@ -543,19 +552,19 @@ server.on('error', (err) => {
   if (app.isReady()) fatal(); else app.once('ready', fatal);
 });
 
-server.listen(8080, '0.0.0.0', async () => {
-  await createPublicTunnel();
-  loadCloudConfig();
-  connectToCloud();
-  setTimeout(() => {
-    if (!publicVotingUrl) {
-      const ip = getLocalIP();
-      if (ip !== '127.0.0.1') {
-        broadcast('update-ip', `http://${ip}:8080/votar`);
+function startServer() {
+  server.listen(8080, '0.0.0.0', async () => {
+    await createPublicTunnel();
+    loadCloudConfig();
+    connectToCloud();
+    setTimeout(() => {
+      if (!publicVotingUrl) {
+        const ip = getLocalIP();
+        if (ip !== '127.0.0.1') broadcast('update-ip', `http://${ip}:8080/votar`);
       }
-    }
-  }, 3000);
-});
+    }, 3000);
+  });
+}
 
 // FIX MAESTRO: Enviar a Socket.io Y DIRECTAMENTE a las ventanas de Electron por IPC
 const broadcast = (event, data) => {
@@ -1106,7 +1115,7 @@ function createWindows() {
     controlWindow.loadURL(`file://${indexPath}#/`);
     overlayWindow.loadURL(`file://${indexPath}#/overlay`);
   }
-  controlWindow.on('closed', () => app.quit());
+  controlWindow.on('closed', () => { if (!returningToLauncher) app.quit(); });
 }
 
 app.on('will-quit', stopHardwarePoller);
@@ -1114,6 +1123,8 @@ app.on('will-quit', stopHardwarePoller);
 // Punto de entrada que usa el instalador
 module.exports = {
   start() {
+    returningToLauncher = false;
+    startServer();
     createWindows();
   }
 };

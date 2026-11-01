@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { readable } from '../state';
 import LogoCover from './LogoCover';
+import { applyLayoutEdits, applyTextSizes } from '../utils/layoutEdit';
 
 // Escudo del equipo; sin escudo cargado muestra un círculo con el color del equipo y la inicial
 export function Crest({ team, size = 40, style }) {
@@ -48,14 +49,38 @@ function hiddenStyle(style, id) {
   }
 }
 
+// Envoltorio sin caja (display: contents) que aplica lo hecho en la pestaña EDITOR: objetos movidos y tamaños de texto propios.
+// La gráfica vuelve a crear nodos al cambiar de datos o al aparecer, así que se reaplica con cada cambio del DOM.
+function LayoutEdits({ edits, textSizes, children }) {
+  const ref = useRef(null);
+  const editsSig = edits && Object.keys(edits).length ? JSON.stringify(edits) : '';
+  const sizesSig = textSizes && Object.keys(textSizes).length ? JSON.stringify(textSizes) : '';
+
+  useLayoutEffect(() => {
+    const wrapper = ref.current;
+    if (!wrapper) return undefined;
+    const currentEdits = editsSig ? JSON.parse(editsSig) : null;
+    const currentSizes = sizesSig ? JSON.parse(sizesSig) : null;
+    const apply = () => { applyLayoutEdits(wrapper, currentEdits); applyTextSizes(wrapper, currentSizes); };
+    apply();
+    if (!currentEdits && !currentSizes) return undefined;
+    const observer = new MutationObserver(apply);
+    observer.observe(wrapper, { childList: true, subtree: true });
+    return () => observer.disconnect();
+  }, [editsSig, sizesSig]);
+
+  return <div ref={ref} data-le-wrap="1" style={{ display: 'contents' }}>{children}</div>;
+}
+
 // Una gráfica en el lienzo: la ubica (posición, escala, opacidad y ancho/alto elegidos en PERSONALIZAR), la anima al aparecer y
 // desaparecer con el estilo y la duración propios, y la tapa un momento con los logos si así está configurado.
 //   pos     : { x, y, scale, opacity, w, h, anim, animMs, cover, coverMs }
 //   radius  : esquinas de la gráfica (el tapado con logo las respeta)
 //   logos   : data URIs con los que se tapa (vacío = sin tapado)
 //   instant : sin transición ni tapado (vista previa de PERSONALIZAR, que mide la gráfica ya asentada)
+//   edits / textSizes : objetos movidos y tamaños de texto de la pestaña EDITOR
 // El contenedor lleva data-gid para poder medirlo desde el panel.
-export function Graphic({ id, pos, visible, instant, radius = 0, logos = [], color, children }) {
+export function Graphic({ id, pos, visible, instant, radius = 0, logos = [], color, edits, textSizes, children }) {
   const [shown, setShown] = useState(false);
   const [exited, setExited] = useState(!visible);
   const [root, setRoot] = useState(null);
@@ -89,7 +114,7 @@ export function Graphic({ id, pos, visible, instant, radius = 0, logos = [], col
         width: pos.w > 0 ? '100%' : undefined, height: pos.h > 0 ? '100%' : undefined,
         transition: instant ? 'none' : `all ${ms}ms cubic-bezier(0.175, 0.885, 0.32, 1.275)`, ...animStyle
       }}>
-        {children}
+        <LayoutEdits edits={edits} textSizes={textSizes}>{children}</LayoutEdits>
         {!instant && logos.length > 0 && (
           <LogoCover root={root} logos={logos} time={Math.max(0.3, (Number(pos.coverMs) || 1400) / 1000)} animDur={ms / 1000} visible={!!visible} color={color} />
         )}

@@ -1,16 +1,37 @@
-# React + Vite
+# Overlay Graphics
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Aplicación de escritorio para operar gráficos deportivos en transmisiones. Usa Electron, React y Vite; el lanzador inicia sesión con una licencia y abre los módulos disponibles.
 
-Currently, two official plugins are available:
+## Módulos
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- `race/`: gráficos y panel de control para automovilismo.
+- `football/`: gráficos y panel para partidos de fútbol.
+- `streaming/`: directorio reservado para el módulo de streaming; todavía no tiene manifiesto publicable.
+- `launcher/`: inicio de sesión, selección, descarga y actualización de módulos.
 
-## React Compiler
+El detector usa los cambios locales de Git dentro de cada directorio y considera solo módulos con `module.json`.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+```bash
+npm run module:pack
+npm run module:publish -- --notes "Mejoras y correcciones"
+```
 
-## Expanding the ESLint configuration
+`module:publish` detecta los módulos modificados, los compila, arma sus ZIP y los sube al servidor. Se puede indicar un módulo (`race`, `football`, `racing`) o usar `--all` para incluir todos los módulos configurados.
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+Para publicar, crea `.env` en la raíz con credenciales de administrador. `.env.example` sirve como plantilla y `.env` está excluido de Git.
+
+```env
+OVERLAY_ADMIN_USER=usuario
+OVERLAY_ADMIN_PASSWORD=contraseña
+OVERLAY_SERVER_URL=https://overlayracing.site
+```
+
+El servidor genera y aplica la firma criptográfica al recibir cada paquete.
+
+## Desarrollo
+
+```bash
+npm start
+```
+
+Esto ejecuta el lanzador y los servidores Vite de Carrera y Fútbol. Para compilar por separado: `npm run race:build` o `npm run football:build`.

@@ -24,6 +24,16 @@ const OVERLAY_SIZE = { width: 1920, height: 1080 };
 let controlWindow = null;
 let overlayWindow = null;
 let io = null;
+let server = null;
+let returningToLauncher = false;
+ipcMain.on('return-to-launcher', () => {
+  returningToLauncher = true;
+  moduleCtx.returnToLauncher?.();
+  if (controlWindow && !controlWindow.isDestroyed()) controlWindow.close();
+  if (overlayWindow && !overlayWindow.isDestroyed()) overlayWindow.close();
+  if (io) io.close();
+  else if (server) server.close();
+});
 
 // Lo que se guarda es todo menos lo que está "al aire" (las gráficas arrancan ocultas en cada sesión).
 let state = null;
@@ -93,7 +103,7 @@ ipcMain.on('refocus-window', (e) => {
 
 function startServer() {
   const expressApp = express();
-  const server = http.createServer(expressApp);
+  server = http.createServer(expressApp);
   io = new Server(server, { cors: { origin: '*' } });
 
   // OBS / vMix abren http://<ip de esta PC>:8080/#/overlay como "Browser source"
@@ -132,12 +142,13 @@ function createWindows() {
     controlWindow.loadURL(`file://${indexPath}#/`);
     overlayWindow.loadURL(`file://${indexPath}#/overlay`);
   }
-  controlWindow.on('closed', () => app.quit());
+  controlWindow.on('closed', () => { if (!returningToLauncher) app.quit(); });
 }
 
 // Punto de entrada que usa el instalador
 module.exports = {
   start() {
+    returningToLauncher = false;
     state = readSaved();
     startServer();
     createWindows();

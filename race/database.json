@@ -29,7 +29,7 @@
   "campeonato": "",
   "relator": "",
   "comentarista": "",
-  "speedhiveCode": "37872",
+  "speedhiveCode": "MPDGRNRG-2147485163",
   "borderRadius_ticker": "0px",
   "gridFormat": "cinematic",
   "circuito": "Autódromo Oscar y Juan Gálvez",
@@ -41,7 +41,7 @@
   "nameFormat": "original",
   "photosPath": null,
   "borderRadius_lapCounter": "0px",
-  "timingProvider": "racemonitor",
+  "timingProvider": "speedhive",
   "weatherData": {
     "temp": 17.9,
     "windSpeed": 4,
@@ -138,5 +138,16 @@
   "animationStyle_grid": "roll",
   "logoCoverProducer_winner": true,
   "sizeW_winner": "",
-  "productora": "PERIKA PRODUCCIONES"
+  "productora": "PERIKA PRODUCCIONES",
+  "layoutEdits_ticker": null,
+  "layoutEdits_evento": {
+    "div:0>div:0>div:2>span:0": {
+      "x": 0,
+      "y": 0,
+      "fontSize": 35
+    }
+  },
+  "textSizes_evento": {
+    "div:0>div:0>div:2>span:0": 29
+  }
 }

@@ -125,7 +125,12 @@ ipcMain.handle('open-module', async (event, { id: moduleId, update = false }) =>
       license: { username: session.username, modules: session.modules, plan: session.plan, expiresAt: session.expiresAt },
       logDir,
       logPath,
-      launcherVersion: app.getVersion()
+      launcherVersion: app.getVersion(),
+      returnToLauncher: () => {
+        moduleRunning = false;
+        if (!modulesWindow || modulesWindow.isDestroyed()) createModulesWindow();
+        else modulesWindow.show();
+      }
     });
     if (modulesWindow) modulesWindow.close();
     return { ok: true };
@@ -136,6 +141,15 @@ ipcMain.handle('open-module', async (event, { id: moduleId, update = false }) =>
   }
 });
 
+ipcMain.handle('update-module', async (event, { id: moduleId }) => {
+  if (!session || !session.modules.includes(moduleId)) return { error: 'Tu licencia no incluye este módulo.' };
+  try {
+    const sendStatus = status => modulesWindow?.webContents.send('module-status', { id: moduleId, ...status });
+    await ensureModule(moduleId, session.sessionToken, sendStatus, { update: true });
+    return { ok: true };
+  } catch (err) { return { error: err?.message || 'No se pudo actualizar el módulo.' }; }
+});
+
 ipcMain.on('launcher-logout', () => {
   if (moduleRunning) return;
   session = null;
@@ -143,6 +157,6 @@ ipcMain.on('launcher-logout', () => {
   if (modulesWindow) modulesWindow.close();
 });
 
-app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(); });
+app.on('window-all-closed', () => { if (process.platform !== 'darwin' && !moduleRunning) app.quit(); });
 
 if (gotSingleInstanceLock) app.whenReady().then(createLoginWindow);

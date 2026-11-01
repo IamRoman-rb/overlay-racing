@@ -27,16 +27,18 @@ instalador (launcher/) --login--> servidor: licencia -> módulos + token de sesi
   para todos, accesos directos y finalizar. Al desinstalar se conservan los datos y los módulos descargados.
 - Las descargas exigen la sesión de la licencia: si está suspendida, vencida o no incluye el módulo, el servidor no lo entrega.
 
-## Publicar una versión nueva de un módulo (Carrera)
+## Publicar una versión nueva de un módulo
 
-1. Subir `version` en `module.json` (por ejemplo 1.0.1).
-2. `npm run module:pack` compila la interfaz y arma `release-modules/racing-1.0.1.zip`.
-3. Publicarlo (PowerShell):
+1. Subir `version` en `race/module.json`, `football/module.json` o `streaming/module.json`.
+2. `npm run module:pack` detecta los módulos modificados por Git y arma sus ZIP.
+3. `npm run module:publish -- --notes "Notas de la versión"` compila y publica los módulos modificados. También acepta `--all` o un id/directorio (`race`, `racing`, `football`).
+
+Las credenciales de administrador se leen de `.env` en la raíz (`OVERLAY_ADMIN_USER` y `OVERLAY_ADMIN_PASSWORD`). Se puede copiar `.env.example`; `.env` está excluido de Git. El servidor aplica la firma criptográfica al paquete.
 
 ```powershell
 $env:OVERLAY_ADMIN_USER = "roman"
 $env:OVERLAY_ADMIN_PASSWORD = "..."
-npm run module:publish -- "Notas de la versión"
+npm run module:publish -- --notes "Notas de la versión"
 ```
 
 Desde ese momento, cada cliente recibe la versión nueva la próxima vez que abre el módulo. Para probar contra un backend
@@ -45,7 +47,7 @@ local: `$env:OVERLAY_SERVER_URL = "http://localhost:8090"`.
 ## Desarrollo
 
 `npm start` abre el instalador: el login y la lista de módulos usan el servidor real (o el de `OVERLAY_SERVER_URL`) y, al
-elegir **Carrera**, se abre directo el código de este repo con Vite, sin descargar nada. `OVERLAY_FORCE_DOWNLOAD=1` fuerza el
+elegir **Carrera**, se abre directo el código de `race/` con Vite, sin descargar nada. `OVERLAY_FORCE_DOWNLOAD=1` fuerza el
 circuito real de descarga.
 
 ## Módulos nuevos (Fútbol, Eventos, ...)
@@ -65,10 +67,8 @@ Bundesliga, Premier League, LaLiga, Liga Argentina y MLS (`football/src/leagues.
   tapado con el logo de la liga / productora), tipografía (41 de Google Fonts), todos los colores, borde y esquinas. La distribución
   de los botones del panel (vista previa a la derecha, izquierda, arriba o abajo) también se elige ahí.
 - Los logos de la liga y de la productora se cargan en PARTIDO y se ponen al aire desde EN VIVO (liga, productora o ambos).
-- `npm start` levanta además el Vite del fútbol (puerto 5174); al elegir **Fútbol** en el instalador se abre desde `football/`.
+- `npm start` levanta Carrera desde `race/` (puerto 5173) y Fútbol desde `football/` (puerto 5174).
 - Overlay: ventana propia del programa (fondo verde croma) o `http://<IP de la PC>:8080/#/overlay` como Browser source en OBS / vMix.
-- `npm run football:pack` arma `release-modules/football-<versión>.zip` (versión en `football/module.json`) y
-  `npm run football:publish -- "notas"` lo sube, con las mismas variables de entorno que Carrera.
 
 # Cómo generar y distribuir el instalador
 

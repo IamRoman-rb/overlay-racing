@@ -36,7 +36,13 @@ export default function Stage({ state, live = state.live, instant, instantExcept
   // Estilo propio de la gráfica (t) y lo que necesita <Graphic> para ubicarla, animarla y taparla con logo (props)
   const setup = (id, visible, radiusKey) => {
     const t = themeOf(id);
-    return { t, props: { id, pos: placeOf(id), visible, instant: isInstant(id), radius: t[radiusKey], logos: coverLogos(id), color: t.accent } };
+    return {
+      t,
+      props: {
+        id, pos: placeOf(id), visible, instant: isInstant(id), radius: t[radiusKey], logos: coverLogos(id), color: t.accent,
+        edits: state.edits?.[id], textSizes: state.textSizes?.[id]
+      }
+    };
   };
 
   const bugTheme = themeOf('scorebug');

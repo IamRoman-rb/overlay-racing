@@ -51,7 +51,7 @@ export function ImagePicker({ value, onChange, label = 'Imagen', max = 320, roun
 }
 
 // Botón de dos pasos para acciones que borran (sin confirm() nativo, que en Windows le saca el foco a los inputs)
-export function ConfirmButton({ onConfirm, children, className = 'btn small danger' }) {
+export function ConfirmButton({ onConfirm, children, className = 'btn small danger', style }) {
   const [armed, setArmed] = useState(false);
   useEffect(() => {
     if (!armed) return undefined;
@@ -59,7 +59,7 @@ export function ConfirmButton({ onConfirm, children, className = 'btn small dang
     return () => clearTimeout(timer);
   }, [armed]);
   return (
-    <button type="button" className={className} onClick={() => { if (armed) { setArmed(false); onConfirm(); } else setArmed(true); }}>
+    <button type="button" className={className} style={style} onClick={() => { if (armed) { setArmed(false); onConfirm(); } else setArmed(true); }}>
       {armed ? '¿Seguro?' : children}
     </button>
   );

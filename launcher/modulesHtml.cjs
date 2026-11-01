@@ -168,8 +168,9 @@ function getModulesHtml() {
       b.disabled = true;
       buttons.push(b);
     } else if (m.updateAvailable && !m.updateBlocked) {
+      buttons.push(makeButton('secondary', small(ICONS.download) + ' Actualizar', () => updateModule(m.id)));
       buttons.push(makeButton('update-btn', small(ICONS.download) + ' Actualizar y abrir', () => openModule(m.id, true)));
-      buttons.push(makeButton('secondary', 'Abrir sin actualizar', () => openModule(m.id, false)));
+      buttons.push(makeButton('secondary', 'Entrar directamente', () => openModule(m.id, false)));
     } else if (m.updateAvailable) {
       buttons.push(makeButton('', small(ICONS.play_arrow) + ' Abrir versión ' + m.installedVersion, () => openModule(m.id, false)));
     } else {
@@ -206,6 +207,17 @@ function getModulesHtml() {
       setButtonsEnabled(true);
     }
     // Si se abrió bien, el proceso principal cierra esta ventana
+  }
+
+  async function updateModule(id) {
+    const c = cards[id];
+    busy = true; setButtonsEnabled(false); c.error.classList.remove('show'); c.bar.classList.add('show');
+    c.meta.textContent = PHASES.checking.toUpperCase();
+    const result = await ipcRenderer.invoke('update-module', { id });
+    if (result && result.error) {
+      c.error.textContent = result.error; c.error.classList.add('show'); c.bar.classList.remove('show');
+      c.meta.textContent = metaText(c.m); busy = false; setButtonsEnabled(true);
+    } else { busy = false; await refresh(); setButtonsEnabled(true); }
   }
 
   ipcRenderer.on('module-status', (event, s) => {

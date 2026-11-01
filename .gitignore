@@ -30,5 +30,8 @@ votes_history.json
 # Paquetes de módulos generados con npm run module:pack
 release-modules/
 
-# Datos del módulo de fútbol (equipos cargados a mano) y su compilado
+# Datos de los módulos (equipos/carrera cargados en desarrollo) y compilados
 football/football-data.json*
+.env
+.env.*
+!.env.example
