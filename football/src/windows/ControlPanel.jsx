@@ -93,13 +93,23 @@ export default function ControlPanel() {
     });
   }, []);
 
+  // Si hay otro panel abierto (por ejemplo en otra PC por http://<IP>:8080) y cambia algo, este se pone al día. Si no, el próximo
+  // cambio de este panel mandaría su estado viejo entero y pisaría lo del otro (tamaños de texto, tapado con logo, marcador...).
+  // Un cambio propio que todavía no se mandó tiene prioridad: se envía enseguida y es el que les llega a todos.
+  useEffect(() => bridge.subscribe(next => {
+    if (!next || pushTimer.current) return;
+    const incoming = normalizeState(next);
+    latest.current = incoming;
+    setState(incoming);
+  }), []);
+
   // El panel es el dueño del estado: cada cambio se aplica acá y se manda entero al overlay (agrupando cambios seguidos)
   const update = useCallback((fn) => {
     const next = fn(latest.current);
     latest.current = next;
     setState(next);
     clearTimeout(pushTimer.current);
-    pushTimer.current = setTimeout(() => bridge.push(latest.current), 60);
+    pushTimer.current = setTimeout(() => { pushTimer.current = null; bridge.push(latest.current); }, 60);
   }, []);
 
   if (!state) return <div className="loading">Cargando…</div>;

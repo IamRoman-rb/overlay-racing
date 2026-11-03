@@ -27,6 +27,24 @@ import LayoutEdits from '../components/LayoutEdits';
 import { getCanvasSize } from '../utils/canvasSize';
 import Icon from '../components/Icon';
 import { GOOGLE_FONTS_URL } from '../utils/fonts';
+import { enableDiagnostics, diagInfo } from '../utils/overlayDiag';
+
+// Resumen (sin datos ni imágenes) de lo que el overlay recibió del EDITOR y de PERSONALIZAR: cuántos tamaños de texto y objetos
+// movidos tiene cada gráfica y cuáles se tapan con logo. Sirve para ver en el registro si a esa PC le llega la configuración.
+function editSummary(config) {
+  const per = {};
+  const add = (id, text) => { (per[id] = per[id] || []).push(text); };
+  Object.keys(config || {}).forEach((key) => {
+    const value = config[key];
+    const count = value && typeof value === 'object' ? Object.keys(value).length : 0;
+    if (key.startsWith('textSizes_') && count) add(key.slice(10), `${count} tamaño(s)`);
+    else if (key.startsWith('layoutEdits_') && count) add(key.slice(12), `${count} movido(s)`);
+    else if (key.startsWith('logoCoverProducer_') && value) add(key.slice(18), `tapado productora (logo ${config.logo ? 'cargado' : 'sin cargar'})`);
+    else if (key.startsWith('logoCoverCategory_') && value) add(key.slice(18), `tapado categoría (logo ${config.categoryLogo ? 'cargado' : 'sin cargar'})`);
+  });
+  const parts = Object.keys(per).sort().map(id => `${id}: ${per[id].join(', ')}`);
+  return parts.length ? parts.join(' · ') : 'sin tamaños, objetos movidos ni tapado';
+}
 
 let ipcRenderer = null;
 if (typeof window !== 'undefined' && typeof window.require === 'function') {
@@ -181,6 +199,7 @@ export default function Overlay() {
         if (bs.customZocalo) setCustomZocaloData(bs.customZocalo);
       }).catch(err => console.error("Error cargando estado inicial", err));
 
+      enableDiagnostics((message) => ipcRenderer.send('overlay-diag', { message }));
       Object.entries(handlers).forEach(([event, handler]) => {
         ipcRenderer.on(event, (_e, data) => handler(data));
       });
@@ -211,6 +230,10 @@ export default function Overlay() {
         Object.entries(handlers).forEach(([event, handler]) => {
           socket.on(event, handler);
         });
+        // Diagnóstico al registro del programa (en vMix no hay consola). Al conectar queda qué navegador usa esta PC:
+        // vMix 23 = Chrome 77, vMix 29 = Chrome 103/115, etc.
+        enableDiagnostics((message) => socket.emit('overlay-diag', { message }));
+        socket.on('connect', () => socket.emit('overlay-diag', { message: `overlay conectado · ${navigator.userAgent}` }));
       });
 
       return () => { if (socket) socket.disconnect(); };
@@ -223,6 +246,10 @@ export default function Overlay() {
   const eventName = (sessionInfo && sessionInfo.name) || safeConfig.campeonato || '';
   const combinedConfig = { ...safeConfig, positions: positions || {}, eventName };
   const canvas = getCanvasSize(safeConfig); // tamaño del overlay (por defecto 1920x1080)
+  const summary = editSummary(config);
+  const hasConfig = !!(config && Object.keys(config).length);
+  // Sólo cuando cambia el resumen (no en cada guardado ni en cada render), y no con la configuración vacía de antes de cargar
+  useEffect(() => { if (hasConfig) diagInfo(`configuración recibida · ${summary}`); }, [summary, hasConfig]);
 
   const formattedDrivers = useMemo(() => {
     return drivers.map(d => ({ ...d, name: formatDriverName(d.name, safeConfig.nameFormat) }));

@@ -471,7 +471,25 @@ io.on('connection', (socket) => {
   Object.keys(broadcastState.graphics).forEach(id => {
     socket.emit('set-graphic-visibility', { id, visible: broadcastState.graphics[id] });
   });
+  // Lo mismo que la ventana de Electron recibe en get-initial-state: sin esto, un vMix/OBS que se conecta (o reconecta) con la
+  // evolución de tiempos al aire no la mostraba hasta el próximo cambio
+  socket.emit('update-lap-times-history', lapTimesHistory);
+  socket.emit('set-lap-times-history-visibility', broadcastState.lapTimesHistory);
+  socket.emit('update-lap-times-focus', broadcastState.lapTimesFocus);
+
+  // Diagnóstico del overlay remoto (navegador de vMix/OBS, configuración recibida, objetos del EDITOR que no se encuentran,
+  // logos que no cargan). Va al registro del programa; limitado por cliente para que una página rota no llene el log.
+  let diagCount = 0;
+  socket.on('overlay-diag', (payload) => logOverlayDiag(`overlay ${socket.handshake.address}`, payload, ++diagCount));
 });
+
+const OVERLAY_DIAG_LIMIT = 60;
+function logOverlayDiag(who, payload, count) {
+  if (count > OVERLAY_DIAG_LIMIT || !payload || typeof payload.message !== 'string') return;
+  console.log(`[overlay] ${who}: ${payload.message.slice(0, 300)}${count === OVERLAY_DIAG_LIMIT ? ' (no se registran más avisos de este cliente)' : ''}`);
+}
+let windowDiagCount = 0;
+ipcMain.on('overlay-diag', (e, payload) => logOverlayDiag('ventana overlay', payload, ++windowDiagCount));
 
 expressApp.get('/votar', (req, res) => {
   let campeonato = 'CARRERA';

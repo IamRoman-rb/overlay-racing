@@ -153,18 +153,38 @@ export function normalizeState(raw) {
   };
 }
 
-// Qué se ve en las vistas previas de PERSONALIZAR y EDITOR: las gráficas pedidas, siempre en pantalla. El evento usa un gol de
-// ejemplo (del 10 titular del local, o el primer jugador cargado). `stamp` = momento fijo en que "se mostró" el evento.
+// Qué se ve en las vistas previas de PERSONALIZAR y EDITOR: las gráficas pedidas, siempre en pantalla, en la MISMA variante que
+// sale al aire: el lado de la alineación y el modo de logos elegidos en EN VIVO, y el último evento mostrado o cargado. Importa
+// porque el EDITOR guarda cada objeto por su camino dentro de la gráfica: un tamaño elegido sobre un gol no existe en un cambio.
+// Sin eventos se usa un gol de ejemplo (del 10 titular del local, o el primer jugador cargado). `stamp` = momento fijo en que
+// "se mostró" el evento.
 export function demoLive(state, ids, stamp) {
   const on = (id) => ids.includes(id);
+  const live = state.live || {};
+  const events = state.match.events || [];
   const team = teamOfSide(state, 'home');
   const player = team?.players.find(p => p.id === state.match.home.xi[9]) || team?.players[0];
+  const sample = { kind: 'goal', side: 'home', playerId: player?.id || null, outId: null, minute: '67', ownGoal: false };
+  const source = live.alert || events[events.length - 1] || sample;
   return {
     scorebug: on('scorebug'), intro: on('intro'),
-    lineup: { visible: on('lineup'), side: 'home' },
-    branding: { visible: on('branding'), mode: 'both' },
-    alert: on('alert') ? { id: 'demo', kind: 'goal', side: 'home', playerId: player?.id || null, outId: null, minute: '67', ownGoal: false, shownAt: stamp, duration: 86400 } : null
+    lineup: { visible: on('lineup'), side: live.lineup?.side === 'away' ? 'away' : 'home' },
+    branding: { visible: on('branding'), mode: live.branding?.mode || 'both' },
+    alert: on('alert') ? { ...source, id: 'demo', shownAt: stamp, duration: 86400 } : null
   };
+}
+
+// Variante que muestran las vistas previas (para decirlo en el EDITOR)
+export function previewVariant(state, id) {
+  const live = state.live || {};
+  if (id === 'lineup') return live.lineup?.side === 'away' ? 'alineación visitante' : 'alineación local';
+  if (id === 'branding') return { league: 'solo logo de la liga', producer: 'solo logo de la productora' }[live.branding?.mode] || 'ambos logos';
+  if (id === 'alert') {
+    const source = live.alert || state.match.events[state.match.events.length - 1];
+    const label = EVENT_KINDS.find(k => k.id === (source?.kind || 'goal'))?.label || 'GOL';
+    return source ? `${label.toLowerCase()} (último evento)` : 'gol de ejemplo';
+  }
+  return null;
 }
 
 export const teamById = (state, id) => state.teams.find(t => t.id === id) || null;

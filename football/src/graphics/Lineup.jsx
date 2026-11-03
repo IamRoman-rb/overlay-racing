@@ -12,7 +12,7 @@ function Pitch({ pitch }) {
   const stripes = 12;
   const line = { stroke: pitch.line, strokeWidth: 3, fill: 'none', vectorEffect: 'non-scaling-stroke' };
   return (
-    <svg width="100%" height="100%" viewBox={`0 0 ${w} ${h}`} preserveAspectRatio="none" style={{ position: 'absolute', inset: 0, borderRadius: 12 }}>
+    <svg width="100%" height="100%" viewBox={`0 0 ${w} ${h}`} preserveAspectRatio="none" style={{ position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, borderRadius: 12 }}>
       {Array.from({ length: stripes }).map((_, i) => (
         <rect key={i} x={(w / stripes) * i} y={0} width={w / stripes + 1} height={h} fill={i % 2 ? pitch.b : pitch.a} />
       ))}

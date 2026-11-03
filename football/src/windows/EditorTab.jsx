@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import Stage from '../graphics/Stage';
 import { ConfirmButton } from './ui';
-import { GRAPHICS, CANVAS, demoLive } from '../state';
+import { GRAPHICS, CANVAS, demoLive, previewVariant } from '../state';
 import { detectObjects, resolvePath, describeObject } from '../utils/layoutEdit';
 
 // EDITOR (igual que en Carrera, race/src/windows/GraphicEditor.jsx): se elige una gráfica y se arrastran sus objetos (escudo,
@@ -66,6 +66,7 @@ export default function EditorTab({ state, update }) {
   const previewState = useMemo(() => ({ ...state, edits: { ...state.edits, [selected]: edits } }), [state, selected, edits]);
   const live = useMemo(() => demoLive(state, [selected], stamp), [state, selected, stamp]);
   const label = GRAPHICS.find(g => g.id === selected)?.label || '';
+  const variant = previewVariant(state, selected);
 
   const getWrapper = useCallback(
     () => (stageRef.current ? stageRef.current.querySelector(`[data-gid="${selected}"] [data-le-wrap]`) : null),
@@ -296,7 +297,7 @@ export default function EditorTab({ state, update }) {
         <p className="desc" style={{ marginBottom: 16 }}>Elegí una gráfica y arrastrá sus objetos (escudo, nombre, marcador, cancha…) de un lugar a otro para personalizarla. Los cambios se guardan solos y se ven al instante en el overlay.</p>
 
         <div className="small-label" style={{ marginBottom: 6 }}>GRÁFICA</div>
-        <div className="gfx-grid" style={{ marginBottom: 22 }}>
+        <div className="gfx-grid" style={{ marginBottom: variant ? 8 : 22 }}>
           {GRAPHICS.map(g => {
             const edited = !!(state.edits?.[g.id] || state.textSizes?.[g.id]);
             return (
@@ -307,6 +308,11 @@ export default function EditorTab({ state, update }) {
             );
           })}
         </div>
+        {variant && (
+          <p className="desc" style={{ margin: '0 0 22px' }}>
+            Se edita como {variant}, igual que en EN VIVO. Lo que cambies se aplica a esa variante: otro tipo de evento, otro lado o otro modo de logos tiene otros objetos.
+          </p>
+        )}
 
         <div className="box" style={{ marginBottom: 22 }}>
           <div className="small-label" style={{ marginBottom: 6 }}>NIVEL DE DETALLE</div>

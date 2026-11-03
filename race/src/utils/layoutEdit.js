@@ -111,8 +111,10 @@ function clearOffset(el) {
 const textSizeOriginals = new WeakMap();
 
 // Aplica tamaños tipográficos por objeto DOM. Se guardan por camino dentro de cada gráfica,
-// por lo que cambiar un texto no afecta a ningún otro.
+// por lo que cambiar un texto no afecta a ningún otro. Devuelve los caminos que no existen en la gráfica tal como está dibujada
+// (el tamaño se eligió en el EDITOR con otra variante de la gráfica: otros datos, sin título, otra cantidad de filas...).
 export function applyTextSizes(wrapper, sizes) {
+  const missing = [];
   wrapper.querySelectorAll('[data-le-text-size]').forEach(el => {
     const original = textSizeOriginals.get(el);
     if (original) {
@@ -122,12 +124,12 @@ export function applyTextSizes(wrapper, sizes) {
     }
     el.removeAttribute('data-le-text-size');
   });
-  if (!sizes) return;
+  if (!sizes) return missing;
   Object.entries(sizes).forEach(([key, raw]) => {
     const size = Number(raw);
     if (!Number.isFinite(size) || size < 6 || size > 240) return;
     const el = resolvePath(wrapper, key);
-    if (!el || !el.style) return;
+    if (!el || !el.style) { missing.push(key); return; }
     if (!textSizeOriginals.has(el)) {
       textSizeOriginals.set(el, {
         value: el.style.getPropertyValue('font-size'),
@@ -137,19 +139,23 @@ export function applyTextSizes(wrapper, sizes) {
     el.style.setProperty('font-size', `${Math.round(size)}px`, 'important');
     el.setAttribute('data-le-text-size', '1');
   });
+  return missing;
 }
 
+// Igual que applyTextSizes pero para los objetos movidos; también devuelve los caminos que no se encontraron.
 export function applyLayoutEdits(wrapper, edits) {
+  const missing = [];
   wrapper.querySelectorAll('[data-le]').forEach(el => {
     clearOffset(el);
     el.removeAttribute('data-le');
   });
-  if (!edits) return;
+  if (!edits) return missing;
   Object.entries(edits).forEach(([key, off]) => {
     if (!off || (!off.x && !off.y)) return;
     const el = resolvePath(wrapper, key);
-    if (!el || !el.style) return;
+    if (!el || !el.style) { missing.push(key); return; }
     setOffset(el, off.x || 0, off.y || 0);
     el.setAttribute('data-le', '1');
   });
+  return missing;
 }

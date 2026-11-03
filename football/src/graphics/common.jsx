@@ -2,6 +2,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { readable } from '../state';
 import LogoCover from './LogoCover';
 import { applyLayoutEdits, applyTextSizes } from '../utils/layoutEdit';
+import { diagOnce } from '../diag';
 
 // Escudo del equipo; sin escudo cargado muestra un círculo con el color del equipo y la inicial
 export function Crest({ team, size = 40, style }) {
@@ -51,7 +52,15 @@ function hiddenStyle(style, id) {
 
 // Envoltorio sin caja (display: contents) que aplica lo hecho en la pestaña EDITOR: objetos movidos y tamaños de texto propios.
 // La gráfica vuelve a crear nodos al cambiar de datos o al aparecer, así que se reaplica con cada cambio del DOM.
-function LayoutEdits({ edits, textSizes, children }) {
+// Los caminos se guardan con la variante que mostraba el EDITOR: si la gráfica al aire tiene otra estructura (otro tipo de evento,
+// otro lado, otro modo de logos) el camino no existe. Eso se avisa (una vez por camino) en el diagnóstico del overlay.
+function reportMissing(id, kind, keys, wrapper) {
+  if (!keys.length || !wrapper.firstElementChild) return;
+  keys.forEach(key => diagOnce(`${id}|${kind}|${key}`,
+    `EDITOR: la gráfica "${id}" al aire no tiene el objeto ${key} (${kind}); se eligió con otra variante de la gráfica y no se aplica.`));
+}
+
+function LayoutEdits({ id, edits, textSizes, children }) {
   const ref = useRef(null);
   const editsSig = edits && Object.keys(edits).length ? JSON.stringify(edits) : '';
   const sizesSig = textSizes && Object.keys(textSizes).length ? JSON.stringify(textSizes) : '';
@@ -61,13 +70,16 @@ function LayoutEdits({ edits, textSizes, children }) {
     if (!wrapper) return undefined;
     const currentEdits = editsSig ? JSON.parse(editsSig) : null;
     const currentSizes = sizesSig ? JSON.parse(sizesSig) : null;
-    const apply = () => { applyLayoutEdits(wrapper, currentEdits); applyTextSizes(wrapper, currentSizes); };
+    const apply = () => {
+      reportMissing(id, 'objeto movido', applyLayoutEdits(wrapper, currentEdits), wrapper);
+      reportMissing(id, 'tamaño de texto', applyTextSizes(wrapper, currentSizes), wrapper);
+    };
     apply();
     if (!currentEdits && !currentSizes) return undefined;
     const observer = new MutationObserver(apply);
     observer.observe(wrapper, { childList: true, subtree: true });
     return () => observer.disconnect();
-  }, [editsSig, sizesSig]);
+  }, [id, editsSig, sizesSig]);
 
   return <div ref={ref} data-le-wrap="1" style={{ display: 'contents' }}>{children}</div>;
 }
@@ -114,9 +126,9 @@ export function Graphic({ id, pos, visible, instant, radius = 0, logos = [], col
         width: pos.w > 0 ? '100%' : undefined, height: pos.h > 0 ? '100%' : undefined,
         transition: instant ? 'none' : `all ${ms}ms cubic-bezier(0.175, 0.885, 0.32, 1.275)`, ...animStyle
       }}>
-        <LayoutEdits edits={edits} textSizes={textSizes}>{children}</LayoutEdits>
+        <LayoutEdits id={id} edits={edits} textSizes={textSizes}>{children}</LayoutEdits>
         {!instant && logos.length > 0 && (
-          <LogoCover root={root} logos={logos} time={Math.max(0.3, (Number(pos.coverMs) || 1400) / 1000)} animDur={ms / 1000} visible={!!visible} color={color} />
+          <LogoCover id={id} root={root} logos={logos} time={Math.max(0.3, (Number(pos.coverMs) || 1400) / 1000)} animDur={ms / 1000} visible={!!visible} color={color} />
         )}
       </div>
     </div>

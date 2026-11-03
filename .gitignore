@@ -32,6 +32,7 @@ release-modules/
 
 # Datos de los módulos (equipos/carrera cargados en desarrollo) y compilados
 football/football-data.json*
+football/football-backups/
 .env
 .env.*
 !.env.example

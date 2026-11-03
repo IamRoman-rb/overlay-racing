@@ -59,18 +59,94 @@ function scheduleSave() {
   }, 400);
 }
 
-function pushState(next, sender) {
+// ---------- Protección de la escritura por red ----------
+// El puerto 8080 queda abierto a la red local para que OBS / vMix lean el overlay y para que un panel abierto en otra PC
+// (http://<IP>:8080/#/) pueda editar. Leer sigue abierto a todos; ESCRIBIR (fb-push-state por Socket.IO) tiene dos filtros:
+//   1. Origen: una página web de OTRO sitio (abierta en cualquier navegador de la red, incluso en esta PC) no puede escribir.
+//      Se acepta la página servida por este mismo programa (Origin = Host), localhost, y clientes sin Origin (no son navegadores).
+//      No reemplaza una autenticación: un programa en la red puede no mandar Origin. Ver docs/auditoria-iso-preliminar.md.
+//   2. Forma: se rechaza un estado con estructura imposible (equipos nulos, listas que no son listas, ...), que antes se guardaba
+//      en disco y dejaba el panel sin abrir en cada arranque. El panel propio siempre manda un estado normalizado, que pasa.
+const isPlainObject = (v) => v !== null && typeof v === 'object' && !Array.isArray(v);
+const optionalObject = (v) => v === undefined || isPlainObject(v);
+const optionalArray = (v, item) => v === undefined || (Array.isArray(v) && (!item || v.every(item)));
+// Textos que el dibujo trata como string (toUpperCase / trim): un número o un objeto ahí rompe el render
+const optionalText = (v) => !v || typeof v === 'string';
+const validPlayer = (p) => isPlainObject(p) && optionalText(p.name) && optionalText(p.nick);
+const validTeam = (t) => isPlainObject(t) && optionalText(t.short) && optionalArray(t.players, validPlayer)
+  && optionalArray(t.staff, isPlainObject) && (t.coach === undefined || t.coach === null || isPlainObject(t.coach));
+
+// Devuelve null si el estado se puede aceptar, o el motivo del rechazo
+function checkIncomingState(next) {
+  if (!isPlainObject(next)) return 'no es un objeto';
+  for (const key of ['layout', 'look', 'edits', 'textSizes', 'brand', 'ui', 'live', 'match']) {
+    if (!optionalObject(next[key])) return `"${key}" no es un objeto`;
+  }
+  if (!optionalArray(next.teams, validTeam)) return '"teams" tiene equipos o jugadores con forma inválida';
+  const match = next.match;
+  if (match) {
+    for (const side of ['home', 'away']) {
+      const s = match[side];
+      if (!optionalObject(s) || (s && (!optionalArray(s.xi) || !optionalArray(s.bench)))) return `"match.${side}" inválido`;
+    }
+    if (!optionalArray(match.events, isPlainObject)) return '"match.events" inválido';
+    if (!optionalObject(match.score) || !optionalObject(match.clock)) return '"match.score" o "match.clock" inválido';
+  }
+  if (next.live && !(next.live.alert === undefined || next.live.alert === null || isPlainObject(next.live.alert))) return '"live.alert" inválido';
+  return null;
+}
+
+const LOOPBACK_HOSTS = new Set(['localhost', '127.0.0.1', '[::1]']);
+// origin / host: cabeceras Origin y Host del cliente Socket.IO al conectarse
+function isAllowedWriteOrigin(origin, host) {
+  if (origin === undefined || origin === '') return true;
+  if (typeof origin !== 'string' || origin === 'null') return false; // "null": iframes aislados / archivos locales
+  let url;
+  try { url = new URL(origin); } catch { return false; }
+  if (url.protocol !== 'http:' && url.protocol !== 'https:') return false;
+  if (LOOPBACK_HOSTS.has(url.hostname)) return true;
+  return typeof host === 'string' && url.host.toLowerCase() === host.toLowerCase();
+}
+
+// Copia de football-data.json al abrir el módulo (se guardan las últimas BACKUP_KEEP): si algo pisa los equipos durante la
+// sesión, se puede volver a la carga anterior copiando la copia sobre football-data.json con el programa cerrado.
+const BACKUP_KEEP = 5;
+function backupSavedData(saved) {
+  try {
+    if (!saved || checkIncomingState(saved) || !fs.existsSync(dataPath)) return;
+    const dir = path.join(userDataPath, 'football-backups');
+    fs.mkdirSync(dir, { recursive: true });
+    const stamp = new Date().toISOString().replace(/[-:]/g, '').replace('T', '-').slice(0, 15);
+    fs.copyFileSync(dataPath, path.join(dir, `football-data-${stamp}.json`));
+    fs.readdirSync(dir).filter(f => /^football-data-\d{8}-\d{6}\.json$/.test(f)).sort().reverse().slice(BACKUP_KEEP)
+      .forEach(f => { try { fs.unlinkSync(path.join(dir, f)); } catch { /* se intenta en el próximo arranque */ } });
+  } catch (e) { console.warn('[football] no se pudo hacer la copia de seguridad:', e.message); }
+}
+
+// Reparte el estado a todos menos a quien lo mandó (ventana por IPC o cliente Socket.IO): los paneles se ponen al día con lo
+// que cambia otro panel, y no reciben de vuelta lo propio (pisaría lo que siguieron cambiando mientras viajaba).
+function pushState(next, { webContents = null, socket = null } = {}) {
   if (!next || typeof next !== 'object') return;
   state = next;
   scheduleSave();
-  if (io) io.emit('fb-state', state);
+  if (io) (socket ? socket.broadcast : io).emit('fb-state', state);
   [controlWindow, overlayWindow].forEach(win => {
-    if (win && !win.isDestroyed() && win.webContents !== sender) win.webContents.send('fb-state', state);
+    if (win && !win.isDestroyed() && win.webContents !== webContents) win.webContents.send('fb-state', state);
   });
 }
 
+// Diagnóstico de los overlays (navegador de vMix/OBS, configuración recibida, objetos del EDITOR que no se encuentran, logos que no
+// cargan). Va al registro del programa; se limita por cliente para que una página rota no llene el log.
+const DIAG_LIMIT = 60;
+function logDiag(who, payload, count) {
+  if (count > DIAG_LIMIT || !payload || typeof payload.message !== 'string') return;
+  console.log(`[football] ${who}: ${payload.message.slice(0, 300)}${count === DIAG_LIMIT ? ' (no se registran más avisos de este cliente)' : ''}`);
+}
+
 ipcMain.handle('fb-get-state', () => state);
-ipcMain.on('fb-push-state', (e, next) => pushState(next, e.sender));
+ipcMain.on('fb-push-state', (e, next) => pushState(next, { webContents: e.sender }));
+let windowDiagCount = 0;
+ipcMain.on('fb-diag', (e, payload) => logDiag('ventana overlay', payload, ++windowDiagCount));
 
 // Imagen elegida desde el panel: se devuelve incrustada (data URI) para guardarla dentro de football-data.json
 ipcMain.handle('fb-pick-image', async (e, title) => {
@@ -111,7 +187,18 @@ function startServer() {
 
   io.on('connection', (socket) => {
     socket.emit('fb-state', state);
-    socket.on('fb-push-state', (next) => pushState(next, null));
+    const { origin, host } = socket.handshake.headers;
+    const canWrite = isAllowedWriteOrigin(origin, host);
+    let rejectedCount = 0;
+    socket.on('fb-push-state', (next) => {
+      const reason = canWrite ? checkIncomingState(next) : `origen no permitido (${String(origin).slice(0, 100)})`;
+      if (!reason) { pushState(next, { socket }); return; }
+      if (++rejectedCount <= DIAG_LIMIT) console.warn(`[football] cambio rechazado de ${socket.handshake.address}: ${reason}`);
+      // El que mandó vuelve al estado vigente (si era un panel legítimo, ve que su cambio no se aplicó en vez de quedar distinto)
+      socket.emit('fb-state', state);
+    });
+    let diagCount = 0;
+    socket.on('fb-diag', (payload) => logDiag(`overlay ${socket.handshake.address}`, payload, ++diagCount));
   });
 
   server.on('error', (err) => {
@@ -150,7 +237,11 @@ module.exports = {
   start() {
     returningToLauncher = false;
     state = readSaved();
+    backupSavedData(state);
     startServer();
     createWindows();
-  }
+  },
+  // Para las pruebas automáticas (football/test/); el instalador sólo usa start()
+  checkIncomingState,
+  isAllowedWriteOrigin
 };

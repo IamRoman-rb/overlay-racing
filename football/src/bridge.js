@@ -57,14 +57,37 @@ export const bridge = {
       return () => ipc.removeListener('fb-state', handler);
     }
     if (mode === 'socket') {
+      // Si se deja de escuchar antes de que cargue socket.io (StrictMode monta dos veces) no tiene que quedar el oyente colgado
       let socket = null;
-      getSocket().then(s => { socket = s; s.on('fb-state', callback); });
-      return () => { if (socket) socket.off('fb-state', callback); };
+      let stopped = false;
+      getSocket().then(s => { if (stopped) return; socket = s; s.on('fb-state', callback); });
+      return () => { stopped = true; if (socket) socket.off('fb-state', callback); };
     }
     if (!channel) return () => {};
     const handler = (e) => callback(e.data);
     channel.addEventListener('message', handler);
     return () => channel.removeEventListener('message', handler);
+  },
+
+  // Cada vez que se conecta (o reconecta) al programa por IP. Sólo en modo socket.
+  onConnect(callback) {
+    if (mode !== 'socket') return () => {};
+    let socket = null;
+    let stopped = false;
+    getSocket().then(s => {
+      if (stopped) return;
+      socket = s;
+      s.on('connect', callback);
+      if (s.connected) callback();
+    });
+    return () => { stopped = true; if (socket) socket.off('connect', callback); };
+  },
+
+  // Aviso de diagnóstico para el registro del programa (main.cjs lo escribe en el log)
+  diag(message) {
+    const payload = { message: String(message).slice(0, 300) };
+    if (mode === 'electron') ipc.send('fb-diag', payload);
+    else if (mode === 'socket') getSocket().then(s => s.emit('fb-diag', payload));
   },
 
   send(channelName, ...args) { if (ipc) ipc.send(channelName, ...args); },

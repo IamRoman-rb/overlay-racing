@@ -3,6 +3,15 @@ import { LAYOUT_EDITS_PREFIX, applyLayoutEdits, applyTextSizes } from '../utils/
 import LogoCover from './LogoCover';
 import { getCoverSettings } from '../utils/logoCover';
 import { SIZE_W_PREFIX, SIZE_H_PREFIX, readSize, applyGraphicSize } from '../utils/graphicSize';
+import { diagOnce } from '../utils/overlayDiag';
+
+// Los caminos se guardan con la variante que mostraba el EDITOR (datos de ejemplo): si la gráfica al aire tiene otra estructura
+// el camino no existe y no se aplica. Se avisa una vez por camino en el diagnóstico del overlay (sólo cuando está en pantalla).
+function reportMissing(id, kind, keys, wrapper, visible) {
+  if (!visible || !keys || !keys.length || !wrapper.firstElementChild) return;
+  keys.forEach(key => diagOnce(`${id}|${kind}|${key}`,
+    `EDITOR: la gráfica "${id}" al aire no tiene el objeto ${key} (${kind}); se eligió con otra variante de la gráfica y no se aplica.`));
+}
 
 // Envuelve una gráfica y le aplica los objetos movidos desde la pestaña EDITOR (config.layoutEdits_<id>).
 // También aplica el ancho/alto propio de la gráfica (config.sizeW_<id> / sizeH_<id>).
@@ -31,9 +40,9 @@ export default function LayoutEdits({ id, config, children, visible, coverReplay
     const currentTextSizes = textSizeSignature ? JSON.parse(textSizeSignature) : null;
     const hasEdits = (!!current && Object.keys(current).length > 0) || (!!currentTextSizes && Object.keys(currentTextSizes).length > 0);
     const apply = () => {
-      applyLayoutEdits(wrapper, current);
+      reportMissing(id, 'objeto movido', applyLayoutEdits(wrapper, current), wrapper, visible);
       if (sized) applyGraphicSize(wrapper, width, height);
-      applyTextSizes(wrapper, currentTextSizes);
+      reportMissing(id, 'tamaño de texto', applyTextSizes(wrapper, currentTextSizes), wrapper, visible);
     };
     apply();
     if (!hasEdits && !width && !height) return undefined;
@@ -42,7 +51,7 @@ export default function LayoutEdits({ id, config, children, visible, coverReplay
     const observer = new MutationObserver(apply);
     observer.observe(wrapper, { childList: true, subtree: true });
     return () => observer.disconnect();
-  }, [signature, textSizeSignature, sized, width, height]);
+  }, [id, signature, textSizeSignature, sized, width, height, visible]);
 
   // Cajas principales de la gráfica (hijos directos del envoltorio): sobre cada una va el tapado con logo
   useLayoutEffect(() => {

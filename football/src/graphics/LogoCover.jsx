@@ -1,6 +1,7 @@
 import { useState, useEffect, useLayoutEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { analyzeLogo, buildCoverBackground, layoutLogos } from '../utils/logoCover';
+import { diagOnce } from '../diag';
 
 const FADE_SHARE = 0.45; // del tiempo de tapado, cuánto es el descubrimiento (el resto el logo se queda quieto)
 const EXIT_COVER_SECONDS = 0.25; // al desaparecer la gráfica, el logo vuelve a taparla rápido
@@ -15,17 +16,25 @@ function hexToRgb(hex) {
 // Se dibuja DENTRO de la caja de la gráfica (portal), así hereda su posición, escala, animación y redondeo de bordes.
 // visible: si la gráfica está en pantalla (al pasar a true el logo la tapa y después la descubre).
 // root: caja de la gráfica donde se dibuja; logos: data URIs; time: segundos de tapado; animDur: segundos de la transición de la gráfica;
-// color: color (#rrggbb) del fondo si no se detecta ninguno en los logos.
-export default function LogoCover({ root, logos, time, animDur, visible, color }) {
+// color: color (#rrggbb) del fondo si no se detecta ninguno en los logos; id: gráfica (para el diagnóstico).
+//
+// Compatibilidad: el input "Web Browser" de vMix 23 es Chrome 77, que no conoce `inset` (Chrome 87) ni `gap` en flex (Chrome 84).
+// Con `inset: 0` el tapado quedaba de 0x0 y la transición corría sin verse; por eso acá van top/right/bottom/left y márgenes.
+export default function LogoCover({ id, root, logos, time, animDur, visible, color }) {
   const [infos, setInfos] = useState([]);
   const [mode, setMode] = useState('idle'); // idle | on | onSoft | fade
   const [dims, setDims] = useState({ w: 0, h: 0 }); // medidas de la caja de la gráfica (sin escala ni animación)
   const wasVisible = useRef(false);
+  const coverRef = useRef(null);
   const logosKey = logos.join('|');
 
   useEffect(() => {
     let alive = true;
-    Promise.all(logos.map(analyzeLogo)).then(res => { if (alive) setInfos(res); });
+    Promise.all(logos.map(analyzeLogo)).then(res => {
+      if (!alive) return;
+      setInfos(res);
+      res.forEach((info, i) => { if (info.failed) diagOnce(`cover-logo|${id}|${i}`, `Tapado de "${id}": no se pudo cargar el logo ${i + 1} (se tapa con el color de la gráfica).`); });
+    });
     return () => { alive = false; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [logosKey]);
@@ -62,6 +71,15 @@ export default function LogoCover({ root, logos, time, animDur, visible, color }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visible, root]);
 
+  // Red de seguridad: si el tapado está activo pero no ocupa lugar (CSS que el navegador no entiende), se avisa una vez
+  useLayoutEffect(() => {
+    const el = coverRef.current;
+    if (mode !== 'on' || !el || !root || root.offsetWidth === 0) return;
+    if (el.offsetWidth === 0 || el.offsetHeight === 0) {
+      diagOnce(`cover-size|${id}`, `Tapado de "${id}": quedó sin tamaño (0x0) en este navegador (${navigator.userAgent}).`);
+    }
+  }, [mode, root, id]);
+
   if (!root || logos.length === 0) return null;
 
   const fallbackColor = hexToRgb(color);
@@ -75,17 +93,18 @@ export default function LogoCover({ root, logos, time, animDur, visible, color }
 
   const cover = (
     <div
+      ref={coverRef}
       style={{
-        position: 'absolute', inset: 0, zIndex: 9999, overflow: 'hidden', borderRadius: 'inherit', pointerEvents: 'none',
+        position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, zIndex: 9999, overflow: 'hidden', borderRadius: 'inherit', pointerEvents: 'none',
         background, opacity, transition, visibility: mode === 'idle' ? 'hidden' : 'visible'
       }}
     >
       {/* Difuminado: cada logo agrandado y desenfocado llena su parte del fondo con sus propios colores */}
-      <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: vertical ? 'column' : 'row' }}>
+      <div style={{ position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, display: 'flex', flexDirection: vertical ? 'column' : 'row' }}>
         {logos.map((src, i) => (
           <div key={`glow${i}`} style={{ flex: '1 1 0', minWidth: 0, minHeight: 0, position: 'relative', overflow: 'hidden' }}>
             <img src={src} alt="" style={{
-              position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover',
+              position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover',
               transform: 'scale(1.8)', filter: `blur(${blurPx}px) saturate(1.5)`, opacity: lightBase ? 0.35 : 0.55
             }} />
           </div>
@@ -94,14 +113,15 @@ export default function LogoCover({ root, logos, time, animDur, visible, color }
 
       {/* Logos nítidos: medidas en px calculadas para que queden juntos, centrados y dentro del ancho y el alto de la gráfica */}
       <div style={{
-        position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
-        flexDirection: vertical ? 'column' : 'row', gap: `${gap}px`,
+        position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
+        flexDirection: vertical ? 'column' : 'row',
         transform: revealing ? 'scale(1.12)' : 'scale(1)', filter: revealing ? 'blur(6px)' : 'none',
         transition: revealing ? `transform ${fadeS}s ease-in, filter ${fadeS}s ease-in` : 'none'
       }}>
         {logos.map((src, i) => (
           <img key={i} src={src} alt="" style={{
             display: 'block', flex: 'none', width: `${sizes[i].w}px`, height: `${sizes[i].h}px`, objectFit: 'contain',
+            ...(i > 0 ? (vertical ? { marginTop: gap } : { marginLeft: gap }) : {}), // separación (en vez de `gap`, ver arriba)
             filter: lightBase ? 'drop-shadow(0 2px 6px rgba(255,255,255,0.5))' : 'drop-shadow(0 3px 10px rgba(0,0,0,0.5))'
           }} />
         ))}

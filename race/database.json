@@ -29,7 +29,7 @@
   "campeonato": "",
   "relator": "",
   "comentarista": "",
-  "speedhiveCode": "MPDGRNRG-2147485163",
+  "speedhiveCode": "37820",
   "borderRadius_ticker": "0px",
   "gridFormat": "cinematic",
   "circuito": "Autódromo Oscar y Juan Gálvez",
@@ -41,7 +41,7 @@
   "nameFormat": "original",
   "photosPath": null,
   "borderRadius_lapCounter": "0px",
-  "timingProvider": "speedhive",
+  "timingProvider": "racemonitor",
   "weatherData": {
     "temp": 17.9,
     "windSpeed": 4,

@@ -2,6 +2,8 @@ import { getSkinStyle } from '../utils/skinStyles';
 import { getAnimDuration, getRollClip } from '../utils/animationTiming';
 import { getCanvasSize } from '../utils/canvasSize';
 
+// El título va siempre (oculto si está vacío): el EDITOR lo muestra con un título de ejemplo y guarda cada objeto por su lugar
+// dentro de la gráfica; sin este nodo, en un zócalo sin título el texto cambiaba de lugar y su tamaño propio no se aplicaba.
 export default function CustomZocalo({ isVisible, title, text, config, id = 'customZocalo' }) {
   const pos = config?.positions?.[id] || { x: 20, y: 550, scale: 1 };
 
@@ -52,11 +54,11 @@ export default function CustomZocalo({ isVisible, title, text, config, id = 'cus
           padding: '14px 40px', textAlign, width: '100%', boxSizing: 'border-box',
           boxShadow: hasCustomBg ? 'none' : '0 10px 30px rgba(0,0,0,0.6)', borderRadius: bRad
         }}>
-          {title && (
+          {title ? (
             <span style={{ color: themeAccent, fontSize: '13px', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '2px', marginRight: '12px' }}>
               {title}
             </span>
-          )}
+          ) : <span style={{ display: 'none' }} />}
           <span style={{ color: themeNormalText, fontSize: '26px', fontWeight: 'bold', textTransform: 'uppercase' }}>
             {text || '...'}
           </span>
@@ -70,14 +72,14 @@ export default function CustomZocalo({ isVisible, title, text, config, id = 'cus
     return (
       <div style={wrapperStyle}>
         <div style={{ display: 'inline-flex', flexDirection: 'column', alignItems: 'flex-start' }}>
-          {title && (
+          {title ? (
             <div style={{
               backgroundColor: themeAccent, color: '#000', fontSize: '12px', fontWeight: '900',
               padding: '5px 16px', borderRadius: `${bRad} ${bRad} 0 0`, textTransform: 'uppercase', letterSpacing: '1px'
             }}>
               {title}
             </div>
-          )}
+          ) : <div style={{ display: 'none' }} />}
           <div style={{
             backgroundColor: hasCustomBg ? 'transparent' : themeBg,
             backgroundImage: hasCustomBg ? `url(${customBg})` : 'none',
@@ -101,11 +103,11 @@ export default function CustomZocalo({ isVisible, title, text, config, id = 'cus
     return (
       <div style={wrapperStyle}>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems, textAlign, gap: '2px' }}>
-          {title && (
+          {title ? (
             <span style={{ color: themeAccent, fontSize: '13px', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '1px', textShadow: '2px 2px 6px rgba(0,0,0,0.9)' }}>
               {title}
             </span>
-          )}
+          ) : <span style={{ display: 'none' }} />}
           <span style={{ color: themeNormalText, fontSize: '30px', fontWeight: '900', textTransform: 'uppercase', textShadow: '2px 2px 6px rgba(0,0,0,0.9)' }}>
             {text || '...'}
           </span>
@@ -143,11 +145,11 @@ export default function CustomZocalo({ isVisible, title, text, config, id = 'cus
 
         {/* ZONA DE TEXTOS */}
         <div style={{ padding: '12px 25px', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems, textAlign, minWidth: '300px' }}>
-          {title && (
+          {title ? (
             <span style={{ color: themeAccent, fontSize: '13px', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '2px' }}>
               {title}
             </span>
-          )}
+          ) : <span style={{ display: 'none' }} />}
           <span style={{ color: themeNormalText, fontSize: '26px', fontWeight: 'bold', textTransform: 'uppercase', lineHeight: '1.1' }}>
             {text || '...'}
           </span>

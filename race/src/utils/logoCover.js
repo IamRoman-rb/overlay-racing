@@ -29,7 +29,7 @@ export function analyzeLogo(src) {
   const job = new Promise((resolve) => {
     const fallback = { colors: [], luminance: 0.5, aspect: 1 };
     const img = new Image();
-    img.onerror = () => resolve(fallback);
+    img.onerror = () => resolve({ ...fallback, failed: true });
     img.onload = () => {
       // proporción ancho/alto del logo (un SVG sin medidas propias puede dar 0: se toma cuadrado)
       const aspect = img.naturalWidth > 0 && img.naturalHeight > 0 ? img.naturalWidth / img.naturalHeight : 1;
