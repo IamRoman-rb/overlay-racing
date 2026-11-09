@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { getSkinStyle } from '../utils/skinStyles';
 import { getAnimDuration, getRollClip } from '../utils/animationTiming';
+import CategoryTag from '../components/CategoryTag';
 
 // Componente que mide si el texto entra en su contenedor.
 // Si entra: texto quieto. Si no entra: desliza en loop (marquee) para mostrarlo completo.
@@ -128,7 +129,7 @@ export default function Battle({ drivers, config, isVisible, battleFocusPos = 1,
           textAlign: 'center', boxShadow: customBg ? 'none' : '0 5px 15px rgba(0,0,0,0.5)'
         }}>
           <span style={{ color: '#fff', fontWeight: '900', fontStyle: 'italic', fontSize: '16px', letterSpacing: '1px', textTransform: 'uppercase' }}>
-            BATALLA POR LA POSICIÓN {a?.pos}
+            BATALLA POR LA POSICIÓN {a?.pos}<CategoryTag config={config} id={id} />
           </span>
         </div>
         <div style={{
@@ -158,7 +159,7 @@ export default function Battle({ drivers, config, isVisible, battleFocusPos = 1,
     return (
       <div style={{ ...wrapperStyle, display: 'flex', flexDirection: 'column', gap: '6px', width: '420px' }}>
         <span style={{ color: themeAccent, fontWeight: '900', fontStyle: 'italic', fontSize: '13px', letterSpacing: '1px', textTransform: 'uppercase', textShadow: '2px 2px 6px rgba(0,0,0,0.9)' }}>
-          BATALLA POR LA POSICIÓN {battleDrivers[0]?.pos}
+          BATALLA POR LA POSICIÓN {battleDrivers[0]?.pos}<CategoryTag config={config} id={id} />
         </span>
         {battleDrivers.map((d, i) => (
           <div key={d.pos} style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -197,7 +198,7 @@ export default function Battle({ drivers, config, isVisible, battleFocusPos = 1,
         boxShadow: skin ? skin.boxShadow : (customBg ? 'none' : '0 5px 15px rgba(0,0,0,0.5)'), zIndex: 2
       }}>
         <span style={{ color: (customBg || skin) ? themeNormalText : '#fff', fontWeight: '900', fontStyle: 'italic', fontSize: isCompact ? '13px' : '16px', letterSpacing: '1px', textTransform: 'uppercase', textShadow: skin?.textShadow }}>
-          BATALLA POR LA POSICIÓN {battleDrivers[0]?.pos}
+          BATALLA POR LA POSICIÓN {battleDrivers[0]?.pos}<CategoryTag config={config} id={id} />
         </span>
       </div>
 

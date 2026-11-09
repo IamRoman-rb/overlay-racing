@@ -4,6 +4,7 @@ import Icon from '../components/Icon';
 import { getCanvasSize } from '../utils/canvasSize';
 import { LAYOUT_EDITS_PREFIX, detectObjects, resolvePath, describeObject } from '../utils/layoutEdit';
 import { GOOGLE_FONTS_URL } from '../utils/fonts';
+import { CATEGORY_GRAPHICS, CATEGORY_TOGGLE_PREFIX } from '../utils/raceVisuals';
 
 const EDITABLE_GRAPHICS = [
   'relator', 'comentarista', 'notero1', 'notero2', 'circuito', 'clima', 'ticker', 'tower',
@@ -308,6 +309,37 @@ export default function GraphicEditor({ config, positions, drivers, sessionInfo,
             );
           })}
         </div>
+
+        {CATEGORY_GRAPHICS.includes(selected) && (
+          <div style={panelBox}>
+            <div style={{ ...smallLabel, marginBottom: '8px' }}>{t('editor.categoryTitle')}</div>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '11px', fontWeight: 'bold', color: colors.textMain, cursor: 'pointer' }}>
+              <input
+                type="checkbox"
+                checked={config[`${CATEGORY_TOGGLE_PREFIX}${selected}`] !== false}
+                onChange={(e) => onConfigChange(`${CATEGORY_TOGGLE_PREFIX}${selected}`, e.target.checked)}
+                style={{ cursor: 'pointer' }}
+              />
+              {t('editor.showCategory')}
+            </label>
+            <p style={{ fontSize: '10px', color: config.categoryName ? colors.textMuted : '#e67e22', lineHeight: '1.5', margin: '8px 0' }}>
+              {config.categoryName ? t('editor.categoryHint', { name: config.categoryName }) : t('editor.categoryEmpty')}
+            </p>
+            <div style={{ display: 'flex', gap: '5px' }}>
+              {[[true, 'editor.categoryShowAll'], [false, 'editor.categoryHideAll']].map(([value, label]) => (
+                <button
+                  key={label}
+                  onClick={() => {
+                    const patch = {};
+                    CATEGORY_GRAPHICS.forEach(gid => { patch[`${CATEGORY_TOGGLE_PREFIX}${gid}`] = value; });
+                    onConfigChange(patch);
+                  }}
+                  style={{ ...btnStyle(false), flex: 1, padding: '7px 4px', fontSize: '9px' }}
+                >{t(label)}</button>
+              ))}
+            </div>
+          </div>
+        )}
 
         <div style={panelBox}>
           <div style={{ ...smallLabel, marginBottom: '6px' }}>{t('editor.detailTitle')}</div>

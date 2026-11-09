@@ -1,5 +1,5 @@
 import { Fragment } from 'react';
-import { getGraphicFrame, useLiveClock, secondsSinceCross, SECTOR_COLORS } from '../utils/raceVisuals';
+import { getGraphicFrame, useLiveClock, secondsSinceCross, SECTOR_COLORS, getCategory } from '../utils/raceVisuals';
 
 // MODO CLASIFICACIÓN: tabla por mejor vuelta con la línea de corte (top N que pasa), la zona de eliminación,
 // quién está en vuelta rápida, la vuelta en curso de los que están en pista y el tiempo que necesita cada uno para pasar.
@@ -37,7 +37,7 @@ export default function QualifyingBoard({ drivers, config, isVisible, sessionInf
         <div style={{ padding: '10px 14px', backgroundColor: customBg ? 'transparent' : theme.headerBg, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
             <span style={{ color: theme.title, fontWeight: 900, fontSize: '16px', letterSpacing: '2px', textTransform: 'uppercase' }}>{title}</span>
-            <span style={{ color: theme.number, fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{config?.categoryName || sessionInfo?.name || ''}</span>
+            <span style={{ color: theme.number, fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{getCategory(config, id) || sessionInfo?.name || ''}</span>
           </div>
           <div style={{ display: cutoff > 0 ? 'flex' : 'none', flexDirection: 'column', alignItems: 'flex-end' }}>
             <span style={{ color: '#e74c3c', fontSize: '10px', fontWeight: 900, letterSpacing: '1px' }}>CORTE P{cutoff}</span>

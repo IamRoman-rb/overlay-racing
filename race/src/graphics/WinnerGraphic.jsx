@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { withCategory } from '../utils/raceVisuals';
 import pilotoAnonimo from '../assets/piloto_anonimo.png';
 import { getSkinStyle } from '../utils/skinStyles';
 import { getAnimDuration, getRollClip } from '../utils/animationTiming';
@@ -20,7 +21,7 @@ export default function WinnerGraphic({ driver, isVisible, config, id = 'winner'
   const animDur = getAnimDuration(config, id, 0.5);
   const winnerFormat = config?.winnerFormat || 'standard';
   // Mismo nombre de evento que muestra la torre; si no hay sesión en vivo, cae al campeonato
-  const eventName = sessionInfo?.name || config?.eventName || config?.campeonato || 'CARRERA';
+  const eventName = withCategory(config, id, sessionInfo?.name || config?.eventName || config?.campeonato) || 'CARRERA';
   const skin = getSkinStyle(winnerFormat, { themeMain, themeAccent });
 
   // Animación de entrada (Slide desde abajo, como la gráfica principal)

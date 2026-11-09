@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { io } from 'socket.io-client';
 import { getSkinStyle } from '../utils/skinStyles';
 import { getAnimDuration, getRollClip } from '../utils/animationTiming';
+import CategoryTag from '../components/CategoryTag';
 
 const PODIUM_COLORS = { 0: '#ffd700', 1: '#c0c0c0', 2: '#cd7f32' };
 
@@ -61,7 +62,7 @@ export default function VirtualChamp({ config, isVisible, id = 'virtualChamp' })
       {!isMinimal && (
         <div style={{ backgroundColor: skin ? 'transparent' : (customBg ? 'transparent' : themeHeaderBg), padding: isCompact ? '8px' : '12px', textAlign: 'center', borderBottom: skin ? `1px solid ${themeAccent}44` : (customBg ? 'none' : `4px solid ${themeMain}`) }}>
           <span style={{ color: themeMain, fontSize: isCompact ? '14px' : '18px', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '1px' }}>
-            CAMPEONATO EN VIVO
+            CAMPEONATO EN VIVO<CategoryTag config={config} id={id} block />
           </span>
         </div>
       )}

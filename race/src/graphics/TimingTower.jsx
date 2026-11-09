@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { getSkinStyle } from '../utils/skinStyles';
 import Icon from '../components/Icon';
 import { getAnimDuration, getRollClip } from '../utils/animationTiming';
-import { getClassColor, ARROW_COLORS } from '../utils/raceVisuals';
+import { getClassColor, ARROW_COLORS, getCategory } from '../utils/raceVisuals';
 
 const PODIUM_COLORS = { 1: '#ffd700', 2: '#c0c0c0', 3: '#cd7f32' };
 
@@ -34,7 +34,7 @@ export default function TimingTower({ drivers, config, isVisible, id = 'tower', 
   const classFilter = multiclass && classes.includes(config?.towerClassFilter) ? config.towerClassFilter : '';
   const shownDrivers = classFilter ? drivers.filter(d => d.cls === classFilter) : drivers;
   const showGains = config?.towerShowGains !== false;
-  const headerCategory = [config?.categoryName, classFilter].filter(Boolean).join(' · ');
+  const headerCategory = [getCategory(config, id), classFilter].filter(Boolean).join(' · ');
 
   // Difuminado del fondo (backdrop blur) elegible en PERSONALIZAR; por defecto un blur suave.
   const configuredBlur = config?.towerBlur;

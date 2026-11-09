@@ -133,5 +133,35 @@
     "x": 253,
     "y": 911,
     "scale": 1
+  },
+  "sectors": {
+    "x": 1440,
+    "y": 360,
+    "scale": 1
+  },
+  "gapChart": {
+    "x": 730,
+    "y": 640,
+    "scale": 1
+  },
+  "gainers": {
+    "x": 1440,
+    "y": 470,
+    "scale": 1
+  },
+  "qualifying": {
+    "x": 20,
+    "y": 20,
+    "scale": 1
+  },
+  "trackMap": {
+    "x": 96,
+    "y": 54,
+    "scale": 1
+  },
+  "raceNotice": {
+    "x": 760,
+    "y": 820,
+    "scale": 1
   }
 }

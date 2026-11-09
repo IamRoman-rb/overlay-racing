@@ -1,6 +1,7 @@
 // src/graphics/LapCounter.jsx
 import { getSkinStyle } from '../utils/skinStyles';
 import { getAnimDuration, getRollClip } from '../utils/animationTiming';
+import CategoryTag from '../components/CategoryTag';
 
 export default function LapCounter({ isVisible, config, sessionInfo, id = 'lapCounter' }) {
   const pos = config?.positions?.[id] || { x: 1700, y: 40, scale: 1 };
@@ -48,7 +49,7 @@ export default function LapCounter({ isVisible, config, sessionInfo, id = 'lapCo
         borderRadius: bRad, boxShadow: hasCustomBg ? 'none' : '0 10px 30px rgba(0,0,0,0.8)', overflow: 'hidden'
       }}>
         <div style={{ backgroundColor: hasCustomBg ? 'transparent' : themeHeaderBg, padding: '5px', borderBottom: hasCustomBg ? 'none' : `3px solid ${themeMain}` }}>
-          <span style={{ color: themeTitleText, fontSize: '11px', fontWeight: '900', letterSpacing: '2px' }}>VUELTA</span>
+          <span style={{ color: themeTitleText, fontSize: '11px', fontWeight: '900', letterSpacing: '2px' }}>VUELTA<CategoryTag config={config} id={id} block size="0.85em" style={{ letterSpacing: '1px' }} /></span>
         </div>
         <div style={{ padding: '8px 20px' }}>
           <span style={{ color: themeNumberText, fontSize: '34px', fontWeight: '900', textShadow: '2px 2px 4px rgba(0,0,0,0.5)' }}>
@@ -86,7 +87,7 @@ export default function LapCounter({ isVisible, config, sessionInfo, id = 'lapCo
     return (
       <div style={wrapperStyle}>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-          <span style={{ color: themeAccent, fontSize: '11px', fontWeight: '900', letterSpacing: '2px', textShadow: '2px 2px 6px rgba(0,0,0,0.9)' }}>VUELTA</span>
+          <span style={{ color: themeAccent, fontSize: '11px', fontWeight: '900', letterSpacing: '2px', textShadow: '2px 2px 6px rgba(0,0,0,0.9)' }}>VUELTA<CategoryTag config={config} id={id} block size="0.85em" style={{ letterSpacing: '1px' }} /></span>
           <span style={{ color: themeNumberText, fontSize: '40px', fontWeight: '900', lineHeight: 1, textShadow: '2px 2px 6px rgba(0,0,0,0.9)' }}>
             {sessionInfo?.laps || '0'}
           </span>

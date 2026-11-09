@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import pilotoAnonimo from '../assets/piloto_anonimo.png';
 import { getSkinStyle } from '../utils/skinStyles';
 import { getAnimDuration, getRollClip } from '../utils/animationTiming';
+import CategoryTag from '../components/CategoryTag';
 
 export default function DriverInfo({ driver, config, isVisible, id = 'driverInfo' }) {
   const pos = config?.positions?.[id] || { x: 380, y: 335, scale: 1 };
@@ -71,7 +72,7 @@ export default function DriverInfo({ driver, config, isVisible, id = 'driverInfo
           </div>
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '12px 18px', minWidth: 0 }}>
             <span style={{ fontSize: '12px', fontWeight: '900', color: themeAccent, letterSpacing: '1px' }}>
-              P{driver.pos} — Nº{driver.number}
+              P{driver.pos} — Nº{driver.number}<CategoryTag config={config} id={id} size="1em" />
             </span>
             <span style={{ fontSize: '22px', fontWeight: '900', color: themeNormalText, textTransform: 'uppercase', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', lineHeight: '1.2' }}>
               {driver.name}
@@ -121,7 +122,7 @@ export default function DriverInfo({ driver, config, isVisible, id = 'driverInfo
       <div style={wrapperStyle}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
           <span style={{ fontSize: '12px', fontWeight: '900', color: themeAccent, letterSpacing: '1px', textShadow: '2px 2px 6px rgba(0,0,0,0.9)' }}>
-            P{driver.pos} — Nº{driver.number}
+            P{driver.pos} — Nº{driver.number}<CategoryTag config={config} id={id} size="1em" />
           </span>
           <span style={{ fontSize: '28px', fontWeight: '900', color: themeNormalText, textTransform: 'uppercase', textShadow: '2px 2px 6px rgba(0,0,0,0.9)' }}>
             {driver.name}
@@ -176,7 +177,7 @@ export default function DriverInfo({ driver, config, isVisible, id = 'driverInfo
 
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '15px 25px' }}>
           <span style={{ fontSize: '24px', fontWeight: '900', color: themeNormalText, textTransform: 'uppercase', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', lineHeight: '1.2' }}>
-            {driver.name}
+            {driver.name}<CategoryTag config={config} id={id} size="0.5em" color={themeTitleText} />
           </span>
           <div style={{ display: 'flex', alignItems: 'center', marginTop: '5px', gap: '8px' }}>
             <span style={{ fontSize: '11px', color: themeTitleText, fontWeight: 'bold', letterSpacing: '1px' }}>MEJOR VUELTA</span>

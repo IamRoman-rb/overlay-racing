@@ -1,4 +1,5 @@
 import { getGraphicFrame } from '../utils/raceVisuals';
+import CategoryTag from '../components/CategoryTag';
 
 // MAYORES REMONTADAS: los pilotos que más posiciones ganaron respecto de la grilla de largada
 export default function Gainers({ drivers, config, isVisible, id = 'gainers' }) {
@@ -19,7 +20,7 @@ export default function Gainers({ drivers, config, isVisible, id = 'gainers' }) 
         borderTop: customBg ? 'none' : `4px solid ${theme.main}`, boxShadow: '0 10px 30px rgba(0,0,0,0.6)'
       }}>
         <div style={{ padding: '9px 14px', backgroundColor: customBg ? 'transparent' : theme.headerBg, color: theme.title, fontWeight: 900, fontSize: '14px', letterSpacing: '2px' }}>
-          MAYORES REMONTADAS
+          MAYORES REMONTADAS<CategoryTag config={config} id={id} />
         </div>
         {list.map((d, i) => (
           <div key={d.number} style={{ display: 'flex', alignItems: 'center', padding: '8px 14px', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>

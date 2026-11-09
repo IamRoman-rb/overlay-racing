@@ -1,6 +1,7 @@
 // src/windows/TrackMapPanel.jsx
-import { useState, useRef } from 'react';
+import { useState, useRef, useMemo } from 'react';
 import Icon from '../components/Icon';
+import { smoothPathPercent } from '../utils/trackPath';
 
 let ipcRenderer = null;
 if (typeof window !== 'undefined' && typeof window.require === 'function') {
@@ -64,6 +65,7 @@ export default function TrackMapPanel({ config, onConfigChange, colors, inputSty
     onConfigChange?.('trackPath', []);
   };
   const isPath = mode === 'path';
+  const smoothD = useMemo(() => (isPath ? smoothPathPercent(trackPath) : ''), [isPath, trackPath]);
 
   const handleSelectImage = async () => {
     if (!ipcRenderer) return;
@@ -222,8 +224,11 @@ export default function TrackMapPanel({ config, onConfigChange, colors, inputSty
             {isPath && (
               <svg viewBox="0 0 100 100" preserveAspectRatio="none" style={{ position: 'absolute', left: 0, top: 0, width: '100%', height: '100%', pointerEvents: 'none' }}>
                 {trackPath.length >= 2 && (
-                  <polygon points={trackPath.map(p => `${p.x},${p.y}`).join(' ')} fill="none" stroke={colors.yellow} strokeWidth="3" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
+                  <polygon points={trackPath.map(p => `${p.x},${p.y}`).join(' ')} fill="none" stroke={colors.yellow} strokeOpacity="0.35" strokeWidth="1" strokeDasharray="4 4" vectorEffect="non-scaling-stroke" />
                 )}
+                {/* Curva suavizada: es exactamente la que se ve en el mapa en vivo */}
+                {smoothD && <path d={smoothD} fill="none" stroke="rgba(0,0,0,0.6)" strokeWidth="9" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />}
+                {smoothD && <path d={smoothD} fill="none" stroke="#2ecc71" strokeWidth="4" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />}
               </svg>
             )}
             {isPath && trackPath.map((p, i) => (
@@ -234,8 +239,9 @@ export default function TrackMapPanel({ config, onConfigChange, colors, inputSty
                 title={i === 0 ? t('circuito.pathStart') : t('circuito.pathPointTitle', { n: i + 1 })}
                 style={{
                   position: 'absolute', left: `${p.x}%`, top: `${p.y}%`, transform: 'translate(-50%, -50%)', cursor: 'grab',
-                  width: i === 0 ? '18px' : '12px', height: i === 0 ? '18px' : '12px', borderRadius: '50%',
-                  backgroundColor: i === 0 ? colors.green : colors.yellow, border: '2px solid #000', userSelect: 'none'
+                  width: i === 0 ? '16px' : '9px', height: i === 0 ? '16px' : '9px', borderRadius: '50%', boxSizing: 'border-box',
+                  backgroundColor: i === 0 ? colors.green : colors.yellow, border: `${i === 0 ? 2 : 1.5}px solid #000`, userSelect: 'none',
+                  opacity: i === 0 ? 1 : 0.85, zIndex: i === 0 ? 2 : 1
                 }}
               />
             ))}

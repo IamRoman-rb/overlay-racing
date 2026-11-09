@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { getSkinStyle } from '../utils/skinStyles';
 import { getAnimDuration, getRollClip } from '../utils/animationTiming';
+import CategoryTag from '../components/CategoryTag';
 
 export default function FastestLap({ drivers, config, isVisible, id = 'fastestLap' }) {
   const pos = config?.positions?.[id] || { x: 440, y: 150, scale: 1 };
@@ -78,7 +79,7 @@ export default function FastestLap({ drivers, config, isVisible, id = 'fastestLa
           transition: `transform ${animDur}s cubic-bezier(0.175, 0.885, 0.32, 1.275), clip-path ${animDur}s ease-in-out`
         }}>
           <span style={{ color: themeTitleText, fontWeight: '900', fontSize: '11px', fontStyle: 'italic', letterSpacing: '1px', whiteSpace: 'nowrap' }}>
-            RÉCORD
+            RÉCORD<CategoryTag config={config} id={id} />
           </span>
           <div style={{ backgroundColor: themeSecondary, color: '#000', fontWeight: '900', fontSize: '14px', width: '32px', height: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '3px', flexShrink: 0 }}>
             {fastestDriver?.number || '-'}
@@ -109,7 +110,7 @@ export default function FastestLap({ drivers, config, isVisible, id = 'fastestLa
           transition: `transform ${animDur}s cubic-bezier(0.175, 0.885, 0.32, 1.275), clip-path ${animDur}s ease-in-out`
         }}>
           <span style={{ color: '#fff', fontWeight: '900', fontSize: '13px', fontStyle: 'italic', letterSpacing: '2px', opacity: 0.9 }}>
-            RECORD DE VUELTA
+            RECORD DE VUELTA<CategoryTag config={config} id={id} block />
           </span>
           <span style={{ color: '#fff', fontWeight: '900', fontSize: '46px', lineHeight: 1.1, margin: '4px 0' }}>
             {fastestDriver?.bestLap || '-:--.---'}
@@ -132,7 +133,7 @@ export default function FastestLap({ drivers, config, isVisible, id = 'fastestLa
           transition: `transform ${animDur}s cubic-bezier(0.175, 0.885, 0.32, 1.275), clip-path ${animDur}s ease-in-out`
         }}>
           <span style={{ color: themeTitleText, fontWeight: '900', fontSize: '13px', fontStyle: 'italic', letterSpacing: '1px', textShadow: '2px 2px 6px rgba(0,0,0,0.9)' }}>
-            RECORD DE VUELTA
+            RECORD DE VUELTA<CategoryTag config={config} id={id} />
           </span>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: '10px' }}>
             <span style={{ color: themeNormalText, fontWeight: '900', fontSize: '24px', textTransform: 'uppercase', textShadow: '2px 2px 6px rgba(0,0,0,0.9)' }}>
@@ -171,7 +172,7 @@ export default function FastestLap({ drivers, config, isVisible, id = 'fastestLa
            display: 'flex', alignItems: 'center', padding: '8px 15px'
          }}>
             <span style={{ color: themeTitleText, fontWeight: '900', fontSize: '16px', fontStyle: 'italic', letterSpacing: '1px' }}>
-              RECORD DE VUELTA
+              RECORD DE VUELTA<CategoryTag config={config} id={id} />
             </span>
          </div>
 

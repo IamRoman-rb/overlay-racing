@@ -1,4 +1,5 @@
 import { getGraphicFrame, SECTOR_COLORS } from '../utils/raceVisuals';
+import CategoryTag from '../components/CategoryTag';
 
 // MINI-SECTORES: hasta 2 pilotos con sus 3 sectores coloreados (violeta = mejor de la sesión, verde = mejor personal,
 // amarillo = más lento), última vuelta, mejor vuelta y vuelta teórica (suma de sus mejores sectores).
@@ -26,7 +27,7 @@ export default function Sectors({ drivers, config, state, sessionInfo, id = 'sec
         borderTop: customBg ? 'none' : `4px solid ${theme.main}`, boxShadow: '0 10px 30px rgba(0,0,0,0.6)'
       }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 14px', backgroundColor: customBg ? 'transparent' : theme.headerBg }}>
-          <span style={{ color: theme.title, fontWeight: 900, fontSize: '14px', letterSpacing: '2px' }}>SECTORES</span>
+          <span style={{ color: theme.title, fontWeight: 900, fontSize: '14px', letterSpacing: '2px' }}>SECTORES<CategoryTag config={config} id={id} /></span>
           <span style={{ color: theme.number, fontSize: '11px', fontWeight: 'bold', display: sessionInfo?.idealLap ? 'inline' : 'none' }}>
             VUELTA IDEAL <span style={{ color: SECTOR_COLORS.purple, fontFamily: 'monospace', fontSize: '13px' }}>{sessionInfo?.idealLap}</span>
           </span>

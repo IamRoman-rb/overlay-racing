@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { withCategory } from '../utils/raceVisuals';
 import pilotoAnonimo from '../assets/piloto_anonimo.png';
 import { getSkinStyle } from '../utils/skinStyles';
 import MarqueeText from './MarqueeText';
@@ -129,7 +130,7 @@ export default function StartingGrid({ drivers, config, isVisible, id = 'grid' }
             )}
             <div style={{ minWidth: 0, flex: '0 1 auto' }}>
               <MarqueeText
-                text={`Ordenamiento de partida - ${config?.eventName || config?.campeonato || 'CARRERA'}`}
+                text={`Ordenamiento de partida - ${withCategory(config, id, config?.eventName || config?.campeonato) || 'CARRERA'}`}
                 style={{ textShadow: gridSkin?.textShadow }}
               />
             </div>
@@ -152,7 +153,7 @@ export default function StartingGrid({ drivers, config, isVisible, id = 'grid' }
           {/* MODO FOTOS: HEADER BROADCAST (TIPO FÓRMULA 1) */}
           <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', display: 'flex', flexDirection: 'column' }}>
             <div style={{ backgroundColor: themeHeaderBg, padding: '15px', textAlign: 'center', color: '#fff', fontSize: '28px', fontWeight: '900', letterSpacing: '2px' }}>
-               {config?.eventName || config?.campeonato || 'CAMPEONATO'}
+               {withCategory(config, id, config?.eventName || config?.campeonato) || 'CAMPEONATO'}
             </div>
             <div style={{ display: 'flex', width: '100%', height: '40px' }}>
                <div style={{ backgroundColor: themeMain, color: '#fff', width: '30%', display: 'flex', alignItems: 'center', paddingLeft: '40px', fontSize: '24px', fontWeight: '900', letterSpacing: '1px' }}>
@@ -410,7 +411,7 @@ function CinematicGridView({ allDrivers, currentDriver, page, config, bRad, them
           {config?.logo && <img src={config.logo} alt="Productora" style={{ height: '32px', maxWidth: '90px', objectFit: 'contain', flexShrink: 0 }} />}
           <div style={{ minWidth: 0, flex: '0 1 auto' }}>
             <MarqueeText
-              text={config?.eventName || config?.campeonato || 'CARRERA'}
+              text={withCategory(config, 'grid', config?.eventName || config?.campeonato) || 'CARRERA'}
               style={{ fontSize: '16px', fontWeight: '900', color: themeTitleText, textTransform: 'uppercase', letterSpacing: '1px' }}
             />
           </div>

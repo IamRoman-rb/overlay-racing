@@ -1,6 +1,7 @@
 import { getSkinStyle } from '../utils/skinStyles';
 import Icon from '../components/Icon';
 import { getAnimDuration, getRollClip } from '../utils/animationTiming';
+import CategoryTag from '../components/CategoryTag';
 
 export default function LapTimeEvolution({ history, drivers, config, isVisible, focusDriver, id = 'lapTimesHistory' }) {
   const pos = config?.positions?.[id] || { x: 100, y: 500, scale: 1 };
@@ -137,7 +138,7 @@ export default function LapTimeEvolution({ history, drivers, config, isVisible, 
           }}>
             {config?.logo && <img src={config.logo} alt="Logo" style={{ height: '20px', maxWidth: '90px', objectFit: 'contain' }} />}
             <span style={{ color: themeNormalText, fontSize: '13px', fontWeight: '900', letterSpacing: '0.5px', textTransform: 'uppercase' }}>
-              ÚLTIMAS {lapCols} VUELTAS
+              ÚLTIMAS {lapCols} VUELTAS<CategoryTag config={config} id={id} />
             </span>
           </div>
 
@@ -216,7 +217,7 @@ export default function LapTimeEvolution({ history, drivers, config, isVisible, 
     }}>
       {isMinimal && (
         <span style={{ display: 'block', color: themeTitleText, fontSize: '11px', fontWeight: '900', letterSpacing: '0.5px', textTransform: 'uppercase', marginBottom: '4px', textShadow: '2px 2px 6px rgba(0,0,0,0.9)' }}>
-          {isFocusMode ? `RITMO — #${focusDriver} ${getDriverName(focusDriver)}` : 'EVOLUCIÓN DE TIEMPOS DE VUELTA'}
+          {isFocusMode ? `RITMO — #${focusDriver} ${getDriverName(focusDriver)}` : 'EVOLUCIÓN DE TIEMPOS DE VUELTA'}<CategoryTag config={config} id={id} />
         </span>
       )}
       <div style={{
@@ -240,7 +241,7 @@ export default function LapTimeEvolution({ history, drivers, config, isVisible, 
             display: 'flex', justifyContent: 'space-between', alignItems: 'center'
           }}>
             <span style={{ color: themeTitleText, fontSize: isLarge ? '13px' : '11px', fontWeight: '900', letterSpacing: '0.5px', textTransform: 'uppercase', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-              {isFocusMode ? `RITMO — #${focusDriver} ${getDriverName(focusDriver)}` : (isCompact ? 'TIEMPOS' : 'EVOLUCIÓN DE TIEMPOS DE VUELTA')}
+              {isFocusMode ? `RITMO — #${focusDriver} ${getDriverName(focusDriver)}` : (isCompact ? 'TIEMPOS' : 'EVOLUCIÓN DE TIEMPOS DE VUELTA')}<CategoryTag config={config} id={id} />
             </span>
 
             {isFocusMode && focusStats && !isCompact && (

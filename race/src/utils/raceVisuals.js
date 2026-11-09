@@ -13,6 +13,30 @@ export function getClassColor(config, className, classes) {
   return CLASS_PALETTE[idx % CLASS_PALETTE.length];
 }
 
+// NOMBRE DE LA CATEGORÍA EN LAS GRÁFICAS: se muestra en cada gráfica salvo que se lo quite en la pestaña EDITOR
+// (config.showCategory_<id> = false).
+export const CATEGORY_GRAPHICS = [
+  'tower', 'ticker', 'grid', 'finalResults', 'winner', 'fastestLap', 'battle', 'lapCounter', 'lapTimesHistory',
+  'virtualChamp', 'driverInfo', 'qualifying', 'sectors', 'gapChart', 'gainers', 'trackMap', 'raceNotice'
+];
+export const CATEGORY_TOGGLE_PREFIX = 'showCategory_';
+
+export function getCategory(config, id) {
+  const name = String(config?.categoryName || '').trim();
+  if (!name || config?.[`${CATEGORY_TOGGLE_PREFIX}${id}`] === false) return '';
+  return name;
+}
+
+// Texto del evento con la categoría adelante, sin repetirla si ya está incluida ("GT Series - Carrera 1")
+export function withCategory(config, id, text) {
+  const cat = getCategory(config, id);
+  const base = String(text || '').trim();
+  if (!cat) return base;
+  if (!base) return cat;
+  if (base.toLowerCase().includes(cat.toLowerCase())) return base;
+  return `${cat} - ${base}`;
+}
+
 // Colores de sectores estilo TV: violeta = mejor de la sesión, verde = mejor personal, amarillo = más lento
 export const SECTOR_COLORS = { purple: '#a23cf0', green: '#21c45a', yellow: '#f5c518', '': 'rgba(255,255,255,0.12)' };
 

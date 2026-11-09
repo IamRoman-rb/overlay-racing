@@ -39,6 +39,10 @@ export const translations = {
       sectors: 'SECTORES', gapChart: 'BRECHA', gainers: 'REMONTADAS', qualifying: 'CLASIFICACIÓN', trackMap: 'MAPA EN VIVO', raceNotice: 'AVISO DE CARRERA'
     },
     editor: {
+      categoryTitle: 'NOMBRE DE LA CATEGORÍA', showCategory: 'Mostrar el nombre de la categoría en esta gráfica',
+      categoryHint: 'Se muestra "{name}". Se cambia en PANEL > CATEGORÍA, CLASES Y GRILLA.',
+      categoryEmpty: 'Todavía no hay categoría: escribila en PANEL > CATEGORÍA, CLASES Y GRILLA (o se completa sola con la fuente).',
+      categoryShowAll: 'MOSTRAR EN TODAS', categoryHideAll: 'QUITAR DE TODAS',
       title: 'EDITOR DE GRÁFICAS',
       description: 'Elegí una gráfica y arrastrá sus objetos (logo, título, tabla…) de un lugar a otro para personalizarla. Los cambios se guardan solos y se ven al instante en el overlay.',
       selectGraphic: 'Gráfica',
@@ -403,6 +407,10 @@ export const translations = {
       sectors: 'SECTORS', gapChart: 'GAP', gainers: 'BIGGEST GAINERS', qualifying: 'QUALIFYING', trackMap: 'LIVE MAP', raceNotice: 'RACE NOTICE'
     },
     editor: {
+      categoryTitle: 'CATEGORY NAME', showCategory: 'Show the category name on this graphic',
+      categoryHint: 'Showing "{name}". Change it in PANEL > CATEGORY, CLASSES AND GRID.',
+      categoryEmpty: 'No category yet: type it in PANEL > CATEGORY, CLASSES AND GRID (or it is filled in from the timing source).',
+      categoryShowAll: 'SHOW ON ALL', categoryHideAll: 'REMOVE FROM ALL',
       title: 'GRAPHICS EDITOR',
       description: 'Pick a graphic and drag its objects (logo, title, table…) from one place to another to customize it. Changes are saved automatically and show up instantly on the overlay.',
       selectGraphic: 'Graphic',

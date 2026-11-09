@@ -1,4 +1,5 @@
 import { getGraphicFrame } from '../utils/raceVisuals';
+import CategoryTag from '../components/CategoryTag';
 
 const W = 520;
 const H = 150;
@@ -38,7 +39,7 @@ export default function GapChart({ data, config, id = 'gapChart', formatName = (
         borderTop: customBg ? 'none' : `4px solid ${theme.main}`, boxShadow: '0 10px 30px rgba(0,0,0,0.6)'
       }}>
         <div style={{ display: 'flex', alignItems: 'center', padding: '8px 14px', backgroundColor: customBg ? 'transparent' : theme.headerBg }}>
-          <span style={{ color: theme.title, fontWeight: 900, fontSize: '13px', letterSpacing: '2px', marginRight: '12px' }}>BRECHA</span>
+          <span style={{ color: theme.title, fontWeight: 900, fontSize: '13px', letterSpacing: '2px', marginRight: '12px', whiteSpace: 'nowrap' }}>BRECHA<CategoryTag config={config} id={id} block size="0.7em" /></span>
           <span style={{ flex: 1, color: theme.text, fontWeight: 900, fontSize: '14px', textTransform: 'uppercase', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
             <span style={{ color: theme.accent }}>P{data?.frontPos || '-'}</span> #{data?.front} {formatName(data?.frontName || '')}
             <span style={{ color: theme.number }}>{'  vs  '}</span>

@@ -3,7 +3,8 @@ import { getSkinStyle } from '../utils/skinStyles';
 import pilotoAnonimo from '../assets/piloto_anonimo.png';
 import { getAnimDuration, getRollClip } from '../utils/animationTiming';
 import { getFinalResultsSize } from '../utils/finalResultsSize';
-import { getClassColor } from '../utils/raceVisuals';
+import { getClassColor, withCategory } from '../utils/raceVisuals';
+import CategoryTag from '../components/CategoryTag';
 
 const PODIUM_COLORS = { 1: '#ffd700', 2: '#c0c0c0', 3: '#cd7f32' };
 
@@ -29,8 +30,11 @@ export default function FinalResults({ drivers: allDrivers, config, isVisible, i
   const classWinners = multiclass && !classFilter && config?.finalResultsClassWinners !== false
     ? classes.map(cls => allDrivers.find(d => d.cls === cls && d.classLeader)).filter(Boolean)
     : [];
-  const baseEvent = config.eventName || config.campeonato || 'CARRERA';
+  const baseEvent = withCategory(config, id, config.eventName || config.campeonato) || 'CARRERA';
   const eventLabel = classFilter ? `${baseEvent} · ${classFilter}` : baseEvent;
+  // Formato estándar: el título grande lleva el evento y la categoría va en una línea más chica debajo (sin repetirla)
+  const plainEvent = config.eventName || config.campeonato || 'CARRERA';
+  const plainLabel = classFilter ? `${plainEvent} · ${classFilter}` : plainEvent;
 
   const themeBg = config?.themeBg || 'rgba(0,0,0,0.95)';
   const themeHeaderBg = config?.themeHeaderBg || '#1a1a1a';
@@ -56,7 +60,8 @@ export default function FinalResults({ drivers: allDrivers, config, isVisible, i
 
   const isBroadcast = resultsFormat === 'broadcast';
   const [page, setPage] = useState(0);
-  const itemsPerPage = isCompact ? 14 : 10;
+  // Con la franja de ganadores por clase abajo entra una fila menos
+  const itemsPerPage = (isCompact ? 14 : 10) - (classWinners.length ? 1 : 0);
 
   // Tamaño fijo (editable en PERSONALIZAR): no se achica cuando la última página tiene pocos pilotos
   const size = getFinalResultsSize(config, resultsFormat);
@@ -153,7 +158,7 @@ export default function FinalResults({ drivers: allDrivers, config, isVisible, i
             {/* COLUMNA IZQUIERDA: TABLA DE RESULTADOS (62,67 % del ancho, como los 940 de 1500 px originales) */}
             <div style={{ flex: '0 0 62.67%', minWidth: 0, boxSizing: 'border-box', padding: '24px 26px', display: 'flex', flexDirection: 'column' }}>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: '10px', marginBottom: '14px' }}>
-                <span style={{ fontSize: '30px', fontWeight: 900, color: themeNormalText, letterSpacing: '1px', maxWidth: '700px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', textTransform: 'uppercase' }}>{classFilter ? eventLabel : (config.eventName || 'CARRERA')}</span>
+                <span style={{ fontSize: '30px', fontWeight: 900, color: themeNormalText, letterSpacing: '1px', maxWidth: '700px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', textTransform: 'uppercase' }}>{eventLabel}</span>
                 {broadcastPages > 1 && (
                   <span style={{ fontSize: '12px', color: themeTitleText, fontWeight: 'bold' }}>PÁGINA {page + 1} DE {broadcastPages}</span>
                 )}
@@ -299,7 +304,7 @@ export default function FinalResults({ drivers: allDrivers, config, isVisible, i
                    <img src={config.logo} alt="Logo Productora" style={{ height: isCompact ? '38px' : '55px', maxWidth: '180px', objectFit: 'contain' }} />
                  )}
                  <h1 style={{ color: themeTitleText, fontSize: isCompact ? '28px' : '40px', fontWeight: '900', textTransform: 'uppercase', margin: 0 }}>
-                     RESULTADOS FINALES - {eventLabel}
+                     RESULTADOS FINALES - {plainLabel}<CategoryTag config={config} id={id} block size="0.45em" unlessIn={plainLabel} style={{ textAlign: 'center' }} />
                  </h1>
              </div>
 

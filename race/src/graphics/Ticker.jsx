@@ -3,17 +3,13 @@ import { getSkinStyle } from '../utils/skinStyles';
 import MarqueeText from './MarqueeText';
 import { getAnimDuration, getRollClip } from '../utils/animationTiming';
 import { getCanvasSize } from '../utils/canvasSize';
-import { usePositionTrends, getPositionArrow, getClassColor, ARROW_COLORS } from '../utils/raceVisuals';
+import { usePositionTrends, getPositionArrow, getClassColor, ARROW_COLORS, withCategory } from '../utils/raceVisuals';
 
 const PODIUM_COLORS = { 1: '#ffd700', 2: '#c0c0c0', 3: '#cd7f32' };
 
 // Nombre que va en la placa de la tira: la categoría escrita / detectada más la sesión (sin repetir la categoría)
-function tickerTitle(config) {
-  const eventName = config?.eventName || config?.campeonato || '';
-  const category = (config?.categoryName || '').trim();
-  if (!category) return eventName;
-  if (!eventName || eventName.toLowerCase().includes(category.toLowerCase())) return eventName || category;
-  return `${category} - ${eventName}`;
+function tickerTitle(config, id) {
+  return withCategory(config, id, config?.eventName || config?.campeonato || '');
 }
 
 export default function Ticker({ drivers, isVisible, config, id = 'ticker', sessionInfo }) {
@@ -62,7 +58,7 @@ export default function Ticker({ drivers, isVisible, config, id = 'ticker', sess
   const isBoard = tickerFormat === 'board';
   const skin = getSkinStyle(tickerFormat, { themeMain, themeAccent });
   // Nombre del evento / sesión (si es largo, se desplaza dentro de su placa)
-  const eventName = tickerTitle(config);
+  const eventName = tickerTitle(config, id);
   const barHeight = isSpotlight ? '110px' : (isCompact ? '46px' : (hasCustomBg ? '80px' : '60px'));
 
   // Rotación automática para el formato "Spotlight" (un piloto a la vez, en grande)

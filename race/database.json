@@ -1,5 +1,5 @@
 {
-  "chromaColor": "#000000",
+  "chromaColor": "#FFFFFF",
   "zocalos": [
     {
       "title": "",
@@ -29,7 +29,7 @@
   "campeonato": "",
   "relator": "",
   "comentarista": "",
-  "speedhiveCode": "37820",
+  "speedhiveCode": "37872",
   "borderRadius_ticker": "0px",
   "gridFormat": "cinematic",
   "circuito": "Autódromo Oscar y Juan Gálvez",
@@ -41,7 +41,7 @@
   "nameFormat": "original",
   "photosPath": null,
   "borderRadius_lapCounter": "0px",
-  "timingProvider": "orbits",
+  "timingProvider": "racemonitor",
   "weatherData": {
     "temp": 17.9,
     "windSpeed": 4,
@@ -123,20 +123,20 @@
   "panelLayout": "left",
   "brandingShow": "both",
   "brandingFormat": "minimal",
-  "panelSplitSide": 401,
+  "panelSplitSide": 414,
   "panelSplitStack": 429,
   "textAlign_relator": "left",
   "autoFlags": true,
   "gridRows": 4,
   "layoutEdits_finalResults": null,
-  "logoCoverProducer_relator": true,
+  "logoCoverProducer_relator": false,
   "logoCoverTime_relator": "2",
-  "logoCoverProducer_ticker": true,
+  "logoCoverProducer_ticker": false,
   "logoCoverTime_ticker": "2",
-  "logoCoverProducer_tower": true,
-  "logoCoverProducer_grid": true,
+  "logoCoverProducer_tower": false,
+  "logoCoverProducer_grid": false,
   "animationStyle_grid": "roll",
-  "logoCoverProducer_winner": true,
+  "logoCoverProducer_winner": false,
   "sizeW_winner": "",
   "productora": "PERIKA PRODUCCIONES",
   "layoutEdits_ticker": null,
@@ -157,5 +157,176 @@
   },
   "elementStyles_fastestLap": null,
   "orbitsPort": 50000,
-  "orbitsHost": "127.0.0.1"
+  "orbitsHost": "127.0.0.1",
+  "multiclassMode": "off",
+  "towerShowGains": true,
+  "logoCoverCategory_relator": false,
+  "logoCoverProducer_comentarista": false,
+  "logoCoverCategory_comentarista": false,
+  "logoCoverTime_comentarista": "2",
+  "logoCoverProducer_notero1": false,
+  "logoCoverCategory_notero1": false,
+  "logoCoverTime_notero1": "2",
+  "logoCoverProducer_notero2": false,
+  "logoCoverCategory_notero2": false,
+  "logoCoverTime_notero2": "2",
+  "logoCoverProducer_circuito": false,
+  "logoCoverCategory_circuito": false,
+  "logoCoverTime_circuito": "2",
+  "logoCoverProducer_clima": false,
+  "logoCoverCategory_clima": false,
+  "logoCoverTime_clima": "2",
+  "logoCoverCategory_ticker": false,
+  "logoCoverCategory_tower": false,
+  "logoCoverTime_tower": "2",
+  "logoCoverCategory_grid": false,
+  "logoCoverTime_grid": "2",
+  "logoCoverProducer_finalResults": false,
+  "logoCoverCategory_finalResults": false,
+  "logoCoverTime_finalResults": "2",
+  "logoCoverCategory_winner": false,
+  "logoCoverTime_winner": "2",
+  "logoCoverProducer_flags": false,
+  "logoCoverCategory_flags": false,
+  "logoCoverTime_flags": "2",
+  "logoCoverProducer_fastestLap": false,
+  "logoCoverCategory_fastestLap": false,
+  "logoCoverTime_fastestLap": "2",
+  "logoCoverProducer_driverInfo": false,
+  "logoCoverCategory_driverInfo": false,
+  "logoCoverTime_driverInfo": "2",
+  "logoCoverProducer_battle": false,
+  "logoCoverCategory_battle": false,
+  "logoCoverTime_battle": "2",
+  "logoCoverProducer_customZocalo": false,
+  "logoCoverCategory_customZocalo": false,
+  "logoCoverTime_customZocalo": "2",
+  "logoCoverProducer_votingQR": false,
+  "logoCoverCategory_votingQR": false,
+  "logoCoverTime_votingQR": "2",
+  "logoCoverProducer_votingResults": false,
+  "logoCoverCategory_votingResults": false,
+  "logoCoverTime_votingResults": "2",
+  "logoCoverProducer_lapCounter": false,
+  "logoCoverCategory_lapCounter": false,
+  "logoCoverTime_lapCounter": "2",
+  "logoCoverProducer_virtualChamp": false,
+  "logoCoverCategory_virtualChamp": false,
+  "logoCoverTime_virtualChamp": "2",
+  "logoCoverProducer_pitStop": false,
+  "logoCoverCategory_pitStop": false,
+  "logoCoverTime_pitStop": "2",
+  "logoCoverProducer_startingLights": false,
+  "logoCoverCategory_startingLights": false,
+  "logoCoverTime_startingLights": "2",
+  "logoCoverProducer_lapTimesHistory": false,
+  "logoCoverCategory_lapTimesHistory": false,
+  "logoCoverTime_lapTimesHistory": "2",
+  "logoCoverProducer_trackAlert": false,
+  "logoCoverCategory_trackAlert": false,
+  "logoCoverTime_trackAlert": "2",
+  "logoCoverProducer_penaltyAlert": false,
+  "logoCoverCategory_penaltyAlert": false,
+  "logoCoverTime_penaltyAlert": "2",
+  "logoCoverProducer_branding": false,
+  "logoCoverCategory_branding": false,
+  "logoCoverTime_branding": "2",
+  "logoCoverProducer_evento": false,
+  "logoCoverCategory_evento": false,
+  "logoCoverTime_evento": "2",
+  "logoCoverProducer_sectors": false,
+  "logoCoverCategory_sectors": false,
+  "logoCoverTime_sectors": "2",
+  "logoCoverProducer_gapChart": false,
+  "logoCoverCategory_gapChart": false,
+  "logoCoverTime_gapChart": "2",
+  "logoCoverProducer_gainers": false,
+  "logoCoverCategory_gainers": false,
+  "logoCoverTime_gainers": "2",
+  "logoCoverProducer_qualifying": false,
+  "logoCoverCategory_qualifying": false,
+  "logoCoverTime_qualifying": "2",
+  "logoCoverProducer_trackMap": false,
+  "logoCoverCategory_trackMap": false,
+  "logoCoverTime_trackMap": "2",
+  "logoCoverProducer_raceNotice": false,
+  "logoCoverCategory_raceNotice": false,
+  "logoCoverTime_raceNotice": "2",
+  "tickerArrows": "live",
+  "categoryName": "Formula Car Challenge",
+  "categoryNameAuto": false,
+  "trackPath": [
+    {
+      "x": 67,
+      "y": 97.2
+    },
+    {
+      "x": 26.3,
+      "y": 18.7
+    },
+    {
+      "x": 32,
+      "y": 3.4
+    },
+    {
+      "x": 47.5,
+      "y": 21
+    },
+    {
+      "x": 51.3,
+      "y": 14.7
+    },
+    {
+      "x": 65,
+      "y": 26
+    },
+    {
+      "x": 65.3,
+      "y": 36
+    },
+    {
+      "x": 72.3,
+      "y": 47.5
+    },
+    {
+      "x": 70.9,
+      "y": 56.8
+    },
+    {
+      "x": 60,
+      "y": 49.3
+    },
+    {
+      "x": 57.3,
+      "y": 51.3
+    },
+    {
+      "x": 56.8,
+      "y": 57.1
+    },
+    {
+      "x": 57.8,
+      "y": 60.6
+    },
+    {
+      "x": 70.5,
+      "y": 84.6
+    },
+    {
+      "x": 71.4,
+      "y": 89.2
+    },
+    {
+      "x": 71.4,
+      "y": 92.7
+    },
+    {
+      "x": 70.3,
+      "y": 96.2
+    },
+    {
+      "x": 68.9,
+      "y": 98.2
+    }
+  ]
 }
