@@ -36,3 +36,6 @@ football/football-backups/
 .env
 .env.*
 !.env.example
+
+# Sponsors cargados en desarrollo (pestaña SPONSORS)
+race/sponsors/

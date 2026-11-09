@@ -443,7 +443,9 @@ function buildLeaderboard() {
       diff,
       totalTime: (c.totalTime && timeToSeconds(c.totalTime) > 0) ? formatSeconds(timeToSeconds(c.totalTime)) : '-',
       bestLap: formatLapTime(c.bestLapTime) || '-',
-      sector1: '', sector2: '', sector3: ''
+      sector1: '', sector2: '', sector3: '',
+      // Dato adicional del competidor ($COMP) y clase: de ahí sale la marca del auto
+      extra: [c.additional, state.classes[c.classId]].filter(Boolean)
     };
   });
 

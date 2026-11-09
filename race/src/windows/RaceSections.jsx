@@ -124,7 +124,7 @@ export function CategorySection({ config, sessionInfo, onSave, onCategoryInput, 
 // --- ANÁLISIS: SECTORES, BRECHA, REMONTADAS, MAPA EN VIVO ---
 export function AnalysisSection({
   drivers, config, sessionInfo, sectorsSel, setSectorsSel, sectorsVisible, onToggleSectors,
-  gapPair, setGapPair, gapData, onToggleGap, recommendedBattle, graphics, onToggleGraphic, onSave,
+  gapPair, setGapPair, gapData, onToggleGap, lapCompareVisible, onToggleLapCompare, recommendedBattle, graphics, onToggleGraphic, onSave,
   colors, inputStyle, btnStyle, t, style
 }) {
   const hasSectorData = drivers.some(d => d.sector1 || d.sector2 || d.sector3);
@@ -165,6 +165,11 @@ export function AnalysisSection({
             <button onClick={() => setGapPair({ front: recommendedBattle.front.number, back: recommendedBattle.back.number })} style={{ ...smallBtn(btnStyle), flex: 1 }}>{t('race.useBattle')}</button>
           )}
           <button onClick={onToggleGap} style={{ ...btnStyle(!!gapData?.isVisible), flex: 2 }}>{gapData?.isVisible ? t('race.hideGap') : t('race.showGap')}</button>
+        </div>
+        <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+          <button onClick={onToggleLapCompare} title={t('race.lapCompareTitle')} style={{ ...btnStyle(!!lapCompareVisible), flex: 1 }}>{t('graphics.lapCompare')}</button>
+          <span style={{ ...labelStyle(colors) }}>{t('race.lapCompareLaps')}</span>
+          <CommitInput type="number" min="3" max="8" value={config.lapCompareLaps || 5} onCommit={(v) => onSave('lapCompareLaps', Math.min(8, Math.max(3, parseInt(v, 10) || 5)))} style={{ ...inputStyle, width: '50px', textAlign: 'center' }} />
         </div>
         {gapPair.front && gapPair.back && (
           <span style={{ ...hintStyle(colors), color: colors.textMain }}>
@@ -275,7 +280,8 @@ export function RaceAlertsBar({ alerts, onAction, canAct, onDismiss, onClear, co
 
 // --- CORRECCIONES MANUALES (pestaña SANCIONES) ---
 export function CorrectionsPanel({ drivers, corrections, onSetCorrection, onClear, colors, inputStyle, btnStyle, t }) {
-  const known = new Set(drivers.map(d => String(d.number)));
+  // Las correcciones se guardan por el número de la fuente (el de PILOTOS puede ser otro)
+  const known = new Set(drivers.map(d => String(d.srcNumber || d.number)));
   const extra = Object.keys(corrections || {}).filter(num => !known.has(num)).map(num => ({ number: num, name: '', pos: '-' }));
   const rows = [...drivers, ...extra];
   const activeCount = Object.keys(corrections || {}).length;
@@ -307,14 +313,14 @@ export function CorrectionsPanel({ drivers, corrections, onSetCorrection, onClea
             </thead>
             <tbody>
               {rows.map(d => {
-                const num = String(d.number);
+                const num = String(d.srcNumber || d.number);
                 const c = (corrections || {})[num] || {};
                 const sourceName = d.src?.name || d.name;
                 const hasAny = !!(c.name || c.timePenalty || c.dsq);
                 return (
                   <tr key={num} style={{ backgroundColor: hasAny ? 'rgba(255,204,0,0.06)' : 'transparent' }}>
                     <td style={{ ...cell, fontWeight: 'bold', color: d.dsq ? colors.red : colors.yellow }}>{d.pos}</td>
-                    <td style={{ ...cell, fontWeight: 'bold' }}>#{num}</td>
+                    <td style={{ ...cell, fontWeight: 'bold' }}>#{d.number || num}</td>
                     <td style={{ ...cell, color: colors.textMuted, textTransform: 'uppercase' }}>{sourceName || '—'}</td>
                     <td style={cell}>
                       <CommitInput value={c.name || ''} placeholder={t('corrections.namePlaceholder')} onCommit={(v) => onSetCorrection(num, { name: v })} style={{ ...inputStyle, padding: '6px', textTransform: 'none' }} />

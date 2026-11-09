@@ -28,6 +28,11 @@ import Gainers from '../graphics/Gainers';
 import QualifyingBoard from '../graphics/QualifyingBoard';
 import TrackMap from '../graphics/TrackMap';
 import RaceNotice from '../graphics/RaceNotice';
+import CircuitIntro from '../graphics/CircuitIntro';
+import CircuitRecord from '../graphics/CircuitRecord';
+import LapCompare from '../graphics/LapCompare';
+import WindVectors from '../graphics/WindField';
+import SponsorLive from '../graphics/SponsorLive';
 import LayoutEdits from '../components/LayoutEdits';
 import { formatDriverName } from '../utils/formatDriverName';
 
@@ -53,6 +58,16 @@ const DEMO_HISTORY = (() => {
   return history;
 })();
 
+// Historial de ejemplo para ÚLTIMAS VUELTAS con los dos primeros pilotos de la lista (reales o de ejemplo)
+const demoLapCompare = (list) => {
+  const history = {};
+  (list || []).slice(0, 2).forEach((d, i) => {
+    if (!d?.number) return;
+    history[String(d.number)] = Array.from({ length: 8 }, (_, lap) => ({ lap: lap + 1, seconds: 76.2 + i * 0.15 + Math.sin(lap * 1.7 + i * 2) * 0.35 }));
+  });
+  return history;
+};
+
 // Datos de ejemplo de lo que calcula el análisis de carrera (sectores, grilla, vuelta en curso) para las gráficas nuevas
 const DEMO_SECTOR_COLORS = [['purple', 'green', 'yellow'], ['green', 'yellow', 'purple'], ['yellow', 'green', 'green']];
 const DEMO_GAINS = [2, -1, 4, -2, 0, 3, -3, 1, 5, -4, 0, -5];
@@ -71,6 +86,21 @@ const DEMO_TRACK_PATH = [
   { x: 20, y: 70 }, { x: 70, y: 72 }, { x: 85, y: 60 }, { x: 80, y: 35 }, { x: 60, y: 25 }, { x: 45, y: 40 },
   { x: 30, y: 30 }, { x: 15, y: 40 }, { x: 12, y: 58 }
 ];
+
+// Datos de ejemplo del circuito (sólo los que falten) para ver la presentación y el récord en PERSONALIZAR
+const demoCircuit = (config) => ({
+  trackPath: (config?.trackPath && config.trackPath.length > 2) ? config.trackPath : DEMO_TRACK_PATH,
+  trackSectors: (config?.trackSectors && config.trackSectors.length) ? config.trackSectors : [0.22, 0.45, 0.68, 0.84],
+  trackCurves: (config?.trackCurves && config.trackCurves.length) ? config.trackCurves : [{ id: 'd1', name: 'C1', x: 70, y: 72 }, { id: 'd2', name: 'C2', x: 82, y: 50 }, { id: 'd3', name: 'C3', x: 45, y: 40 }],
+  circuitName: config?.circuitName || config?.circuito || 'AUTÓDROMO DE EJEMPLO',
+  circuitCity: config?.circuitCity || 'CIUDAD, PROVINCIA',
+  circuitLength: config?.circuitLength || '3250',
+  recordTime: config?.recordTime || '1:28.415', recordSpeed: config?.recordSpeed || '214',
+  recordDate: config?.recordDate || '14 SEP 2025', recordEvent: config?.recordEvent || 'FINAL',
+  recordDriver: config?.recordDriver || 'NOMBRE APELLIDO', recordNumber: config?.recordNumber || '7', recordTeam: config?.recordTeam || 'EQUIPO',
+  eventTitle: config?.eventTitle || config?.campeonato || 'CAMPEONATO - FECHA 1',
+  weatherData: config?.weatherData || { temp: 19, weathercode: 0, windSpeed: 7, windDir: 200, humidity: 47, precipProb: 0, place: 'CIUDAD' }
+});
 
 const ROLE_BY_ID = { relator: 'Relator', comentarista: 'Comentarista', notero1: 'Notero', notero2: 'Notero', circuito: 'Circuito' };
 
@@ -135,7 +165,7 @@ function GraphicPreviewContent({ id, config, positions, drivers, sessionInfo }) 
     case 'lapTimesHistory':
       return <LapTimeEvolution history={DEMO_HISTORY} drivers={list} config={fullConfig} isVisible focusDriver={null} />;
     case 'trackAlert':
-      return <TrackAlert alert={{ isVisible: true, type: 'yellow', curveName: 'CURVA 1', curveId: null }} config={fullConfig} />;
+      return <TrackAlert alert={{ isVisible: true, type: 'yellow', curveName: config?.trackCurves?.[0]?.name || 'CURVA 1', curveId: config?.trackCurves?.[0]?.id || null }} config={fullConfig} />;
     case 'penaltyAlert':
       return <PenaltyAlert alert={{ isVisible: true, driverNumber: list[1]?.number, driverName: list[1]?.name, type: 'penalty', reason: 'Exceso de velocidad en boxes' }} config={fullConfig} />;
     case 'branding':
@@ -154,8 +184,18 @@ function GraphicPreviewContent({ id, config, positions, drivers, sessionInfo }) 
       return <TrackMap drivers={enrichDemo(list, realDrivers)} config={{ ...fullConfig, trackPath: (config?.trackPath && config.trackPath.length > 1) ? config.trackPath : DEMO_TRACK_PATH }} isVisible sessionInfo={session} />;
     case 'raceNotice':
       return <RaceNotice config={fullConfig} notice={{ isVisible: true, kind: 'leader', title: 'NUEVO LÍDER', text: list[1]?.name || 'NOMBRE DE EJEMPLO', number: list[1]?.number }} />;
+    case 'circuitIntro':
+      return <CircuitIntro config={{ ...fullConfig, ...demoCircuit(config) }} isVisible />;
+    case 'circuitRecord':
+      return <CircuitRecord config={{ ...fullConfig, ...demoCircuit(config) }} isVisible />;
+    case 'lapCompare':
+      return <LapCompare state={{ isVisible: true, a: list[0]?.number, b: list[1]?.number }} drivers={enrichDemo(list, realDrivers)} history={demoLapCompare(list)} config={fullConfig} />;
+    case 'windVectors':
+      return <WindVectors isVisible config={{ ...fullConfig, weatherData: config?.weatherData || { temp: 22, weathercode: 2, windSpeed: 18, windDir: 240, precipProb: 10, feelsLike: 21 } }} />;
+    case 'sponsorLive':
+      return <SponsorLive config={fullConfig} state={{ isVisible: true, rotate: true }} />;
     case 'evento':
-      return <Evento isVisible config={{ ...fullConfig, productora: config?.productora || 'PRODUCTORA DE EJEMPLO', circuito: config?.circuito || 'AUTÓDROMO DE EJEMPLO', weatherData: config?.weatherData || { temp: 22, weathercode: 2, windSpeed: 14, windDir: 200, precipProb: 20, feelsLike: 21 } }} />;
+      return <Evento isVisible config={{ ...fullConfig, productora: config?.productora || '', circuito: config?.circuito || '', weatherData: config?.weatherData || { temp: 22, weathercode: 2, windSpeed: 14, windDir: 200, precipProb: 20, feelsLike: 21 } }} />;
     default:
       return null;
   }
@@ -165,7 +205,7 @@ function GraphicPreviewContent({ id, config, positions, drivers, sessionInfo }) 
 // El tapado con logo solo se ve al pedir "probar" (coverReplay) y nunca en el editor (noCover).
 export default function GraphicPreview(props) {
   return (
-    <LayoutEdits id={props.id} config={props.config} coverReplay={props.coverReplay} noCover={props.noCover}>
+    <LayoutEdits id={props.id} config={props.config ? { ...props.config, positions: props.positions || props.config.positions } : props.config} coverReplay={props.coverReplay} noCover={props.noCover} noSponsors={props.noSponsors}>
       <GraphicPreviewContent {...props} />
     </LayoutEdits>
   );

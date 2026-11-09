@@ -4,6 +4,8 @@ import MarqueeText from './MarqueeText';
 import { getAnimDuration, getRollClip } from '../utils/animationTiming';
 import { getCanvasSize } from '../utils/canvasSize';
 import { usePositionTrends, getPositionArrow, getClassColor, ARROW_COLORS, withCategory } from '../utils/raceVisuals';
+import BrandLogo from '../components/BrandLogo';
+import { useSuitColors } from '../utils/suitColor';
 
 const PODIUM_COLORS = { 1: '#ffd700', 2: '#c0c0c0', 3: '#cd7f32' };
 
@@ -24,6 +26,9 @@ export default function Ticker({ drivers, isVisible, config, id = 'ticker', sess
 
   // Flechas de avance / descenso: respecto de la largada (si hay grilla) o del último cambio de posición
   const liveTrends = usePositionTrends(drivers);
+  // Color del número tomado del traje (foto del piloto), si está activado en PILOTOS
+  const suit = useSuitColors(drivers, config);
+  const sc = (n) => (suit[String(n)] ? { backgroundColor: suit[String(n)].bg, color: suit[String(n)].text } : {});
   const arrowMode = config?.tickerArrows || 'start';
   const renderArrow = (driver, fontSize) => {
     const arrow = getPositionArrow(driver, liveTrends, arrowMode);
@@ -161,7 +166,7 @@ export default function Ticker({ drivers, isVisible, config, id = 'ticker', sess
                       <span style={{
                         flexShrink: 0, width: '34px', height: '34px', borderRadius: '50%',
                         backgroundColor: themeSecondary, color: '#000', fontWeight: '900', fontSize: '13px',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center'
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', ...sc(driver.number)
                       }}>
                         {driver.number}
                       </span>
@@ -169,7 +174,7 @@ export default function Ticker({ drivers, isVisible, config, id = 'ticker', sess
                         flex: 1, color: themeNormalText, fontWeight: '900', fontSize: '15px', textTransform: 'uppercase',
                         whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'
                       }}>
-                        {driver.name}
+                        <BrandLogo brand={driver.brand} config={config} size={16} style={{ marginRight: '6px' }} />{driver.name}
                       </span>
                       <span style={{
                         flexShrink: 0, minWidth: '68px', textAlign: 'center', padding: '4px 8px', borderRadius: '4px',
@@ -305,7 +310,7 @@ export default function Ticker({ drivers, isVisible, config, id = 'ticker', sess
                         <span style={{ color: themeTitleText, fontSize: '10px', fontWeight: 'bold', letterSpacing: '1px', lineHeight: 1.1 }}>LÍDER</span>
                         <span style={{ color: clsColor, fontSize: isCompact ? '13px' : '15px', fontWeight: '900', textTransform: 'uppercase', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', lineHeight: 1.1 }}>{driver.cls}</span>
                       </div>
-                      <div style={{ backgroundColor: clsColor, color: '#000', fontWeight: '900', fontSize: isCompact ? '16px' : '20px', minWidth: isCompact ? '34px' : '40px', height: isCompact ? '26px' : '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '4px', flexShrink: 0 }}>
+                      <div style={{ backgroundColor: clsColor, color: '#000', fontWeight: '900', fontSize: isCompact ? '16px' : '20px', minWidth: isCompact ? '34px' : '40px', height: isCompact ? '26px' : '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '4px', flexShrink: 0, ...sc(driver.number) }}>
                         {driver.number}
                       </div>
                       <span style={{ flex: 1, color: themeNormalText, fontSize: isCompact ? '14px' : '17px', fontWeight: 'bold', textTransform: 'uppercase', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
@@ -327,14 +332,14 @@ export default function Ticker({ drivers, isVisible, config, id = 'ticker', sess
                       color: podiumColor ? '#000' : (hasCustomBg ? '#fff' : '#000'),
                       fontWeight: '900', fontSize: isCompact ? '18px' : '22px', width: isCompact ? '38px' : '45px', height: isCompact ? '28px' : '35px', display: 'flex',
                       alignItems: 'center', justifyContent: 'center', borderRadius: '4px',
-                      border: hasCustomBg ? '1px solid rgba(255,255,255,0.2)' : '2px solid rgba(0,0,0,0.5)'
+                      border: hasCustomBg ? '1px solid rgba(255,255,255,0.2)' : '2px solid rgba(0,0,0,0.5)', ...sc(driver.number)
                     }}>
                       {driver.number}
                     </div>
 
                     <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', flex: 1, overflow: 'hidden' }}>
                       <span style={{ color: themeNormalText, fontSize: isCompact ? '15px' : '18px', fontWeight: 'bold', textTransform: 'uppercase', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', lineHeight: '1.2' }}>
-                        {driver.name}
+                        <BrandLogo brand={driver.brand} config={config} size={18} style={{ marginRight: '6px' }} />{driver.name}
                       </span>
                       {!isCompact && (
                         <span style={{ color: hasCustomBg ? '#aaaaaa' : themeNumberText, fontSize: '14px', fontWeight: 'bold', lineHeight: '1' }}>

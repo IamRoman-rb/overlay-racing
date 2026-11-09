@@ -5,6 +5,8 @@ import { getAnimDuration, getRollClip } from '../utils/animationTiming';
 import { getFinalResultsSize } from '../utils/finalResultsSize';
 import { getClassColor, withCategory } from '../utils/raceVisuals';
 import CategoryTag from '../components/CategoryTag';
+import BrandLogo from '../components/BrandLogo';
+import { useSuitColors } from '../utils/suitColor';
 
 const PODIUM_COLORS = { 1: '#ffd700', 2: '#c0c0c0', 3: '#cd7f32' };
 
@@ -60,6 +62,9 @@ export default function FinalResults({ drivers: allDrivers, config, isVisible, i
 
   const isBroadcast = resultsFormat === 'broadcast';
   const [page, setPage] = useState(0);
+  // Color del número tomado del traje (foto del piloto), si está activado en PILOTOS
+  const suit = useSuitColors(allDrivers, config);
+  const sc = (n) => (suit[String(n)] ? { backgroundColor: suit[String(n)].bg, color: suit[String(n)].text } : {});
   // Con la franja de ganadores por clase abajo entra una fila menos
   const itemsPerPage = (isCompact ? 14 : 10) - (classWinners.length ? 1 : 0);
 
@@ -187,12 +192,12 @@ export default function FinalResults({ drivers: allDrivers, config, isVisible, i
                       <span style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '10px', overflow: 'hidden' }}>
                         <span style={{
                           fontSize: '11px', fontWeight: 900, padding: '2px 6px', borderRadius: '3px',
-                          backgroundColor: isLeader ? themeMain : themeSecondary, color: '#fff', flexShrink: 0
+                          backgroundColor: isLeader ? themeMain : themeSecondary, color: '#fff', flexShrink: 0, ...sc(d.number)
                         }}>{d.number}</span>
                         <span style={{
                           fontWeight: 900, fontSize: '16px', textTransform: 'uppercase',
                           color: isLeader ? '#111' : themeNormalText, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'
-                        }}>{d.name}</span>
+                        }}><BrandLogo brand={d.brand} config={config} size={18} style={{ marginRight: '6px' }} />{d.name}</span>
                       </span>
                       <span style={{
                         width: '260px', fontSize: '13px', fontWeight: 'bold', textTransform: 'uppercase',
@@ -342,9 +347,9 @@ export default function FinalResults({ drivers: allDrivers, config, isVisible, i
                      }}>
                         <span style={{ width: '60px', color: podiumColor || themeAccent, fontWeight: '900', fontSize: isCompact ? '18px' : '24px' }}>{d.pos}</span>
                         <span style={{ width: '80px' }}>
-                          <span style={{ backgroundColor: podiumColor || themeSecondary, color: '#000', padding: '4px 10px', borderRadius: '4px', fontWeight: '900', fontSize: isCompact ? '14px' : '18px' }}>{d.number}</span>
+                          <span style={{ backgroundColor: podiumColor || themeSecondary, color: '#000', padding: '4px 10px', borderRadius: '4px', fontWeight: '900', fontSize: isCompact ? '14px' : '18px', ...sc(d.number) }}>{d.number}</span>
                         </span>
-                        <span style={{ flex: 1, fontWeight: '900', color: themeNormalText, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{d.name.toUpperCase()}</span>
+                        <span style={{ flex: 1, fontWeight: '900', color: themeNormalText, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}><BrandLogo brand={d.brand} config={config} size={20} style={{ marginRight: '6px' }} />{d.name.toUpperCase()}</span>
                         {!isCompact && <span style={{ width: '120px', textAlign: 'center', color: themeNumberText, fontWeight: 'bold' }}>{d.laps}</span>}
                         <span style={{ width: '180px', textAlign: 'right', color: themeNumberText, fontWeight: 'bold' }}>
                           {d.dsq ? 'DSQ' : d.totalTime}

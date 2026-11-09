@@ -13,6 +13,64 @@
 // Todo es código puro (sin Electron) para poder probarlo con `node --test`.
 
 const MAX_ALERTS = 30;
+
+// ---------------------------------------------------------------------------
+// Marcas de autos (logos en race/public/brands/<slug>.png, índice en src/data/brands.json)
+// ---------------------------------------------------------------------------
+let BRANDS = [];
+try { BRANDS = require('../data/brands.json'); } catch (e) { BRANDS = []; }
+const normalizeWords = (s) => ' ' + String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim() + ' ';
+const EXTRA_ALIASES = {
+  volkswagen: ['vw'], 'mercedes-benz': ['mercedes', 'mb'], chevrolet: ['chevy', 'chev'], 'alfa-romeo': ['alfa'],
+  'land-rover': ['landrover'], 'aston-martin': ['aston'], 'rolls-royce': ['rolls'], citroen: ['citroen'], peugeot: ['peugot']
+};
+// Alias -> slug, de más largo a más corto (para que "alfa romeo" gane sobre "alfa")
+// Las submarcas ("ford-mustang") no se detectan solas: se prefiere la marca madre; se pueden elegir a mano en PILOTOS.
+const BRAND_ALIASES = (() => {
+  const slugs = new Set(BRANDS.map(b => b.slug));
+  const list = [];
+  BRANDS.forEach(b => {
+    if (b.slug.includes('-') && slugs.has(b.slug.split('-')[0])) return;
+    const words = new Set([normalizeWords(b.name).trim(), b.slug.replace(/-/g, ' '), b.slug.replace(/-/g, '')]);
+    words.forEach(w => { if (w) list.push({ alias: w, slug: b.slug, curated: false }); });
+    (EXTRA_ALIASES[b.slug] || []).forEach(a => list.push({ alias: a, slug: b.slug, curated: true }));
+  });
+  return list.sort((a, b) => b.alias.length - a.alias.length);
+})();
+
+// Marca a partir de los textos que informa la fuente (clase, equipo, datos adicionales). Devuelve el slug o ''.
+// Los alias de menos de 3 letras sólo cuentan si son el texto entero (para no confundir "MG" dentro de otra palabra).
+function detectBrand(texts) {
+  for (const raw of (Array.isArray(texts) ? texts : [texts])) {
+    const text = normalizeWords(raw);
+    if (text.trim().length < 2) continue;
+    for (const { alias, slug, curated } of BRAND_ALIASES) {
+      if (alias.length < 3 && !curated ? text.trim() === alias : text.includes(` ${alias} `)) return slug;
+    }
+  }
+  return '';
+}
+const brandExists = (slug) => BRANDS.some(b => b.slug === slug);
+
+// Datos cargados a mano por piloto (pestaña PILOTOS), por número de la fuente
+function normalizeRoster(raw) {
+  const out = {};
+  if (!raw || typeof raw !== 'object') return out;
+  Object.keys(raw).forEach(num => {
+    const r = raw[num];
+    if (!r || typeof r !== 'object') return;
+    const e = {};
+    const clip = (v, n) => String(v === undefined || v === null ? '' : v).replace(/\s+/g, ' ').trim().slice(0, n);
+    if (clip(r.name, 80)) e.name = clip(r.name, 80);
+    if (clip(r.number, 6)) e.number = clip(r.number, 6);
+    if (clip(r.team, 60)) e.team = clip(r.team, 60);
+    if (clip(r.brand, 40) && brandExists(clip(r.brand, 40))) e.brand = clip(r.brand, 40);
+    if (r.manual === true) e.manual = true;
+    const key = clip(num, 12);
+    if (key && (Object.keys(e).length)) out[key] = e;
+  });
+  return out;
+}
 const LEADER_STABLE_TICKS = 2;      // el nuevo líder tiene que repetirse en 2 lecturas seguidas (evita falsas alarmas por un parpadeo)
 const STOP_FACTOR = 2;              // sin pasar por meta durante 2 vueltas típicas => posible abandono
 const STOP_MIN_EXTRA = 45;          // ... y como mínimo una vuelta típica + 45 s
@@ -272,7 +330,7 @@ class RaceAnalyzer {
     const grid = {};
     (drivers || []).filter(d => d && !d.dsq).forEach((d, i) => {
       const p = toInt(d.pos);
-      grid[String(d.number)] = p !== null ? p : i + 1;
+      grid[String(d.srcNumber || d.number)] = p !== null ? p : i + 1;
     });
     this.manualGrid = Object.keys(grid).length ? grid : null;
   }
@@ -481,6 +539,19 @@ class RaceAnalyzer {
       d.isFastest = sessionBest !== null && timeToSeconds(d.bestLap) === sessionBest;
     });
 
+    // --- Datos de la pestaña PILOTOS (lo que la fuente no informa o informa mal) ---
+    // Se aplican después del análisis (que usa el número de la fuente) y antes de las alertas y la salida.
+    const roster = normalizeRoster(opts.roster);
+    drivers.forEach(d => {
+      const src = String(d.number);
+      const r = roster[src] || {};
+      d.srcNumber = src;
+      d.brand = r.brand && brandExists(r.brand) ? r.brand : detectBrand([d.make, ...(Array.isArray(d.extra) ? d.extra : [])]);
+      if (r.team) d.team = r.team;
+      if (r.name && !d.renamed) d.name = r.name;
+      if (r.number) d.number = r.number;
+    });
+
     // --- Alertas ---
     const leader = drivers.find(d => !d.dsq);
     const flag = String(session.flag || '').toLowerCase();
@@ -565,6 +636,9 @@ class RaceAnalyzer {
 }
 
 module.exports = {
+  normalizeRoster,
+  detectBrand,
+  brandExists,
   RaceAnalyzer,
   applyCorrections,
   normalizeCorrections,

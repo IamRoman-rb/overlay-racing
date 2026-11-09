@@ -718,7 +718,14 @@ async function scrapeSpeedhive(inputCode) {
                 sector2 || '',
 
               sector3:
-                sector3 || ''
+                sector3 || '',
+
+              // Textos de las columnas de auto / equipo / marca / datos extra: de ahí sale la marca del auto
+              extra: Array.from(row.querySelectorAll('[class*="datatable-cell-"]'))
+                .filter(c => /make|brand|car|vehicle|team|sponsor|additional|chassis|manufacturer|marca|equipo|class/i.test(c.className))
+                .map(c => (c.textContent || '').trim())
+                .filter(Boolean)
+                .slice(0, 8)
             });
           }
         });
@@ -867,9 +874,16 @@ async function scrapeRaceMonitor(inputCode) {
           let gap = row.querySelector('.gapValue')?.textContent.trim() || '-';
 
           if (pos && (name || number)) {
+            // Textos de auto / equipo / marca / datos extra (si la transmisión los muestra): de ahí sale la marca del auto
+            const extra = Array.from(row.querySelectorAll('[class]'))
+              .filter(el => /car|make|brand|vehicle|team|sponsor|additional|chassis|marca|equipo|category/i.test(el.className) && !/racerName/.test(el.className))
+              .map(el => (el.textContent || '').trim())
+              .filter((txt, i, arr) => txt && txt.length < 60 && arr.indexOf(txt) === i)
+              .slice(0, 8);
             data.push({
               pos, number, name, make: category, laps, lastLap, bestLap, totalTime: '-',
-              diff: gap !== '-' && gap !== '' ? gap : diff
+              diff: gap !== '-' && gap !== '' ? gap : diff,
+              extra
             });
           }
         });

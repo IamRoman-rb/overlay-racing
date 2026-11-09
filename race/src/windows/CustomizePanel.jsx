@@ -7,6 +7,7 @@ import { COVER_PRODUCER_PREFIX, COVER_CATEGORY_PREFIX, COVER_TIME_PREFIX, COVER_
 import { EXTRA_FONTS, fontCssValue, GOOGLE_FONTS_URL } from '../utils/fonts';
 import { resolvePath, pathOf, elementAtPoint, elementTree } from '../utils/layoutEdit';
 import ElementStylePanel from './ElementStylePanel';
+import { PanelSectionsEditor } from './PanelSectionsEditor';
 
 // Número que se confirma con Enter o al salir del campo (no en cada tecla: evita redimensionar a medio escribir).
 // Vacío = vuelve al valor original. `key` fuerza a mostrar el valor guardado cuando cambia desde afuera.
@@ -47,6 +48,28 @@ function ScaleInput({ value, onChange, style }) {
     />
   );
 }
+
+// Formatos de las gráficas del análisis de carrera (config.<id>Format); además se suman los skins comunes
+const RACE_GRAPHIC_FORMATS = {
+  sectors: [['standard', 'Clásico (Sectores con Barras)'], ['compact', 'Compacto (Una Fila por Piloto)'], ['big', 'Sectores Grandes (Tiempos Protagonistas)'], ['minimal', 'Minimalista (Sin Caja)']],
+  gapChart: [['standard', 'Clásico (Gráfico Vuelta a Vuelta)'], ['duel', 'Duelo (Pilotos Enfrentados + Mini Gráfico)'], ['compact', 'Compacto (Una Línea, Sin Gráfico)'], ['minimal', 'Minimalista (Sin Caja)']],
+  gainers: [['standard', 'Clásico (Lista)'], ['compact', 'Compacto (Lista Angosta)'], ['cards', 'Tarjetas (En Fila, Número Grande)'], ['both', 'Ganadas y Perdidas (Dos Columnas)'], ['minimal', 'Minimalista (Filas Sueltas)']],
+  qualifying: [['standard', 'Clásico (Diferencias al P1)'], ['times', 'Tiempos Absolutos (Mejor Vuelta de Cada Uno)'], ['compact', 'Compacto (Filas Más Chicas)'], ['minimal', 'Minimalista (Filas Translúcidas)']],
+  trackMap: [['standard', 'Clásico (Con Encabezado)'], ['compact', 'Compacto (Más Chico)'], ['dots', 'Puntos (Autos Sin Número)'], ['minimal', 'Minimalista (Solo el Circuito)']],
+  raceNotice: [['standard', 'Clásico (Tarjeta con Número)'], ['compact', 'Compacto (Una Línea)'], ['banner', 'Banner (Barra de Todo el Ancho)'], ['minimal', 'Minimalista (Sin Caja)']],
+  circuitIntro: [['elite', 'Elite 3D (Circuito en Perspectiva)'], ['flat', 'Elite Plano (Visto desde Arriba)']],
+  circuitRecord: [['elite', 'Elite']],
+  lapCompare: [['standard', 'Clásico (Tiempos + Diferencias)'], ['compact', 'Compacto (Columnas Angostas)'], ['minimal', 'Minimalista (Sin Caja)']],
+  windVectors: [['standard', 'Clásico (Flechas)'], ['dense', 'Denso (Muchas Flechas Chicas)'], ['light', 'Liviano (Líneas Finas)']]
+};
+// Gráficas que sólo existen en estilo Elite (no llevan los skins comunes)
+const ELITE_ONLY = ['circuitIntro', 'circuitRecord'];
+// Gráficas sin los skins comunes (no tienen caja)
+const NO_SKINS = [...ELITE_ONLY, 'windVectors'];
+// Gráficas que pueden mostrar las fotos de los pilotos (config.showPhotos_<id>)
+const PHOTO_GRAPHICS = ['sectors', 'gapChart', 'gainers', 'raceNotice', 'lapCompare'];
+// Gráficas que muestran el logo de la marca del auto
+const BRAND_GRAPHICS = ['tower', 'ticker', 'finalResults', 'qualifying', 'gainers', 'lapCompare'];
 
 const OVERLAY_PRESETS = [[1920, 1080, 'Full HD'], [1280, 720, 'HD'], [3840, 2160, '4K'], [1080, 1920, ''], [1080, 1080, '']];
 
@@ -394,7 +417,7 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
     'grid', 'finalResults', 'winner', 'flags', 'fastestLap', 'driverInfo', 'battle', 'customZocalo',
     'votingQR', 'votingResults', 'lapCounter', 'virtualChamp', 'pitStop', 'startingLights',
     'lapTimesHistory', 'trackAlert', 'penaltyAlert', 'branding', 'evento',
-    'sectors', 'gapChart', 'gainers', 'qualifying', 'trackMap', 'raceNotice'
+    'sectors', 'gapChart', 'gainers', 'qualifying', 'trackMap', 'raceNotice', 'circuitIntro', 'circuitRecord', 'lapCompare', 'windVectors', 'sponsorLive'
   ];
   const allGraphics = GRAPHIC_IDS.map(id => ({ id, label: t(`graphics.${id}`) }));
 
@@ -445,6 +468,8 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
             );
           })}
         </div>
+
+        <PanelSectionsEditor config={config} onConfigChange={onConfigChange} colors={colors} btnStyle={btnStyle} t={t} />
 
         <h3 style={{ color: colors.yellow, marginBottom: '8px' }}>{t('personalizar.overlaySizeTitle')}</h3>
         <p style={{ fontSize: '10px', color: colors.textMuted, lineHeight: '1.5', marginTop: 0, marginBottom: '12px' }}>{t('personalizar.overlaySizeDesc')}</p>
@@ -558,6 +583,7 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
               <option value="minimal">Minimalista (Solo Línea)</option>
               <option value="boxed">Con Marco (Badge + Caja)</option>
               <option value="broadcast">Broadcast (Bloques Bicolor)</option>
+              <option value="elite">Elite (Azul de Transmisión, con Ícono)</option>
               {renderSkinOptions()}
             </select>
           </div>
@@ -762,9 +788,52 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
               <option value="standard">Clásico (Header + Fila)</option>
               <option value="compact">Compacto (Una Línea)</option>
               <option value="spotlight">Spotlight (Tiempo Protagonista)</option>
+              <option value="photo">Con Foto (Piloto + Tiempo)</option>
               <option value="minimal">Minimalista (Sin Caja)</option>
               {renderSkinOptions()}
             </select>
+          </div>
+        )}
+
+        {/* Gráficas del análisis de carrera: formato propio + los skins comunes */}
+        {RACE_GRAPHIC_FORMATS[selectedGraphic] && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', marginBottom: '30px', backgroundColor: '#111', padding: '15px', borderRadius: '8px', border: `1px solid ${colors.border}` }}>
+            <label style={{ fontSize: '10px', color: colors.textMuted, fontWeight: 'bold' }}>{t('personalizar.formatOf', { name: t(`graphics.${selectedGraphic}`) })}</label>
+            <select
+              value={config[`${selectedGraphic}Format`] || (ELITE_ONLY.includes(selectedGraphic) ? 'elite' : 'standard')}
+              onChange={(e) => onConfigChange(`${selectedGraphic}Format`, e.target.value)}
+              style={{ ...inputStyle, padding: '10px', fontSize: '11px', cursor: 'pointer', border: `1px solid ${colors.border}` }}
+            >
+              {RACE_GRAPHIC_FORMATS[selectedGraphic].map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+              {!NO_SKINS.includes(selectedGraphic) && renderSkinOptions()}
+            </select>
+          </div>
+        )}
+
+        {/* Fotos de los pilotos en la gráfica (carpeta de fotos de PERSONALIZAR) */}
+        {PHOTO_GRAPHICS.includes(selectedGraphic) && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginBottom: '30px', backgroundColor: '#111', padding: '15px', borderRadius: '8px', border: `1px solid ${colors.border}` }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '11px', fontWeight: 'bold', color: colors.textMain, cursor: 'pointer' }}>
+              <input type="checkbox" checked={config[`showPhotos_${selectedGraphic}`] === true} onChange={(e) => onConfigChange(`showPhotos_${selectedGraphic}`, e.target.checked)} style={{ cursor: 'pointer' }} />
+              {t('personalizar.showPhotos')}
+            </label>
+            {!config.photosPath && <span style={{ fontSize: '10px', color: '#e67e22' }}>{t('personalizar.showPhotosNoFolder')}</span>}
+          </div>
+        )}
+
+        {/* Logos de las marcas de los autos (los toma de la fuente o de la pestaña PILOTOS) */}
+        {BRAND_GRAPHICS.includes(selectedGraphic) && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '30px', backgroundColor: '#111', padding: '15px', borderRadius: '8px', border: `1px solid ${colors.border}` }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '11px', fontWeight: 'bold', color: colors.textMain, cursor: 'pointer' }}>
+              <input type="checkbox" checked={config.showBrandLogos !== false} onChange={(e) => onConfigChange('showBrandLogos', e.target.checked)} style={{ cursor: 'pointer' }} />
+              {t('personalizar.showBrandLogos')}
+            </label>
+            <select value={config.brandLogoStyle === 'color' ? 'color' : 'white'} onChange={(e) => onConfigChange('brandLogoStyle', e.target.value)} disabled={config.showBrandLogos === false}
+              style={{ ...inputStyle, padding: '8px', fontSize: '11px', cursor: 'pointer', border: `1px solid ${colors.border}` }}>
+              <option value="white">{t('personalizar.brandLogoWhite')}</option>
+              <option value="color">{t('personalizar.brandLogoColor')}</option>
+            </select>
+            <span style={{ fontSize: '10px', color: colors.textMuted }}>{t('personalizar.brandLogosHint')}</span>
           </div>
         )}
 
@@ -798,6 +867,8 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
               <option value="compact">Compacto (Solo Ícono y Temp.)</option>
               <option value="vertical">Vertical (Columna Angosta)</option>
               <option value="minimal">Minimalista (Sin Caja)</option>
+              <option value="elite">Elite (Caja "El Clima en…")</option>
+              <option value="eliteBar">Elite Barra (Horizontal)</option>
               {renderSkinOptions()}
             </select>
           </div>
@@ -832,6 +903,7 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
               <option value="compact">Compacta (Sin Tendencia ni Tiempo)</option>
               <option value="podium">Podio (Colores Oro/Plata/Bronce)</option>
               <option value="minimal">Minimalista (Filas Cebra, Sin Header)</option>
+              <option value="elite">Elite (Torre Angosta, Código de 4 Letras)</option>
               {renderSkinOptions()}
             </select>
             <label style={{ fontSize: '10px', color: colors.textMuted, fontWeight: 'bold', marginTop: '15px' }}>{t('personalizar.towerBlurLabel')}</label>
@@ -878,6 +950,7 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
               <option value="horizontal">Horizontal (Lado a Lado / WEC)</option>
               <option value="compact">Compacta (Filas Angostas)</option>
               <option value="duel">Duelo (1 vs 1 con "VS")</option>
+              <option value="photoDuel">Duelo con Fotos (Pilotos Enfrentados)</option>
               <option value="minimal">Minimalista (Sin Caja)</option>
               {renderSkinOptions()}
             </select>

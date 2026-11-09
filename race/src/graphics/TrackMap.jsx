@@ -1,9 +1,8 @@
 import { useMemo } from 'react';
-import { getGraphicFrame, useLiveClock, secondsSinceCross, getClassColor } from '../utils/raceVisuals';
-import { buildTrack, pointOnTrack } from '../utils/trackPath';
+import { getGraphicFrame, getFormatStyles, useLiveClock, secondsSinceCross, getClassColor, useImageAspect } from '../utils/raceVisuals';
+import { buildTrack, pointOnTrack, DEFAULT_ASPECT } from '../utils/trackPath';
 import CategoryTag from '../components/CategoryTag';
 
-const W = 420;
 
 // Número en negro sobre colores claros y en blanco sobre oscuros
 function textOn(color) {
@@ -17,12 +16,27 @@ function textOn(color) {
 // MAPA DEL CIRCUITO EN VIVO: cada auto se ubica sobre el trazado según el tiempo desde su última pasada por meta y su
 // vuelta típica. Es una estimación (no hay GPS): los que llevan demasiado sin pasar (boxes / detenidos) no se dibujan.
 // El trazado marcado en la pestaña CIRCUITO se suaviza y se encuadra para ocupar todo el recuadro.
+// Formatos (PERSONALIZAR): standard | compact (más chico) | dots (autos sin número) | minimal (sin caja ni encabezado) | skins.
 export default function TrackMap({ drivers, config, isVisible, sessionInfo, id = 'trackMap' }) {
-  const { wrapperStyle, bRad, customBg, theme } = getGraphicFrame(config, id, isVisible, { x: 1460, y: 610, scale: 1 });
-  const track = useMemo(() => buildTrack(config?.trackPath, { width: W, fit: true }), [config?.trackPath]);
+  const { wrapperStyle, bRad, customBg, theme: baseTheme } = getGraphicFrame(config, id, isVisible, { x: 1460, y: 610, scale: 1 });
+  const format = config?.trackMapFormat || 'standard';
+  const f = getFormatStyles(format, { theme: baseTheme, customBg, bRad });
+  const theme = f.theme;
+  const dots = format === 'dots';
+  const compact = format === 'compact';
+  const W = compact ? 300 : 420;
+  const k = compact ? 0.75 : 1; // grosor de la pista
+  const trackPath = config?.trackPath;
+  // Los puntos están en % de la imagen del circuito (o de un lienzo 3:2 si no hay imagen): hace falta su proporción real
+  const trackImage = config?.trackImage || null;
+  const imageAspect = useImageAspect(trackImage);
+  const aspect = trackImage ? imageAspect : DEFAULT_ASPECT;
+  const track = useMemo(() => (aspect ? buildTrack(trackPath, { width: compact ? 300 : 420, fit: true, maxHeight: compact ? 240 : 340, minHeight: compact ? 130 : 170, pad: compact ? 16 : 22, aspect }) : null), [trackPath, compact, aspect]);
   const clock = useLiveClock(!!isVisible && !!track, drivers, 120);
-  const showImage = config?.trackMapShowImage !== false && !!config?.trackImage;
+  // Por defecto el mapa se dibuja sólo con los puntos del trazado; la imagen de fondo es opcional
+  const showImage = config?.trackMapShowImage === true && !!config?.trackImage;
   const classes = sessionInfo?.classes || [];
+  const lineColor = /^#[0-9a-f]{6}$/i.test(config?.trackMapLineColor || '') ? config.trackMapLineColor : '#2ecc71';
   const H = track ? track.height : 200;
 
   const cars = [];
@@ -43,24 +57,23 @@ export default function TrackMap({ drivers, config, isVisible, sessionInfo, id =
 
   return (
     <div style={wrapperStyle}>
-      <div style={{
-        width: `${W}px`, boxSizing: 'border-box', borderRadius: bRad, overflow: 'hidden',
-        backgroundColor: customBg ? 'transparent' : theme.bg,
-        backgroundImage: customBg ? `url(${customBg})` : 'none', backgroundSize: '100% 100%',
-        borderTop: customBg ? 'none' : `4px solid ${theme.main}`, boxShadow: '0 10px 30px rgba(0,0,0,0.6)'
-      }}>
-        <div style={{ padding: '8px 14px', backgroundColor: customBg ? 'transparent' : theme.headerBg, color: theme.title, fontWeight: 900, fontSize: '12px', letterSpacing: '2px', display: 'flex', justifyContent: 'space-between' }}>
+      <div style={{ ...f.box, width: `${W}px` }}>
+        <div style={{ display: f.minimal ? 'none' : 'flex', padding: f.compact ? '6px 10px' : '8px 14px', backgroundColor: f.headerBg, borderBottom: f.headerBorder, color: theme.title, fontWeight: 900, fontSize: f.compact ? '10px' : '12px', letterSpacing: '2px', justifyContent: 'space-between' }}>
           <span>EN PISTA<CategoryTag config={config} id={id} /></span>
           <span style={{ color: theme.number }}>{cars.length ? `${cars.length} AUTOS` : ''}</span>
         </div>
         <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} style={{ display: 'block' }}>
           {track && showImage && (
-            <image href={config.trackImage} x={track.image.x} y={track.image.y} width={track.image.w} height={track.image.h} preserveAspectRatio="xMidYMid meet" opacity="0.35" />
+            <image href={config.trackImage} x={track.image.x} y={track.image.y} width={track.image.w} height={track.image.h} preserveAspectRatio="none" opacity="0.95" />
           )}
           {track && (
             <g>
-              <path d={track.d} fill="none" stroke="rgba(0,0,0,0.55)" strokeWidth="13" strokeLinejoin="round" strokeLinecap="round" />
-              <path d={track.d} fill="none" stroke="#e9e9e9" strokeWidth="6.5" strokeLinejoin="round" strokeLinecap="round" />
+              {/* Sin imagen de fondo se dibuja la pista (asfalto con bordes claros); con imagen, la pista es la de la foto */}
+              {!showImage && <path d={track.d} fill="none" stroke="#9a9a9a" strokeWidth={17 * k} strokeLinejoin="round" strokeLinecap="round" />}
+              {!showImage && <path d={track.d} fill="none" stroke="#3b3b3b" strokeWidth={13 * k} strokeLinejoin="round" strokeLinecap="round" />}
+              {/* Trazado: la misma línea verde que se ve al dibujarlo en la pestaña CIRCUITO */}
+              <path d={track.d} fill="none" stroke="rgba(0,0,0,0.6)" strokeWidth={6 * k} strokeLinejoin="round" strokeLinecap="round" />
+              <path d={track.d} fill="none" stroke={lineColor} strokeWidth={3.2 * k} strokeLinejoin="round" strokeLinecap="round" />
               {/* Línea de largada / llegada, perpendicular a la pista */}
               <g transform={`translate(${track.start.x.toFixed(1)} ${track.start.y.toFixed(1)}) rotate(${(track.start.angle + 90).toFixed(1)})`}>
                 <rect x="-9" y="-2" width="18" height="4" fill="#ffffff" stroke="#000" strokeWidth="0.8" />
@@ -75,12 +88,12 @@ export default function TrackMap({ drivers, config, isVisible, sessionInfo, id =
             const num = String(d.number);
             return (
               <g key={num} transform={`translate(${p.x.toFixed(1)} ${p.y.toFixed(1)})`}>
-                <circle r={leader ? 9.5 : 8} fill={color} stroke="#000" strokeWidth="1.6" />
-                <text y="3.2" textAnchor="middle" fontSize={num.length > 2 ? 7 : 9} fontWeight="900" fill={textOn(color)}>{num}</text>
+                <circle r={dots ? (leader ? 6 : 4.5) : (f.compact ? (leader ? 7.5 : 6.5) : (leader ? 9.5 : 8))} fill={color} stroke="#000" strokeWidth={dots ? 1.2 : 1.6} />
+                {!dots && <text y={f.compact ? 2.6 : 3.2} textAnchor="middle" fontSize={f.compact ? (num.length > 2 ? 5.5 : 7) : (num.length > 2 ? 7 : 9)} fontWeight="900" fill={textOn(color)}>{num}</text>}
               </g>
             );
           })}
-          {!track && <text x={W / 2} y={H / 2} textAnchor="middle" fill={theme.number} fontSize="13">Dibujá el trazado en la pestaña CIRCUITO</text>}
+          {!track && aspect && <text x={W / 2} y={H / 2} textAnchor="middle" fill={theme.number} fontSize="13">Dibujá el trazado en la pestaña CIRCUITO</text>}
         </svg>
       </div>
     </div>

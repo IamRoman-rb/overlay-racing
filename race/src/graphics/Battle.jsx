@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from 'react';
 import { getSkinStyle } from '../utils/skinStyles';
 import { getAnimDuration, getRollClip } from '../utils/animationTiming';
 import CategoryTag from '../components/CategoryTag';
+import DriverPhoto from '../components/DriverPhoto';
+import { useSuitColors } from '../utils/suitColor';
 
 // Componente que mide si el texto entra en su contenedor.
 // Si entra: texto quieto. Si no entra: desliza en loop (marquee) para mostrarlo completo.
@@ -57,6 +59,9 @@ function ScrollingName({ text, style, containerStyle }) {
 
 export default function Battle({ drivers, config, isVisible, battleFocusPos = 1, id = 'battle' }) {
   const pos = config?.positions?.[id] || { x: 50, y: 150, scale: 1 };
+  // Color del número tomado del traje (foto del piloto), si está activado en PILOTOS
+  const suit = useSuitColors(drivers, config);
+  const sc = (n) => (suit[String(n)] ? { backgroundColor: suit[String(n)].bg, color: suit[String(n)].text } : {});
   const themeBg = config?.themeBg || 'rgba(0, 0, 0, 0.85)';
   const themeMain = config?.themeMain || '#e74c3c';
   const themeSecondary = config?.themeSecondary || '#3498db';
@@ -74,6 +79,7 @@ export default function Battle({ drivers, config, isVisible, battleFocusPos = 1,
   const isCompact = battleFormat === 'compact';
   const isDuel = battleFormat === 'duel';
   const isMinimal = battleFormat === 'minimal';
+  const isPhotoDuel = battleFormat === 'photoDuel';
   const skin = getSkinStyle(battleFormat, { themeMain, themeAccent });
 
   const containerWidth = isHorizontal ? '880px' : (isCompact ? '360px' : '460px');
@@ -87,7 +93,7 @@ export default function Battle({ drivers, config, isVisible, battleFocusPos = 1,
 
   const targetPos = parseInt(battleFocusPos) || 1;
   const startIndex = Math.max(0, drivers.findIndex(d => parseInt(d.pos) === targetPos));
-  const battleDrivers = drivers.slice(startIndex, startIndex + (isDuel ? 2 : 3));
+  const battleDrivers = drivers.slice(startIndex, startIndex + (isDuel || isPhotoDuel ? 2 : 3));
 
   if (battleDrivers.length === 0) return null;
 
@@ -100,6 +106,38 @@ export default function Battle({ drivers, config, isVisible, battleFocusPos = 1,
     pointerEvents: 'none'
   };
 
+  // FORMATO DUELO CON FOTOS: los dos pilotos con su foto, enfrentados, y la diferencia en el medio
+  if (isPhotoDuel) {
+    const [a, b] = battleDrivers;
+    const gapText = b ? (b.diff || b.gap || '-') : '-';
+    const side = (d, align) => d && (
+      <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+        <div style={{ height: '150px', display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
+          <DriverPhoto number={d.number} config={config} height={150} maxWidth={200} fade />
+        </div>
+        <div style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: align === 'left' ? 'flex-start' : 'flex-end', flexDirection: align === 'left' ? 'row' : 'row-reverse', padding: '8px 12px', boxSizing: 'border-box', backgroundColor: themeBg }}>
+          <span style={{ color: themeAccent, fontWeight: '900', fontSize: '24px', margin: '0 8px' }}>P{d.pos}</span>
+          <span style={{ backgroundColor: themeSecondary, color: '#000', fontWeight: '900', fontSize: '15px', padding: '2px 8px', borderRadius: '3px', ...sc(d.number) }}>{d.number}</span>
+          <span style={{ color: themeNormalText, fontWeight: '900', fontSize: '17px', textTransform: 'uppercase', margin: '0 10px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{d.name}</span>
+        </div>
+      </div>
+    );
+    return (
+      <div style={{ ...wrapperStyle, width: '640px' }}>
+        <div style={{ backgroundColor: themeMain, color: '#fff', textAlign: 'center', fontWeight: '900', fontStyle: 'italic', fontSize: '16px', letterSpacing: '1px', padding: '6px', borderRadius: `${bRad} ${bRad} 0 0` }}>
+          BATALLA POR LA POSICIÓN {a?.pos}<CategoryTag config={config} id={id} />
+        </div>
+        <div style={{ display: 'flex', alignItems: 'flex-end', position: 'relative', borderRadius: `0 0 ${bRad} ${bRad}`, overflow: 'hidden', background: `linear-gradient(180deg, transparent 0%, ${themeBg} 100%)` }}>
+          {side(a, 'left')}
+          {side(b, 'right')}
+          <div style={{ position: 'absolute', left: '50%', bottom: '44px', transform: 'translateX(-50%)', backgroundColor: themeMain, color: '#fff', fontWeight: '900', fontSize: '20px', padding: '6px 14px', borderRadius: '6px', boxShadow: '0 6px 18px rgba(0,0,0,0.5)', whiteSpace: 'nowrap' }}>
+            {gapText}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   // FORMATO DUELO: 1 vs 1 cara a cara, con "VS" al centro
   if (isDuel) {
     const [a, b] = battleDrivers;
@@ -109,7 +147,7 @@ export default function Battle({ drivers, config, isVisible, battleFocusPos = 1,
         backgroundColor: customBg ? 'transparent' : themeBg, minWidth: 0
       }}>
         <span style={{ color: themeAccent, fontWeight: '900', fontSize: '32px', lineHeight: 1 }}>P{d.pos}</span>
-        <span style={{ backgroundColor: themeSecondary, color: '#000', fontWeight: '900', fontSize: '16px', padding: '2px 10px', borderRadius: '4px' }}>{d.number}</span>
+        <span style={{ backgroundColor: themeSecondary, color: '#000', fontWeight: '900', fontSize: '16px', padding: '2px 10px', borderRadius: '4px', ...sc(d.number) }}>{d.number}</span>
         <ScrollingName
           text={d.name}
           containerStyle={{ maxWidth: '100%', textAlign: 'center' }}
@@ -237,7 +275,7 @@ export default function Battle({ drivers, config, isVisible, battleFocusPos = 1,
                   />
                 </div>
                 <div style={{ display: 'flex', height: '32px' }}>
-                  <div style={{ width: '35px', flexShrink: 0, backgroundColor: themeSecondary, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: '900', fontSize: '16px' }}>
+                  <div style={{ width: '35px', flexShrink: 0, backgroundColor: themeSecondary, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: '900', fontSize: '16px', ...sc(d.number) }}>
                     {d.number}
                   </div>
                   <div style={{ flex: 1, backgroundColor: 'rgba(46, 204, 113, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#2ecc71', fontWeight: '900', fontSize: '19px', letterSpacing: '1px' }}>
@@ -248,7 +286,7 @@ export default function Battle({ drivers, config, isVisible, battleFocusPos = 1,
             ) : (
               <>
                 <span style={{ width: isCompact ? '24px' : '30px', flexShrink: 0, color: themeAccent, fontWeight: '900', fontSize: isCompact ? '15px' : '20px' }}>{d.pos}</span>
-                <span style={{ flexShrink: 0, backgroundColor: themeSecondary, color: themeBg, padding: isCompact ? '1px 6px' : '2px 8px', borderRadius: '4px', fontWeight: '900', fontSize: isCompact ? '12px' : '16px', marginRight: isCompact ? '8px' : '12px' }}>{d.number}</span>
+                <span style={{ flexShrink: 0, backgroundColor: themeSecondary, color: themeBg, padding: isCompact ? '1px 6px' : '2px 8px', borderRadius: '4px', fontWeight: '900', fontSize: isCompact ? '12px' : '16px', marginRight: isCompact ? '8px' : '12px', ...sc(d.number) }}>{d.number}</span>
                 <ScrollingName
                   text={d.name}
                   containerStyle={{ flex: 1, minWidth: 0, paddingRight: '10px' }}

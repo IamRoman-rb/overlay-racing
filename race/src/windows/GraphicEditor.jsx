@@ -11,7 +11,7 @@ const EDITABLE_GRAPHICS = [
   'grid', 'finalResults', 'winner', 'flags', 'fastestLap', 'driverInfo', 'battle', 'customZocalo',
   'votingQR', 'votingResults', 'lapCounter', 'virtualChamp', 'pitStop', 'startingLights',
   'lapTimesHistory', 'trackAlert', 'penaltyAlert', 'branding', 'evento',
-    'sectors', 'gapChart', 'gainers', 'qualifying', 'trackMap', 'raceNotice'
+    'sectors', 'gapChart', 'gainers', 'qualifying', 'trackMap', 'raceNotice', 'circuitIntro', 'circuitRecord', 'lapCompare', 'windVectors', 'sponsorLive'
 ];
 
 const SNAP_THRESHOLD = 8; // px del escenario (el lienzo del overlay)
@@ -459,7 +459,7 @@ export default function GraphicEditor({ config, positions, drivers, sessionInfo,
               </style>
 
               <div style={{ position: 'absolute', left: 0, top: 0, width: `${CW}px`, height: `${CH}px`, pointerEvents: 'none', zIndex: 10 }}>
-                <GraphicPreview noCover id={selected} config={previewConfig} positions={positions} drivers={drivers} sessionInfo={sessionInfo} />
+                <GraphicPreview noCover noSponsors id={selected} config={previewConfig} positions={positions} drivers={drivers} sessionInfo={sessionInfo} />
               </div>
 
               {showGuides && (

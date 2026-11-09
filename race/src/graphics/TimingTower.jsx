@@ -3,6 +3,9 @@ import { getSkinStyle } from '../utils/skinStyles';
 import Icon from '../components/Icon';
 import { getAnimDuration, getRollClip } from '../utils/animationTiming';
 import { getClassColor, ARROW_COLORS, getCategory } from '../utils/raceVisuals';
+import { getElitePalette, ELITE_FONT, rgba, numberColor, textOnColor, surnameCode } from '../utils/elite';
+import BrandLogo from '../components/BrandLogo';
+import { useSuitColors } from '../utils/suitColor';
 
 const PODIUM_COLORS = { 1: '#ffd700', 2: '#c0c0c0', 3: '#cd7f32' };
 
@@ -16,6 +19,9 @@ export default function TimingTower({ drivers, config, isVisible, id = 'tower', 
   const pos = config?.positions?.[id] || { x: 20, y: 20, scale: 1 };
 
   const prevDriversRef = useRef({});
+  // Color del número tomado del traje (foto del piloto), si está activado en PILOTOS
+  const suit = useSuitColors(drivers, config);
+  const sc = (n) => (suit[String(n)] ? { backgroundColor: suit[String(n)].bg, color: suit[String(n)].text } : {});
   const [trends, setTrends] = useState({});
 
   const themeBg = config?.themeBg || 'rgba(0, 0, 0, 0.85)';
@@ -83,6 +89,57 @@ export default function TimingTower({ drivers, config, isVisible, id = 'tower', 
     drivers.forEach(d => currentDriversMap[d.name] = d);
     prevDriversRef.current = currentDriversMap;
   }, [drivers]);
+
+  // FORMATO ELITE (paquete azul de transmisión): torre angosta con código de 4 letras y número de color por auto
+  if (towerFormat === 'elite') {
+    const pal = getElitePalette(config);
+    const flagRaw = String(sessionInfo?.flag || '').toLowerCase();
+    const flagColor = /red|roja/.test(flagRaw) ? '#e8183f' : /yellow|amarill/.test(flagRaw) ? '#ffd60a' : /checker|finish/.test(flagRaw) ? '#ffffff' : '#2fd17f';
+    const sessionLabel = sessionInfo?.qualifying ? 'CLASIFICACIÓN' : (sessionInfo?.name ? String(sessionInfo.name).split(/\s+[-–—]\s+/).pop() : 'CARRERA');
+    const ROW = 25;
+    return (
+      <div style={{
+        position: 'absolute', left: `${pos.x}px`, top: `${pos.y}px`, transformOrigin: 'top left', zIndex: 10,
+        transition: `all ${animDur}s cubic-bezier(0.175, 0.885, 0.32, 1.275)`,
+        opacity: isVisible || animStyle === 'roll' ? 1 : 0,
+        transform: isVisible || animStyle === 'roll' ? `scale(${pos.scale}) translateX(0)` : transformHidden, ...getRollClip(animStyle, isVisible),
+        pointerEvents: isVisible ? 'auto' : 'none', fontFamily: ELITE_FONT, color: pal.text, textTransform: 'uppercase'
+      }}>
+        <div style={{ width: '186px', background: pal.background, borderRadius: bRad, overflow: 'hidden', boxShadow: '0 10px 28px rgba(0,0,0,0.5)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '34px', backgroundColor: '#0b0b0b', padding: '0 8px' }}>
+            {config?.categoryLogo
+              ? <img src={config.categoryLogo} alt="" style={{ maxHeight: '28px', maxWidth: '170px', objectFit: 'contain' }} />
+              : <span style={{ fontSize: '15px', fontWeight: 700, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{headerCategory || sessionInfo?.name || ''}</span>}
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', padding: '4px 6px', backgroundColor: rgba(pal.deep, 0.6) }}>
+            <span style={{ width: '14px', height: '30px', backgroundColor: flagColor, borderRadius: '2px', marginRight: '7px', flexShrink: 0 }} />
+            <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.1, minWidth: 0 }}>
+              <span style={{ fontSize: '13px', fontWeight: 700, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{classFilter || sessionLabel}</span>
+              <span style={{ fontSize: '13px', fontWeight: 600, color: pal.muted }}>{sessionInfo?.totalTime || '-'}</span>
+            </div>
+          </div>
+          {shownDrivers.map((d, idx) => {
+            const nb = numberColor(d.number);
+            const isLeader = idx === 0;
+            const gap = isLeader ? (sessionInfo?.qualifying ? (d.bestLap || '-') : 'LÍDER') : (d.diff && d.diff !== '-' ? d.diff : (d.gap || '-'));
+            const clsColor = multiclass && d.cls ? getClassColor(config, d.cls, classes) : null;
+            return (
+              <div key={d.number || d.name} style={{ display: 'flex', alignItems: 'center', height: `${ROW}px`, borderTop: idx === 10 ? `2px solid ${rgba('#ffffff', 0.5)}` : `1px solid ${rgba('#ffffff', 0.06)}`, boxShadow: clsColor ? `inset 3px 0 0 ${clsColor}` : 'none' }}>
+                <span style={{ width: '20px', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: pal.accent, color: textOnColor(pal.accent), fontSize: '12px', fontWeight: 800 }}>{classFilter ? (d.classPos || d.pos) : d.pos}</span>
+                <span style={{ width: '34px', margin: '0 6px', textAlign: 'center', backgroundColor: nb, color: textOnColor(nb), fontSize: '13px', fontWeight: 800, lineHeight: '18px', ...sc(d.number) }}>{d.number}</span>
+                <span style={{ flex: 1, fontSize: '15px', fontWeight: 700, letterSpacing: '0.5px' }}>{surnameCode(d.name)}</span>
+                <span style={{ width: '24px', display: 'flex', justifyContent: 'center' }}><BrandLogo brand={d.brand} config={config} size={14} /></span>
+                <span style={{ fontSize: '13px', fontWeight: 600, paddingRight: '7px', fontFamily: ELITE_FONT }}>{d.dsq ? 'DSQ' : gap}</span>
+              </div>
+            );
+          })}
+          <div style={{ display: config?.logo ? 'flex' : 'none', justifyContent: 'center', padding: '5px 0', backgroundColor: rgba(pal.deep, 0.6) }}>
+            {config?.logo && <img src={config.logo} alt="" style={{ maxHeight: '22px', maxWidth: '150px', objectFit: 'contain' }} />}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const renderTrend = (trend) => {
     if (trend === 'up') return <span style={{ color: '#2ecc71', fontSize: '16px', lineHeight: 1 }}><Icon name="arrow_drop_up" size="1.4em" /></span>;
@@ -180,8 +237,8 @@ export default function TimingTower({ drivers, config, isVisible, id = 'tower', 
           }}>
             <span style={{ width: '25px', color: podiumColor || themeAccent, fontWeight: 'bold' }}>{classFilter ? (driver.classPos || driver.pos) : driver.pos}</span>
             {!isCompact && <span style={{ width: '15px', display: 'flex', justifyContent: 'center' }}>{renderTrend(trends[driver.name])}</span>}
-            <div style={{ backgroundColor: podiumColor || themeSecondary, color: '#000', fontWeight: '900', fontSize: isCompact || isMinimal ? '11px' : '12px', width: isCompact || isMinimal ? '22px' : '26px', height: isCompact || isMinimal ? '16px' : '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '2px', marginRight: '8px', marginLeft: '6px' }}>{driver.number}</div>
-            <span style={{ flex: 1, color: themeNormalText, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{driver.name}</span>
+            <div style={{ backgroundColor: podiumColor || themeSecondary, color: '#000', fontWeight: '900', fontSize: isCompact || isMinimal ? '11px' : '12px', width: isCompact || isMinimal ? '22px' : '26px', height: isCompact || isMinimal ? '16px' : '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '2px', marginRight: '8px', marginLeft: '6px', ...sc(driver.number) }}>{driver.number}</div>
+            <span style={{ flex: 1, color: themeNormalText, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}><BrandLogo brand={driver.brand} config={config} size={16} style={{ marginRight: '6px' }} />{driver.name}</span>
             {!isCompact && <span style={{ width: '65px', textAlign: 'right', color: themeNumberText, fontSize: '14px', fontWeight: 'bold' }}>{driver.lastLap}</span>}
             <span style={{ display: gain ? 'inline' : 'none', width: '34px', textAlign: 'right', fontSize: '12px', fontWeight: 900, color: gain > 0 ? ARROW_COLORS.up : ARROW_COLORS.down, whiteSpace: 'nowrap' }}>
               {gain > 0 ? `▲${gain}` : `▼${-gain}`}

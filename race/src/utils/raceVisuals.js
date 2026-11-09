@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { getAnimDuration, getRollClip } from './animationTiming';
+import { getSkinStyle } from './skinStyles';
 
 // Colores de clase por defecto (multiclase). Se pueden cambiar uno por uno en el panel (config.classColors).
 export const CLASS_PALETTE = ['#e74c3c', '#3498db', '#2ecc71', '#f1c40f', '#9b59b6', '#e67e22', '#1abc9c', '#ecf0f1'];
@@ -112,6 +113,23 @@ export function useLiveClock(active, data, intervalMs = 200) {
   return { now: Math.max(now, stamp.at), receivedAt: stamp.at };
 }
 
+// Proporción real (ancho / alto) de una imagen, o null mientras carga. Se usa para que los puntos del trazado (marcados en %
+// de la imagen) caigan en el mismo lugar en la pestaña CIRCUITO y en el mapa al aire.
+export function useImageAspect(src) {
+  const [state, setState] = useState({ src: null, aspect: null });
+  useEffect(() => {
+    if (!src) return undefined;
+    let alive = true;
+    const img = new Image();
+    img.onload = () => {
+      if (alive && img.naturalWidth > 0 && img.naturalHeight > 0) setState({ src, aspect: img.naturalWidth / img.naturalHeight });
+    };
+    img.src = src;
+    return () => { alive = false; };
+  }, [src]);
+  return src && state.src === src ? state.aspect : null;
+}
+
 // Segundos desde la última pasada por meta, sumando lo que pasó desde que llegaron los datos
 export function secondsSinceCross(driver, clock) {
   if (!driver || !driver.lapProgress) return null;
@@ -119,6 +137,40 @@ export function secondsSinceCross(driver, clock) {
 }
 
 export const ARROW_COLORS = { up: '#2ecc71', down: '#e74c3c', same: '#7f8c8d' };
+
+// Caja de las gráficas nuevas según el formato elegido en PERSONALIZAR: 'standard' | 'compact' | 'minimal' (sin caja)
+// o uno de los skins comunes ('pro', 'gradient', 'glass'). Devuelve el estilo de la caja, el del encabezado y la sombra
+// de texto que corresponde (en minimalista el texto va flotando sobre el video).
+export function getFormatStyles(format, { theme, customBg, bRad }) {
+  const skin = getSkinStyle(format, { themeMain: theme.main, themeAccent: theme.accent });
+  const minimal = format === 'minimal';
+  const bare = minimal || !!customBg;
+  // Degradé: el fondo es el color principal -> acento, así que los textos en esos colores se pierden; van en blanco
+  const textTheme = format === 'gradient' && !customBg
+    ? { ...theme, title: '#ffffff', accent: '#ffffff', number: 'rgba(255,255,255,0.88)' }
+    : theme;
+  // Sobre el degradé, sombra marcada en todo el texto (se hereda) para que los colores de sectores / estados se lean
+  const strongShadow = format === 'gradient' && !customBg ? '0 1px 2px rgba(0,0,0,0.95), 0 0 5px rgba(0,0,0,0.75)' : null;
+  return {
+    theme: textTheme,
+    skin,
+    minimal,
+    compact: format === 'compact',
+    box: {
+      boxSizing: 'border-box', borderRadius: bRad, overflow: 'hidden',
+      backgroundColor: bare ? 'transparent' : (skin ? skin.background : theme.bg),
+      backgroundImage: customBg ? `url(${customBg})` : (skin?.backgroundImage || 'none'), backgroundSize: '100% 100%',
+      border: skin && !customBg ? skin.border : 'none',
+      borderTop: skin && !customBg ? skin.border : (bare ? 'none' : `4px solid ${theme.main}`),
+      boxShadow: bare ? 'none' : (skin ? skin.boxShadow : '0 10px 30px rgba(0,0,0,0.6)'),
+      backdropFilter: skin && !customBg ? skin.backdropFilter : undefined,
+      textShadow: strongShadow || undefined
+    },
+    headerBg: bare || skin ? 'transparent' : theme.headerBg,
+    headerBorder: skin && !bare ? `1px solid ${skin.border !== 'none' ? theme.accent : 'rgba(255,255,255,0.25)'}` : 'none',
+    textShadow: strongShadow || (minimal ? '2px 2px 6px rgba(0,0,0,0.9)' : (skin?.textShadow || 'none'))
+  };
+}
 
 // Marco común de las gráficas nuevas: posición, escala, colores del tema y transición de entrada configurables en PERSONALIZAR
 export function getGraphicFrame(config, id, isVisible, defaults = { x: 100, y: 100, scale: 1 }, zIndex = 40) {

@@ -20,11 +20,13 @@ export const translations = {
       hide: 'OCULTAR'
     },
     tabs: {
+      pilotos: 'PILOTOS', sponsors: 'SPONSORS',
       panel: 'PANEL', campeonato: 'CAMPEONATO', votaciones: 'VOTACIONES', sanciones: 'SANCIONES',
       cloud: 'CLOUD', zocalos: 'ZÓCALOS', disenos: 'DISEÑOS', circuito: 'CIRCUITO',
       ajustes: 'AJUSTES', personalizar: 'PERSONALIZAR', editor: 'EDITOR', manual: 'MANUAL', atajos: 'ATAJOS'
     },
     graphics: {
+      lapCompare: 'ÚLTIMAS VUELTAS', windVectors: 'VECTORES DE VIENTO', sponsorLive: 'SPONSOR AL AIRE',
       relator: 'RELATOR', comentarista: 'COMENTARISTA', notero1: 'NOTERO 1', notero2: 'NOTERO 2',
       circuito: 'CIRCUITO', clima: 'CLIMA', ticker: 'TIRA INFERIOR', tower: 'TORRE POSICIONES',
       grid: 'GRILLA PARTIDA', finalResults: 'RESULTADOS FINALES', winner: 'GANADOR',
@@ -36,7 +38,7 @@ export const translations = {
       trackAlert: 'ALERTA EN CURVA', penaltyAlert: 'SANCIÓN / INVESTIGACIÓN',
       branding: 'LOGOS PRODUCTORA Y CATEGORÍA',
       evento: 'EVENTO',
-      sectors: 'SECTORES', gapChart: 'BRECHA', gainers: 'REMONTADAS', qualifying: 'CLASIFICACIÓN', trackMap: 'MAPA EN VIVO', raceNotice: 'AVISO DE CARRERA'
+      sectors: 'SECTORES', gapChart: 'BRECHA', gainers: 'REMONTADAS', qualifying: 'CLASIFICACIÓN', trackMap: 'MAPA EN VIVO', raceNotice: 'AVISO DE CARRERA', circuitIntro: 'PRESENTACIÓN CIRCUITO', circuitRecord: 'RÉCORD DEL CIRCUITO'
     },
     editor: {
       categoryTitle: 'NOMBRE DE LA CATEGORÍA', showCategory: 'Mostrar el nombre de la categoría en esta gráfica',
@@ -71,6 +73,7 @@ export const translations = {
       rights: 'Todos los derechos reservados.', registered: 'Obra registrada en la Dirección Nacional del Derecho de Autor · Registro {registry}'
     },
     panel: {
+      windVectorsTitle: 'Flechas de viento en toda la pantalla, con la dirección y la fuerza del clima cargado', introModeTitle: 'Cómo se muestra el circuito en la presentación', introModeStatic: 'Circuito completo', introModeTour: 'Vuelta en primera persona', introModeCurves: 'Curva por curva', introTourSec: 'SEG. POR VUELTA',
       battleRecommended: 'Batalla más cercana:', battleRecommendedInfo: '{front} vs {back} · intervalo {gap} s',
       battleNone: 'Sin batallas cercanas por ahora.', battleAuto: 'Elegir la posición automáticamente (mientras no está al aire)', battleUse: 'USAR BATALLA RECOMENDADA (POS {pos})',
       flagGreen: 'VERDE',
@@ -197,6 +200,26 @@ export const translations = {
       textPlaceholder: 'Escribe la información...',
       removeFromAir: '🔴 QUITAR DEL AIRE', putOnAir: '▶ PONER EN EL AIRE'
     },
+    pilotos: {
+      title: 'PILOTOS', description: 'Completá o corregí lo que el cronometraje no informa: el número a mostrar, el nombre, la marca del auto y el equipo. Se guarda por el número que manda la fuente y se aplica a todas las gráficas. También podés cargar pilotos antes de que aparezcan.',
+      newNumber: 'N° de la fuente', addBtn: 'AGREGAR PILOTO', empty: 'Todavía no hay pilotos: cargá datos de la carrera o agregalos a mano.',
+      colPhoto: 'FOTO', colSource: 'N° FUENTE', colNumber: 'N° A MOSTRAR', colName: 'NOMBRE', colBrand: 'MARCA', colTeam: 'EQUIPO',
+      notInData: 'no está en los datos', namePlaceholder: 'Nombre', detected: 'detectada', brandPlaceholder: 'Elegí la marca', brandUnknown: 'No se encontró la marca "{name}". Elegila de la lista.',
+      teamPlaceholder: 'Equipo', removeTitle: 'Borrar los datos cargados a mano', confirmRemove: '¿Borrar los datos cargados para el #{n}?',
+      footer: 'Los cambios se aplican en vivo. Si dejás un campo vacío se usa lo que informa el cronometraje.',
+      suitColors: 'Color del número según el traje de la foto', suitColorsHint: 'Toma el color dominante del traje en la foto de cada piloto y lo usa de fondo del número en todas las gráficas.', suitColorsNoFolder: 'Elegí la carpeta de fotos de los pilotos en PERSONALIZAR para usar esta opción.'
+    },
+    sponsors: {
+      title: 'SPONSORS', description: 'Cargá los logos o videos de los sponsors. Podés sacarlos al aire solos o rotando, y pegarlos a cualquier gráfica: aparecen y se van junto con ella.',
+      library: 'BIBLIOTECA', addBtn: 'AGREGAR IMÁGENES O VIDEOS', rotateAll: 'ROTAR TODOS AL AIRE', stopRotate: 'DETENER ROTACIÓN', offAir: 'SACAR DEL AIRE', onAir: 'AL AIRE',
+      empty: 'No hay sponsors cargados.', confirmRemove: '¿Borrar el sponsor "{name}"? Se quita también de las gráficas.',
+      liveFormat: 'FORMATO AL AIRE', formatCard: 'Recuadro con fondo', formatClean: 'Solo el logo', formatFull: 'Pantalla completa (spots)', liveWidth: 'ANCHO', rotateSec: 'SEG. POR SPONSOR',
+      liveHint: 'La posición y el tamaño del sponsor al aire se ajustan en PERSONALIZAR (SPONSOR AL AIRE).',
+      inGraphics: 'SPONSORS EN LAS GRÁFICAS', whichOnes: 'Sponsors en esta gráfica (rotan si hay varios)', width: 'ANCHO', height: 'ALTO', everySec: 'CADA (S)',
+      quickPlace: 'UBICACIÓN RÁPIDA', place_above: 'ARRIBA', place_below: 'ABAJO', place_left: 'IZQUIERDA', place_right: 'DERECHA',
+      clearGraphic: 'QUITAR SPONSORS DE ESTA GRÁFICA', dragHint: 'Arrastrá el recuadro amarillo para moverlo y tirá de la esquina para cambiar el tamaño.',
+      oldDesigns: 'DISEÑOS CARGADOS ANTES (CLIC PARA QUITAR)'
+    },
     disenos: {
       title: 'DISEÑOS DE GRÁFICAS (PNG/SVG)',
       description: 'Carga imágenes con transparencia para reemplazar la caja clásica de colores por tu propio diseño.',
@@ -226,6 +249,11 @@ export const translations = {
       alertPositionsReset: '✅ Se restablecieron todas las posiciones al layout preconfigurado.'
     },
     personalizar: {
+      showPhotos: 'Mostrar fotos de los pilotos', showPhotosNoFolder: 'Elegí la carpeta de fotos de los pilotos (más abajo) para que aparezcan.', showBrandLogos: 'Mostrar logos de las marcas de los autos', brandLogoWhite: 'Logos en blanco (un solo color)', brandLogoColor: 'Logos a color (originales)', brandLogosHint: 'La marca se detecta de los datos del cronometraje o se elige a mano en la pestaña PILOTOS. Vale para todas las gráficas.',
+      panelSectionsTitle: 'SECCIONES DEL PANEL', panelSectionsDesc: 'Arrastrá las secciones (o usá las flechas) para ordenar los botones de la pestaña PANEL a tu gusto. Destildá las que no uses para ocultarlas.',
+      moveUp: 'Subir', moveDown: 'Bajar', sectionVisible: 'Mostrar en el PANEL', panelSectionsReset: '↺ RESTABLECER ORDEN Y SECCIONES',
+      eliteTitle: 'ESTILO ELITE', eliteDesc: 'Colores del paquete azul de transmisión: presentación y récord del circuito, y los formatos Elite de torre, clima y zócalos.',
+      eliteBase: 'Base', eliteAccent: 'Acento', eliteRed: 'Rojo', eliteReset: '↺ COLORES ELITE ORIGINALES',
       selectGraphic: 'SELECCIONAR GRÁFICA', multiSelectHint: 'Ctrl + clic para sumar gráficas y verlas juntas en la previsualización. Un clic sin Ctrl vuelve a ver una sola.', themeConfig: 'CONFIGURACIÓN VISUAL (TEMA)',
       colorBorder: 'BORDES / LÍNEAS', colorSecondary: 'CAJAS / SECUNDARIO', colorAccent: 'ACENTO / POSICIÓN',
       colorBg: 'FONDO GENERAL', colorHeaderBg: 'FONDO ENCABEZADOS', colorTitleText: 'TEXTO TÍTULOS',
@@ -290,6 +318,7 @@ export const translations = {
       act: { trackAlertEmit: 'Alerta de curva: emitir', trackAlertHide: 'Alerta de curva: ocultar', penaltyHide: 'Sanción: ocultar', lightsStart: 'Semáforo: iniciar / dar salida', lightsHide: 'Semáforo: ocultar', gridPrev: 'Grilla: anterior', gridNext: 'Grilla: siguiente', finalPrev: 'Resultados finales: página anterior', finalNext: 'Resultados finales: página siguiente', zocalo: 'Zócalo {n}' }
     },
     race: {
+      lapCompareTitle: 'Últimas vueltas de los dos pilotos elegidos arriba: tiempos del primero y diferencia del segundo', lapCompareLaps: 'VUELTAS',
       categorySection: 'CATEGORÍA, CLASES Y GRILLA', categoryLabel: 'NOMBRE DE LA CATEGORÍA', categoryPlaceholder: 'Escribí la categoría',
       categoryAuto: 'Completado con lo que informa la fuente de cronometraje. Podés cambiarlo.',
       categoryManual: 'Escrito a mano: no se reemplaza con lo que informe la fuente.',
@@ -342,9 +371,28 @@ export const translations = {
     },
     circuito: {
       modeCurves: 'CURVAS', modePath: 'TRAZADO (MAPA EN VIVO)',
+      modeSectors: 'SECTORES', modeData: 'DATOS',
+      sectorsInstructions: 'Hacé clic sobre la pista donde termina cada sector (el S1 arranca en la largada). Cada sector se pinta con el color que usa la presentación del circuito.',
+      sectorRemove: 'Quitar este corte', sectorsNeedLength: 'Cargá la extensión del circuito en DATOS para ver el largo de cada sector en metros.', sectorsClear: 'BORRAR SECTORES',
+      dataInstructions: 'Datos para la presentación y el récord del circuito. El sentido de giro y las curvas a izquierda / derecha salen solos del trazado.',
+      dataEventTitle: 'TÍTULO DEL EVENTO (FRANJA SUPERIOR)', dataName: 'NOMBRE DEL CIRCUITO', dataCity: 'UBICACIÓN', dataLength: 'EXTENSIÓN (METROS)',
+      dataDirection: 'SENTIDO DE GIRO', dirAuto: 'Automático ({dir})', dirCw: 'HORARIO', dirCcw: 'ANTIHORARIO',
+      dataRecordTitle: 'RÉCORD DEL CIRCUITO', dataRecordTime: 'TIEMPO', dataRecordSpeed: 'VELOCIDAD (KM/H)', dataRecordDate: 'FECHA', dataRecordEvent: 'SESIÓN / EVENTO',
+      dataRecordDriver: 'PILOTO', dataRecordNumber: 'NÚMERO', dataRecordTeam: 'EQUIPO',
+      dataPhotoHint: 'La foto del piloto sale de la carpeta de fotos de PERSONALIZAR (archivo con su número, por ejemplo 7.png).',
       pathInstructions: 'Hacé click siguiendo el recorrido del circuito, en el sentido de marcha, empezando en la línea de largada (punto verde). Arrastrá un punto para moverlo; click derecho para borrarlo. El trazado se cierra solo.',
       pathPoints: '{n} puntos (mínimo 3)', pathUndo: 'DESHACER', pathClear: 'BORRAR TRAZADO',
-      confirmClearPath: '¿Borrar todo el trazado del mapa en vivo?', mapShowImage: 'Mostrar la imagen del circuito de fondo en el mapa en vivo',
+      confirmClearPath: '¿Borrar todo el trazado del mapa en vivo?', mapShowImage: 'Mostrar también la imagen de fondo en el mapa en vivo (por defecto se dibuja sólo con el trazado)',
+      suggestBtn: 'SUGERIR TRAZADO DESDE LA IMAGEN', suggesting: 'Buscando el circuito en la imagen…',
+      suggestOkAlpha: 'Se detectó el circuito en la imagen sin fondo: {n} puntos sugeridos.',
+      suggestOkColor: 'Se detectó el circuito separándolo del fondo por color: {n} puntos sugeridos. Revisalos por si tomó algo de más.',
+      suggestOkContour: 'No se encontró la línea central de la pista y se usó su contorno: {n} puntos sugeridos. Revisalos y ajustalos.',
+      suggestFail: 'No se pudo encontrar el circuito en la imagen: marcá los puntos a mano. Funciona mejor con un PNG sin fondo.',
+      suggestReviewHint: 'Revisá que el punto verde (largada) esté en la línea de llegada y que la flecha marque el sentido de carrera.',
+      confirmReplacePath: '¿Reemplazar el trazado actual por el que se detecte en la imagen?',
+      pickStartBtn: 'ELEGIR LARGADA', pickStartHint: 'Hacé clic sobre el punto donde está la línea de largada.', reverseBtn: 'INVERTIR SENTIDO',
+      curvesOnPathHint: 'Las curvas se marcan sobre la pista dibujada con el trazado: hacé clic cerca de la pista y el marcador se ubica solo sobre la línea.',
+      curvesNeedPath: 'Primero armá el trazado (modo TRAZADO): las curvas se marcan sobre él y la alerta en curva se dibuja con la pista, sin depender de la imagen.', mapLineColor: 'Color de la línea del trazado en el mapa en vivo',
       pathStart: 'Línea de largada', pathPointTitle: 'Punto {n} (click derecho para borrar)',
       confirmRemoveMap: '¿Seguro que querés quitar el mapa del circuito? Se perderán las curvas marcadas.',
       title: 'MAPA DEL CIRCUITO', loadImageBtn: '📷 CARGAR IMAGEN',
@@ -388,11 +436,13 @@ export const translations = {
       hide: 'HIDE'
     },
     tabs: {
+      pilotos: 'DRIVERS', sponsors: 'SPONSORS',
       panel: 'PANEL', campeonato: 'STANDINGS', votaciones: 'VOTING', sanciones: 'PENALTIES',
       cloud: 'CLOUD', zocalos: 'LOWER THIRDS', disenos: 'DESIGNS', circuito: 'TRACK',
       ajustes: 'SETTINGS', personalizar: 'CUSTOMIZE', editor: 'EDITOR', manual: 'MANUAL', atajos: 'SHORTCUTS'
     },
     graphics: {
+      lapCompare: 'LAST LAPS', windVectors: 'WIND VECTORS', sponsorLive: 'SPONSOR ON AIR',
       relator: 'COMMENTATOR', comentarista: 'CO-COMMENTATOR', notero1: 'REPORTER 1', notero2: 'REPORTER 2',
       circuito: 'TRACK', clima: 'WEATHER', ticker: 'BOTTOM TICKER', tower: 'POSITION TOWER',
       grid: 'STARTING GRID', finalResults: 'FINAL RESULTS', winner: 'WINNER',
@@ -404,7 +454,7 @@ export const translations = {
       trackAlert: 'CORNER ALERT', penaltyAlert: 'PENALTY / INVESTIGATION',
       branding: 'PRODUCER & CATEGORY LOGOS',
       evento: 'EVENT',
-      sectors: 'SECTORS', gapChart: 'GAP', gainers: 'BIGGEST GAINERS', qualifying: 'QUALIFYING', trackMap: 'LIVE MAP', raceNotice: 'RACE NOTICE'
+      sectors: 'SECTORS', gapChart: 'GAP', gainers: 'BIGGEST GAINERS', qualifying: 'QUALIFYING', trackMap: 'LIVE MAP', raceNotice: 'RACE NOTICE', circuitIntro: 'CIRCUIT INTRO', circuitRecord: 'CIRCUIT RECORD'
     },
     editor: {
       categoryTitle: 'CATEGORY NAME', showCategory: 'Show the category name on this graphic',
@@ -439,6 +489,7 @@ export const translations = {
       rights: 'All rights reserved.', registered: 'Work registered with Argentina’s National Copyright Office (DNDA) · Registration {registry}'
     },
     panel: {
+      windVectorsTitle: 'Full-screen wind arrows using the direction and strength of the loaded weather', introModeTitle: 'How the track is shown in the intro', introModeStatic: 'Whole track', introModeTour: 'First-person lap', introModeCurves: 'Corner by corner', introTourSec: 'SEC. PER LAP',
       battleRecommended: 'Closest battle:', battleRecommendedInfo: '{front} vs {back} · gap {gap} s',
       battleNone: 'No close battles right now.', battleAuto: 'Pick the position automatically (while it is off air)', battleUse: 'USE RECOMMENDED BATTLE (POS {pos})',
       flagGreen: 'GREEN',
@@ -565,6 +616,26 @@ export const translations = {
       textPlaceholder: 'Type the information...',
       removeFromAir: '🔴 TAKE OFF AIR', putOnAir: '▶ PUT ON AIR'
     },
+    pilotos: {
+      title: 'DRIVERS', description: 'Fill in or fix what the timing does not send: the number to show, the name, the car brand and the team. Saved by the number the source sends and applied to every graphic. You can also add drivers before they appear.',
+      newNumber: 'Source #', addBtn: 'ADD DRIVER', empty: 'No drivers yet: load race data or add them by hand.',
+      colPhoto: 'PHOTO', colSource: 'SOURCE #', colNumber: '# TO SHOW', colName: 'NAME', colBrand: 'BRAND', colTeam: 'TEAM',
+      notInData: 'not in the data', namePlaceholder: 'Name', detected: 'detected', brandPlaceholder: 'Choose the brand', brandUnknown: 'Brand "{name}" not found. Pick it from the list.',
+      teamPlaceholder: 'Team', removeTitle: 'Delete the data entered by hand', confirmRemove: 'Delete the data entered for #{n}?',
+      footer: 'Changes apply live. An empty field uses what the timing sends.',
+      suitColors: 'Number color from the suit in the photo', suitColorsHint: 'Takes the dominant suit color from each driver photo and uses it as the number background in every graphic.', suitColorsNoFolder: 'Choose the driver photos folder in CUSTOMIZE to use this option.'
+    },
+    sponsors: {
+      title: 'SPONSORS', description: 'Load the sponsor logos or videos. Put them on air alone or rotating, and attach them to any graphic: they show and hide with it.',
+      library: 'LIBRARY', addBtn: 'ADD IMAGES OR VIDEOS', rotateAll: 'ROTATE ALL ON AIR', stopRotate: 'STOP ROTATION', offAir: 'TAKE OFF AIR', onAir: 'ON AIR',
+      empty: 'No sponsors loaded.', confirmRemove: 'Delete sponsor "{name}"? It is also removed from the graphics.',
+      liveFormat: 'ON-AIR FORMAT', formatCard: 'Box with background', formatClean: 'Logo only', formatFull: 'Full screen (spots)', liveWidth: 'WIDTH', rotateSec: 'SEC. PER SPONSOR',
+      liveHint: 'The on-air sponsor position and size are set in CUSTOMIZE (SPONSOR ON AIR).',
+      inGraphics: 'SPONSORS ON GRAPHICS', whichOnes: 'Sponsors on this graphic (they rotate if several)', width: 'WIDTH', height: 'HEIGHT', everySec: 'EVERY (S)',
+      quickPlace: 'QUICK PLACEMENT', place_above: 'ABOVE', place_below: 'BELOW', place_left: 'LEFT', place_right: 'RIGHT',
+      clearGraphic: 'REMOVE SPONSORS FROM THIS GRAPHIC', dragHint: 'Drag the yellow box to move it and pull the corner to resize.',
+      oldDesigns: 'DESIGNS LOADED BEFORE (CLICK TO REMOVE)'
+    },
     disenos: {
       title: 'GRAPHIC DESIGNS (PNG/SVG)',
       description: 'Upload images with transparency to replace the classic color box with your own design.',
@@ -594,6 +665,11 @@ export const translations = {
       alertPositionsReset: '✅ All positions were reset to the preset layout.'
     },
     personalizar: {
+      showPhotos: 'Show driver photos', showPhotosNoFolder: 'Choose the driver photos folder (below) so they appear.', showBrandLogos: 'Show car brand logos', brandLogoWhite: 'White logos (single color)', brandLogoColor: 'Color logos (original)', brandLogosHint: 'The brand is detected from the timing data or chosen by hand in the DRIVERS tab. Applies to every graphic.',
+      panelSectionsTitle: 'PANEL SECTIONS', panelSectionsDesc: 'Drag the sections (or use the arrows) to order the PANEL tab buttons your way. Untick the ones you do not use to hide them.',
+      moveUp: 'Move up', moveDown: 'Move down', sectionVisible: 'Show in the PANEL', panelSectionsReset: '↺ RESET ORDER AND SECTIONS',
+      eliteTitle: 'ELITE STYLE', eliteDesc: 'Colors of the blue broadcast package: circuit intro and record, and the Elite formats of the tower, weather and lower thirds.',
+      eliteBase: 'Base', eliteAccent: 'Accent', eliteRed: 'Red', eliteReset: '↺ ORIGINAL ELITE COLORS',
       selectGraphic: 'SELECT GRAPHIC', multiSelectHint: 'Ctrl + click to add graphics and see them together in the preview. A click without Ctrl goes back to a single one.', themeConfig: 'VISUAL SETTINGS (THEME)',
       colorBorder: 'BORDERS / LINES', colorSecondary: 'BOXES / SECONDARY', colorAccent: 'ACCENT / POSITION',
       colorBg: 'GENERAL BACKGROUND', colorHeaderBg: 'HEADER BACKGROUND', colorTitleText: 'TITLE TEXT',
@@ -658,6 +734,7 @@ export const translations = {
       act: { trackAlertEmit: 'Track alert: show', trackAlertHide: 'Track alert: hide', penaltyHide: 'Penalty: hide', lightsStart: 'Lights: start / go', lightsHide: 'Lights: hide', gridPrev: 'Grid: previous', gridNext: 'Grid: next', finalPrev: 'Final results: previous page', finalNext: 'Final results: next page', zocalo: 'Lower third {n}' }
     },
     race: {
+      lapCompareTitle: 'Last laps of the two drivers selected above: times of the first and difference of the second', lapCompareLaps: 'LAPS',
       categorySection: 'CATEGORY, CLASSES AND GRID', categoryLabel: 'CATEGORY NAME', categoryPlaceholder: 'Type the category',
       categoryAuto: 'Filled in from the timing source. You can change it.',
       categoryManual: 'Typed by hand: the timing source will not replace it.',
@@ -710,9 +787,28 @@ export const translations = {
     },
     circuito: {
       modeCurves: 'CORNERS', modePath: 'TRACK LINE (LIVE MAP)',
+      modeSectors: 'SECTORS', modeData: 'DATA',
+      sectorsInstructions: 'Click on the track where each sector ends (S1 starts at the start/finish line). Each sector is painted with the color used by the circuit intro.',
+      sectorRemove: 'Remove this split', sectorsNeedLength: 'Enter the circuit length in DATA to see each sector length in meters.', sectorsClear: 'CLEAR SECTORS',
+      dataInstructions: 'Data for the circuit intro and record. The direction and left / right corners come from the track line automatically.',
+      dataEventTitle: 'EVENT TITLE (TOP STRIP)', dataName: 'CIRCUIT NAME', dataCity: 'LOCATION', dataLength: 'LENGTH (METERS)',
+      dataDirection: 'DIRECTION', dirAuto: 'Automatic ({dir})', dirCw: 'CLOCKWISE', dirCcw: 'ANTI-CLOCKWISE',
+      dataRecordTitle: 'CIRCUIT RECORD', dataRecordTime: 'TIME', dataRecordSpeed: 'SPEED (KM/H)', dataRecordDate: 'DATE', dataRecordEvent: 'SESSION / EVENT',
+      dataRecordDriver: 'DRIVER', dataRecordNumber: 'NUMBER', dataRecordTeam: 'TEAM',
+      dataPhotoHint: 'The driver photo comes from the photos folder set in CUSTOMIZE (a file named with the number, e.g. 7.png).',
       pathInstructions: 'Click along the circuit in the direction of travel, starting at the start/finish line (green dot). Drag a point to move it; right-click to delete it. The line closes automatically.',
       pathPoints: '{n} points (minimum 3)', pathUndo: 'UNDO', pathClear: 'CLEAR LINE',
-      confirmClearPath: 'Delete the whole live map track line?', mapShowImage: 'Show the circuit image behind the live map',
+      confirmClearPath: 'Delete the whole live map track line?', mapShowImage: 'Also show the background image on the live map (by default it is drawn only from the track line)',
+      suggestBtn: 'SUGGEST TRACK LINE FROM IMAGE', suggesting: 'Looking for the circuit in the image…',
+      suggestOkAlpha: 'The circuit was detected in the transparent image: {n} points suggested.',
+      suggestOkColor: 'The circuit was detected by separating it from the background color: {n} points suggested. Check them in case something extra was picked up.',
+      suggestOkContour: 'The track centerline was not found and its outline was used: {n} points suggested. Check and adjust them.',
+      suggestFail: 'The circuit could not be found in the image: mark the points by hand. It works best with a transparent PNG.',
+      suggestReviewHint: 'Check that the green point (start) is on the finish line and the arrow shows the racing direction.',
+      confirmReplacePath: 'Replace the current track line with the one detected in the image?',
+      pickStartBtn: 'PICK START', pickStartHint: 'Click the point where the start/finish line is.', reverseBtn: 'REVERSE DIRECTION',
+      curvesOnPathHint: 'Corners are marked on the track drawn from the track line: click near the track and the marker snaps onto it.',
+      curvesNeedPath: 'First build the track line (TRACK LINE mode): corners are marked on it and the corner alert is drawn from the track, without depending on the image.', mapLineColor: 'Track line color on the live map',
       pathStart: 'Start/finish line', pathPointTitle: 'Point {n} (right-click to delete)',
       confirmRemoveMap: 'Are you sure you want to remove the track map? The marked corners will be lost.',
       title: 'TRACK MAP', loadImageBtn: '📷 LOAD IMAGE',

@@ -8,7 +8,7 @@
     "dev": "vite --config race/vite.config.js",
     "build": "vite build --config race/vite.config.js",
     "lint": "eslint .",
-    "test": "node --test football/test/*.test.cjs race/test/*.test.cjs",
+    "test": "node --test football/test/*.test.cjs race/test/*.test.cjs race/test/*.test.mjs",
     "preview": "vite preview --config race/vite.config.js",
     "electron:dev": "wait-on http://localhost:5173 && electron .",
     "start": "concurrently -k \"npm run dev\" \"npm run football:dev\" \"npm run electron:dev\"",

@@ -43,13 +43,13 @@
   "borderRadius_lapCounter": "0px",
   "timingProvider": "racemonitor",
   "weatherData": {
-    "temp": 17.9,
-    "windSpeed": 4,
-    "windDir": 36,
-    "weathercode": 3,
-    "feelsLike": 16.6,
-    "humidity": 53,
-    "precipProb": 31,
+    "temp": 25.1,
+    "windSpeed": 11.7,
+    "windDir": 29,
+    "weathercode": 0,
+    "feelsLike": 25,
+    "humidity": 33,
+    "precipProb": 0,
     "place": null
   },
   "trackImage": "data:image/png;base64,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",
@@ -57,44 +57,51 @@
     {
       "id": "curve_1788874432815",
       "name": "Curva 1",
-      "x": 24.335610079059297,
-      "y": 7.112648981161092
+      "x": 12.67,
+      "y": 2.91,
+      "t": 0.4169
     },
     {
       "id": "curve_1788874433991",
       "name": "Curva 2",
-      "x": 45.17843468042604,
-      "y": 20.850954760989364
+      "x": 43.53,
+      "y": 18.47,
+      "t": 0.5253
     },
     {
       "id": "curve_1788874435070",
       "name": "Curva 3",
-      "x": 52.12604288088162,
-      "y": 15.109573241061131
+      "x": 66.5,
+      "y": 17.99,
+      "t": 0.5979
     },
     {
       "id": "curve_1788874436369",
       "name": "Curva 4",
-      "x": 67.95747796060827,
-      "y": 32.128668460848395
+      "x": 83.4,
+      "y": 36.14,
+      "t": 0.6782
     },
     {
       "id": "curve_1788874437421",
       "name": "Curva 5",
-      "x": 76.04403832507296,
-      "y": 52.223503780597206
+      "x": 94.54,
+      "y": 52.76,
+      "t": 0.7438
     },
     {
       "id": "curve_1788874438653",
       "name": "Curva 6",
-      "x": 58.39027978293173,
-      "y": 51.19825708061002
+      "x": 65.58,
+      "y": 54.82,
+      "t": 0.8416
     },
     {
       "id": "curve_1788874439485",
       "name": "Curva 7",
-      "x": 76.27182875787479,
-      "y": 95.28386518005895
+      "x": 92.35,
+      "y": 93.88,
+      "t": 0.992
     }
   ],
   "animationStyle_trackAlert": "zoom",
@@ -257,76 +264,382 @@
   "categoryNameAuto": false,
   "trackPath": [
     {
-      "x": 67,
-      "y": 97.2
+      "x": 60.1,
+      "y": 74
     },
     {
-      "x": 26.3,
-      "y": 18.7
+      "x": 57.1,
+      "y": 71.5
     },
     {
-      "x": 32,
-      "y": 3.4
+      "x": 54.1,
+      "y": 68.9
     },
     {
-      "x": 47.5,
-      "y": 21
+      "x": 51.2,
+      "y": 66.3
     },
     {
-      "x": 51.3,
-      "y": 14.7
+      "x": 48.3,
+      "y": 63.4
     },
     {
-      "x": 65,
-      "y": 26
+      "x": 45.4,
+      "y": 60.8
+    },
+    {
+      "x": 42.4,
+      "y": 58.3
+    },
+    {
+      "x": 39.4,
+      "y": 55.7
+    },
+    {
+      "x": 36.6,
+      "y": 52.8
+    },
+    {
+      "x": 33.6,
+      "y": 50.2
+    },
+    {
+      "x": 30.7,
+      "y": 47.7
+    },
+    {
+      "x": 27.7,
+      "y": 45.1
+    },
+    {
+      "x": 24.7,
+      "y": 42.5
+    },
+    {
+      "x": 21.9,
+      "y": 39.6
+    },
+    {
+      "x": 18.9,
+      "y": 37
+    },
+    {
+      "x": 15.9,
+      "y": 34.5
+    },
+    {
+      "x": 13,
+      "y": 31.9
+    },
+    {
+      "x": 10.1,
+      "y": 29.1
+    },
+    {
+      "x": 7.2,
+      "y": 26.4
+    },
+    {
+      "x": 4.3,
+      "y": 23.8
+    },
+    {
+      "x": 2.7,
+      "y": 20.3
+    },
+    {
+      "x": 2.2,
+      "y": 16.4
+    },
+    {
+      "x": 2.2,
+      "y": 12.2
+    },
+    {
+      "x": 3.3,
+      "y": 8.5
+    },
+    {
+      "x": 5.8,
+      "y": 5.4
+    },
+    {
+      "x": 8.7,
+      "y": 2.9
+    },
+    {
+      "x": 12.5,
+      "y": 2.3
+    },
+    {
+      "x": 16.5,
+      "y": 2.3
+    },
+    {
+      "x": 20.2,
+      "y": 2.9
+    },
+    {
+      "x": 23.8,
+      "y": 3.9
+    },
+    {
+      "x": 26.9,
+      "y": 6
+    },
+    {
+      "x": 29.8,
+      "y": 9
+    },
+    {
+      "x": 32.7,
+      "y": 11.6
+    },
+    {
+      "x": 35.7,
+      "y": 14.1
+    },
+    {
+      "x": 38.7,
+      "y": 16.7
+    },
+    {
+      "x": 41.6,
+      "y": 19.2
+    },
+    {
+      "x": 45.3,
+      "y": 20
+    },
+    {
+      "x": 48.7,
+      "y": 18.5
+    },
+    {
+      "x": 51.1,
+      "y": 15.4
+    },
+    {
+      "x": 54.5,
+      "y": 14.9
+    },
+    {
+      "x": 58.2,
+      "y": 15.4
+    },
+    {
+      "x": 61.7,
+      "y": 16.6
     },
     {
       "x": 65.3,
-      "y": 36
-    },
-    {
-      "x": 72.3,
-      "y": 47.5
-    },
-    {
-      "x": 70.9,
-      "y": 56.8
-    },
-    {
-      "x": 60,
-      "y": 49.3
-    },
-    {
-      "x": 57.3,
-      "y": 51.3
-    },
-    {
-      "x": 56.8,
-      "y": 57.1
-    },
-    {
-      "x": 57.8,
-      "y": 60.6
-    },
-    {
-      "x": 70.5,
-      "y": 84.6
-    },
-    {
-      "x": 71.4,
-      "y": 89.2
-    },
-    {
-      "x": 71.4,
-      "y": 92.7
-    },
-    {
-      "x": 70.3,
-      "y": 96.2
+      "y": 17.7
     },
     {
       "x": 68.9,
-      "y": 98.2
+      "y": 18.7
+    },
+    {
+      "x": 72.5,
+      "y": 19.6
+    },
+    {
+      "x": 75.9,
+      "y": 21
+    },
+    {
+      "x": 79.2,
+      "y": 22.7
+    },
+    {
+      "x": 81,
+      "y": 26.1
+    },
+    {
+      "x": 81,
+      "y": 30.3
+    },
+    {
+      "x": 81.9,
+      "y": 34.1
+    },
+    {
+      "x": 83.2,
+      "y": 37.7
+    },
+    {
+      "x": 86,
+      "y": 40.6
+    },
+    {
+      "x": 89.3,
+      "y": 42.3
+    },
+    {
+      "x": 92.7,
+      "y": 44
+    },
+    {
+      "x": 95.7,
+      "y": 46.3
+    },
+    {
+      "x": 97.3,
+      "y": 49.8
+    },
+    {
+      "x": 96.3,
+      "y": 53.6
+    },
+    {
+      "x": 93,
+      "y": 55.4
+    },
+    {
+      "x": 89.3,
+      "y": 54.9
+    },
+    {
+      "x": 85.8,
+      "y": 53.7
+    },
+    {
+      "x": 82.2,
+      "y": 52.6
+    },
+    {
+      "x": 78.7,
+      "y": 51.4
+    },
+    {
+      "x": 75.2,
+      "y": 50.3
+    },
+    {
+      "x": 71.5,
+      "y": 49.5
+    },
+    {
+      "x": 67.9,
+      "y": 49.7
+    },
+    {
+      "x": 64.8,
+      "y": 51.9
+    },
+    {
+      "x": 64.1,
+      "y": 55.8
+    },
+    {
+      "x": 65.3,
+      "y": 59.5
+    },
+    {
+      "x": 68.1,
+      "y": 62.5
+    },
+    {
+      "x": 71.1,
+      "y": 65
+    },
+    {
+      "x": 73.9,
+      "y": 68
+    },
+    {
+      "x": 76.9,
+      "y": 70.5
+    },
+    {
+      "x": 79.8,
+      "y": 73.1
+    },
+    {
+      "x": 82.8,
+      "y": 75.6
+    },
+    {
+      "x": 85.8,
+      "y": 78.2
+    },
+    {
+      "x": 88.6,
+      "y": 81.1
+    },
+    {
+      "x": 91.6,
+      "y": 83.7
+    },
+    {
+      "x": 94,
+      "y": 86.8
+    },
+    {
+      "x": 95.1,
+      "y": 90.5
+    },
+    {
+      "x": 94.1,
+      "y": 94.3
+    },
+    {
+      "x": 90.8,
+      "y": 97.1
+    },
+    {
+      "x": 86.8,
+      "y": 97.1
+    },
+    {
+      "x": 83.5,
+      "y": 95.3
+    },
+    {
+      "x": 80.6,
+      "y": 92.6
+    },
+    {
+      "x": 77.8,
+      "y": 89.8
+    },
+    {
+      "x": 74.8,
+      "y": 87.2
+    },
+    {
+      "x": 71.8,
+      "y": 84.6
+    },
+    {
+      "x": 68.8,
+      "y": 82.1
+    },
+    {
+      "x": 65.9,
+      "y": 79.4
+    },
+    {
+      "x": 63,
+      "y": 76.6
     }
-  ]
+  ],
+  "trackMapShowImage": false,
+  "trackMapFormat": "standard",
+  "eliteBase": null,
+  "eliteAccent": null,
+  "eliteRed": null,
+  "trackSectors": [
+    0.2359,
+    0.3416,
+    0.4424,
+    0.5231,
+    0.5795,
+    0.6532,
+    0.7449,
+    0.8451,
+    0.917
+  ],
+  "circuitCity": "BUENOS AIRES",
+  "circuitLength": "3250"
 }

@@ -5,7 +5,7 @@ const fs = require('fs');
 const path = require('path');
 const { scrapeSpeedhive, scrapeRaceMonitor, getBrowserInfo } = require('./src/scripts/scraper.cjs');
 const { fetchOrbits, disconnectOrbits, getOrbitsStatus } = require('./src/scripts/orbits.cjs');
-const { RaceAnalyzer, normalizeCorrections } = require('./src/scripts/raceData.cjs');
+const { RaceAnalyzer, normalizeCorrections, normalizeRoster } = require('./src/scripts/raceData.cjs');
 const { buildResultsHtml } = require('./src/scripts/resultsPdf.cjs');
 const { networkInterfaces } = require('os');
 const express = require('express');
@@ -74,6 +74,11 @@ const backupPath = path.join(userDataPath, 'last_race.json');
 const lapTimesPath = path.join(userDataPath, 'lap_times.json');
 const votesHistoryPath = path.join(userDataPath, 'votes_history.json');
 const correctionsPath = path.join(userDataPath, 'race_corrections.json');
+const rosterPath = path.join(userDataPath, 'race_drivers.json');
+// Archivos de los sponsors (imágenes y videos) que se cargan en la pestaña SPONSORS
+const sponsorsDir = path.join(userDataPath, 'sponsors');
+const SPONSOR_EXT = { png: 'image', jpg: 'image', jpeg: 'image', svg: 'image', webp: 'image', gif: 'image', mp4: 'video', webm: 'video' };
+const SPONSOR_FILE_RE = /^sp_[a-z0-9]+\.(png|jpe?g|svg|webp|gif|mp4|webm)$/;
 
 // Log a archivo: lo instala el instalador (launcher/logger.cjs); acá sólo se necesita saber dónde queda,
 // para mostrarlo en AJUSTES > DIAGNÓSTICO.
@@ -106,7 +111,12 @@ const defaultPositions = {
   gainers: { x: 1440, y: 470, scale: 1 },
   qualifying: { x: 20, y: 20, scale: 1 },
   trackMap: { x: 1460, y: 610, scale: 1 },
-  raceNotice: { x: 760, y: 820, scale: 1 }
+  raceNotice: { x: 760, y: 820, scale: 1 },
+  circuitIntro: { x: 470, y: 230, scale: 1 },
+  circuitRecord: { x: 1500, y: 700, scale: 1 },
+  lapCompare: { x: 640, y: 880, scale: 1 },
+  windVectors: { x: 0, y: 0, scale: 1 },
+  sponsorLive: { x: 1560, y: 40, scale: 1 }
 };
 
 if (!fs.existsSync(posPath)) fs.writeFileSync(posPath, JSON.stringify(defaultPositions, null, 2));
@@ -233,6 +243,12 @@ function readJsonFile(file, fallback) {
 // Configuración en memoria (la misma que database.json): el analizador necesita el modo multiclase
 let currentConfig = readJsonFile(dbPath, {}) || {};
 let raceCorrections = normalizeCorrections(readJsonFile(correctionsPath, {}));
+// Pestaña PILOTOS: datos por número de la fuente (nombre, número a mostrar, marca, equipo)
+let raceRoster = normalizeRoster(readJsonFile(rosterPath, {}));
+function saveRoster() {
+  try { fs.writeFileSync(rosterPath, JSON.stringify(raceRoster, null, 2)); } catch (e) {}
+  broadcast('update-roster', raceRoster);
+}
 
 function saveCorrections() {
   try { fs.writeFileSync(correctionsPath, JSON.stringify(raceCorrections, null, 2)); } catch (e) {}
@@ -244,6 +260,7 @@ function processLeaderboard(raw, opts = {}) {
   rawLeaderboard = raw && Array.isArray(raw.drivers) ? raw : { session: {}, drivers: [] };
   const { leaderboard, newAlerts } = raceAnalyzer.update(rawLeaderboard, {
     corrections: raceCorrections,
+    roster: raceRoster,
     multiclassMode: currentConfig.multiclassMode || 'auto',
     now: Date.now(),
     reprocess: !!opts.reprocess
@@ -272,7 +289,8 @@ function getGapChartData() {
   const find = (num) => (lastLeaderboard.drivers || []).find(d => String(d.number) === String(num)) || null;
   const front = find(state.front);
   const back = find(state.back);
-  const data = state.front && state.back ? raceAnalyzer.getGapSeries(state.front, state.back) : { series: [], rate: null, lapsToCatch: null, current: null };
+  const srcOf = (d, num) => (d && d.srcNumber) || num;
+  const data = state.front && state.back ? raceAnalyzer.getGapSeries(srcOf(front, state.front), srcOf(back, state.back)) : { series: [], rate: null, lapsToCatch: null, current: null };
   return {
     ...state,
     ...data,
@@ -508,6 +526,8 @@ let broadcastState = {
   penaltyAlert: { isVisible: false, driverNumber: null, driverName: '', type: 'investigation', reason: '' },
   sectors: { isVisible: false, numbers: [] },
   gapChart: { isVisible: false, front: null, back: null },
+  lapCompare: { isVisible: false, a: null, b: null },
+  sponsorLive: { isVisible: false, sponsorId: null, rotate: false },
   raceNotice: { isVisible: false, kind: '', title: '', text: '', number: null }
 };
 
@@ -524,8 +544,24 @@ const io = new Server(server, {
 expressApp.use(express.json());
 
 if (!isDev) {
-  expressApp.use(express.static(path.join(__dirname, 'dist')));
+  // index.html sin caché: después de actualizar el programa, el navegador de vMix / OBS tiene que pedir la página nueva
+  // (los .js y .css llevan un hash en el nombre, así que esos sí se pueden guardar)
+  expressApp.use(express.static(path.join(__dirname, 'dist'), {
+    setHeaders: (res, filePath) => { if (filePath.endsWith('.html')) res.set('Cache-Control', 'no-cache, no-store, must-revalidate'); }
+  }));
 }
+
+// Versión de las gráficas que sirve este programa (nombre del .js principal de dist, que cambia en cada compilación).
+// Un overlay remoto que quedó abierto desde antes de actualizar se reconecta solo por socket, pero sigue ejecutando el
+// código viejo: al recibir este dato y ver que no coincide con el suyo, recarga la página.
+const OVERLAY_BUILD_ID = (() => {
+  if (isDev) return null;
+  try {
+    const html = fs.readFileSync(path.join(__dirname, 'dist', 'index.html'), 'utf-8');
+    const m = html.match(/assets\/(index-[A-Za-z0-9_-]+\.js)/);
+    return m ? m[1] : null;
+  } catch (e) { return null; }
+})();
 
 // Reemplaza únicamente los logos Base64 por URLs locales. Electron sigue recibiendo
 // la configuración original por IPC; los navegadores remotos descargan los logos por HTTP.
@@ -638,9 +674,12 @@ io.on('connection', (socket) => {
   socket.emit('update-track-alert', broadcastState.trackAlert);
   socket.emit('update-penalty', broadcastState.penaltyAlert);
   socket.emit('update-sectors', broadcastState.sectors);
+  socket.emit('update-lap-compare', broadcastState.lapCompare);
+  socket.emit('update-sponsor-live', broadcastState.sponsorLive);
   socket.emit('update-gap-chart', getGapChartData());
   socket.emit('update-race-notice', broadcastState.raceNotice);
   socket.emit('cloud-status', { connected: !!cloudSocket?.connected });
+  if (OVERLAY_BUILD_ID) socket.emit('overlay-build', OVERLAY_BUILD_ID);
   Object.keys(broadcastState.graphics).forEach(id => {
     socket.emit('set-graphic-visibility', { id, visible: broadcastState.graphics[id] });
   });
@@ -712,7 +751,19 @@ expressApp.post('/comisarios/hide', (req, res) => {
   }
 });
 
+// Archivos de los sponsors: sólo los nombres que genera el programa (sin rutas)
+expressApp.get('/sponsor-assets/:file', (req, res) => {
+  res.set('Access-Control-Allow-Origin', '*');
+  const file = String(req.params.file || '');
+  if (!SPONSOR_FILE_RE.test(file)) return res.sendStatus(404);
+  const full = path.join(sponsorsDir, file);
+  if (!fs.existsSync(full)) return res.sendStatus(404);
+  res.sendFile(full, { maxAge: '1d' });
+});
+
 expressApp.get('/photo/:number', (req, res) => {
+  // CORS abierto: las gráficas leen los píxeles de la foto (color del traje) desde la ventana del overlay (file://)
+  res.set('Access-Control-Allow-Origin', '*');
   try {
     const configData = JSON.parse(fs.readFileSync(dbPath, 'utf-8'));
     const photosDir = configData.photosPath;
@@ -939,6 +990,27 @@ ipc.handle('clear-corrections', (e, mode) => {
   return raceCorrections;
 });
 
+// --- PILOTOS (datos que la fuente no informa o informa mal) ---
+ipc.handle('get-roster', () => raceRoster);
+ipc.handle('set-roster-entry', (e, data) => {
+  const num = String(data?.number ?? '').trim();
+  if (!num) return raceRoster;
+  const next = { ...raceRoster };
+  next[num] = { ...(next[num] || {}), ...(data?.patch || {}) };
+  raceRoster = normalizeRoster(next);
+  saveRoster();
+  reprocessLeaderboard();
+  return raceRoster;
+});
+ipc.handle('delete-roster-entry', (e, number) => {
+  const next = { ...raceRoster };
+  delete next[String(number)];
+  raceRoster = next;
+  saveRoster();
+  reprocessLeaderboard();
+  return raceRoster;
+});
+
 // --- GRILLA DE LARGADA (posiciones ganadas / perdidas) ---
 ipc.handle('get-grid-info', () => raceAnalyzer.getGridInfo());
 ipc.handle('start-grid', (e, action) => {
@@ -966,6 +1038,45 @@ ipc.on('toggle-gap-chart', (e, data) => {
   broadcast('update-gap-chart', getGapChartData());
 });
 ipc.handle('get-gap-chart', () => getGapChartData());
+// Últimas vueltas: el piloto A con sus tiempos y el B con la diferencia vuelta a vuelta
+ipc.on('toggle-lap-compare', (e, data) => {
+  const a = data?.a ? String(data.a) : null;
+  const b = data?.b ? String(data.b) : null;
+  broadcastState.lapCompare = { isVisible: !!data?.isVisible && !!a && !!b, a, b };
+  broadcast('update-lap-compare', broadcastState.lapCompare);
+});
+// --- SPONSORS ---
+// Copia los archivos elegidos a la carpeta del programa y devuelve [{ id, name, file, type }] (el panel los guarda en la config)
+ipc.handle('add-sponsor-files', async () => {
+  const result = await dialog.showOpenDialog(controlWindow, {
+    title: 'Agregar sponsors (imágenes o videos)', properties: ['openFile', 'multiSelections'],
+    filters: [{ name: 'Imágenes y videos', extensions: Object.keys(SPONSOR_EXT) }]
+  });
+  if (result.canceled || !result.filePaths.length) return [];
+  try { fs.mkdirSync(sponsorsDir, { recursive: true }); } catch (e) {}
+  const added = [];
+  result.filePaths.forEach((src, i) => {
+    const ext = path.extname(src).slice(1).toLowerCase();
+    if (!SPONSOR_EXT[ext]) return;
+    const id = `sp_${Date.now().toString(36)}${i.toString(36)}${Math.random().toString(36).slice(2, 6)}`;
+    const file = `${id}.${ext === 'jpeg' ? 'jpg' : ext}`;
+    try {
+      fs.copyFileSync(src, path.join(sponsorsDir, file));
+      added.push({ id, name: path.basename(src, path.extname(src)).toUpperCase(), file, type: SPONSOR_EXT[ext] });
+    } catch (e) { console.error('No se pudo copiar el sponsor', src, e.message); }
+  });
+  return added;
+});
+ipc.handle('delete-sponsor-file', (e, file) => {
+  const name = String(file || '');
+  if (!SPONSOR_FILE_RE.test(name)) return false;
+  try { fs.unlinkSync(path.join(sponsorsDir, name)); return true; } catch (err) { return false; }
+});
+ipc.on('sponsor-live', (e, data) => {
+  broadcastState.sponsorLive = { isVisible: !!data?.isVisible, sponsorId: data?.sponsorId ? String(data.sponsorId) : null, rotate: !!data?.rotate };
+  broadcast('update-sponsor-live', broadcastState.sponsorLive);
+});
+ipc.handle('get-sponsor-live', () => broadcastState.sponsorLive);
 ipc.on('show-race-notice', (e, data) => showRaceNotice(data));
 ipc.on('hide-race-notice', () => hideRaceNotice());
 
@@ -975,7 +1086,7 @@ ipc.handle('export-results-pdf', async (e, options) => {
   const config = readJsonFile(dbPath, {}) || {};
   const language = options?.language || config.language || 'es';
   const base = String(config.categoryName || lastLeaderboard.session?.detectedCategory || lastLeaderboard.session?.name || 'carrera')
-    .normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-zA-Z0-9]+/g, '-').replace(/^-+|-+$/g, '').toLowerCase().slice(0, 60) || 'carrera';
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-zA-Z0-9]+/g, '-').replace(/^-+|-+$/g, '').toLowerCase().slice(0, 60) || 'carrera';
   const stamp = new Date();
   const pad = (n) => String(n).padStart(2, '0');
   const result = await dialog.showSaveDialog(controlWindow, {

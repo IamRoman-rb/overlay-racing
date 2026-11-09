@@ -1,6 +1,9 @@
 import { getSkinStyle } from '../utils/skinStyles';
 import { getAnimDuration, getRollClip } from '../utils/animationTiming';
+import { useMemo } from 'react';
 import { getCanvasSize } from '../utils/canvasSize';
+import { buildTrack, pointOnTrack, nearestOnTrack, DEFAULT_ASPECT } from '../utils/trackPath';
+import { useImageAspect } from '../utils/raceVisuals';
 
 export default function TrackAlert({ alert, config, id = 'trackAlert' }) {
   const pos = config?.positions?.[id] || { x: 1500, y: 500, scale: 1 };
@@ -20,6 +23,26 @@ export default function TrackAlert({ alert, config, id = 'trackAlert' }) {
   const isVisible = !!alert?.isVisible;
   const isIncident = alert?.type === 'incident';
   const curve = (config?.trackCurves || []).find(c => c.id === alert?.curveId);
+
+  // Mapa de la alerta: la pista dibujada con los puntos del trazado (pestaña CIRCUITO) y la curva marcada sobre ella.
+  // Sin trazado se usa la imagen del circuito como antes.
+  const trackPath = config?.trackPath;
+  const trackImage = config?.trackImage || null;
+  const imageAspect = useImageAspect(trackImage);
+  const aspect = trackImage ? imageAspect : DEFAULT_ASPECT;
+  const track = useMemo(() => (aspect ? buildTrack(trackPath, { width: 340, fit: true, minHeight: 110, maxHeight: 170, pad: 16, aspect }) : null), [trackPath, aspect]);
+  const curveT = curve && Number.isFinite(curve.t) ? curve.t : null;
+  const curveX = curve ? curve.x : null;
+  const curveY = curve ? curve.y : null;
+  const marker = useMemo(() => {
+    if (!track || curveX === null) return null;
+    let tt = curveT;
+    if (tt === null) {
+      const near = nearestOnTrack(trackPath, aspect, { x: curveX, y: curveY });
+      tt = near ? near.t : null;
+    }
+    return tt === null ? null : pointOnTrack(track, tt);
+  }, [track, trackPath, aspect, curveT, curveX, curveY]);
 
   const accentColor = isIncident ? '#e74c3c' : '#f1c40f';
   const alertTitle = isIncident ? 'INCIDENTE EN PISTA' : 'BANDERA AMARILLA';
@@ -119,7 +142,17 @@ export default function TrackAlert({ alert, config, id = 'trackAlert' }) {
           </span>
         </div>
 
-        {config?.trackImage && curve && (
+        {track && marker && (
+          <svg width="340" height={track.height} viewBox={`0 0 340 ${track.height}`} style={{ display: 'block', backgroundColor: themeHeaderBg }}>
+            <path d={track.d} fill="none" stroke="#9a9a9a" strokeWidth="13" strokeLinejoin="round" strokeLinecap="round" />
+            <path d={track.d} fill="none" stroke="#3b3b3b" strokeWidth="9" strokeLinejoin="round" strokeLinecap="round" />
+            <circle cx={marker.x} cy={marker.y} r="16" fill={accentColor} opacity="0.35">
+              <animate attributeName="r" values="10;20;10" dur="1.2s" repeatCount="indefinite" />
+            </circle>
+            <circle cx={marker.x} cy={marker.y} r="9" fill={accentColor} stroke="#000" strokeWidth="2" />
+          </svg>
+        )}
+        {!(track && marker) && config?.trackImage && curve && (
           <div style={{
             position: 'relative', width: '100%', height: '140px',
             backgroundImage: `url(${config.trackImage})`, backgroundSize: 'contain',

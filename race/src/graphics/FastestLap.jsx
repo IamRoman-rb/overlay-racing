@@ -2,9 +2,14 @@ import { useMemo } from 'react';
 import { getSkinStyle } from '../utils/skinStyles';
 import { getAnimDuration, getRollClip } from '../utils/animationTiming';
 import CategoryTag from '../components/CategoryTag';
+import DriverPhoto from '../components/DriverPhoto';
+import { useSuitColors } from '../utils/suitColor';
 
 export default function FastestLap({ drivers, config, isVisible, id = 'fastestLap' }) {
   const pos = config?.positions?.[id] || { x: 440, y: 150, scale: 1 };
+  // Color del número tomado del traje (foto del piloto), si está activado en PILOTOS
+  const suit = useSuitColors(drivers, config);
+  const sc = (n) => (suit[String(n)] ? { backgroundColor: suit[String(n)].bg, color: suit[String(n)].text } : {});
 
   const themeBg = config?.themeBg || 'rgba(0,0,0,0.9)';
   const themeHeaderBg = config?.themeHeaderBg || '#000000';
@@ -63,6 +68,33 @@ export default function FastestLap({ drivers, config, isVisible, id = 'fastestLa
     opacity: isVisible ? 1 : 0
   };
 
+  // FORMATO CON FOTO: la foto del piloto a la izquierda, número, nombre y el tiempo grande
+  if (fastestLapFormat === 'photo') {
+    return (
+      <div style={wrapperStyle}>
+        <div style={{
+          display: 'flex', alignItems: 'flex-end', width: '520px', borderRadius: bRad, overflow: 'hidden',
+          backgroundColor: hasCustomBg ? 'transparent' : themeBg, backgroundImage: hasCustomBg ? `url(${customBg})` : 'none', backgroundSize: '100% 100%',
+          borderBottom: hasCustomBg ? 'none' : `4px solid ${themeMain}`, boxShadow: '0 10px 30px rgba(0,0,0,0.6)',
+          transform: isVisible || animStyle === 'roll' ? 'translateY(0) scale(1)' : transformHidden, ...getRollClip(animStyle, isVisible),
+          transition: `transform ${animDur}s cubic-bezier(0.175, 0.885, 0.32, 1.275), clip-path ${animDur}s ease-in-out`
+        }}>
+          <div style={{ width: '150px', height: '130px', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', flexShrink: 0, background: `linear-gradient(180deg, transparent, ${themeHeaderBg})` }}>
+            <DriverPhoto number={fastestDriver?.number} config={config} height={130} maxWidth={150} />
+          </div>
+          <div style={{ flex: 1, minWidth: 0, padding: '12px 16px' }}>
+            <span style={{ color: themeTitleText, fontWeight: '900', fontSize: '14px', fontStyle: 'italic', letterSpacing: '1px' }}>RECORD DE VUELTA<CategoryTag config={config} id={id} /></span>
+            <div style={{ display: 'flex', alignItems: 'center', marginTop: '6px' }}>
+              <span style={{ backgroundColor: themeSecondary, color: '#000', fontWeight: '900', fontSize: '16px', padding: '2px 8px', borderRadius: '3px', marginRight: '10px', ...sc(fastestDriver?.number) }}>{fastestDriver?.number || '-'}</span>
+              <span style={{ color: themeNormalText, fontWeight: 'bold', fontSize: '20px', textTransform: 'uppercase', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{fastestDriver?.name || '---'}</span>
+            </div>
+            <div style={{ color: themeAccent, fontWeight: '900', fontSize: '40px', lineHeight: 1.1 }}>{fastestDriver?.bestLap || '-:--.---'}</div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   // FORMATO COMPACTO: una sola fila, sin barra de encabezado
   if (fastestLapFormat === 'compact') {
     return (
@@ -81,7 +113,7 @@ export default function FastestLap({ drivers, config, isVisible, id = 'fastestLa
           <span style={{ color: themeTitleText, fontWeight: '900', fontSize: '11px', fontStyle: 'italic', letterSpacing: '1px', whiteSpace: 'nowrap' }}>
             RÉCORD<CategoryTag config={config} id={id} />
           </span>
-          <div style={{ backgroundColor: themeSecondary, color: '#000', fontWeight: '900', fontSize: '14px', width: '32px', height: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '3px', flexShrink: 0 }}>
+          <div style={{ backgroundColor: themeSecondary, color: '#000', fontWeight: '900', fontSize: '14px', width: '32px', height: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '3px', flexShrink: 0, ...sc(fastestDriver?.number) }}>
             {fastestDriver?.number || '-'}
           </div>
           <div style={{ flex: 1, color: themeNormalText, fontWeight: 'bold', fontSize: '16px', textTransform: 'uppercase', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
@@ -178,7 +210,7 @@ export default function FastestLap({ drivers, config, isVisible, id = 'fastestLa
 
          {/* DATOS DEL PILOTO */}
          <div style={{ backgroundColor: 'transparent', display: 'flex', alignItems: 'center', padding: '15px' }}>
-            <div style={{ backgroundColor: themeSecondary, color: '#000', fontWeight: '900', fontSize: '20px', width: '45px', height: '35px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '4px', marginRight: '15px' }}>
+            <div style={{ backgroundColor: themeSecondary, color: '#000', fontWeight: '900', fontSize: '20px', width: '45px', height: '35px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '4px', marginRight: '15px', ...sc(fastestDriver?.number) }}>
               {fastestDriver?.number || '-'}
             </div>
 

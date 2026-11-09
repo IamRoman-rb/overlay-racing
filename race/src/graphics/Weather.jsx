@@ -85,6 +85,7 @@ export function getWindDirLabel(deg) {
 
 import { getSkinStyle } from '../utils/skinStyles';
 import { getAnimDuration, getRollClip } from '../utils/animationTiming';
+import { getElitePalette, ELITE_FONT, rgba } from '../utils/elite';
 
 export default function Weather({ data, isVisible, config, id = 'clima' }) {
   const pos = config?.positions?.[id] || { x: 20, y: 160, scale: 1 };
@@ -120,6 +121,83 @@ export default function Weather({ data, isVisible, config, id = 'clima' }) {
     opacity: isVisible || animStyle === 'roll' ? 1 : 0, pointerEvents: 'none',
     transform: isVisible || animStyle === 'roll' ? `scale(${pos.scale}) translateX(0)` : transformHidden, ...getRollClip(animStyle, isVisible)
   };
+
+  // FORMATOS ELITE (paquete azul de transmisión): caja "EL CLIMA EN ..." o barra horizontal
+  if (climaFormat === 'elite' || climaFormat === 'eliteBar') {
+    const pal = getElitePalette(config);
+    const place = (data.place || config?.circuitCity || config?.circuito || '').split(',')[0];
+    const val = (v) => (v === null || v === undefined ? '-' : Math.round(v));
+    const stats = [
+      { key: 'VIENTO', value: val(data.windSpeed), unit: 'km/h', icon: 'M3 8h11a3 3 0 1 0-3-3M3 12h16a3 3 0 1 1-3 3M3 16h7', stroke: true },
+      { key: 'HUMEDAD', value: val(data.humidity), unit: '%', icon: 'M12 3C9 8 6 11.5 6 15.5a6 6 0 0 0 12 0C18 11.5 15 8 12 3z' },
+      { key: 'LLUVIA', value: val(data.precipProb), unit: '%', icon: 'M7 15a4 4 0 0 1 .5-8A5.5 5.5 0 0 1 18 8.5 3.5 3.5 0 0 1 17.5 15zM8 18l-1 3M12 18l-1 3M16 18l-1 3', stroke: true }
+    ];
+    const statIcon = (s) => (
+      <svg width="16" height="16" viewBox="0 0 24 24" fill={s.stroke ? 'none' : '#7fd3ff'} stroke={s.stroke ? '#7fd3ff' : 'none'} strokeWidth="2" strokeLinecap="round"><path d={s.icon} /></svg>
+    );
+    const pin = (<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#7fd3ff" strokeWidth="2"><path d="M12 22s7-7.7 7-13a7 7 0 0 0-14 0c0 5.3 7 13 7 13z" /><circle cx="12" cy="9" r="2.5" /></svg>);
+    const cell = { display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', borderLeft: `1px solid ${rgba('#ffffff', 0.18)}` };
+    const box = { fontFamily: ELITE_FONT, color: pal.text, textTransform: 'uppercase', background: pal.background, borderRadius: bRad, overflow: 'hidden', boxShadow: '0 10px 28px rgba(0,0,0,0.5)', border: `1px solid ${rgba('#ffffff', 0.18)}` };
+
+    if (climaFormat === 'eliteBar') {
+      return (
+        <div style={wrapperStyle}>
+          <div style={{ ...box, display: 'flex', height: '50px', width: '700px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', padding: '0 14px', minWidth: '150px' }}>
+              {pin}
+              <div style={{ display: 'flex', flexDirection: 'column', marginLeft: '8px', lineHeight: 1.05 }}>
+                <span style={{ fontSize: '10px', fontStyle: 'italic', color: pal.muted }}>EL CLIMA EN</span>
+                <span style={{ fontSize: '18px', fontWeight: 700 }}>{place}</span>
+              </div>
+            </div>
+            <div style={{ ...cell, flexDirection: 'row', padding: '0 16px', minWidth: '170px' }}>
+              <WeatherIcon category={category} color="#ffc93c" size={22} />
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginLeft: '10px', lineHeight: 1 }}>
+                <span style={{ fontSize: '28px', fontWeight: 700 }}>{Math.round(data.temp)}°C</span>
+                <span style={{ fontSize: '9px', color: pal.muted }}>{label}</span>
+              </div>
+            </div>
+            {stats.map(s => (
+              <div key={s.key} style={{ ...cell, flex: 1 }}>
+                <span style={{ display: 'flex', alignItems: 'center', fontSize: '10px', color: pal.muted }}>{statIcon(s)}<span style={{ marginLeft: '4px' }}>{s.key}</span></span>
+                <span style={{ fontSize: '17px', fontWeight: 700, lineHeight: 1 }}>{s.value}<span style={{ fontSize: '10px', marginLeft: '2px' }}>{s.unit}</span></span>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div style={wrapperStyle}>
+        <div style={{ ...box, width: '230px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', padding: '10px 12px 0' }}>
+            {pin}
+            <div style={{ display: 'flex', flexDirection: 'column', marginLeft: '8px', lineHeight: 1.05 }}>
+              <span style={{ fontSize: '11px', fontStyle: 'italic', color: pal.muted }}>EL CLIMA EN</span>
+              <span style={{ fontSize: '22px', fontWeight: 700 }}>{place}</span>
+            </div>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '10px 0 8px' }}>
+            <WeatherIcon category={category} color="#ffc93c" size={26} />
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginLeft: '12px', lineHeight: 1 }}>
+              <span style={{ fontSize: '40px', fontWeight: 700 }}>{Math.round(data.temp)}°C</span>
+              <span style={{ fontSize: '10px', color: pal.muted }}>{label}</span>
+            </div>
+          </div>
+          <div style={{ display: 'flex', borderTop: `1px solid ${rgba('#ffffff', 0.18)}`, height: '56px' }}>
+            {stats.map((s, i) => (
+              <div key={s.key} style={{ ...cell, flex: 1, borderLeft: i ? cell.borderLeft : 'none' }}>
+                {statIcon(s)}
+                <span style={{ fontSize: '9px', color: pal.muted }}>{s.key}</span>
+                <span style={{ fontSize: '15px', fontWeight: 700, lineHeight: 1 }}>{s.value}<span style={{ fontSize: '9px', marginLeft: '1px' }}>{s.unit}</span></span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // FORMATO COMPACTO: una sola fila, sin encabezado ni estadísticas de viento/humedad/lluvia
   if (climaFormat === 'compact') {

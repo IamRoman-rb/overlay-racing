@@ -8,8 +8,11 @@ import UserManual from '../windows/UserManual';
 import VoteHistory from '../windows/VoteHistory';
 import GraphicEditor from '../windows/GraphicEditor';
 import HotkeysPanel from '../windows/HotkeysPanel';
+import DriversRoster from '../windows/DriversRoster';
+import SponsorsPanel from '../windows/SponsorsPanel';
 import { CategorySection, AnalysisSection, QualifyingSection, RaceAlertsBar, CorrectionsPanel } from './RaceSections';
 import { formatDriverName } from '../utils/formatDriverName';
+import { sectionPlacement } from '../utils/panelSections';
 import Icon from '../components/Icon';
 import banderaCuadrosImg from '../assets/bandera cuadros.jpg';
 import { createTranslator } from '../i18n/translations';
@@ -296,7 +299,9 @@ export const defaultPositions = {
   evento: { x: 560, y: 20, scale: 1 },
   sectors: { x: 1440, y: 360, scale: 1 }, gapChart: { x: 730, y: 640, scale: 1 },
   gainers: { x: 1440, y: 470, scale: 1 }, qualifying: { x: 20, y: 20, scale: 1 },
-  trackMap: { x: 1460, y: 610, scale: 1 }, raceNotice: { x: 760, y: 820, scale: 1 }
+  trackMap: { x: 1460, y: 610, scale: 1 }, raceNotice: { x: 760, y: 820, scale: 1 },
+  circuitIntro: { x: 470, y: 230, scale: 1 }, circuitRecord: { x: 1500, y: 700, scale: 1 },
+  lapCompare: { x: 640, y: 880, scale: 1 }, windVectors: { x: 0, y: 0, scale: 1 }, sponsorLive: { x: 1560, y: 40, scale: 1 }
 };
 
 const GRAPHIC_IDS = [
@@ -304,10 +309,10 @@ const GRAPHIC_IDS = [
   'grid', 'finalResults', 'winner', 'flags', 'fastestLap', 'driverInfo', 'battle', 'customZocalo',
   'votingQR', 'votingResults', 'lapCounter', 'virtualChamp', 'startingLights',
   'lapTimesHistory', 'trackAlert', 'penaltyAlert', 'branding', 'evento',
-    'sectors', 'gapChart', 'gainers', 'qualifying', 'trackMap', 'raceNotice'
+    'sectors', 'gapChart', 'gainers', 'qualifying', 'trackMap', 'raceNotice', 'circuitIntro', 'circuitRecord', 'lapCompare', 'windVectors'
 ];
 
-const TAB_IDS = ['panel', 'campeonato', 'votaciones', 'sanciones', 'cloud', 'zocalos', 'disenos', 'circuito', 'ajustes', 'personalizar', 'editor', 'atajos', 'manual'];
+const TAB_IDS = ['panel', 'campeonato', 'votaciones', 'sanciones', 'cloud', 'zocalos', 'pilotos', 'sponsors', 'circuito', 'ajustes', 'personalizar', 'editor', 'atajos', 'manual'];
 
 export default function ControlPanel() {
   const [config, setConfig] = useState({
@@ -398,6 +403,7 @@ export default function ControlPanel() {
   const [sectorsState, setSectorsState] = useState({ isVisible: false, numbers: [] });
   const [gapPair, setGapPair] = useState({ front: '', back: '' });
   const [gapData, setGapData] = useState(null);
+  const [lapCompareState, setLapCompareState] = useState({ isVisible: false, a: null, b: null });
   const [configLoaded, setConfigLoaded] = useState(false);
   const lastDetectedCategoryRef = useRef('');
 
@@ -446,6 +452,7 @@ export default function ControlPanel() {
           setGapData(state.gapChart);
           if (state.gapChart.front && state.gapChart.back) setGapPair({ front: state.gapChart.front, back: state.gapChart.back });
         }
+        if (state?.broadcastState?.lapCompare) setLapCompareState(state.broadcastState.lapCompare);
         if (state?.broadcastState?.graphics) setGraphics(prev => ({ ...prev, ...state.broadcastState.graphics }));
         if (state?.leaderboard?.drivers?.length) { setDrivers(state.leaderboard.drivers); setSessionInfo(state.leaderboard.session || {}); }
       }).catch(() => { });
@@ -474,6 +481,7 @@ export default function ControlPanel() {
       const handleCorrections = (event, data) => { if (data) setCorrections(data); };
       const handleSectors = (event, data) => { if (data) setSectorsState(data); };
       const handleGapChart = (event, data) => { if (data) setGapData(data); };
+      const handleLapCompare = (event, data) => { if (data) setLapCompareState(data); };
 
       ipcRenderer.on('update-votes', handleUpdateVotes);
       ipcRenderer.on('update-ip', handleUpdateIp);
@@ -487,6 +495,7 @@ export default function ControlPanel() {
       ipcRenderer.on('update-corrections', handleCorrections);
       ipcRenderer.on('update-sectors', handleSectors);
       ipcRenderer.on('update-gap-chart', handleGapChart);
+      ipcRenderer.on('update-lap-compare', handleLapCompare);
 
       return () => {
         ipcRenderer.removeListener('update-votes', handleUpdateVotes);
@@ -501,6 +510,7 @@ export default function ControlPanel() {
         ipcRenderer.removeListener('update-corrections', handleCorrections);
         ipcRenderer.removeListener('update-sectors', handleSectors);
         ipcRenderer.removeListener('update-gap-chart', handleGapChart);
+        ipcRenderer.removeListener('update-lap-compare', handleLapCompare);
       }
     }
   }, []);
@@ -986,6 +996,13 @@ export default function ControlPanel() {
     setGapPair(pair);
     const valid = !!(pair.front && pair.back && pair.front !== pair.back);
     sendGap(!!gapData?.isVisible && valid, pair);
+    // ÚLTIMAS VUELTAS usa la misma pareja (A = adelante, B = atrás)
+    if (lapCompareState.isVisible && ipcRenderer) ipcRenderer.send('toggle-lap-compare', { isVisible: valid, a: pair.front || null, b: pair.back || null });
+  };
+  const handleToggleLapCompare = () => {
+    const valid = !!(gapPair.front && gapPair.back && gapPair.front !== gapPair.back);
+    if (!lapCompareState.isVisible && !valid) { alert(t('race.selectPairFirst')); return; }
+    if (ipcRenderer) ipcRenderer.send('toggle-lap-compare', { isVisible: !lapCompareState.isVisible, a: gapPair.front || null, b: gapPair.back || null });
   };
   const handleToggleGap = () => {
     const valid = !!(gapPair.front && gapPair.back && gapPair.front !== gapPair.back);
@@ -1056,7 +1073,9 @@ export default function ControlPanel() {
       zocalo1: () => handleToggleZocalo(0), zocalo2: () => handleToggleZocalo(1), zocalo3: () => handleToggleZocalo(2),
       zocalo4: () => handleToggleZocalo(3), zocalo5: () => handleToggleZocalo(4), zocalo6: () => handleToggleZocalo(5),
       qualifying: () => handleToggleGraphic('qualifying'), sectors: handleToggleSectors, gapChart: handleToggleGap,
-      gainers: () => handleToggleGraphic('gainers'), trackMap: () => handleToggleGraphic('trackMap')
+      gainers: () => handleToggleGraphic('gainers'), trackMap: () => handleToggleGraphic('trackMap'),
+      circuitIntro: () => handleToggleGraphic('circuitIntro'), circuitRecord: () => handleToggleGraphic('circuitRecord'),
+      lapCompare: handleToggleLapCompare, windVectors: () => handleToggleGraphic('windVectors')
     };
   });
 
@@ -1218,7 +1237,7 @@ export default function ControlPanel() {
         <div ref={panelContainerRef} style={{ display: 'flex', flexDirection: panelSideBySide ? 'row' : 'column', flex: 1, overflow: panelSideBySide ? 'hidden' : 'auto' }}>
           <style>{`.panel-section > :last-child { margin-bottom: 0 !important; }`}</style>
           <div ref={panelButtonsRef} style={panelButtonsStyle}>
-            <div className="panel-section" style={panelSectionStyle}>
+            <div className="panel-section" style={{ ...panelSectionStyle, ...sectionPlacement(config, 'flags') }}>
             <div style={sectionTitleStyle}>{t('panel.flagsSection')}</div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(110px, 1fr))', gap: '5px', marginBottom: '20px' }}>
               <button onClick={() => handleToggleFlag('red')} style={{ ...btnStyle(activeFlags.red), backgroundColor: activeFlags.red ? '#e74c3c' : colors.bgInput, color: activeFlags.red ? '#fff' : colors.textMain, borderColor: activeFlags.red ? '#c0392b' : colors.border }}><Icon name="flag" color={activeFlags.red ? '#fff' : '#e74c3c'} />{t('panel.flagRed')}</button>
@@ -1250,7 +1269,7 @@ export default function ControlPanel() {
             </div>
             </div>
 
-            <div className="panel-section" style={panelSectionWideStyle}>
+            <div className="panel-section" style={{ ...panelSectionWideStyle, ...sectionPlacement(config, 'personal') }}>
             <div style={sectionTitleStyle}>{t('panel.personalSection')}</div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '8px' }}>
               <GraphicControl id="relator" label={t('graphics.relator')} value={config.relator} isActive={graphics.relator} onChange={handleChange} onBlur={handleSave} onToggle={handleToggleGraphic} t={t} />
@@ -1258,7 +1277,10 @@ export default function ControlPanel() {
               <GraphicControl id="notero1" label={t('graphics.notero1')} value={config.notero1} isActive={graphics.notero1} onChange={handleChange} onBlur={handleSave} onToggle={handleToggleGraphic} t={t} />
               <GraphicControl id="notero2" label={t('graphics.notero2')} value={config.notero2} isActive={graphics.notero2} onChange={handleChange} onBlur={handleSave} onToggle={handleToggleGraphic} t={t} />
               <SearchSelectControl id="circuito" label={t('graphics.circuito')} value={config.circuito} options={circuitosData} isActive={graphics.circuito} onChange={(v) => setConfig({ ...config, circuito: v })} onCommit={handleCommitCircuit} onToggle={handleToggleGraphic} t={t} />
-              <WeatherControl id="clima" label={t('graphics.clima')} config={config} setConfig={setConfig} isActive={graphics.clima} onToggle={handleToggleGraphic} t={t} />
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                <WeatherControl id="clima" label={t('graphics.clima')} config={config} setConfig={setConfig} isActive={graphics.clima} onToggle={handleToggleGraphic} t={t} />
+                <button onClick={() => handleToggleGraphic('windVectors')} title={t('panel.windVectorsTitle')} style={btnStyle(!!graphics.windVectors)}>{t('graphics.windVectors')}</button>
+              </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
                 <button onClick={() => handleToggleGraphic('evento')} title={t('panel.eventoTitle')} style={btnStyle(!!graphics.evento)}>{t('graphics.evento')}</button>
                 <input name="productora" value={config.productora || ''} onChange={handleChange} onBlur={handleSave} style={inputStyle} placeholder={t('panel.productoraPlaceholder')} />
@@ -1266,9 +1288,9 @@ export default function ControlPanel() {
             </div>
             </div>
 
-            <CategorySection config={config} sessionInfo={sessionInfo} onSave={handleDirectSave} onCategoryInput={handleCategoryInput} onGridAction={handleGridAction} colors={colors} inputStyle={inputStyle} btnStyle={btnStyle} t={t} style={panelSectionWideStyle} />
+            <CategorySection config={config} sessionInfo={sessionInfo} onSave={handleDirectSave} onCategoryInput={handleCategoryInput} onGridAction={handleGridAction} colors={colors} inputStyle={inputStyle} btnStyle={btnStyle} t={t} style={{ ...panelSectionWideStyle, ...sectionPlacement(config, 'category') }} />
 
-            <div className="panel-section" style={panelSectionStyle}>
+            <div className="panel-section" style={{ ...panelSectionStyle, ...sectionPlacement(config, 'trackAlert') }}>
             <div style={sectionTitleStyle}>{t('graphics.trackAlert')}</div>
 <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', marginBottom: '20px' }}>
   <select
@@ -1302,7 +1324,7 @@ export default function ControlPanel() {
 </div>
             </div>
 
-            <div className="panel-section" style={panelSectionStyle}>
+            <div className="panel-section" style={{ ...panelSectionStyle, ...sectionPlacement(config, 'grid') }}>
             <div style={sectionTitleStyle}>{t('panel.gridSection')}</div>
             <div style={{ display: 'flex', gap: '5px', marginBottom: '5px' }}>
               <button onClick={() => { if (ipcRenderer) ipcRenderer.send('grid-prev'); }} style={{ ...btnStyle(), flex: 1 }}>{t.i('panel.gridPrev')}</button>
@@ -1316,7 +1338,7 @@ export default function ControlPanel() {
             </div>
             </div>
 
-            <div className="panel-section" style={panelSectionStyle}>
+            <div className="panel-section" style={{ ...panelSectionStyle, ...sectionPlacement(config, 'startingLights') }}>
             <div style={sectionTitleStyle}>{t('graphics.startingLights')}</div>
             <StartingLightsIndicator visible={startingLightsVisible} step={startingLightsStep} t={t} />
             <div style={{ display: 'flex', gap: '5px', marginBottom: '15px' }}>
@@ -1348,7 +1370,7 @@ export default function ControlPanel() {
             </div>
             </div>
 
-            <div className="panel-section" style={panelSectionStyle}>
+            <div className="panel-section" style={{ ...panelSectionStyle, ...sectionPlacement(config, 'graphics') }}>
             <div style={sectionTitleStyle}>{t('panel.graphicsSection')}</div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(110px, 1fr))', gap: '5px' }}>
               <button onClick={handleToggleTicker} style={btnStyle(showTicker)}>{t('graphics.ticker')}</button>
@@ -1363,11 +1385,26 @@ export default function ControlPanel() {
               >
                 {t('panel.recordLapShort')}
               </button>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                <button onClick={() => handleToggleGraphic('circuitIntro')} style={btnStyle(!!graphics.circuitIntro)}>{t('graphics.circuitIntro')}</button>
+                <select value={config.circuitIntroMode || 'static'} onChange={(e) => handleDirectSave('circuitIntroMode', e.target.value)} title={t('panel.introModeTitle')} style={{ ...inputStyle, padding: '5px', fontSize: '10px', cursor: 'pointer' }}>
+                  <option value="static">{t('panel.introModeStatic')}</option>
+                  <option value="tour">{t('panel.introModeTour')}</option>
+                  <option value="curves">{t('panel.introModeCurves')}</option>
+                </select>
+                {config.circuitIntroMode === 'tour' && (
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '9px', color: colors.textMuted, fontWeight: 'bold' }}>
+                    {t('panel.introTourSec')}
+                    <input type="number" min="6" max="90" value={config.circuitIntroTourSec || 16} onChange={(e) => handleDirectSave('circuitIntroTourSec', Math.min(90, Math.max(6, parseInt(e.target.value, 10) || 16)))} style={{ ...inputStyle, padding: '4px', width: '52px', fontSize: '10px' }} />
+                  </label>
+                )}
+              </div>
+              <button onClick={() => handleToggleGraphic('circuitRecord')} style={btnStyle(!!graphics.circuitRecord)}>{t('graphics.circuitRecord')}</button>
 
             </div>
             </div>
 
-            <div className="panel-section" style={panelSectionStyle}>
+            <div className="panel-section" style={{ ...panelSectionStyle, ...sectionPlacement(config, 'branding') }}>
             <div style={sectionTitleStyle}>{t('graphics.branding')}</div>
             <div style={{ display: 'flex', gap: '5px', marginBottom: '8px' }}>
               <button onClick={() => handleToggleGraphic('branding')} style={{ ...btnStyle(!!graphics.branding), flex: 1 }}>
@@ -1386,7 +1423,7 @@ export default function ControlPanel() {
             </div>
             </div>
 
-            <div className="panel-section" style={panelSectionStyle}>
+            <div className="panel-section" style={{ ...panelSectionStyle, ...sectionPlacement(config, 'battle') }}>
             <div style={sectionTitleStyle}>{t('panel.battleSection')}</div>
             <div style={{ display: 'flex', gap: '5px', marginBottom: '15px' }}>
               <div style={{ display: 'flex', alignItems: 'center', backgroundColor: colors.bgInput, border: `1px solid ${colors.border}`, padding: '0 10px', borderRadius: '4px' }}>
@@ -1430,13 +1467,14 @@ export default function ControlPanel() {
               drivers={drivers} config={config} sessionInfo={sessionInfo}
               sectorsSel={sectorsSel} setSectorsSel={handleSectorsSel} sectorsVisible={!!sectorsState.isVisible} onToggleSectors={handleToggleSectors}
               gapPair={gapPair} setGapPair={handleGapPair} gapData={gapData} onToggleGap={handleToggleGap}
+              lapCompareVisible={!!lapCompareState.isVisible} onToggleLapCompare={handleToggleLapCompare}
               recommendedBattle={recommendedBattle} graphics={graphics} onToggleGraphic={handleToggleGraphic} onSave={handleDirectSave}
-              colors={colors} inputStyle={inputStyle} btnStyle={btnStyle} t={t} style={panelSectionWideStyle}
+              colors={colors} inputStyle={inputStyle} btnStyle={btnStyle} t={t} style={{ ...panelSectionWideStyle, ...sectionPlacement(config, 'analysis') }}
             />
 
-            <QualifyingSection config={config} sessionInfo={sessionInfo} isVisible={!!graphics.qualifying} onToggle={() => handleToggleGraphic('qualifying')} onSave={handleDirectSave} colors={colors} inputStyle={inputStyle} btnStyle={btnStyle} t={t} style={panelSectionStyle} />
+            <QualifyingSection config={config} sessionInfo={sessionInfo} isVisible={!!graphics.qualifying} onToggle={() => handleToggleGraphic('qualifying')} onSave={handleDirectSave} colors={colors} inputStyle={inputStyle} btnStyle={btnStyle} t={t} style={{ ...panelSectionStyle, ...sectionPlacement(config, 'qualifying') }} />
 
-            <div className="panel-section" style={panelSectionStyle}>
+            <div className="panel-section" style={{ ...panelSectionStyle, ...sectionPlacement(config, 'virtualChamp') }}>
             <div style={sectionTitleStyle}>{t('graphics.virtualChamp')}</div>
             <div style={{ display: 'flex', gap: '5px', marginBottom: '15px' }}>
               <button onClick={handleToggleVirtualChamp} style={{ ...btnStyle(showVirtualChamp), flex: 1 }}>
@@ -1448,7 +1486,7 @@ export default function ControlPanel() {
             </div>
             </div>
 
-            <div className="panel-section" style={panelSectionStyle}>
+            <div className="panel-section" style={{ ...panelSectionStyle, ...sectionPlacement(config, 'lapTimes') }}>
             <div style={sectionTitleStyle}>{t('graphics.lapTimesHistory')}</div>
             <div style={{ display: 'flex', gap: '5px', marginBottom: '15px' }}>
               <button onClick={handleToggleLapTimesHistory} style={{ ...btnStyle(showLapTimesHistory), flex: 2 }}>
@@ -1465,7 +1503,7 @@ export default function ControlPanel() {
             )}
             </div>
 
-            <div className="panel-section" style={panelSectionStyle}>
+            <div className="panel-section" style={{ ...panelSectionStyle, ...sectionPlacement(config, 'voting') }}>
             <div style={sectionTitleStyle}>{t('panel.votingSection')}</div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px' }}>
               <span style={{
@@ -1484,7 +1522,7 @@ export default function ControlPanel() {
             </div>
             </div>
 
-            <div className="panel-section" style={panelSectionStyle}>
+            <div className="panel-section" style={{ ...panelSectionStyle, ...sectionPlacement(config, 'backup') }}>
             <div style={sectionTitleStyle}>{t('panel.backupSection')}</div>
             <div style={{ display: 'flex', gap: '5px', marginBottom: '15px' }}>
               <button onClick={handleSaveBackup} style={{ ...btnStyle(), flex: 1, backgroundColor: '#8e44ad', color: '#fff', borderColor: '#9b59b6' }}>
@@ -1496,7 +1534,7 @@ export default function ControlPanel() {
             </div>
             </div>
 
-            <div className="panel-section" style={panelSectionStyle}>
+            <div className="panel-section" style={{ ...panelSectionStyle, ...sectionPlacement(config, 'closing') }}>
             <div style={sectionTitleStyle}>{t('panel.closingSection')}</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', marginBottom: '20px' }}>
               <div style={{ display: 'flex', gap: '5px' }}>
@@ -1953,32 +1991,13 @@ export default function ControlPanel() {
         </div>
       )}
 
-      {activeTab === 'disenos' && (
-        <div style={{ padding: '30px', overflowY: 'auto', flex: 1, backgroundColor: colors.bgApp, display: 'block' }}>
-          <h2 style={{ color: colors.yellow, marginTop: 0, borderBottom: `1px solid ${colors.border}`, paddingBottom: '10px' }}>{t('disenos.title')}</h2>
-          <p style={{ color: colors.textMuted, fontSize: '13px', marginBottom: '25px' }}>
-            {t('disenos.description')}
-          </p>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '20px' }}>
-            {GRAPHIC_IDS.map(graphicId => {
-              const graphicLabel = t(`graphics.${graphicId}`);
-              const configKey = `design_${graphicId}`;
-              const hasDesign = !!config[configKey];
-              return (
-                <div key={graphicId} style={{ backgroundColor: colors.bgPanel, padding: '15px', borderRadius: '8px', border: `1px solid ${colors.border}`, display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                  <span style={{ fontSize: '12px', color: colors.textMain, fontWeight: 'bold', textAlign: 'center' }}>{graphicLabel}</span>
-                  <div style={{ backgroundColor: '#000', height: '80px', borderRadius: '4px', border: `1px dashed ${hasDesign ? colors.green : colors.border}`, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
-                    {hasDesign ? <img src={config[configKey]} alt={graphicLabel} style={{ maxHeight: '70px', maxWidth: '90%', objectFit: 'contain' }} /> : <span style={{ fontSize: '10px', color: '#444' }}>{t('disenos.standardDesign')}</span>}
-                  </div>
-                  <div style={{ display: 'flex', gap: '5px' }}>
-                    <button onClick={async () => { if (ipcRenderer) { const imgData = await ipcRenderer.invoke('select-design-image', graphicLabel); if (imgData) handleDirectSave(configKey, imgData); } }} style={{ ...btnStyle(false), flex: 1, padding: '8px', fontSize: '10px' }}>{t.i('disenos.loadBtn')}</button>
-                    {hasDesign && <button onClick={() => handleDirectSave(configKey, null)} style={{ ...btnStyle(false), flex: 1, backgroundColor: '#c0392b', color: 'white', border: 'none', padding: '8px', fontSize: '10px' }}>{t.i('common.removeBtn')}</button>}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
+      {activeTab === 'pilotos' && (
+        <DriversRoster drivers={drivers} config={config} colors={colors} inputStyle={inputStyle} btnStyle={btnStyle} t={t}
+          onConfigChange={handleDirectSave} />
+      )}
+
+      {activeTab === 'sponsors' && (
+        <SponsorsPanel config={config} positions={positions} drivers={drivers} sessionInfo={sessionInfo} graphicIds={GRAPHIC_IDS} onConfigChange={handleDirectSave} colors={colors} inputStyle={inputStyle} btnStyle={btnStyle} t={t} />
       )}
 
       <footer style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', gap: '2px 16px', flexShrink: 0, padding: '6px 20px', borderTop: `1px solid ${colors.border}`, backgroundColor: colors.bgPanel, fontSize: '10px', color: '#666', letterSpacing: '0.3px' }}>

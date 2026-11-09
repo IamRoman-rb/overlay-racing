@@ -1,6 +1,7 @@
 import { useRef, useState, useLayoutEffect } from 'react';
 import { LAYOUT_EDITS_PREFIX, ELEMENT_STYLES_PREFIX, applyLayoutEdits, applyTextSizes, applyElementStyles } from '../utils/layoutEdit';
 import LogoCover from './LogoCover';
+import SponsorSlot from './SponsorSlot';
 import { getCoverSettings } from '../utils/logoCover';
 import { SIZE_W_PREFIX, SIZE_H_PREFIX, readSize, applyGraphicSize } from '../utils/graphicSize';
 import { diagOnce } from '../utils/overlayDiag';
@@ -20,7 +21,7 @@ function reportMissing(id, kind, keys, wrapper, visible) {
 //   visible: si la gráfica está en pantalla (undefined = vista previa); coverReplay: número que sube al pulsar "probar";
 //   noCover: sin tapado (por ejemplo en el editor de objetos).
 // No agrega ninguna caja al layout (display: contents) y, si la gráfica no tiene cambios, no hace nada.
-export default function LayoutEdits({ id, config, children, visible, coverReplay, noCover }) {
+export default function LayoutEdits({ id, config, children, visible, coverReplay, noCover, noSponsors }) {
   const ref = useRef(null);
   const [roots, setRoots] = useState([]);
   const cover = noCover ? { logos: [], time: 0 } : getCoverSettings(config, id);
@@ -65,7 +66,7 @@ export default function LayoutEdits({ id, config, children, visible, coverReplay
     const wrapper = ref.current;
     if (!wrapper || !coverOn) { setRoots(prev => (prev.length ? [] : prev)); return undefined; }
     const find = () => {
-      const found = Array.from(wrapper.children).filter(c => !['STYLE', 'SCRIPT', 'LINK'].includes(c.tagName) && getComputedStyle(c).position !== 'static');
+      const found = Array.from(wrapper.children).filter(c => !['STYLE', 'SCRIPT', 'LINK'].includes(c.tagName) && !c.hasAttribute('data-sponsor-slot') && getComputedStyle(c).position !== 'static');
       setRoots(prev => (prev.length === found.length && prev.every((r, i) => r === found[i]) ? prev : found));
     };
     find();
@@ -80,6 +81,8 @@ export default function LayoutEdits({ id, config, children, visible, coverReplay
       {coverOn && roots.map((root, i) => (
         <LogoCover key={i} root={root} logos={cover.logos} time={cover.time} visible={visible} replay={coverReplay} config={config} id={id} />
       ))}
+      {/* Sponsors elegidos para esta gráfica en la pestaña SPONSORS */}
+      {!noSponsors && <SponsorSlot id={id} config={config} visible={visible} />}
     </div>
   );
 }

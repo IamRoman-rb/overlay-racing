@@ -1,5 +1,6 @@
 import { getSkinStyle } from '../utils/skinStyles';
 import { getAnimDuration, getRollClip } from '../utils/animationTiming';
+import { getElitePalette, ELITE_FONT } from '../utils/elite';
 
 export default function LowerThird({ role, name, isVisible, config, id }) {
   const pos = config?.positions?.[id] || { x: 20, y: 100, scale: 1 };
@@ -37,6 +38,26 @@ export default function LowerThird({ role, name, isVisible, config, id }) {
     opacity: isVisible || animStyle === 'roll' ? 1 : 0, pointerEvents: isVisible ? 'auto' : 'none',
     transform: isVisible || animStyle === 'roll' ? `scale(${pos.scale}) translateX(0)` : transformHidden, ...getRollClip(animStyle, isVisible),
   };
+
+  // FORMATO ELITE (paquete azul de transmisión): ícono de micrófono (o ubicación para el circuito), nombre y rol
+  if (format === 'elite') {
+    const pal = getElitePalette(config);
+    const isPlace = id === 'circuito';
+    const icon = isPlace
+      ? <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.2"><path d="M12 22s7-7.7 7-13a7 7 0 0 0-14 0c0 5.3 7 13 7 13z" /><circle cx="12" cy="9" r="2.5" /></svg>
+      : <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.2" strokeLinecap="round"><rect x="9" y="2" width="6" height="12" rx="3" /><path d="M5 11a7 7 0 0 0 14 0M12 18v4" /></svg>;
+    return (
+      <div style={wrapperStyle}>
+        <div style={{ fontFamily: ELITE_FONT, color: pal.text, textTransform: 'uppercase', display: 'flex', flexDirection: 'column', alignItems, textAlign }}>
+          <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '24px', height: '22px', backgroundColor: pal.deep, borderRadius: `${bRad} ${bRad} 0 0` }}>{icon}</span>
+          <div style={{ background: pal.background, padding: '6px 16px 6px 14px', minWidth: '220px', boxSizing: 'border-box', borderRadius: `0 ${bRad} ${bRad} ${bRad}`, borderLeft: `3px solid ${pal.accent}`, boxShadow: '0 8px 22px rgba(0,0,0,0.45)' }}>
+            <div style={{ fontSize: '24px', fontWeight: 700, lineHeight: 1.05, whiteSpace: 'nowrap' }}>{name || '...'}</div>
+            <div style={{ fontSize: '12px', fontWeight: 600, letterSpacing: '1px', color: '#7fd3ff' }}>{role}</div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // FORMATO MINIMALISTA: sin caja, solo texto con línea de acento debajo
   if (format === 'minimal') {

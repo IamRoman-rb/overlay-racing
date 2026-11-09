@@ -29,6 +29,11 @@ import Gainers from '../graphics/Gainers';
 import QualifyingBoard from '../graphics/QualifyingBoard';
 import TrackMap from '../graphics/TrackMap';
 import RaceNotice from '../graphics/RaceNotice';
+import CircuitIntro from '../graphics/CircuitIntro';
+import CircuitRecord from '../graphics/CircuitRecord';
+import LapCompare from '../graphics/LapCompare';
+import WindVectors from '../graphics/WindField';
+import SponsorLive from '../graphics/SponsorLive';
 import LayoutEdits from '../components/LayoutEdits';
 import { getCanvasSize } from '../utils/canvasSize';
 import Icon from '../components/Icon';
@@ -61,6 +66,18 @@ if (typeof window !== 'undefined' && typeof window.require === 'function') {
   }
 }
 
+// Nombre del .js principal con el que se cargó esta página (assets/index-<hash>.js), o null en modo desarrollo
+function currentBuildId() {
+  try {
+    const scripts = Array.from(document.querySelectorAll('script[src]'));
+    for (let i = 0; i < scripts.length; i++) {
+      const m = scripts[i].getAttribute('src').match(/assets\/(index-[A-Za-z0-9_-]+\.js)/);
+      if (m) return m[1];
+    }
+  } catch { /* sin DOM */ }
+  return null;
+}
+
 function buildEventHandlers(setters) {
   const {
     setConfig, setPositions, setLocalIp, setDrivers, setSessionInfo,
@@ -71,7 +88,7 @@ function buildEventHandlers(setters) {
     setVotes, setIsLapCounterVisible, setIsVirtualChampVisible, setPitStopState,
     setStartingLightsState, setIsLapTimesHistoryVisible, setLapTimesHistory,
     setLapTimesFocus, setTrackAlert, setPenaltyAlert, setFinalResultsNav,
-    setSectorsState, setGapChartData, setRaceNotice
+    setSectorsState, setGapChartData, setRaceNotice, setLapCompare, setSponsorLive
   } = setters;
 
   return {
@@ -118,6 +135,8 @@ function buildEventHandlers(setters) {
     'update-sectors': (data) => data && setSectorsState(data),
     'update-gap-chart': (data) => data && setGapChartData(data),
     'update-race-notice': (data) => data && setRaceNotice(data),
+    'update-lap-compare': (data) => data && setLapCompare(data),
+    'update-sponsor-live': (data) => data && setSponsorLive(data),
   };
 }
 
@@ -160,6 +179,8 @@ export default function Overlay() {
   const [sectorsState, setSectorsState] = useState({ isVisible: false, numbers: [] });
   const [gapChartData, setGapChartData] = useState({ isVisible: false, series: [] });
   const [raceNotice, setRaceNotice] = useState({ isVisible: false, kind: '', title: '', text: '', number: null });
+  const [lapCompare, setLapCompare] = useState({ isVisible: false, a: null, b: null });
+  const [sponsorLive, setSponsorLive] = useState({ isVisible: false, sponsorId: null, rotate: false });
 
   const inBrowserMode = !ipcRenderer;
 
@@ -173,7 +194,7 @@ export default function Overlay() {
       setVotes, setIsLapCounterVisible, setIsVirtualChampVisible, setPitStopState,
       setStartingLightsState, setIsLapTimesHistoryVisible, setLapTimesHistory,
       setLapTimesFocus, setTrackAlert, setPenaltyAlert, setFinalResultsNav,
-      setSectorsState, setGapChartData, setRaceNotice
+      setSectorsState, setGapChartData, setRaceNotice, setLapCompare, setSponsorLive
     });
 
     if (ipcRenderer) {
@@ -213,6 +234,8 @@ export default function Overlay() {
         if (bs.customZocalo) setCustomZocaloData(bs.customZocalo);
         if (bs.sectors) setSectorsState(bs.sectors);
         if (bs.raceNotice) setRaceNotice(bs.raceNotice);
+        if (bs.lapCompare) setLapCompare(bs.lapCompare);
+        if (bs.sponsorLive) setSponsorLive(bs.sponsorLive);
         if (state.gapChart) setGapChartData(state.gapChart);
       }).catch(err => console.error("Error cargando estado inicial", err));
 
@@ -251,6 +274,18 @@ export default function Overlay() {
         // vMix 23 = Chrome 77, vMix 29 = Chrome 103/115, etc.
         enableDiagnostics((message) => socket.emit('overlay-diag', { message }));
         socket.on('connect', () => socket.emit('overlay-diag', { message: `overlay conectado · ${navigator.userAgent}` }));
+        // Si el programa se actualizó mientras esta página estaba abierta (vMix / OBS no la recargan solos), el socket se
+        // reconecta pero el código sigue siendo el viejo y no entiende las opciones nuevas: se recarga la página.
+        socket.on('overlay-build', (serverBuild) => {
+          const own = currentBuildId();
+          if (!serverBuild || !own || serverBuild === own) return;
+          let last = 0;
+          try { last = Number(sessionStorage.getItem('overlayReloadAt')) || 0; } catch { /* sin sessionStorage */ }
+          if (Date.now() - last < 30000) return; // nunca en bucle
+          try { sessionStorage.setItem('overlayReloadAt', String(Date.now())); } catch { /* sin sessionStorage */ }
+          socket.emit('overlay-diag', { message: `overlay desactualizado (${own} -> ${serverBuild}): se recarga la página` });
+          setTimeout(() => window.location.reload(), 300);
+        });
       });
 
       return () => { if (socket) socket.disconnect(); };
@@ -404,6 +439,21 @@ export default function Overlay() {
       </LayoutEdits>
       <LayoutEdits id="trackMap" config={combinedConfig} visible={!!(graphics?.trackMap)}>
         <TrackMap drivers={formattedDrivers} config={combinedConfig} isVisible={!!graphics?.trackMap} sessionInfo={sessionInfo} />
+      </LayoutEdits>
+      <LayoutEdits id="circuitIntro" config={combinedConfig} visible={!!(graphics?.circuitIntro)}>
+        <CircuitIntro config={combinedConfig} isVisible={!!graphics?.circuitIntro} />
+      </LayoutEdits>
+      <LayoutEdits id="circuitRecord" config={combinedConfig} visible={!!(graphics?.circuitRecord)}>
+        <CircuitRecord config={combinedConfig} isVisible={!!graphics?.circuitRecord} />
+      </LayoutEdits>
+      <LayoutEdits id="lapCompare" config={combinedConfig} visible={!!(lapCompare?.isVisible)}>
+        <LapCompare state={lapCompare} drivers={formattedDrivers} history={lapTimesHistory} config={combinedConfig} />
+      </LayoutEdits>
+      <LayoutEdits id="windVectors" config={combinedConfig} visible={!!(graphics?.windVectors)}>
+        <WindVectors config={combinedConfig} isVisible={!!graphics?.windVectors} />
+      </LayoutEdits>
+      <LayoutEdits id="sponsorLive" config={combinedConfig} visible={!!(sponsorLive?.isVisible)}>
+        <SponsorLive state={sponsorLive} config={combinedConfig} />
       </LayoutEdits>
       <LayoutEdits id="raceNotice" config={combinedConfig} visible={!!(raceNotice?.isVisible)}>
         <RaceNotice notice={raceNotice} config={combinedConfig} />

@@ -42,7 +42,9 @@ export const HOTKEY_GROUPS = [
       { id: 'votingQR', label: 'graphics.votingQR' }, { id: 'votingResults', label: 'graphics.votingResults' },
       { id: 'qualifying', label: 'graphics.qualifying' }, { id: 'sectors', label: 'graphics.sectors' },
       { id: 'gapChart', label: 'graphics.gapChart' }, { id: 'gainers', label: 'graphics.gainers' },
-      { id: 'trackMap', label: 'graphics.trackMap' }
+      { id: 'trackMap', label: 'graphics.trackMap' },
+      { id: 'circuitIntro', label: 'graphics.circuitIntro' }, { id: 'circuitRecord', label: 'graphics.circuitRecord' },
+      { id: 'lapCompare', label: 'graphics.lapCompare' }, { id: 'windVectors', label: 'graphics.windVectors' }
     ]
   },
   {
