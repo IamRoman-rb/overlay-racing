@@ -4,6 +4,9 @@ const { getPenaltyHtml } = require('./src/scripts/penaltyHtml.cjs');
 const fs = require('fs');
 const path = require('path');
 const { scrapeSpeedhive, scrapeRaceMonitor, getBrowserInfo } = require('./src/scripts/scraper.cjs');
+const { fetchOrbits, disconnectOrbits, getOrbitsStatus } = require('./src/scripts/orbits.cjs');
+const { RaceAnalyzer, normalizeCorrections } = require('./src/scripts/raceData.cjs');
+const { buildResultsHtml } = require('./src/scripts/resultsPdf.cjs');
 const { networkInterfaces } = require('os');
 const express = require('express');
 const http = require('http');
@@ -20,16 +23,46 @@ const { getSystemStats, stopHardwarePoller } = require('./src/scripts/systemStat
 // y llama a start(); el login, el menú de módulos, la instancia única y el log a archivo viven en el instalador.
 const moduleCtx = global.overlayModuleCtx || {};
 
+// Canales IPC del módulo. El instalador carga el módulo dentro de su mismo proceso: si se vuelve al menú de módulos y se
+// abre otra versión (por ejemplo, después de actualizar sin cerrar el programa), los canales de la versión anterior siguen
+// registrados y Electron no deja registrar dos veces el mismo `handle` ("Attempted to register a second handler").
+// Por eso cada canal se registra a través de `ipc`: reemplaza el que haya quedado de antes y se puede liberar todo junto.
+const ipcHandles = new Set();
+const ipcListeners = [];
+const ipc = {
+  handle(channel, fn) {
+    ipcMain.removeHandler(channel);
+    ipcMain.handle(channel, fn);
+    ipcHandles.add(channel);
+  },
+  on(channel, fn) {
+    ipcMain.on(channel, fn);
+    ipcListeners.push([channel, fn]);
+  }
+};
+function releaseIpc() {
+  ipcHandles.forEach(channel => ipcMain.removeHandler(channel));
+  ipcHandles.clear();
+  ipcListeners.splice(0).forEach(([channel, fn]) => ipcMain.removeListener(channel, fn));
+}
+// Si una versión anterior de este módulo (con esta misma limpieza) quedó cargada en el proceso, se liberan sus canales
+if (typeof global.overlayRacingReleaseIpc === 'function') {
+  try { global.overlayRacingReleaseIpc(); } catch (e) {}
+}
+global.overlayRacingReleaseIpc = releaseIpc;
+
 let controlWindow;
 let overlayWindow;
 let returningToLauncher = false;
-ipcMain.on('return-to-launcher', () => {
+ipc.on('return-to-launcher', () => {
   returningToLauncher = true;
   moduleCtx.returnToLauncher?.();
   if (controlWindow && !controlWindow.isDestroyed()) controlWindow.close();
   if (overlayWindow && !overlayWindow.isDestroyed()) overlayWindow.close();
   io.close();
   stopHardwarePoller();
+  disconnectOrbits();
+  if (raceNoticeTimer) { clearTimeout(raceNoticeTimer); raceNoticeTimer = null; }
 });
 
 const isDev = moduleCtx.isDev !== undefined ? moduleCtx.isDev : !app.isPackaged;
@@ -40,6 +73,7 @@ const posPath = path.join(userDataPath, 'posiciones.json');
 const backupPath = path.join(userDataPath, 'last_race.json');
 const lapTimesPath = path.join(userDataPath, 'lap_times.json');
 const votesHistoryPath = path.join(userDataPath, 'votes_history.json');
+const correctionsPath = path.join(userDataPath, 'race_corrections.json');
 
 // Log a archivo: lo instala el instalador (launcher/logger.cjs); acá sólo se necesita saber dónde queda,
 // para mostrarlo en AJUSTES > DIAGNÓSTICO.
@@ -66,7 +100,13 @@ const defaultPositions = {
   penaltyAlert: { x: 950, y: 500, scale: 1 },
   driverInfo: { x: 380, y: 335, scale: 1 },
   branding: { x: 1640, y: 900, scale: 1 },
-  evento: { x: 560, y: 20, scale: 1 }
+  evento: { x: 560, y: 20, scale: 1 },
+  sectors: { x: 1440, y: 360, scale: 1 },
+  gapChart: { x: 730, y: 640, scale: 1 },
+  gainers: { x: 1440, y: 470, scale: 1 },
+  qualifying: { x: 20, y: 20, scale: 1 },
+  trackMap: { x: 1460, y: 610, scale: 1 },
+  raceNotice: { x: 760, y: 820, scale: 1 }
 };
 
 if (!fs.existsSync(posPath)) fs.writeFileSync(posPath, JSON.stringify(defaultPositions, null, 2));
@@ -178,6 +218,90 @@ function resetLapTimesHistory() {
   lapTimesHistory = {};
   saveLapTimesToDisk(); // pisa el archivo con datos vacíos: arranca limpio para la próxima carrera
   broadcast('update-lap-times-history', lapTimesHistory);
+}
+
+// --- ANÁLISIS DE CARRERA (src/scripts/raceData.cjs) ---
+// Cada lectura de la fuente (rawLeaderboard) pasa por el analizador antes de salir: correcciones manuales, clases,
+// grilla y posiciones ganadas, sectores, pasadas por meta y alertas. Lo que reciben las gráficas es lastLeaderboard.
+const raceAnalyzer = new RaceAnalyzer();
+let rawLeaderboard = { session: {}, drivers: [] };
+
+function readJsonFile(file, fallback) {
+  try { if (fs.existsSync(file)) return JSON.parse(fs.readFileSync(file, 'utf-8')); } catch (e) {}
+  return fallback;
+}
+// Configuración en memoria (la misma que database.json): el analizador necesita el modo multiclase
+let currentConfig = readJsonFile(dbPath, {}) || {};
+let raceCorrections = normalizeCorrections(readJsonFile(correctionsPath, {}));
+
+function saveCorrections() {
+  try { fs.writeFileSync(correctionsPath, JSON.stringify(raceCorrections, null, 2)); } catch (e) {}
+  broadcast('update-corrections', raceCorrections);
+}
+
+// opts.reprocess: misma lectura vuelta a procesar (correcciones, grilla, carrera guardada): no dispara alertas
+function processLeaderboard(raw, opts = {}) {
+  rawLeaderboard = raw && Array.isArray(raw.drivers) ? raw : { session: {}, drivers: [] };
+  const { leaderboard, newAlerts } = raceAnalyzer.update(rawLeaderboard, {
+    corrections: raceCorrections,
+    multiclassMode: currentConfig.multiclassMode || 'auto',
+    now: Date.now(),
+    reprocess: !!opts.reprocess
+  });
+  lastLeaderboard = leaderboard;
+  if (leaderboard.drivers.length > 0) {
+    currentDriversForVote = leaderboard.drivers;
+    pushDriversToCloud();
+  }
+  broadcast('update-leaderboard', leaderboard);
+  pushLeaderboardToCloud(leaderboard);
+  calculateLiveChampionship();
+  updateLapTimesHistory(leaderboard);
+  if (newAlerts.length) broadcast('update-race-alerts', raceAnalyzer.alerts);
+  if (broadcastState.gapChart.front && broadcastState.gapChart.back) broadcast('update-gap-chart', getGapChartData());
+  return leaderboard;
+}
+
+// Vuelve a aplicar correcciones / modo multiclase / grilla sobre la última lectura (aunque el cronometraje esté en pausa)
+function reprocessLeaderboard() {
+  return processLeaderboard(rawLeaderboard, { reprocess: true });
+}
+
+function getGapChartData() {
+  const state = broadcastState.gapChart;
+  const find = (num) => (lastLeaderboard.drivers || []).find(d => String(d.number) === String(num)) || null;
+  const front = find(state.front);
+  const back = find(state.back);
+  const data = state.front && state.back ? raceAnalyzer.getGapSeries(state.front, state.back) : { series: [], rate: null, lapsToCatch: null, current: null };
+  return {
+    ...state,
+    ...data,
+    frontName: front ? front.name : '', frontPos: front ? front.pos : '',
+    backName: back ? back.name : '', backPos: back ? back.pos : ''
+  };
+}
+
+// --- AVISO DE CARRERA (nuevo líder / posible abandono) que sale al aire desde una alerta del panel ---
+let raceNoticeTimer = null;
+function showRaceNotice(data) {
+  if (raceNoticeTimer) { clearTimeout(raceNoticeTimer); raceNoticeTimer = null; }
+  const clip = (v, n) => String(v === undefined || v === null ? '' : v).slice(0, n);
+  broadcastState.raceNotice = {
+    isVisible: true,
+    kind: clip(data && data.kind, 24),
+    title: clip(data && data.title, 60),
+    text: clip(data && data.text, 120),
+    number: data && data.number !== undefined ? clip(data.number, 12) : null
+  };
+  broadcast('update-race-notice', broadcastState.raceNotice);
+  const raw = Number(data && data.autoHideSeconds);
+  const seconds = Number.isFinite(raw) && raw > 0 ? Math.min(120, raw) : 8;
+  raceNoticeTimer = setTimeout(() => hideRaceNotice(), seconds * 1000);
+}
+function hideRaceNotice() {
+  if (raceNoticeTimer) { clearTimeout(raceNoticeTimer); raceNoticeTimer = null; }
+  broadcastState.raceNotice = { ...broadcastState.raceNotice, isVisible: false };
+  broadcast('update-race-notice', broadcastState.raceNotice);
 }
 
 
@@ -382,6 +506,9 @@ let broadcastState = {
   customZocalo: { isVisible: false, title: '', text: '' },
   trackAlert: { isVisible: false, curveId: null, curveName: '', type: 'yellow' },
   penaltyAlert: { isVisible: false, driverNumber: null, driverName: '', type: 'investigation', reason: '' },
+  sectors: { isVisible: false, numbers: [] },
+  gapChart: { isVisible: false, front: null, back: null },
+  raceNotice: { isVisible: false, kind: '', title: '', text: '', number: null }
 };
 
 const expressApp = express();
@@ -413,8 +540,51 @@ function getNetworkConfig(config) {
       networkConfig[key] = `/overlay-assets/${key}?v=${version}`;
     }
   });
+  // Imágenes elegidas por elemento en PERSONALIZAR (config.elementStyles_<gráfica>[camino].bgImage / imgSrc)
+  Object.keys(networkConfig).forEach((key) => {
+    if (!/^elementStyles_[A-Za-z0-9]+$/.test(key)) return;
+    const styles = networkConfig[key];
+    if (!styles || typeof styles !== 'object') return;
+    let copy = null;
+    Object.entries(styles).forEach(([elementPath, style]) => {
+      if (!style || typeof style !== 'object') return;
+      ELEMENT_IMAGE_FIELDS.forEach((field) => {
+        if (typeof style[field] !== 'string' || !/^data:image\/[a-zA-Z0-9.+-]+;base64,/.test(style[field])) return;
+        if (!copy) copy = { ...styles };
+        copy[elementPath] = { ...copy[elementPath], [field]: `/overlay-assets/element/${encodeURIComponent(key)}/${encodeURIComponent(elementPath)}/${field}?v=${version}` };
+      });
+    });
+    if (copy) networkConfig[key] = copy;
+  });
   return networkConfig;
 }
+
+const ELEMENT_IMAGE_FIELDS = ['bgImage', 'imgSrc'];
+
+function sendDataImage(res, value) {
+  const match = typeof value === 'string' && value.match(/^data:(image\/[a-zA-Z0-9.+-]+);base64,([\s\S]+)$/);
+  if (!match) return res.sendStatus(404);
+  const mime = match[1] === 'image/jpg' ? 'image/jpeg' : match[1];
+  if (!['image/png', 'image/jpeg', 'image/svg+xml'].includes(mime)) return res.sendStatus(404);
+  res.set('Cache-Control', 'no-store');
+  // Un SVG podría traer scripts: se sirve sin permiso para ejecutarlos
+  if (mime === 'image/svg+xml') res.set('Content-Security-Policy', "default-src 'none'; style-src 'unsafe-inline'");
+  return res.type(mime).send(Buffer.from(match[2], 'base64'));
+}
+
+// Imagen de un elemento: solo valores que ya están en la configuración, nunca rutas arbitrarias
+expressApp.get('/overlay-assets/element/:configKey/:elementPath/:field', (req, res) => {
+  const { configKey, elementPath, field } = req.params;
+  if (!/^elementStyles_[A-Za-z0-9]+$/.test(configKey) || !ELEMENT_IMAGE_FIELDS.includes(field)) return res.sendStatus(404);
+  try {
+    const config = JSON.parse(fs.readFileSync(dbPath, 'utf-8'));
+    const styles = config[configKey];
+    const style = styles && typeof styles === 'object' && Object.prototype.hasOwnProperty.call(styles, elementPath) ? styles[elementPath] : null;
+    return sendDataImage(res, style && style[field]);
+  } catch (error) {
+    return res.sendStatus(404);
+  }
+});
 
 // Endpoint seguro: sólo permite servir los dos logos configurados, nunca rutas arbitrarias.
 expressApp.get('/overlay-assets/:asset', (req, res) => {
@@ -467,6 +637,9 @@ io.on('connection', (socket) => {
   socket.emit('update-starting-lights', broadcastState.startingLights);
   socket.emit('update-track-alert', broadcastState.trackAlert);
   socket.emit('update-penalty', broadcastState.penaltyAlert);
+  socket.emit('update-sectors', broadcastState.sectors);
+  socket.emit('update-gap-chart', getGapChartData());
+  socket.emit('update-race-notice', broadcastState.raceNotice);
   socket.emit('cloud-status', { connected: !!cloudSocket?.connected });
   Object.keys(broadcastState.graphics).forEach(id => {
     socket.emit('set-graphic-visibility', { id, visible: broadcastState.graphics[id] });
@@ -489,7 +662,7 @@ function logOverlayDiag(who, payload, count) {
   console.log(`[overlay] ${who}: ${payload.message.slice(0, 300)}${count === OVERLAY_DIAG_LIMIT ? ' (no se registran más avisos de este cliente)' : ''}`);
 }
 let windowDiagCount = 0;
-ipcMain.on('overlay-diag', (e, payload) => logOverlayDiag('ventana overlay', payload, ++windowDiagCount));
+ipc.on('overlay-diag', (e, payload) => logOverlayDiag('ventana overlay', payload, ++windowDiagCount));
 
 expressApp.get('/votar', (req, res) => {
   let campeonato = 'CARRERA';
@@ -597,27 +770,27 @@ const broadcast = (event, data) => {
   }
 };
 
-ipcMain.on('preview-positions', (event, data) => broadcast('update-positions', data));
-ipcMain.on('force-update-leaderboard', (event, data) => { lastLeaderboard = data; broadcast('update-leaderboard', data); pushLeaderboardToCloud(data); });
-ipcMain.on('toggle-ticker', (e, data) => { broadcastState.ticker = data; broadcast('set-ticker-visibility', data); });
-ipcMain.on('toggle-tower', (e, data) => { broadcastState.tower = data; broadcast('set-tower-visibility', data); });
-ipcMain.on('toggle-graphic', (e, data) => { broadcastState.graphics[data.id] = data.visible; broadcast('set-graphic-visibility', data); });
-ipcMain.on('toggle-grid', (e, data) => { broadcastState.grid = data; broadcast('set-grid-visibility', data); });
-ipcMain.on('grid-next', () => broadcast('grid-next'));
-ipcMain.on('grid-prev', () => broadcast('grid-prev'));
-ipcMain.on('toggle-final-results', (e, data) => { broadcastState.finalResults = data; broadcast('set-final-results-visibility', data); });
-ipcMain.on('final-results-next', () => broadcast('final-results-next'));
-ipcMain.on('final-results-prev', () => broadcast('final-results-prev'));
-ipcMain.on('toggle-winner', (e, data) => { broadcastState.winner = data; broadcast('set-winner-visibility', data); });
-ipcMain.on('toggle-flag', (e, data) => { broadcastState.flags = data; broadcast('set-flag-visibility', data); });
-ipcMain.on('toggle-fastest-lap', (e, data) => { broadcastState.fastestLap = data; broadcast('set-fastest-lap-visibility', data); });
-ipcMain.on('toggle-driver-info', (e, data) => { broadcastState.driverInfo = data; broadcast('set-driver-info-visibility', data); });
-ipcMain.on('toggle-battle', (e, data) => { broadcastState.battle = data; broadcast('set-battle-visibility', data); });
-ipcMain.on('toggle-custom-zocalo', (e, data) => { broadcastState.customZocalo = data; broadcast('set-custom-zocalo-visibility', data); });
-ipcMain.on('toggle-voting-qr', (e, data) => { broadcastState.votingQR = data; broadcast('set-voting-qr', data); });
-ipcMain.on('toggle-voting-results', (e, data) => { broadcastState.votingResults = data; broadcast('set-voting-results', data); });
-ipcMain.on('toggle-lap-counter', (e, data) => { broadcastState.lapCounter = data; broadcast('set-lap-counter-visibility', data); });
-ipcMain.on('reset-votes', () => {
+ipc.on('preview-positions', (event, data) => broadcast('update-positions', data));
+ipc.on('force-update-leaderboard', (event, data) => { processLeaderboard(data, { reprocess: true }); });
+ipc.on('toggle-ticker', (e, data) => { broadcastState.ticker = data; broadcast('set-ticker-visibility', data); });
+ipc.on('toggle-tower', (e, data) => { broadcastState.tower = data; broadcast('set-tower-visibility', data); });
+ipc.on('toggle-graphic', (e, data) => { broadcastState.graphics[data.id] = data.visible; broadcast('set-graphic-visibility', data); });
+ipc.on('toggle-grid', (e, data) => { broadcastState.grid = data; broadcast('set-grid-visibility', data); });
+ipc.on('grid-next', () => broadcast('grid-next'));
+ipc.on('grid-prev', () => broadcast('grid-prev'));
+ipc.on('toggle-final-results', (e, data) => { broadcastState.finalResults = data; broadcast('set-final-results-visibility', data); });
+ipc.on('final-results-next', () => broadcast('final-results-next'));
+ipc.on('final-results-prev', () => broadcast('final-results-prev'));
+ipc.on('toggle-winner', (e, data) => { broadcastState.winner = data; broadcast('set-winner-visibility', data); });
+ipc.on('toggle-flag', (e, data) => { broadcastState.flags = data; broadcast('set-flag-visibility', data); });
+ipc.on('toggle-fastest-lap', (e, data) => { broadcastState.fastestLap = data; broadcast('set-fastest-lap-visibility', data); });
+ipc.on('toggle-driver-info', (e, data) => { broadcastState.driverInfo = data; broadcast('set-driver-info-visibility', data); });
+ipc.on('toggle-battle', (e, data) => { broadcastState.battle = data; broadcast('set-battle-visibility', data); });
+ipc.on('toggle-custom-zocalo', (e, data) => { broadcastState.customZocalo = data; broadcast('set-custom-zocalo-visibility', data); });
+ipc.on('toggle-voting-qr', (e, data) => { broadcastState.votingQR = data; broadcast('set-voting-qr', data); });
+ipc.on('toggle-voting-results', (e, data) => { broadcastState.votingResults = data; broadcast('set-voting-results', data); });
+ipc.on('toggle-lap-counter', (e, data) => { broadcastState.lapCounter = data; broadcast('set-lap-counter-visibility', data); });
+ipc.on('reset-votes', () => {
   votesData = {};
   broadcast('update-votes', votesData);
 });
@@ -642,11 +815,11 @@ function localDayString(date) {
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
 }
 
-ipcMain.handle('get-vote-history', () => readVotesHistory());
+ipc.handle('get-vote-history', () => readVotesHistory());
 
 // data: { category, drivers: [{number, name}], resetAfter }
 // Si ya hay un registro de la misma categoría el mismo día, se reemplaza (volver a guardar = actualizar).
-ipcMain.handle('save-vote-record', (event, data) => {
+ipc.handle('save-vote-record', (event, data) => {
   const category = String(data?.category || '').trim();
   if (!category) return { ok: false, reason: 'NO_CATEGORY' };
 
@@ -682,22 +855,22 @@ ipcMain.handle('save-vote-record', (event, data) => {
   return { ok: true, record, history };
 });
 
-ipcMain.handle('delete-vote-record', (event, id) => {
+ipc.handle('delete-vote-record', (event, id) => {
   const history = readVotesHistory().filter(r => r.id !== id);
   writeVotesHistory(history);
   return history;
 });
-ipcMain.on('toggle-virtual-champ', (e, data) => { broadcastState.virtualChamp = data; broadcast('set-virtual-champ', data); });
+ipc.on('toggle-virtual-champ', (e, data) => { broadcastState.virtualChamp = data; broadcast('set-virtual-champ', data); });
 
-ipcMain.on('toggle-lap-times-history', (e, data) => { broadcastState.lapTimesHistory = data; broadcast('set-lap-times-history-visibility', data); });
-ipcMain.on('set-lap-times-focus', (e, driverNumber) => { broadcastState.lapTimesFocus = driverNumber; broadcast('update-lap-times-focus', driverNumber); });
-ipcMain.on('reset-lap-times-history', () => resetLapTimesHistory());
+ipc.on('toggle-lap-times-history', (e, data) => { broadcastState.lapTimesHistory = data; broadcast('set-lap-times-history-visibility', data); });
+ipc.on('set-lap-times-focus', (e, driverNumber) => { broadcastState.lapTimesFocus = driverNumber; broadcast('update-lap-times-focus', driverNumber); });
+ipc.on('reset-lap-times-history', () => resetLapTimesHistory());
 
-ipcMain.on('trigger-track-alert', (e, data) => {
+ipc.on('trigger-track-alert', (e, data) => {
   broadcastState.trackAlert = { isVisible: true, curveId: data.curveId, curveName: data.curveName, type: data.type };
   broadcast('update-track-alert', broadcastState.trackAlert);
 });
-ipcMain.on('hide-track-alert', () => {
+ipc.on('hide-track-alert', () => {
   broadcastState.trackAlert = { isVisible: false, curveId: null, curveName: '', type: 'yellow' };
   broadcast('update-track-alert', broadcastState.trackAlert);
 });
@@ -737,10 +910,102 @@ function hidePenaltyAlert() {
   broadcast('update-penalty', broadcastState.penaltyAlert);
 }
 
-ipcMain.on('trigger-penalty', (e, data) => triggerPenalty(data));
-ipcMain.on('hide-penalty', () => hidePenaltyAlert());
+ipc.on('trigger-penalty', (e, data) => triggerPenalty(data));
+ipc.on('hide-penalty', () => hidePenaltyAlert());
 
-ipcMain.on('pitstop-action', (e, { action, driver }) => {
+// --- CORRECCIONES MANUALES (nombre, penalización de tiempo, descalificación) ---
+ipc.handle('get-corrections', () => raceCorrections);
+ipc.handle('set-correction', (e, data) => {
+  const num = String(data?.number ?? '').trim();
+  if (!num) return raceCorrections;
+  const next = { ...raceCorrections };
+  next[num] = { ...(next[num] || {}), ...(data?.patch || {}) };
+  raceCorrections = normalizeCorrections(next);
+  saveCorrections();
+  reprocessLeaderboard();
+  return raceCorrections;
+});
+// mode: 'all' borra todo; 'penalties' conserva sólo los nombres corregidos
+ipc.handle('clear-corrections', (e, mode) => {
+  if (mode === 'penalties') {
+    const kept = {};
+    Object.keys(raceCorrections).forEach(num => { if (raceCorrections[num].name) kept[num] = { name: raceCorrections[num].name }; });
+    raceCorrections = kept;
+  } else {
+    raceCorrections = {};
+  }
+  saveCorrections();
+  reprocessLeaderboard();
+  return raceCorrections;
+});
+
+// --- GRILLA DE LARGADA (posiciones ganadas / perdidas) ---
+ipc.handle('get-grid-info', () => raceAnalyzer.getGridInfo());
+ipc.handle('start-grid', (e, action) => {
+  if (action === 'capture') raceAnalyzer.setManualGrid(lastLeaderboard.drivers);
+  else if (action === 'clear') raceAnalyzer.clearGrid();
+  reprocessLeaderboard();
+  return raceAnalyzer.getGridInfo();
+});
+
+// --- ALERTAS AUTOMÁTICAS (sugerencias para el operador) ---
+ipc.handle('get-race-alerts', () => raceAnalyzer.alerts);
+ipc.on('dismiss-race-alert', (e, id) => { raceAnalyzer.dismissAlert(id); broadcast('update-race-alerts', raceAnalyzer.alerts); });
+ipc.on('clear-race-alerts', () => { raceAnalyzer.clearAlerts(); broadcast('update-race-alerts', raceAnalyzer.alerts); });
+
+// --- SECTORES / BRECHA ENTRE DOS PILOTOS / AVISO DE CARRERA ---
+ipc.on('toggle-sectors', (e, data) => {
+  const numbers = (Array.isArray(data?.numbers) ? data.numbers : []).filter(Boolean).map(String).slice(0, 2);
+  broadcastState.sectors = { isVisible: !!data?.isVisible && numbers.length > 0, numbers };
+  broadcast('update-sectors', broadcastState.sectors);
+});
+ipc.on('toggle-gap-chart', (e, data) => {
+  const front = data?.front ? String(data.front) : null;
+  const back = data?.back ? String(data.back) : null;
+  broadcastState.gapChart = { isVisible: !!data?.isVisible && !!front && !!back, front, back };
+  broadcast('update-gap-chart', getGapChartData());
+});
+ipc.handle('get-gap-chart', () => getGapChartData());
+ipc.on('show-race-notice', (e, data) => showRaceNotice(data));
+ipc.on('hide-race-notice', () => hideRaceNotice());
+
+// --- PLANILLA DE RESULTADOS EN PDF ---
+ipc.handle('export-results-pdf', async (e, options) => {
+  if (!lastLeaderboard?.drivers?.length) return { ok: false, reason: 'NO_DATA' };
+  const config = readJsonFile(dbPath, {}) || {};
+  const language = options?.language || config.language || 'es';
+  const base = String(config.categoryName || lastLeaderboard.session?.detectedCategory || lastLeaderboard.session?.name || 'carrera')
+    .normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-zA-Z0-9]+/g, '-').replace(/^-+|-+$/g, '').toLowerCase().slice(0, 60) || 'carrera';
+  const stamp = new Date();
+  const pad = (n) => String(n).padStart(2, '0');
+  const result = await dialog.showSaveDialog(controlWindow, {
+    title: 'Guardar resultados en PDF',
+    defaultPath: `resultados-${base}-${stamp.getFullYear()}${pad(stamp.getMonth() + 1)}${pad(stamp.getDate())}.pdf`,
+    filters: [{ name: 'PDF', extensions: ['pdf'] }]
+  });
+  if (result.canceled || !result.filePath) return { ok: false, reason: 'CANCELED' };
+
+  const html = buildResultsHtml({ leaderboard: lastLeaderboard, config, language, date: stamp });
+  const tmpFile = path.join(os.tmpdir(), `overlay-resultados-${process.pid}-${Date.now()}.html`);
+  let pdfWindow = null;
+  try {
+    fs.writeFileSync(tmpFile, html, 'utf-8');
+    pdfWindow = new BrowserWindow({ show: false, webPreferences: { javascript: false, nodeIntegration: false, contextIsolation: true, sandbox: true } });
+    await pdfWindow.loadFile(tmpFile);
+    const pdf = await pdfWindow.webContents.printToPDF({ pageSize: 'A4', printBackground: true, margins: { top: 0, bottom: 0, left: 0, right: 0 } });
+    fs.writeFileSync(result.filePath, pdf);
+    shell.showItemInFolder(result.filePath);
+    return { ok: true, filePath: result.filePath };
+  } catch (err) {
+    console.error('Error exportando resultados a PDF:', err);
+    return { ok: false, reason: 'ERROR', message: err?.message || '' };
+  } finally {
+    if (pdfWindow && !pdfWindow.isDestroyed()) pdfWindow.destroy();
+    try { fs.unlinkSync(tmpFile); } catch (e) {}
+  }
+});
+
+ipc.on('pitstop-action', (e, { action, driver }) => {
   if (action === 'start') {
     broadcastState.pitStop = { isVisible: true, driver, startTime: Date.now(), stoppedTime: null, isRunning: true };
   } else if (action === 'stop') {
@@ -761,7 +1026,7 @@ const clearStartingLightsTimers = () => {
   startingLightsTimers = [];
 };
 
-ipcMain.on('starting-lights-action', (e, action) => {
+ipc.on('starting-lights-action', (e, action) => {
   if (action === 'hide') {
     clearStartingLightsTimers();
     broadcastState.startingLights = { isVisible: false, step: 0 };
@@ -799,9 +1064,9 @@ ipcMain.on('starting-lights-action', (e, action) => {
   }
 });
 
-ipcMain.handle('get-pitstop', () => broadcastState.pitStop);
-ipcMain.handle('get-championship', () => liveChampionship);
-ipcMain.handle('load-excel', async () => {
+ipc.handle('get-pitstop', () => broadcastState.pitStop);
+ipc.handle('get-championship', () => liveChampionship);
+ipc.handle('load-excel', async () => {
   const result = await dialog.showOpenDialog(controlWindow, {
     title: 'Cargar Campeonato (Excel)', properties: ['openFile'], filters: [{ name: 'Excel', extensions: ['xlsx', 'xls'] }]
   });
@@ -824,7 +1089,7 @@ ipcMain.handle('load-excel', async () => {
 
 // Genera una plantilla .xlsx lista para completar con el formato que espera 'load-excel'
 // (solo lee la primera hoja; las instrucciones van en una segunda hoja para no interferir).
-ipcMain.handle('save-excel-template', async (event, language) => {
+ipc.handle('save-excel-template', async (event, language) => {
   const instructions = {
     es: ['INSTRUCCIONES', 'Completá la hoja "Campeonato". No cambies los nombres de las columnas (Numero, Nombre, Puntos, Posicion, Puntos_Escala).', 'Numero / Nombre / Puntos: un piloto por fila. Puntos es el puntaje que ya trae antes de esta carrera.', 'Posicion / Puntos_Escala: cuántos puntos da cada posición de llegada (1°, 2°, 3°...). Pueden estar en filas distintas a las de los pilotos.', 'Los datos de ejemplo se pueden borrar o reemplazar. Solo se lee la primera hoja.'],
     en: ['INSTRUCTIONS', 'Fill in the "Campeonato" sheet. Do not change the column names (Numero, Nombre, Puntos, Posicion, Puntos_Escala).', 'Numero / Nombre / Puntos: one driver per row. Puntos is the score the driver already has before this race.', 'Posicion / Puntos_Escala: how many points each finishing position gives (1st, 2nd, 3rd...). They can be on different rows than the drivers.', 'The sample data can be deleted or replaced. Only the first sheet is read.'],
@@ -864,7 +1129,7 @@ ipcMain.handle('save-excel-template', async (event, language) => {
 });
 
 // Direcciones por las que otra PC de la red (por ejemplo la que corre vMix) puede abrir el overlay.
-ipcMain.handle('get-network-urls', () => {
+ipc.handle('get-network-urls', () => {
   const urls = [];
   const nets = networkInterfaces();
   for (const name of Object.keys(nets)) {
@@ -877,11 +1142,11 @@ ipcMain.handle('get-network-urls', () => {
   return urls;
 });
 
-ipcMain.handle('get-system-stats', () => getSystemStats());
-ipcMain.handle('get-local-ip', () => getVotingUrl());
-ipcMain.handle('get-steward-url', () => getStewardUrl());
-ipcMain.handle('get-votes', () => votesData);
-ipcMain.handle('get-config', () => {
+ipc.handle('get-system-stats', () => getSystemStats());
+ipc.handle('get-local-ip', () => getVotingUrl());
+ipc.handle('get-steward-url', () => getStewardUrl());
+ipc.handle('get-votes', () => votesData);
+ipc.handle('get-config', () => {
   try { if (fs.existsSync(dbPath)) return JSON.parse(fs.readFileSync(dbPath, 'utf-8')); } catch (e) {}
   return { campeonato: '', relator: '', comentarista: '' };
 });
@@ -905,32 +1170,35 @@ function applyOverlaySize(cfg) {
   overlayWindow.setResizable(false);
 }
 
-ipcMain.handle('save-config', (event, data) => {
+ipc.handle('save-config', (event, data) => {
   try {
     fs.writeFileSync(dbPath, JSON.stringify(data, null, 2));
+    const multiclassChanged = (data?.multiclassMode || 'auto') !== (currentConfig.multiclassMode || 'auto');
+    currentConfig = data || {};
     applyOverlaySize(data);
     broadcast('update-config', data);
+    if (multiclassChanged) reprocessLeaderboard();
     return true;
   } catch (e) { return false; }
 });
-ipcMain.handle('get-default-positions', () => defaultPositions);
-ipcMain.handle('get-positions', () => {
+ipc.handle('get-default-positions', () => defaultPositions);
+ipc.handle('get-positions', () => {
   try {
     let savedPos = JSON.parse(fs.readFileSync(posPath, 'utf-8'));
     return { ...defaultPositions, ...savedPos };
   } catch (e) { return defaultPositions; }
 });
-ipcMain.handle('save-positions', (event, data) => {
+ipc.handle('save-positions', (event, data) => {
   try { fs.writeFileSync(posPath, JSON.stringify(data, null, 2)); broadcast('update-positions', data); return true; } catch (e) { return false; }
 });
-ipcMain.handle('save-backup', (event, data) => {
+ipc.handle('save-backup', (event, data) => {
   try { fs.writeFileSync(backupPath, JSON.stringify(data, null, 2)); return true; } catch (e) { return false; }
 });
 
 // --- COPIA DE SEGURIDAD DE LA CONFIGURACIÓN (database.json + posiciones.json) ---
 // Permite al usuario guardar/restaurar su configuración manualmente, por ejemplo antes de
 // actualizar el programa a una versión nueva, para no perder colores, textos, formatos ni posiciones.
-ipcMain.handle('export-settings', async () => {
+ipc.handle('export-settings', async () => {
   const result = await dialog.showOpenDialog(controlWindow, {
     title: 'Elegí una carpeta para guardar la copia de seguridad',
     properties: ['openDirectory', 'createDirectory']
@@ -945,7 +1213,7 @@ ipcMain.handle('export-settings', async () => {
   } catch (e) { return false; }
 });
 
-ipcMain.handle('import-settings', async () => {
+ipc.handle('import-settings', async () => {
   const result = await dialog.showOpenDialog(controlWindow, {
     title: 'Elegí la carpeta con database.json y/o posiciones.json',
     properties: ['openDirectory']
@@ -962,6 +1230,7 @@ ipcMain.handle('import-settings', async () => {
     if (fs.existsSync(srcDbPath)) {
       configData = JSON.parse(fs.readFileSync(srcDbPath, 'utf-8'));
       fs.writeFileSync(dbPath, JSON.stringify(configData, null, 2));
+      currentConfig = configData || {};
       broadcast('update-config', configData);
       imported.config = true;
     }
@@ -981,17 +1250,16 @@ ipcMain.handle('import-settings', async () => {
   if (!imported.config && !imported.positions) return null;
   return { imported, config: configData, positions: positionsData };
 });
-ipcMain.handle('load-backup', () => {
+ipc.handle('load-backup', () => {
   try {
     if (fs.existsSync(backupPath)) {
       const bData = JSON.parse(fs.readFileSync(backupPath, 'utf-8'));
-      lastLeaderboard = bData;
-      return bData;
+      return processLeaderboard(bData, { reprocess: true });
     }
   } catch (e) {} return null;
 });
 
-ipcMain.handle('get-diagnostics', () => {
+ipc.handle('get-diagnostics', () => {
   let logTail = '';
   try {
     const lines = fs.readFileSync(logPath, 'utf-8').split('\n').filter(Boolean);
@@ -1005,41 +1273,40 @@ ipcMain.handle('get-diagnostics', () => {
     platform: `${os.platform()} ${os.release()} ${os.arch()}`,
     resourcesPath: process.resourcesPath,
     browser: browserInfo,
+    orbits: getOrbitsStatus(),
     logPath,
     logTail
   };
 });
-ipcMain.handle('open-logs-folder', () => shell.showItemInFolder(fs.existsSync(logPath) ? logPath : logDir));
+ipc.handle('open-logs-folder', () => shell.showItemInFolder(fs.existsSync(logPath) ? logPath : logDir));
 
-ipcMain.handle('scrape-timing', async (event, { provider, code }) => {
+ipc.handle('scrape-timing', async (event, { provider, code, port }) => {
   let leaderboard;
   try {
-    leaderboard = provider === 'racemonitor' ? await scrapeRaceMonitor(code) : await scrapeSpeedhive(code);
+    // Orbits mantiene una conexión TCP abierta: si se pasa a otro proveedor, se corta.
+    if (provider !== 'orbits') disconnectOrbits();
+    if (provider === 'orbits') leaderboard = await fetchOrbits(code, port);
+    else leaderboard = provider === 'racemonitor' ? await scrapeRaceMonitor(code) : await scrapeSpeedhive(code);
   } catch (e) {
     console.error('Error en scrape-timing:', e);
     return { session: {}, drivers: [], error: { code: 'SCRAPER_ERROR', message: e?.message || '' } };
   }
-  if (leaderboard && leaderboard.drivers && leaderboard.drivers.length > 0) {
-    currentDriversForVote = leaderboard.drivers;
-    pushDriversToCloud();
-  }
   // Si el scraper falló (sin navegador, sin internet, error puntual), no pisamos los últimos datos
   // buenos: así un corte momentáneo no deja vacías las gráficas que están al aire.
   if (leaderboard?.error) return leaderboard;
-  lastLeaderboard = leaderboard;
-  broadcast('update-leaderboard', leaderboard);
-  pushLeaderboardToCloud(leaderboard);
-  calculateLiveChampionship();
-  updateLapTimesHistory(leaderboard);
-  return leaderboard;
+  return processLeaderboard(leaderboard);
 });
 
+// Estado de la conexión con Orbits para el indicador de AJUSTES
+ipc.handle('orbits-status', () => getOrbitsStatus());
+ipc.handle('orbits-disconnect', () => { disconnectOrbits(); return getOrbitsStatus(); });
+
 // --- CONFIG DEL SERVIDOR CLOUD (tokens de QR / Comisario del evento activo) ---
-ipcMain.handle('get-cloud-config', () => {
+ipc.handle('get-cloud-config', () => {
   loadCloudConfig();
   return { ...cloudConfig, connected: !!cloudSocket?.connected, url: CLOUD_URL };
 });
-ipcMain.handle('save-cloud-config', (event, data) => {
+ipc.handle('save-cloud-config', (event, data) => {
   try {
     let configData = {};
     if (fs.existsSync(dbPath)) configData = JSON.parse(fs.readFileSync(dbPath, 'utf-8'));
@@ -1055,7 +1322,7 @@ ipcMain.handle('save-cloud-config', (event, data) => {
   } catch (e) { return false; }
 });
 
-ipcMain.handle('get-initial-state', () => {
+ipc.handle('get-initial-state', () => {
   let config = {};
   try { if (fs.existsSync(dbPath)) config = JSON.parse(fs.readFileSync(dbPath, 'utf-8')); } catch (e) {}
 
@@ -1073,6 +1340,7 @@ ipcMain.handle('get-initial-state', () => {
   broadcastState,
   leaderboard: lastLeaderboard,
   lapTimesHistory,
+  gapChart: getGapChartData(),
   votes: votesData,
   localIp: getVotingUrl()
   };
@@ -1090,16 +1358,17 @@ const handleFileSelect = async (title, extensions) => {
   }
   return null;
 };
-ipcMain.handle('select-logo', () => handleFileSelect('Seleccionar Logo', ['png', 'jpg', 'jpeg']));
-ipcMain.handle('select-category-logo', () => handleFileSelect('Seleccionar Logo Categoría', ['png', 'jpg', 'jpeg']));
-ipcMain.handle('select-track-image', () => handleFileSelect('Seleccionar Imagen del Circuito', ['png', 'jpg', 'jpeg']));
-ipcMain.handle('select-design-image', (e, title) => handleFileSelect(`Diseño PNG/SVG: ${title}`, ['png', 'svg']));
-ipcMain.handle('select-photos-folder', async () => {
+ipc.handle('select-logo', () => handleFileSelect('Seleccionar Logo', ['png', 'jpg', 'jpeg']));
+ipc.handle('select-category-logo', () => handleFileSelect('Seleccionar Logo Categoría', ['png', 'jpg', 'jpeg']));
+ipc.handle('select-track-image', () => handleFileSelect('Seleccionar Imagen del Circuito', ['png', 'jpg', 'jpeg']));
+ipc.handle('select-design-image', (e, title) => handleFileSelect(`Diseño PNG/SVG: ${title}`, ['png', 'svg']));
+ipc.handle('select-element-image', () => handleFileSelect('Imagen para el elemento de la gráfica', ['png', 'jpg', 'jpeg', 'svg']));
+ipc.handle('select-photos-folder', async () => {
   const result = await dialog.showOpenDialog(controlWindow, { title: 'Seleccionar Carpeta Fotos', properties: ['openDirectory'] });
   return !result.canceled ? result.filePaths[0] : null;
 });
 
-ipcMain.on('overlay-control', (event, action) => {
+ipc.on('overlay-control', (event, action) => {
   if (!overlayWindow) return;
   if (action === 'minimize') overlayWindow.minimize();
   else if (action === 'maximize') { overlayWindow.isMaximized() ? overlayWindow.unmaximize() : overlayWindow.maximize(); }
@@ -1108,7 +1377,7 @@ ipcMain.on('overlay-control', (event, action) => {
 
 // Tras un alert()/confirm() nativo en Windows la ventana pierde el foco de teclado (los inputs no
 // dejan escribir); blur + focus fuerza a Windows a devolvérselo.
-ipcMain.on('refocus-window', (e) => {
+ipc.on('refocus-window', (e) => {
   const win = BrowserWindow.fromWebContents(e.sender);
   if (!win || win.isDestroyed()) return;
   win.blur();
@@ -1136,7 +1405,7 @@ function createWindows() {
   controlWindow.on('closed', () => { if (!returningToLauncher) app.quit(); });
 }
 
-app.on('will-quit', stopHardwarePoller);
+app.on('will-quit', () => { stopHardwarePoller(); disconnectOrbits(); });
 
 // Punto de entrada que usa el instalador
 module.exports = {

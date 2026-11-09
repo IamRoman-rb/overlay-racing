@@ -8,4 +8,12 @@ const SERVER_URL = (process.env.OVERLAY_SERVER_URL || 'https://overlayracing.sit
 // Un módulo publicado con launcherApi mayor al de este instalador pide actualizar el instalador.
 const LAUNCHER_API = 1;
 
-module.exports = { SERVER_URL, LAUNCHER_API };
+// Derechos de autor: el software está inscripto en la Dirección Nacional del Derecho de Autor (Registro de Obra Publicada - Software).
+// Se muestra en el panel del launcher; el mismo texto va en "copyright" de package.json (propiedades del .exe).
+const COPYRIGHT = {
+  year: 2026,
+  holder: 'Roman Manuel Borla',
+  registry: 'RL-2026-107621619-APN-DNDA#MJ',
+};
+
+module.exports = { SERVER_URL, LAUNCHER_API, COPYRIGHT };

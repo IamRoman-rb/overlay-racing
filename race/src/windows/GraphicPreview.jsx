@@ -22,6 +22,12 @@ import TrackAlert from '../graphics/TrackAlert';
 import PenaltyAlert from '../graphics/PenaltyAlert';
 import Branding from '../graphics/Branding';
 import Evento from '../graphics/Evento';
+import Sectors from '../graphics/Sectors';
+import GapChart from '../graphics/GapChart';
+import Gainers from '../graphics/Gainers';
+import QualifyingBoard from '../graphics/QualifyingBoard';
+import TrackMap from '../graphics/TrackMap';
+import RaceNotice from '../graphics/RaceNotice';
 import LayoutEdits from '../components/LayoutEdits';
 import { formatDriverName } from '../utils/formatDriverName';
 
@@ -46,6 +52,25 @@ const DEMO_HISTORY = (() => {
   });
   return history;
 })();
+
+// Datos de ejemplo de lo que calcula el análisis de carrera (sectores, grilla, vuelta en curso) para las gráficas nuevas
+const DEMO_SECTOR_COLORS = [['purple', 'green', 'yellow'], ['green', 'yellow', 'purple'], ['yellow', 'green', 'green']];
+const DEMO_GAINS = [2, -1, 4, -2, 0, 3, -3, 1, 5, -4, 0, -5];
+const enrichDemo = (list, realDrivers) => list.map((d, i) => {
+  if (realDrivers) return d;
+  const pos = i + 1;
+  return {
+    ...d,
+    sector1: d.sector1 || (24.8 + i * 0.11).toFixed(3), sector2: d.sector2 || (26.1 + i * 0.07).toFixed(3), sector3: d.sector3 || (25.0 + i * 0.09).toFixed(3),
+    sectorColors: DEMO_SECTOR_COLORS[i % 3], theoreticalBest: `1:15.${String(820 + i * 41).slice(-3)}`,
+    startPos: pos + DEMO_GAINS[i % DEMO_GAINS.length], posGain: DEMO_GAINS[i % DEMO_GAINS.length],
+    lapProgress: { since: (i * 7) % 70, lapTime: 76 + i * 0.4 }, onTrack: i % 4 !== 3, onPushLap: i === 2, isFastest: i === 0
+  };
+});
+const DEMO_TRACK_PATH = [
+  { x: 20, y: 70 }, { x: 70, y: 72 }, { x: 85, y: 60 }, { x: 80, y: 35 }, { x: 60, y: 25 }, { x: 45, y: 40 },
+  { x: 30, y: 30 }, { x: 15, y: 40 }, { x: 12, y: 58 }
+];
 
 const ROLE_BY_ID = { relator: 'Relator', comentarista: 'Comentarista', notero1: 'Notero', notero2: 'Notero', circuito: 'Circuito' };
 
@@ -76,13 +101,13 @@ function GraphicPreviewContent({ id, config, positions, drivers, sessionInfo }) 
     case 'clima':
       return <Weather data={config?.weatherData || { temp: 22, weathercode: 2, windSpeed: 14, windDir: 200, precipProb: 20, feelsLike: 21 }} isVisible config={fullConfig} />;
     case 'ticker':
-      return <Ticker drivers={list} config={fullConfig} isVisible sessionInfo={session} />;
+      return <Ticker drivers={enrichDemo(list, realDrivers)} config={fullConfig} isVisible sessionInfo={session} />;
     case 'tower':
-      return <TimingTower drivers={list} config={fullConfig} isVisible sessionInfo={session} />;
+      return <TimingTower drivers={enrichDemo(list, realDrivers)} config={fullConfig} isVisible sessionInfo={session} />;
     case 'grid':
       return <StartingGrid drivers={list} config={fullConfig} isVisible />;
     case 'finalResults':
-      return <FinalResults drivers={list} config={fullConfig} isVisible />;
+      return <FinalResults drivers={list} config={fullConfig} isVisible sessionInfo={session} />;
     case 'winner':
       return <WinnerGraphic driver={list[1] || list[0]} config={fullConfig} isVisible sessionInfo={session} />;
     case 'flags':
@@ -115,6 +140,20 @@ function GraphicPreviewContent({ id, config, positions, drivers, sessionInfo }) 
       return <PenaltyAlert alert={{ isVisible: true, driverNumber: list[1]?.number, driverName: list[1]?.name, type: 'penalty', reason: 'Exceso de velocidad en boxes' }} config={fullConfig} />;
     case 'branding':
       return <Branding isVisible config={fullConfig} />;
+    case 'sectors':
+      return <Sectors drivers={enrichDemo(list, realDrivers)} config={fullConfig} state={{ isVisible: true, numbers: [list[0]?.number, list[1]?.number].filter(Boolean) }} sessionInfo={{ ...session, idealLap: session.idealLap || '1:15.690' }} />;
+    case 'gapChart': {
+      const series = [1.9, 1.6, 1.45, 1.2, 0.95, 0.8, 0.6].map((gap, i) => ({ lap: i + 1, gap }));
+      return <GapChart config={fullConfig} data={{ isVisible: true, front: list[0]?.number, back: list[1]?.number, frontName: list[0]?.name, backName: list[1]?.name, frontPos: '1', backPos: '2', series, rate: -0.21, current: 0.6, lapsToCatch: 3 }} />;
+    }
+    case 'gainers':
+      return <Gainers drivers={enrichDemo(list, realDrivers)} config={fullConfig} isVisible />;
+    case 'qualifying':
+      return <QualifyingBoard drivers={enrichDemo(list, realDrivers)} config={{ ...fullConfig, qualiCutoff: config?.qualiCutoff || 10 }} isVisible sessionInfo={session} />;
+    case 'trackMap':
+      return <TrackMap drivers={enrichDemo(list, realDrivers)} config={{ ...fullConfig, trackPath: (config?.trackPath && config.trackPath.length > 1) ? config.trackPath : DEMO_TRACK_PATH }} isVisible sessionInfo={session} />;
+    case 'raceNotice':
+      return <RaceNotice config={fullConfig} notice={{ isVisible: true, kind: 'leader', title: 'NUEVO LÍDER', text: list[1]?.name || 'NOMBRE DE EJEMPLO', number: list[1]?.number }} />;
     case 'evento':
       return <Evento isVisible config={{ ...fullConfig, productora: config?.productora || 'PRODUCTORA DE EJEMPLO', circuito: config?.circuito || 'AUTÓDROMO DE EJEMPLO', weatherData: config?.weatherData || { temp: 22, weathercode: 2, windSpeed: 14, windDir: 200, precipProb: 20, feelsLike: 21 } }} />;
     default:

@@ -1,5 +1,5 @@
 import { useRef, useState, useLayoutEffect } from 'react';
-import { LAYOUT_EDITS_PREFIX, applyLayoutEdits, applyTextSizes } from '../utils/layoutEdit';
+import { LAYOUT_EDITS_PREFIX, ELEMENT_STYLES_PREFIX, applyLayoutEdits, applyTextSizes, applyElementStyles } from '../utils/layoutEdit';
 import LogoCover from './LogoCover';
 import { getCoverSettings } from '../utils/logoCover';
 import { SIZE_W_PREFIX, SIZE_H_PREFIX, readSize, applyGraphicSize } from '../utils/graphicSize';
@@ -13,7 +13,8 @@ function reportMissing(id, kind, keys, wrapper, visible) {
     `EDITOR: la gráfica "${id}" al aire no tiene el objeto ${key} (${kind}); se eligió con otra variante de la gráfica y no se aplica.`));
 }
 
-// Envuelve una gráfica y le aplica los objetos movidos desde la pestaña EDITOR (config.layoutEdits_<id>).
+// Envuelve una gráfica y le aplica los objetos movidos desde la pestaña EDITOR (config.layoutEdits_<id>) y los estilos por
+// elemento elegidos en PERSONALIZAR (config.elementStyles_<id>).
 // También aplica el ancho/alto propio de la gráfica (config.sizeW_<id> / sizeH_<id>).
 // Si la gráfica tiene logos de tapado elegidos en PERSONALIZAR, los dibuja encima de su caja al aparecer (ver LogoCover).
 //   visible: si la gráfica está en pantalla (undefined = vista previa); coverReplay: número que sube al pulsar "probar";
@@ -28,6 +29,8 @@ export default function LayoutEdits({ id, config, children, visible, coverReplay
   const signature = edits ? JSON.stringify(edits) : '';
   const textSizes = config?.[`textSizes_${id}`];
   const textSizeSignature = textSizes ? JSON.stringify(textSizes) : '';
+  const elementStyles = config?.[`${ELEMENT_STYLES_PREFIX}${id}`];
+  const elementStyleSignature = elementStyles ? JSON.stringify(elementStyles) : '';
   // La gráfica de resultados finales dibuja su propio tamaño (con medidas por defecto), así que acá se la saltea
   const sized = id !== 'finalResults';
   const width = sized ? readSize(config?.[`${SIZE_W_PREFIX}${id}`]) : null;
@@ -38,11 +41,15 @@ export default function LayoutEdits({ id, config, children, visible, coverReplay
     if (!wrapper) return undefined;
     const current = signature ? JSON.parse(signature) : null;
     const currentTextSizes = textSizeSignature ? JSON.parse(textSizeSignature) : null;
-    const hasEdits = (!!current && Object.keys(current).length > 0) || (!!currentTextSizes && Object.keys(currentTextSizes).length > 0);
+    const currentElementStyles = elementStyleSignature ? JSON.parse(elementStyleSignature) : null;
+    const hasEdits = (!!current && Object.keys(current).length > 0)
+      || (!!currentTextSizes && Object.keys(currentTextSizes).length > 0)
+      || (!!currentElementStyles && Object.keys(currentElementStyles).length > 0);
     const apply = () => {
       reportMissing(id, 'objeto movido', applyLayoutEdits(wrapper, current), wrapper, visible);
       if (sized) applyGraphicSize(wrapper, width, height);
       reportMissing(id, 'tamaño de texto', applyTextSizes(wrapper, currentTextSizes), wrapper, visible);
+      reportMissing(id, 'estilo de elemento', applyElementStyles(wrapper, currentElementStyles), wrapper, visible);
     };
     apply();
     if (!hasEdits && !width && !height) return undefined;
@@ -51,7 +58,7 @@ export default function LayoutEdits({ id, config, children, visible, coverReplay
     const observer = new MutationObserver(apply);
     observer.observe(wrapper, { childList: true, subtree: true });
     return () => observer.disconnect();
-  }, [id, signature, textSizeSignature, sized, width, height, visible]);
+  }, [id, signature, textSizeSignature, elementStyleSignature, sized, width, height, visible]);
 
   // Cajas principales de la gráfica (hijos directos del envoltorio): sobre cada una va el tapado con logo
   useLayoutEffect(() => {

@@ -23,6 +23,12 @@ import TrackAlert from '../graphics/TrackAlert';
 import PenaltyAlert from '../graphics/PenaltyAlert';
 import Branding from '../graphics/Branding';
 import Evento from '../graphics/Evento';
+import Sectors from '../graphics/Sectors';
+import GapChart from '../graphics/GapChart';
+import Gainers from '../graphics/Gainers';
+import QualifyingBoard from '../graphics/QualifyingBoard';
+import TrackMap from '../graphics/TrackMap';
+import RaceNotice from '../graphics/RaceNotice';
 import LayoutEdits from '../components/LayoutEdits';
 import { getCanvasSize } from '../utils/canvasSize';
 import Icon from '../components/Icon';
@@ -64,7 +70,8 @@ function buildEventHandlers(setters) {
     setBattleData, setCustomZocaloData, setIsVotingQRVisible, setIsVotingResultsVisible,
     setVotes, setIsLapCounterVisible, setIsVirtualChampVisible, setPitStopState,
     setStartingLightsState, setIsLapTimesHistoryVisible, setLapTimesHistory,
-    setLapTimesFocus, setTrackAlert, setPenaltyAlert, setFinalResultsNav
+    setLapTimesFocus, setTrackAlert, setPenaltyAlert, setFinalResultsNav,
+    setSectorsState, setGapChartData, setRaceNotice
   } = setters;
 
   return {
@@ -108,6 +115,9 @@ function buildEventHandlers(setters) {
     'update-lap-times-focus': (data) => setLapTimesFocus(data ?? null),
     'update-track-alert': (data) => data && setTrackAlert(data),
     'update-penalty': (data) => data && setPenaltyAlert(data),
+    'update-sectors': (data) => data && setSectorsState(data),
+    'update-gap-chart': (data) => data && setGapChartData(data),
+    'update-race-notice': (data) => data && setRaceNotice(data),
   };
 }
 
@@ -147,6 +157,9 @@ export default function Overlay() {
   const [lapTimesFocus, setLapTimesFocus] = useState(null);
   const [trackAlert, setTrackAlert] = useState({ isVisible: false, curveId: null, curveName: '', type: 'yellow' });
   const [penaltyAlert, setPenaltyAlert] = useState({ isVisible: false, driverNumber: null, driverName: '', type: 'penalty', reason: '' });
+  const [sectorsState, setSectorsState] = useState({ isVisible: false, numbers: [] });
+  const [gapChartData, setGapChartData] = useState({ isVisible: false, series: [] });
+  const [raceNotice, setRaceNotice] = useState({ isVisible: false, kind: '', title: '', text: '', number: null });
 
   const inBrowserMode = !ipcRenderer;
 
@@ -159,7 +172,8 @@ export default function Overlay() {
       setBattleData, setCustomZocaloData, setIsVotingQRVisible, setIsVotingResultsVisible,
       setVotes, setIsLapCounterVisible, setIsVirtualChampVisible, setPitStopState,
       setStartingLightsState, setIsLapTimesHistoryVisible, setLapTimesHistory,
-      setLapTimesFocus, setTrackAlert, setPenaltyAlert, setFinalResultsNav
+      setLapTimesFocus, setTrackAlert, setPenaltyAlert, setFinalResultsNav,
+      setSectorsState, setGapChartData, setRaceNotice
     });
 
     if (ipcRenderer) {
@@ -197,6 +211,9 @@ export default function Overlay() {
         if (bs.driverInfo) { setIsDriverInfoVisible(bs.driverInfo.isVisible); if (bs.driverInfo.driver) setDriverInfoData(bs.driverInfo.driver); }
         if (bs.battle) setBattleData(bs.battle);
         if (bs.customZocalo) setCustomZocaloData(bs.customZocalo);
+        if (bs.sectors) setSectorsState(bs.sectors);
+        if (bs.raceNotice) setRaceNotice(bs.raceNotice);
+        if (state.gapChart) setGapChartData(state.gapChart);
       }).catch(err => console.error("Error cargando estado inicial", err));
 
       enableDiagnostics((message) => ipcRenderer.send('overlay-diag', { message }));
@@ -309,7 +326,7 @@ export default function Overlay() {
         <StartingGrid drivers={formattedDrivers} config={combinedConfig} isVisible={isGridVisible} />
       </LayoutEdits>
       <LayoutEdits id="finalResults" config={combinedConfig} visible={!!(isFinalResultsVisible)}>
-        <FinalResults drivers={formattedDrivers} config={combinedConfig} isVisible={isFinalResultsVisible} navSignal={finalResultsNav} />
+        <FinalResults drivers={formattedDrivers} config={combinedConfig} isVisible={isFinalResultsVisible} navSignal={finalResultsNav} sessionInfo={sessionInfo} />
       </LayoutEdits>
       <LayoutEdits id="winner" config={combinedConfig} visible={!!(isWinnerVisible)}>
         <WinnerGraphic driver={formattedWinnerData} config={combinedConfig} isVisible={isWinnerVisible} sessionInfo={sessionInfo} />
@@ -372,6 +389,24 @@ export default function Overlay() {
       </LayoutEdits>
       <LayoutEdits id="branding" config={combinedConfig} visible={!!(graphics?.branding)}>
         <Branding isVisible={graphics?.branding} config={combinedConfig} />
+      </LayoutEdits>
+      <LayoutEdits id="qualifying" config={combinedConfig} visible={!!(graphics?.qualifying)}>
+        <QualifyingBoard drivers={formattedDrivers} config={combinedConfig} isVisible={!!graphics?.qualifying} sessionInfo={sessionInfo} />
+      </LayoutEdits>
+      <LayoutEdits id="sectors" config={combinedConfig} visible={!!(sectorsState?.isVisible)}>
+        <Sectors drivers={formattedDrivers} config={combinedConfig} state={sectorsState} sessionInfo={sessionInfo} />
+      </LayoutEdits>
+      <LayoutEdits id="gapChart" config={combinedConfig} visible={!!(gapChartData?.isVisible)}>
+        <GapChart data={gapChartData} config={combinedConfig} formatName={(n) => formatDriverName(n, safeConfig.nameFormat)} />
+      </LayoutEdits>
+      <LayoutEdits id="gainers" config={combinedConfig} visible={!!(graphics?.gainers)}>
+        <Gainers drivers={formattedDrivers} config={combinedConfig} isVisible={!!graphics?.gainers} />
+      </LayoutEdits>
+      <LayoutEdits id="trackMap" config={combinedConfig} visible={!!(graphics?.trackMap)}>
+        <TrackMap drivers={formattedDrivers} config={combinedConfig} isVisible={!!graphics?.trackMap} sessionInfo={sessionInfo} />
+      </LayoutEdits>
+      <LayoutEdits id="raceNotice" config={combinedConfig} visible={!!(raceNotice?.isVisible)}>
+        <RaceNotice notice={raceNotice} config={combinedConfig} />
       </LayoutEdits>
     </div>
   );

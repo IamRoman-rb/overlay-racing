@@ -5,6 +5,8 @@ import { getCanvasSize } from '../utils/canvasSize';
 import GraphicPreview from './GraphicPreview';
 import { COVER_PRODUCER_PREFIX, COVER_CATEGORY_PREFIX, COVER_TIME_PREFIX, COVER_DEFAULT_TIME } from '../utils/logoCover';
 import { EXTRA_FONTS, fontCssValue, GOOGLE_FONTS_URL } from '../utils/fonts';
+import { resolvePath, pathOf, elementAtPoint, elementTree } from '../utils/layoutEdit';
+import ElementStylePanel from './ElementStylePanel';
 
 // Número que se confirma con Enter o al salir del campo (no en cada tecla: evita redimensionar a medio escribir).
 // Vacío = vuelve al valor original. `key` fuerza a mostrar el valor guardado cuando cambia desde afuera.
@@ -22,9 +24,33 @@ function CommitNumberInput({ value, placeholder, onCommit, style }) {
   );
 }
 
+const EMPTY_TREE = { current: null, ancestors: [], children: [] };
+
+// Escala de la gráfica (1 = tamaño original). Se aplica mientras se escribe, pero solo con un número válido: así se puede
+// borrar el campo para escribir otro valor sin que la gráfica desaparezca (escala 0) a mitad de camino.
+function ScaleInput({ value, onChange, style }) {
+  const [text, setText] = useState(String(value));
+  const [focused, setFocused] = useState(false);
+  const shown = focused ? text : String(value);
+  return (
+    <input
+      type="number" min="0.1" max="5" step="0.05" value={shown} placeholder="1"
+      onFocus={() => { setText(String(value)); setFocused(true); }}
+      onBlur={() => setFocused(false)}
+      onChange={(e) => {
+        setText(e.target.value);
+        const n = parseFloat(e.target.value);
+        if (Number.isFinite(n) && n >= 0.1 && n <= 5) onChange(Math.round(n * 1000) / 1000);
+      }}
+      onKeyDown={(e) => { if (e.key === 'Enter') e.currentTarget.blur(); }}
+      style={style}
+    />
+  );
+}
+
 const OVERLAY_PRESETS = [[1920, 1080, 'Full HD'], [1280, 720, 'HD'], [3840, 2160, '4K'], [1080, 1920, ''], [1080, 1080, '']];
 
-export default function CustomizePanel({ config, positions, defaultPositions, onUpdatePositions, onSelectLogo, onSelectCategoryLogo, onSelectPhotosFolder, onClearLogo, onClearCategoryLogo, onClearPhotosFolder, onConfigChange, colors, inputStyle, btnStyle, t, drivers, sessionInfo }) {
+export default function CustomizePanel({ config, positions, defaultPositions, onUpdatePositions, onSelectLogo, onSelectCategoryLogo, onSelectPhotosFolder, onClearLogo, onClearCategoryLogo, onClearPhotosFolder, onConfigChange, onSelectElementImage, colors, inputStyle, btnStyle, t, drivers, sessionInfo }) {
   const [selectedGraphic, setSelectedGraphic] = useState('relator');
   const [coverReplay, setCoverReplay] = useState(0); // sube al pulsar "probar transición"
   // Gráficas acumuladas con Ctrl + clic para verlas juntas en la previsualización (vacío = se ve solo la seleccionada)
@@ -62,6 +88,94 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
   const [snapEnabled, setSnapEnabled] = useState(true);
   const [snapLines, setSnapLines] = useState({ x: [], y: [] });
   const hasContent = contentState.id === selectedGraphic ? contentState.has : true;
+
+  // --- ELEMENTOS: selección de cualquier caja / texto / imagen de la gráfica para darle estilo propio ---
+  // Con "seleccionar en la vista" activo, una capa transparente sobre el escenario busca el elemento más chico bajo el mouse;
+  // desde la lista se sube al bloque que lo contiene o se baja a lo que tiene adentro.
+  const [pickMode, setPickMode] = useState(false);
+  // Elegido, bajo el mouse y árbol valen solo para la gráfica con que se armaron (`scope`): al cambiar de gráfica
+  // se pierde la selección anterior sin tener que borrarla a mano.
+  const [elSelState, setElSelState] = useState({ scope: '', key: null });
+  const [elHoverState, setElHoverState] = useState({ scope: '', key: null });
+  const [elTreeState, setElTreeState] = useState({ scope: '', tree: EMPTY_TREE });
+  const elSelectedKey = elSelState.scope === selectedGraphic ? elSelState.key : null;
+  const elHoverKey = elHoverState.scope === selectedGraphic ? elHoverState.key : null;
+  const elTree = elTreeState.scope === `${selectedGraphic}|${elSelectedKey}` ? elTreeState.tree : EMPTY_TREE;
+  const setElSelectedKey = (key) => setElSelState({ scope: selectedGraphic, key: key || null });
+  const setElHoverKey = (key) => setElHoverState(prev => (prev.scope === selectedGraphic && prev.key === (key || null) ? prev : { scope: selectedGraphic, key: key || null }));
+  const selBoxRef = useRef(null);
+  const hoverBoxRef = useRef(null);
+
+  // Contenedor de la gráfica seleccionada dentro de la vista (el que usan los caminos de los elementos)
+  const getElWrapper = () => {
+    const wrap = graphicWrapRef.current && Array.from(graphicWrapRef.current.children).find(el => el.dataset.gid === selectedGraphic);
+    return wrap ? wrap.querySelector('[data-le-wrap]') : null;
+  };
+  const getElElement = (key) => { const w = getElWrapper(); return w ? resolvePath(w, key) : null; };
+
+  // Árbol del elemento elegido (contenedores e hijos); se vuelve a mirar cada tanto porque la gráfica cambia (datos, páginas...)
+  useEffect(() => {
+    const scope = `${selectedGraphic}|${elSelectedKey}`;
+    const refresh = () => {
+      const wrap = graphicWrapRef.current && Array.from(graphicWrapRef.current.children).find(el => el.dataset.gid === selectedGraphic);
+      const wrapper = wrap && wrap.querySelector('[data-le-wrap]');
+      if (!wrapper) return;
+      const tree = elementTree(wrapper, elSelectedKey);
+      const sig = JSON.stringify(tree);
+      setElTreeState(prev => (prev.scope === scope && prev.sig === sig ? prev : { scope, sig, tree }));
+    };
+    refresh();
+    const timer = setInterval(refresh, 700);
+    return () => clearInterval(timer);
+  }, [selectedGraphic, elSelectedKey, config, drivers]);
+
+  // Los recuadros del elegido y del que está bajo el mouse siguen al elemento real en cada cuadro (la gráfica puede animarse)
+  useEffect(() => {
+    if (!pickMode && !elSelectedKey && !elHoverKey) return undefined;
+    let raf = 0;
+    const place = (box, wrapper, key, stageRect, k) => {
+      if (!box) return;
+      const el = key ? resolvePath(wrapper, key) : null;
+      if (!el) { box.style.display = 'none'; return; }
+      const r = el.getBoundingClientRect();
+      box.style.display = 'block';
+      box.style.left = `${(r.left - stageRect.left) / k}px`;
+      box.style.top = `${(r.top - stageRect.top) / k}px`;
+      box.style.width = `${r.width / k}px`;
+      box.style.height = `${r.height / k}px`;
+    };
+    const tick = () => {
+      raf = requestAnimationFrame(tick);
+      const stage = previewRef.current;
+      const wrap = graphicWrapRef.current && Array.from(graphicWrapRef.current.children).find(el => el.dataset.gid === selectedGraphic);
+      const wrapper = wrap && wrap.querySelector('[data-le-wrap]');
+      if (!stage || !wrapper) return;
+      const stageRect = stage.getBoundingClientRect();
+      if (stageRect.width === 0) return;
+      const k = stageRect.width / CW;
+      place(selBoxRef.current, wrapper, elSelectedKey, stageRect, k);
+      place(hoverBoxRef.current, wrapper, elHoverKey !== elSelectedKey ? elHoverKey : null, stageRect, k);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [pickMode, elSelectedKey, elHoverKey, selectedGraphic, CW]);
+
+  // Capa de selección: el elemento más chico bajo el puntero
+  const keyAtPointer = (e) => {
+    const wrapper = getElWrapper();
+    const el = wrapper && elementAtPoint(wrapper, e.clientX, e.clientY);
+    return el ? pathOf(wrapper, el) : null;
+  };
+  const handlePickMove = (e) => setElHoverKey(keyAtPointer(e));
+  const handlePickDown = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const key = keyAtPointer(e);
+    // Clic sobre el mismo elemento ya elegido: sube al bloque que lo contiene (así se llega a las cajas de atrás)
+    if (key && key === elSelectedKey && elTree.ancestors.length) setElSelectedKey(elTree.ancestors[elTree.ancestors.length - 1].key);
+    else setElSelectedKey(key);
+  };
+
 
   // Líneas a las que "se pega" la gráfica al arrastrarla: bordes, centro y zona segura (5 %) del cuadro
   const SNAP_X = [0, SAFE_X, CW / 2, CW - SAFE_X, CW];
@@ -236,7 +350,7 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
 
   const handlePosChange = (axis, value) => {
     const valNum = parseFloat(value) || 0;
-    const newPositions = { ...positions, [selectedGraphic]: { ...positions[selectedGraphic], [axis]: valNum } };
+    const newPositions = { ...positions, [selectedGraphic]: { ...getCurrentPos(selectedGraphic), [axis]: valNum } };
     onUpdatePositions(newPositions, true);
   };
 
@@ -279,7 +393,8 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
     'relator', 'comentarista', 'notero1', 'notero2', 'circuito', 'clima', 'ticker', 'tower',
     'grid', 'finalResults', 'winner', 'flags', 'fastestLap', 'driverInfo', 'battle', 'customZocalo',
     'votingQR', 'votingResults', 'lapCounter', 'virtualChamp', 'pitStop', 'startingLights',
-    'lapTimesHistory', 'trackAlert', 'penaltyAlert', 'branding', 'evento'
+    'lapTimesHistory', 'trackAlert', 'penaltyAlert', 'branding', 'evento',
+    'sectors', 'gapChart', 'gainers', 'qualifying', 'trackMap', 'raceNotice'
   ];
   const allGraphics = GRAPHIC_IDS.map(id => ({ id, label: t(`graphics.${id}`) }));
 
@@ -877,6 +992,16 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
             </div>
           )}
 
+          {/* Escala de la gráfica entera (la misma de COORDENADAS Y TAMAÑO) */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+            <label style={{ fontSize: '9px', color: colors.textMuted, fontWeight: 'bold' }}>{t('personalizar.scaleLabel')} <span style={{ fontWeight: 'normal' }}>(1 = 100 %)</span></label>
+            <ScaleInput
+              value={getCurrentPos(selectedGraphic).scale ?? 1}
+              onChange={(v) => handlePosChange('scale', v)}
+              style={{ ...inputStyle, padding: '10px', fontSize: '11px' }}
+            />
+          </div>
+
           {/* La alerta de sanciones aparece/desaparece sin transición, así que no tiene duración configurable */}
           {selectedGraphic !== 'penaltyAlert' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
@@ -932,6 +1057,22 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
             <span style={{ fontSize: '10px', color: colors.textMuted, lineHeight: '1.5' }}>{(config.logo || config.categoryLogo) ? t('personalizar.coverHint') : t('personalizar.coverNoLogos')}</span>
           </div>
         </div>
+
+        <ElementStylePanel
+          graphicId={selectedGraphic}
+          graphicLabel={allGraphics.find(g => g.id === selectedGraphic)?.label}
+          config={config}
+          onConfigChange={onConfigChange}
+          tree={elTree}
+          selectedKey={elSelectedKey}
+          onSelect={setElSelectedKey}
+          onHover={setElHoverKey}
+          pickMode={pickMode}
+          onTogglePick={() => setPickMode(v => !v)}
+          getElement={getElElement}
+          onSelectImage={onSelectElementImage}
+          colors={colors} inputStyle={inputStyle} btnStyle={btnStyle} t={t}
+        />
 
         <h3 style={{ color: colors.yellow, marginBottom: '15px' }}>{t('personalizar.coordsTitle')}</h3>
         {positions[selectedGraphic] && (
@@ -1067,7 +1208,9 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
                 onMouseDown={(e) => handlePreviewMouseDown(e, selectedGraphic)}
                 style={{
                   position: 'absolute', display: 'none', zIndex: 1000, boxSizing: 'border-box',
-                  border: `3px dashed ${config.themeAccent || '#ffcc00'}`, cursor: 'grab'
+                  border: `3px dashed ${config.themeAccent || '#ffcc00'}`, cursor: 'grab',
+                  // En modo "seleccionar elementos" los clics van a los recuadros de los elementos, no a arrastrar la gráfica
+                  pointerEvents: pickMode ? 'none' : 'auto', opacity: pickMode ? 0.35 : 1
                 }}
               >
                 <div ref={labelRef} style={{
@@ -1075,6 +1218,18 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
                   backgroundColor: config.themeAccent || '#ffcc00', color: '#000', fontSize: '20px', fontWeight: 'bold', padding: '2px 8px', fontFamily: 'monospace'
                 }} />
               </div>
+
+              {/* PERSONALIZAR > ELEMENTOS: capa que elige el elemento bajo el mouse y recuadros del elegido / del señalado */}
+              {pickMode && (
+                <div
+                  onMouseMove={handlePickMove}
+                  onMouseDown={handlePickDown}
+                  onMouseLeave={() => setElHoverKey(null)}
+                  style={{ position: 'absolute', left: 0, top: 0, width: `${CW}px`, height: `${CH}px`, zIndex: 1090, cursor: 'crosshair' }}
+                />
+              )}
+              <div ref={hoverBoxRef} style={{ position: 'absolute', display: 'none', boxSizing: 'border-box', zIndex: 1100, pointerEvents: 'none', border: '2px dashed rgba(255,255,255,0.85)', backgroundColor: 'rgba(255,255,255,0.12)' }} />
+              <div ref={selBoxRef} style={{ position: 'absolute', display: 'none', boxSizing: 'border-box', zIndex: 1120, pointerEvents: 'none', border: `4px solid ${config.themeAccent || '#ffcc00'}`, backgroundColor: 'rgba(255,204,0,0.1)' }} />
             </div>
           </div>
         </div>

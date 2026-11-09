@@ -1,8 +1,9 @@
 // Instala, actualiza y carga los módulos del software (carrera, fútbol, ...), que se descargan del servidor.
 //
 // Cada módulo es un .zip firmado con module.json (id, version, entry, launcherApi), su código y su interfaz ya compilada.
-// Se guardan en <datos del usuario>/modules/<módulo>/<versión>/ y se abre siempre la versión más nueva.
-const { app } = require('electron');
+// Se guardan en <datos del usuario>/modules/<módulo>/<versión>/ y se abre la versión más nueva instalada, salvo que se elija
+// otra desde el "Historial de actualizaciones" de la ventana de módulos.
+const { app, ipcMain } = require('electron');
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
@@ -73,9 +74,10 @@ function extractSafely(zipFile, destDir) {
   }
 }
 
-function pruneOldVersions(moduleId) {
+// Se conservan las KEEP_VERSIONS más nuevas, más las que se pidan (por ejemplo, una versión anterior que se acaba de elegir)
+function pruneOldVersions(moduleId, keep = []) {
   const versions = installedVersions(moduleId);
-  versions.slice(0, Math.max(0, versions.length - KEEP_VERSIONS)).forEach(v => {
+  versions.slice(0, Math.max(0, versions.length - KEEP_VERSIONS)).filter(v => !keep.includes(v)).forEach(v => {
     try { fs.rmSync(path.join(modulesRoot(), moduleId, v), { recursive: true, force: true }); } catch (e) {}
   });
 }
@@ -150,27 +152,32 @@ async function ensureModule(moduleId, sessionToken, onStatus = () => {}, { updat
 
   if (installedVersions(moduleId).includes(latest.version)) return describe(moduleId, latest.version);
 
+  return installRelease(moduleId, latest, sessionToken, onStatus);
+}
+
+// Descarga, verifica (hash + firma) e instala la versión `release` ({ version, sha256, signature }) del módulo
+async function installRelease(moduleId, release, sessionToken, onStatus = () => {}, { keep = [] } = {}) {
   const workDir = path.join(modulesRoot(), moduleId);
   fs.mkdirSync(workDir, { recursive: true });
-  const zipFile = path.join(workDir, `${latest.version}.download.zip`);
-  const stagingDir = path.join(workDir, `${latest.version}.partial`);
-  const finalDir = path.join(workDir, latest.version);
+  const zipFile = path.join(workDir, `${release.version}.download.zip`);
+  const stagingDir = path.join(workDir, `${release.version}.partial`);
+  const finalDir = path.join(workDir, release.version);
 
   try {
     onStatus({ phase: 'downloading', progress: 0 });
-    await api.downloadPackage(moduleId, latest.version, sessionToken, zipFile, progress => onStatus({ phase: 'downloading', progress }));
+    await api.downloadPackage(moduleId, release.version, sessionToken, zipFile, progress => onStatus({ phase: 'downloading', progress }));
 
     onStatus({ phase: 'verifying' });
     const sha256 = await sha256File(zipFile);
-    if (sha256 !== latest.sha256) throw new Error('La descarga quedó corrupta (no coincide el hash). Probá de nuevo.');
-    verifyPackage(moduleId, latest.version, sha256, latest.signature);
+    if (sha256 !== release.sha256) throw new Error('La descarga quedó corrupta (no coincide el hash). Probá de nuevo.');
+    verifyPackage(moduleId, release.version, sha256, release.signature);
 
     onStatus({ phase: 'installing' });
     fs.rmSync(stagingDir, { recursive: true, force: true });
     fs.rmSync(finalDir, { recursive: true, force: true });
     extractSafely(zipFile, stagingDir);
     const manifest = JSON.parse(fs.readFileSync(path.join(stagingDir, 'module.json'), 'utf-8'));
-    if (manifest.id !== moduleId || manifest.version !== latest.version) throw new Error('El paquete no corresponde al módulo pedido.');
+    if (manifest.id !== moduleId || manifest.version !== release.version) throw new Error('El paquete no corresponde al módulo pedido.');
     fs.writeFileSync(path.join(stagingDir, COMPLETE_MARK), new Date().toISOString());
     fs.renameSync(stagingDir, finalDir);
   } finally {
@@ -178,13 +185,64 @@ async function ensureModule(moduleId, sessionToken, onStatus = () => {}, { updat
     fs.rmSync(stagingDir, { recursive: true, force: true });
   }
 
-  pruneOldVersions(moduleId);
-  return describe(moduleId, latest.version);
+  pruneOldVersions(moduleId, [release.version, ...keep]);
+  return describe(moduleId, release.version);
+}
+
+// Abre una versión elegida del historial: si no está instalada, la descarga del servidor.
+async function ensureModuleVersion(moduleId, version, sessionToken, onStatus = () => {}) {
+  if (!/^\d+\.\d+\.\d+$/.test(String(version))) throw new Error('Versión inválida.');
+  if (installedVersions(moduleId).includes(version)) return describe(moduleId, version);
+  onStatus({ phase: 'checking' });
+  const releases = await api.fetchReleases(moduleId, sessionToken);
+  const release = releases.find(r => r.version === version);
+  if (!release) throw new Error(`La versión ${version} ya no está disponible en el servidor.`);
+  if (release.launcherApi > LAUNCHER_API) {
+    throw new Error('Esa versión necesita un instalador más nuevo. Descargá el instalador actualizado desde la web.');
+  }
+  return installRelease(moduleId, release, sessionToken, onStatus);
+}
+
+// Historial para la ventana de módulos: versiones publicadas (con notas y fecha) marcando cuáles ya están en esta PC.
+// Si el servidor no responde, se muestran al menos las versiones instaladas.
+async function getModuleReleases(moduleId, sessionToken) {
+  const installed = installedVersions(moduleId);
+  let releases = [];
+  let error = null;
+  try {
+    releases = await api.fetchReleases(moduleId, sessionToken);
+  } catch (err) {
+    error = err.message || 'No se pudo consultar el historial de versiones.';
+  }
+  const list = releases.map(r => ({
+    version: r.version, notes: r.notes || null, releasedAt: r.releasedAt || null, size: r.size || 0,
+    installed: installed.includes(r.version), blocked: r.launcherApi > LAUNCHER_API
+  }));
+  installed.forEach(v => {
+    if (!list.some(r => r.version === v)) list.push({ version: v, notes: null, releasedAt: null, size: 0, installed: true, blocked: false, localOnly: true });
+  });
+  list.sort((x, y) => compareVersions(y.version, x.version));
+  return { releases: list, newestInstalled: installed[installed.length - 1] || null, error };
+}
+
+// Los módulos corren dentro de este mismo proceso: si se abre otra versión del mismo módulo sin cerrar el programa (una
+// actualización o una versión anterior del historial), sus canales `ipcMain.handle` ya están registrados por la versión
+// anterior y Electron rechaza registrarlos de nuevo ("Attempted to register a second handler"). Con esto, registrar un
+// canal reemplaza al anterior: así funciona también con versiones viejas de los módulos, que no se pueden cambiar.
+function allowHandlerReplacement() {
+  if (ipcMain.overlayHandlerReplacement) return;
+  const originalHandle = ipcMain.handle.bind(ipcMain);
+  ipcMain.handle = (channel, listener) => {
+    ipcMain.removeHandler(channel);
+    return originalHandle(channel, listener);
+  };
+  ipcMain.overlayHandlerReplacement = true;
 }
 
 // Carga el código del módulo dentro de este mismo proceso. Los módulos usan las librerías (express, socket.io,
 // puppeteer, ...) que trae el instalador, así que se agregan sus carpetas a la búsqueda de require().
 function loadModule(installed, ctx) {
+  allowHandlerReplacement();
   const appRoot = app.getAppPath();
   const searchPaths = [
     path.join(appRoot, 'node_modules'),
@@ -200,4 +258,4 @@ function loadModule(installed, ctx) {
   return mod.start(global.overlayModuleCtx);
 }
 
-module.exports = { ensureModule, getModuleStatus, loadModule, installedVersions };
+module.exports = { ensureModule, ensureModuleVersion, getModuleReleases, getModuleStatus, loadModule, installedVersions };

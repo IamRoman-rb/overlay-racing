@@ -8,6 +8,7 @@ import EditorTab from './EditorTab';
 import { bridge, mode } from '../bridge';
 import { useNow } from '../useNow';
 import { normalizeState, CANVAS, PERIODS, clockText, teamOfSide, teamInfo } from '../state';
+import { COPYRIGHT } from '../copyright';
 
 const TABS = [
   { id: 'live', label: 'EN VIVO' },
@@ -164,6 +165,11 @@ export default function ControlPanel() {
         </aside>
         )}
       </div>
+
+      <footer className="legal">
+        <span><b>© {COPYRIGHT.year} {COPYRIGHT.holder}.</b> Todos los derechos reservados.</span>
+        <span>Obra registrada en la Dirección Nacional del Derecho de Autor · Registro {COPYRIGHT.registry}</span>
+      </footer>
     </div>
   );
 }

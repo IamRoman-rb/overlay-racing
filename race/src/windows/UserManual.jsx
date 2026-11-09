@@ -129,11 +129,27 @@ export default function UserManual({ colors, t, language }) {
 
       <Section id="timing" icon="⏱️" title={t('manual.sections.timing')} {...sectionProps}>
         <ol style={ol}>
-          <li style={li}>Andá a la pestaña <b>AJUSTES</b> y elegí el proveedor: <b>Speedhive (MyLaps)</b> o <b>Race Monitor</b>.</li>
+          <li style={li}>Andá a la pestaña <b>AJUSTES</b> y elegí el proveedor: <b>Speedhive (MyLaps)</b>, <b>Race Monitor</b> o <b>MYLAPS Orbits 4 / 5 (IP)</b>.</li>
           <li style={li}>Pegá el código de la carrera, o directamente la URL completa de Speedhive/Race Monitor — el programa reconoce ambos formatos igual.</li>
+          <li style={li}>Con <b>Orbits</b> no hace falta internet: escribí la IP de la PC del cronometrador (o 127.0.0.1 si Orbits corre en esta misma PC) y el puerto (50000 por defecto). En Orbits tiene que estar activada la salida <b>Results Protocol / Scoreboard</b> (RMonitor) y el Firewall de esa PC tiene que permitir el puerto. El indicador de AJUSTES muestra si la conexión está activa.</li>
           <li style={li}>Tocá "<Icon name="refresh" /> CARGAR DATOS AHORA" para traer los datos una sola vez, o activá "<Icon name="play_arrow" /> AUTO-CARGA" en la pestaña PANEL para que se actualice solo cada 1 segundo mientras dura la sesión.</li>
         </ol>
         <div style={note}>Si intentás hacer auto-carga sin haber cargado antes un código, el programa te va a avisar que primero completes el código en AJUSTES.</div>
+      </Section>
+
+      <Section id="analysis" icon="📈" title={t('manual.sections.analysis')} {...sectionProps}>
+        <ul style={ol}>
+          <li style={li}><b>Categoría:</b> en PANEL &gt; CATEGORÍA, CLASES Y GRILLA. Si la fuente la informa (por ejemplo "125cc 4T Libre - 1era Manga" o todos los pilotos de la misma clase) se completa sola; si no, escribila a mano. Lo que escribas a mano no se reemplaza; con el botón USAR volvés al dato de la fuente.</li>
+          <li style={li}><b>Multiclase:</b> en AUTO se activa cuando la fuente informa entre 2 y 8 clases. Cada clase tiene su color (se cambia en el mismo bloque); la torre y los resultados finales se pueden filtrar por clase (muestran la posición dentro de la clase) y la tira inferior pasa primero los líderes de cada clase.</li>
+          <li style={li}><b>Grilla y posiciones ganadas:</b> la grilla se toma sola con el orden antes de largar. Si abriste el programa con la carrera empezada, tocá "FIJAR CON EL ORDEN ACTUAL". Con grilla, la torre muestra ▲/▼ con las posiciones ganadas, la tira inferior muestra las flechas y la gráfica REMONTADAS lista a los que más avanzaron.</li>
+          <li style={li}><b>Sectores:</b> elegí 1 o 2 pilotos. Violeta = mejor sector de la sesión, verde = mejor personal, amarillo = más lento; incluye la vuelta teórica. Solo Speedhive informa sectores.</li>
+          <li style={li}><b>Brecha:</b> elegí dos pilotos (o USAR BATALLA). La gráfica dibuja la diferencia vuelta a vuelta, cuánto descuenta por vuelta y en cuántas vueltas lo alcanzaría al ritmo actual. Se calcula desde que el programa ve pasar a los dos pilotos por meta.</li>
+          <li style={li}><b>Modo clasificación:</b> TABLA DE CLASIFICACIÓN muestra la línea de corte (PASAN = cuántos avanzan), la zona de eliminación, quién está en vuelta rápida (con sectores), la vuelta en curso de los que están en pista y el tiempo objetivo de los que están afuera.</li>
+          <li style={li}><b>Mapa en vivo:</b> en la pestaña CIRCUITO elegí el modo TRAZADO y hacé clic siguiendo el circuito en el sentido de marcha, empezando en la línea de largada. La posición de cada auto es una estimación con el tiempo desde su última pasada y su vuelta típica (no es GPS): un auto aparece recién después de pasar una vez por meta y se oculta si lleva mucho sin pasar.</li>
+          <li style={li}><b>Alertas:</b> arriba de la tabla de pilotos aparecen sugerencias automáticas (vuelta rápida, nuevo líder, posible abandono, cambio de bandera). AL AIRE saca la gráfica correspondiente con un clic; la X la descarta. Nada sale al aire sin que lo toques.</li>
+          <li style={li}><b>Correcciones manuales:</b> en SANCIONES &gt; CORRECCIONES MANUALES podés corregir nombres, sumar segundos de penalización (reordena a los que están en la misma vuelta) o descalificar. Se aplican a todas las gráficas y al PDF, y quedan guardadas hasta que las borres.</li>
+          <li style={li}><b>PDF de resultados:</b> en PANEL &gt; CIERRE, EXPORTAR PDF genera la planilla con logos, categoría, circuito, clasificación general, tablas por clase, penalizaciones y vuelta más rápida.</li>
+        </ul>
       </Section>
 
       <Section id="excel" icon="📊" title={t('manual.sections.excel')} {...sectionProps}>
@@ -212,7 +228,7 @@ export default function UserManual({ colors, t, language }) {
             <tr><td style={{ ...td, fontWeight: 'bold' }}>ZÓCALOS</td><td style={td}>Seis zócalos de texto libre preseteados (título + texto), para poner al aire cuando haga falta.</td></tr>
             <tr><td style={{ ...td, fontWeight: 'bold' }}>DISEÑOS</td><td style={td}>Subir una imagen propia (PNG/SVG) que reemplace el diseño estándar de cualquier gráfica, gráfica por gráfica.</td></tr>
             <tr><td style={{ ...td, fontWeight: 'bold' }}>CIRCUITO</td><td style={td}>Cargar la imagen del circuito y marcar las curvas (arrastrando puntos), para usarlas en las alertas de curva del PANEL.</td></tr>
-            <tr><td style={{ ...td, fontWeight: 'bold' }}>AJUSTES</td><td style={td}>Idioma del programa, color de Chroma Key para vMix, configuración del proveedor de timing en vivo (Speedhive/Race Monitor), y copia de seguridad de la configuración (database.json + posiciones.json).</td></tr>
+            <tr><td style={{ ...td, fontWeight: 'bold' }}>AJUSTES</td><td style={td}>Idioma del programa, color de Chroma Key para vMix, configuración del proveedor de timing en vivo (Speedhive/Race Monitor/Orbits), y copia de seguridad de la configuración (database.json + posiciones.json).</td></tr>
             <tr><td style={{ ...td, fontWeight: 'bold' }}>PERSONALIZAR</td><td style={td}>Colores del tema, tipografía, formato visual de cada gráfica, bordes, animaciones de entrada, posición/escala con vista previa arrastrable, logos y carpeta de fotos.</td></tr>
             <tr><td style={{ ...td, fontWeight: 'bold' }}>EDITOR</td><td style={td}>Elegir una gráfica y arrastrar sus objetos (logo, título, tabla…) de un lugar a otro con el mouse para personalizarla. Los cambios se guardan solos y se ven en el overlay al instante. Se puede deshacer, restablecer un objeto o toda la gráfica.</td></tr>
           </tbody>

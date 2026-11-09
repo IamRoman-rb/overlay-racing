@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { getSkinStyle } from '../utils/skinStyles';
 import Icon from '../components/Icon';
 import { getAnimDuration, getRollClip } from '../utils/animationTiming';
+import { getClassColor, ARROW_COLORS } from '../utils/raceVisuals';
 
 const PODIUM_COLORS = { 1: '#ffd700', 2: '#c0c0c0', 3: '#cd7f32' };
 
@@ -26,6 +27,14 @@ export default function TimingTower({ drivers, config, isVisible, id = 'tower', 
   const themeNormalText = config?.themeNormalText || '#ffffff';
   const themeNumberText = config?.themeNumberText || '#3498db';
   const skin = getSkinStyle(towerFormat, { themeMain, themeAccent });
+
+  // MULTICLASE: color de clase en cada fila y, si se eligió una clase en el panel, sólo esa clase con su posición en la clase
+  const multiclass = !!sessionInfo?.multiclass;
+  const classes = sessionInfo?.classes || [];
+  const classFilter = multiclass && classes.includes(config?.towerClassFilter) ? config.towerClassFilter : '';
+  const shownDrivers = classFilter ? drivers.filter(d => d.cls === classFilter) : drivers;
+  const showGains = config?.towerShowGains !== false;
+  const headerCategory = [config?.categoryName, classFilter].filter(Boolean).join(' · ');
 
   // Difuminado del fondo (backdrop blur) elegible en PERSONALIZAR; por defecto un blur suave.
   const configuredBlur = config?.towerBlur;
@@ -131,6 +140,9 @@ export default function TimingTower({ drivers, config, isVisible, id = 'tower', 
                 {sessionInfo.name}
               </span>
             )}
+            <span style={{ display: headerCategory ? 'block' : 'none', fontWeight: 'bold', fontSize: '11px', letterSpacing: '1px', textAlign: 'center', width: '100%', color: classFilter ? getClassColor(config, classFilter, classes) : themeNumberText, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', textTransform: 'uppercase' }}>
+              {headerCategory}
+            </span>
           </div>
 
         </div>
@@ -150,8 +162,10 @@ export default function TimingTower({ drivers, config, isVisible, id = 'tower', 
       )}
 
       <div style={{ position: 'relative', flex: 1, overflow: 'hidden' }}>
-        {drivers.map((driver, index) => {
+        {shownDrivers.map((driver, index) => {
           const podiumColor = isPodium ? PODIUM_COLORS[Number(driver.pos)] : null;
+          const classColor = multiclass && driver.cls ? getClassColor(config, driver.cls, classes) : null;
+          const gain = showGains && Number.isFinite(driver.posGain) && driver.posGain !== 0 ? driver.posGain : 0;
           const zebraBg = isMinimal ? (index % 2 === 0 ? 'rgba(0,0,0,0.55)' : 'rgba(0,0,0,0.35)') : null;
           return (
           <div key={driver.number || driver.name} style={{
@@ -159,15 +173,19 @@ export default function TimingTower({ drivers, config, isVisible, id = 'tower', 
             display: 'flex', alignItems: 'center', padding: '0 15px', boxSizing: 'border-box',
             backgroundColor: zebraBg || 'transparent',
             borderLeft: podiumColor ? `4px solid ${podiumColor}` : 'none',
+            boxShadow: classColor && !podiumColor ? `inset 4px 0 0 ${classColor}` : 'none',
             borderRadius: isMinimal ? bRad : 0,
             borderBottom: (hasCustomBg || isMinimal) ? 'none' : '1px solid rgba(255,255,255,0.05)',
             transition: 'top 0.6s ease-in-out', fontSize: isCompact || isMinimal ? '13px' : '16px'
           }}>
-            <span style={{ width: '25px', color: podiumColor || themeAccent, fontWeight: 'bold' }}>{driver.pos}</span>
+            <span style={{ width: '25px', color: podiumColor || themeAccent, fontWeight: 'bold' }}>{classFilter ? (driver.classPos || driver.pos) : driver.pos}</span>
             {!isCompact && <span style={{ width: '15px', display: 'flex', justifyContent: 'center' }}>{renderTrend(trends[driver.name])}</span>}
             <div style={{ backgroundColor: podiumColor || themeSecondary, color: '#000', fontWeight: '900', fontSize: isCompact || isMinimal ? '11px' : '12px', width: isCompact || isMinimal ? '22px' : '26px', height: isCompact || isMinimal ? '16px' : '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '2px', marginRight: '8px', marginLeft: '6px' }}>{driver.number}</div>
             <span style={{ flex: 1, color: themeNormalText, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{driver.name}</span>
             {!isCompact && <span style={{ width: '65px', textAlign: 'right', color: themeNumberText, fontSize: '14px', fontWeight: 'bold' }}>{driver.lastLap}</span>}
+            <span style={{ display: gain ? 'inline' : 'none', width: '34px', textAlign: 'right', fontSize: '12px', fontWeight: 900, color: gain > 0 ? ARROW_COLORS.up : ARROW_COLORS.down, whiteSpace: 'nowrap' }}>
+              {gain > 0 ? `▲${gain}` : `▼${-gain}`}
+            </span>
           </div>
           );
         })}

@@ -31,6 +31,16 @@ async function fetchLatest(moduleId, sessionToken) {
   return response.json();
 }
 
+// Historial de versiones publicadas del módulo (la más nueva primero). Servidores viejos no tienen el endpoint: 404.
+async function fetchReleases(moduleId, sessionToken) {
+  const response = await fetch(`${SERVER_URL}/api/public/modules/${moduleId}/releases`, {
+    headers: { Authorization: `Bearer ${sessionToken}` }
+  });
+  if (!response.ok) throw new Error(await readError(response, 'No se pudo consultar el historial de versiones'));
+  const data = await response.json();
+  return Array.isArray(data?.releases) ? data.releases : [];
+}
+
 // Descarga el paquete a destFile informando el avance (0..1)
 async function downloadPackage(moduleId, version, sessionToken, destFile, onProgress) {
   const response = await fetch(`${SERVER_URL}/api/public/modules/${moduleId}/download/${version}`, {
@@ -53,4 +63,4 @@ async function downloadPackage(moduleId, version, sessionToken, destFile, onProg
   return received;
 }
 
-module.exports = { login, fetchLatest, downloadPackage };
+module.exports = { login, fetchLatest, fetchReleases, downloadPackage };

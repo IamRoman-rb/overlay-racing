@@ -41,7 +41,7 @@
   "nameFormat": "original",
   "photosPath": null,
   "borderRadius_lapCounter": "0px",
-  "timingProvider": "racemonitor",
+  "timingProvider": "orbits",
   "weatherData": {
     "temp": 17.9,
     "windSpeed": 4,
@@ -149,5 +149,13 @@
   },
   "textSizes_evento": {
     "div:0>div:0>div:2>span:0": 29
-  }
+  },
+  "elementStyles_relator": {
+    "div:0>div:0>div:0>img:0": {
+      "opacity": 0
+    }
+  },
+  "elementStyles_fastestLap": null,
+  "orbitsPort": 50000,
+  "orbitsHost": "127.0.0.1"
 }

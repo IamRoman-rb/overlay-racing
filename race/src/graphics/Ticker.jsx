@@ -3,13 +3,41 @@ import { getSkinStyle } from '../utils/skinStyles';
 import MarqueeText from './MarqueeText';
 import { getAnimDuration, getRollClip } from '../utils/animationTiming';
 import { getCanvasSize } from '../utils/canvasSize';
+import { usePositionTrends, getPositionArrow, getClassColor, ARROW_COLORS } from '../utils/raceVisuals';
 
 const PODIUM_COLORS = { 1: '#ffd700', 2: '#c0c0c0', 3: '#cd7f32' };
 
+// Nombre que va en la placa de la tira: la categoría escrita / detectada más la sesión (sin repetir la categoría)
+function tickerTitle(config) {
+  const eventName = config?.eventName || config?.campeonato || '';
+  const category = (config?.categoryName || '').trim();
+  if (!category) return eventName;
+  if (!eventName || eventName.toLowerCase().includes(category.toLowerCase())) return eventName || category;
+  return `${category} - ${eventName}`;
+}
+
 export default function Ticker({ drivers, isVisible, config, id = 'ticker', sessionInfo }) {
   const tickerFormat = config?.tickerFormat || 'standard';
-  const tickerItems = [...drivers, ...drivers];
-  const animationDuration = drivers.length > 0 ? drivers.length * 4.5 : 0;
+  // MULTICLASE: antes de los pilotos pasan los líderes de cada clase
+  const multiclass = !!sessionInfo?.multiclass && config?.tickerClassLeaders !== false;
+  const classes = sessionInfo?.classes || [];
+  const classLeaders = multiclass ? classes.map(cls => drivers.find(d => d.cls === cls && d.classLeader)).filter(Boolean).map(d => ({ ...d, isClassLeaderItem: true })) : [];
+  const loopItems = [...classLeaders, ...drivers];
+  const tickerItems = [...loopItems, ...loopItems];
+  const animationDuration = loopItems.length > 0 ? loopItems.length * 4.5 : 0;
+
+  // Flechas de avance / descenso: respecto de la largada (si hay grilla) o del último cambio de posición
+  const liveTrends = usePositionTrends(drivers);
+  const arrowMode = config?.tickerArrows || 'start';
+  const renderArrow = (driver, fontSize) => {
+    const arrow = getPositionArrow(driver, liveTrends, arrowMode);
+    const visible = !!arrow && arrow.dir !== 'same';
+    return (
+      <span style={{ display: visible ? 'inline-block' : 'none', color: arrow ? ARROW_COLORS[arrow.dir] : 'transparent', fontWeight: '900', fontSize, lineHeight: 1, whiteSpace: 'nowrap', flexShrink: 0, alignSelf: 'center' }}>
+        {arrow ? `${arrow.dir === 'up' ? '▲' : '▼'}${arrow.n ? arrow.n : ''}` : ''}
+      </span>
+    );
+  };
   const pos = config?.positions?.[id] || { x: 0, y: 1000, scale: 1 };
 
   const themeBg = config?.themeBg || 'rgba(0, 0, 0, 0.85)';
@@ -34,7 +62,7 @@ export default function Ticker({ drivers, isVisible, config, id = 'ticker', sess
   const isBoard = tickerFormat === 'board';
   const skin = getSkinStyle(tickerFormat, { themeMain, themeAccent });
   // Nombre del evento / sesión (si es largo, se desplaza dentro de su placa)
-  const eventName = config?.eventName || config?.campeonato || '';
+  const eventName = tickerTitle(config);
   const barHeight = isSpotlight ? '110px' : (isCompact ? '46px' : (hasCustomBg ? '80px' : '60px'));
 
   // Rotación automática para el formato "Spotlight" (un piloto a la vez, en grande)
@@ -153,6 +181,7 @@ export default function Ticker({ drivers, isVisible, config, id = 'ticker', sess
                       }}>
                         {isLeader ? driver.totalTime : (driver.diff || driver.gap || '-')}
                       </span>
+                      {renderArrow(driver, '13px')}
                     </div>
                   );
                 })}
@@ -264,6 +293,7 @@ export default function Ticker({ drivers, isVisible, config, id = 'ticker', sess
                   {spotlightDriver.lastLap}
                 </span>
               </div>
+              {renderArrow(spotlightDriver, '30px')}
             </div>
           )}
 
@@ -271,8 +301,26 @@ export default function Ticker({ drivers, isVisible, config, id = 'ticker', sess
             <div className="ticker-track" style={{ height: '100%' }}>
               {tickerItems.map((driver, index) => {
                 const podiumColor = isPodium ? PODIUM_COLORS[Number(driver.pos)] : null;
+                if (driver.isClassLeaderItem) {
+                  const clsColor = getClassColor(config, driver.cls, classes);
+                  return (
+                    <div key={index} className="driver-item" style={{ gap: '10px', alignItems: 'center', boxShadow: `inset 0 -4px 0 ${clsColor}` }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', flexShrink: 0, maxWidth: '45%' }}>
+                        <span style={{ color: themeTitleText, fontSize: '10px', fontWeight: 'bold', letterSpacing: '1px', lineHeight: 1.1 }}>LÍDER</span>
+                        <span style={{ color: clsColor, fontSize: isCompact ? '13px' : '15px', fontWeight: '900', textTransform: 'uppercase', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', lineHeight: 1.1 }}>{driver.cls}</span>
+                      </div>
+                      <div style={{ backgroundColor: clsColor, color: '#000', fontWeight: '900', fontSize: isCompact ? '16px' : '20px', minWidth: isCompact ? '34px' : '40px', height: isCompact ? '26px' : '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '4px', flexShrink: 0 }}>
+                        {driver.number}
+                      </div>
+                      <span style={{ flex: 1, color: themeNormalText, fontSize: isCompact ? '14px' : '17px', fontWeight: 'bold', textTransform: 'uppercase', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        {driver.name}
+                      </span>
+                    </div>
+                  );
+                }
+                const clsColor = multiclass && driver.cls ? getClassColor(config, driver.cls, classes) : null;
                 return (
-                  <div key={index} className="driver-item" style={{ gap: '10px' }}>
+                  <div key={index} className="driver-item" style={{ gap: '10px', boxShadow: clsColor ? `inset 0 -4px 0 ${clsColor}` : 'none' }}>
 
                     <div style={{ color: podiumColor || (hasCustomBg ? '#fff' : themeAccent), fontWeight: '900', fontSize: isCompact ? '18px' : '22px', minWidth: '25px', textAlign: 'center' }}>
                       {driver.pos}
@@ -298,6 +346,8 @@ export default function Ticker({ drivers, isVisible, config, id = 'ticker', sess
                         </span>
                       )}
                     </div>
+
+                    {renderArrow(driver, isCompact ? '14px' : '17px')}
 
                   </div>
                 );

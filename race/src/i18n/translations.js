@@ -35,7 +35,8 @@ export const translations = {
       startingLights: 'SEMÁFORO DE LARGADA', lapTimesHistory: 'EVOLUCIÓN DE TIEMPOS DE VUELTA',
       trackAlert: 'ALERTA EN CURVA', penaltyAlert: 'SANCIÓN / INVESTIGACIÓN',
       branding: 'LOGOS PRODUCTORA Y CATEGORÍA',
-      evento: 'EVENTO'
+      evento: 'EVENTO',
+      sectors: 'SECTORES', gapChart: 'BRECHA', gainers: 'REMONTADAS', qualifying: 'CLASIFICACIÓN', trackMap: 'MAPA EN VIVO', raceNotice: 'AVISO DE CARRERA'
     },
     editor: {
       title: 'EDITOR DE GRÁFICAS',
@@ -62,7 +63,8 @@ export const translations = {
     header: {
       title: 'OVERLAY RACING DASHBOARD', bestLap: 'MEJOR VUELTA', laps: 'VUELTAS',
       totalTime: 'TIEMPO TOTAL', live: '🟢 EN VIVO', paused: 'PAUSADO',
-      sysTempHint: 'Sin dato de temperatura: Windows no la expone en esta PC. Abrí LibreHardwareMonitor para verla.'
+      sysTempHint: 'Sin dato de temperatura: Windows no la expone en esta PC. Abrí LibreHardwareMonitor para verla.',
+      rights: 'Todos los derechos reservados.', registered: 'Obra registrada en la Dirección Nacional del Derecho de Autor · Registro {registry}'
     },
     panel: {
       battleRecommended: 'Batalla más cercana:', battleRecommendedInfo: '{front} vs {back} · intervalo {gap} s',
@@ -117,7 +119,11 @@ export const translations = {
       scrapeErrLaunchFailed: 'No se pudo abrir el navegador interno que trae los datos de timing. Probá cerrar y reabrir el programa; si sigue igual, puede ser el antivirus bloqueándolo.',
       scrapeErrNavFailed: 'No se pudo conectar a la página de timing. Revisá la conexión a internet de esta PC y que el firewall/antivirus no bloquee el acceso.',
       scrapeErrNoDrivers: 'Conectó, pero no hay pilotos para mostrar. Revisá que el código de la carrera sea correcto, que el proveedor (Speedhive / Race Monitor) sea el que corresponde y que la sesión esté activa.',
-      scrapeErrGeneric: 'Error al traer los datos de timing.'
+      scrapeErrGeneric: 'Error al traer los datos de timing.',
+      alertNoOrbitsHost: "⚠️ Ingresá la dirección IP de la PC de Orbits en la pestaña AJUSTES primero.",
+      scrapeErrOrbitsNotConnected: "No se pudo conectar con Orbits. Revisá que la IP y el puerto sean los de la PC del cronometrador, que Orbits esté abierto con la salida \"Results Protocol / Scoreboard\" activada y que el Firewall de Windows de esa PC permita el puerto. Se reintenta solo cada 3 segundos.",
+      scrapeErrOrbitsInvalidHost: "La dirección de Orbits no es válida. Escribí solo la IP (por ejemplo 192.168.1.50) o el nombre de la PC.",
+      scrapeErrOrbitsNoDrivers: "Conectado a Orbits, pero todavía no llegaron pilotos. Verificá que en Orbits haya una sesión (run) abierta con competidores cargados."
     },
     campeonato: {
       title: '🏆 CAMPEONATO (EXCEL)', driversLoaded: 'PILOTOS CARGADOS:',
@@ -197,6 +203,7 @@ export const translations = {
       chromaGreen: 'VERDE (CLÁSICO)', chromaBlue: 'AZUL', chromaMagenta: 'MAGENTA / ROSA',
       chromaBlack: 'NEGRO', chromaWhite: 'BLANCO', chromaYellow: 'AMARILLO',
       providerLabel: 'PROVEEDOR DE TIEMPOS (TIMING)', codeLabel: 'CÓDIGO DE LA CARRERA',
+      orbitsHostLabel: "DIRECCIÓN IP DEL CRONOMETRADOR (PC CON ORBITS)", orbitsPortLabel: "PUERTO", orbitsHelp: "En la PC de Orbits (versión 4 o 5) activá la salida de datos \"Results Protocol\" / \"Scoreboard\" (protocolo RMonitor, puerto TCP 50000 por defecto) y permití ese puerto en el Firewall de Windows de esa PC. Las dos PC tienen que estar en la misma red. Si Orbits corre en esta misma PC, usá 127.0.0.1. La conexión queda abierta y los datos llegan en tiempo real.", orbitsIdle: "Sin conectar: presioná CARGAR DATOS AHORA o activá EN VIVO.", orbitsConnected: "Conectado a {addr} · {count} pilotos · último dato hace {ago} s", orbitsConnecting: "Conectando a {addr}...", orbitsDisconnected: "Sin conexión con {addr}, reintentando",
       loadNowBtn: '🔄 CARGAR DATOS AHORA', vmixSection: 'CONEXIÓN CON VMIX (EN OTRA PC)', vmixDescription: "Si vMix está en otra computadora, NO se puede usar localhost: ahí \"localhost\" es la PC de vMix, no esta. En vMix agregá un input Web Browser con una de estas direcciones (la de la placa de red conectada por cable a esa PC). Ambas PC tienen que estar en la misma red; si las unís con un cable directo, ponele a cada una una IP fija (por ejemplo 192.168.1.10 y 192.168.1.11, máscara 255.255.255.0). Si no conecta, permití Overlay Graphics en el Firewall de Windows para redes privadas.", vmixNoNetwork: 'No se detectó ninguna conexión de red. Conectá el cable o la red Wi-Fi y volvé a abrir esta pestaña.', vmixCopy: '📋 COPIAR', vmixCopied: '✓ COPIADO', diagSection: 'DIAGNÓSTICO', diagDescription: 'Si el programa no trae los datos de timing en una PC, mostrá este diagnóstico (qué navegador usa el scraper y las últimas líneas del registro) y copialo para enviarlo.', diagShowBtn: '🔍 VER DIAGNÓSTICO', diagCopyBtn: '📋 COPIAR', diagCopied: '✓ COPIADO', diagOpenBtn: '📁 ABRIR CARPETA DE LOGS', diagUnavailable: 'El diagnóstico solo está disponible en la app de escritorio.', diagLogTitle: 'ÚLTIMAS LÍNEAS DEL LOG', loadingBtn: 'CARGANDO...', loadedBtn: '¡DATOS CARGADOS!', loadErrorBtn: 'NO SE PUDO CARGAR', languageLabel: 'IDIOMA',
       backupSection: 'COPIA DE SEGURIDAD DE LA CONFIGURACIÓN',
       backupDescription: 'Guardá una copia de tu configuración (colores, textos, formatos, posición de cada gráfica) antes de actualizar el programa, para no perderla. Se guardan los archivos database.json y posiciones.json.',
@@ -243,7 +250,28 @@ export const translations = {
       graphicWidthLabel: "ANCHO (PX)", graphicHeightLabel: "ALTO (PX)", graphicSizeAuto: "auto",
       graphicSizeHint: "Vacío = tamaño original de la gráfica. Se aplica al recuadro de la gráfica; el contenido mantiene su tamaño. Confirmá con Enter o al salir del campo.",
       coverTitle: "TRANSICIÓN CON LOGO (TAPA LA GRÁFICA AL APARECER)", coverProducer: "Logo de la productora", coverCategory: "Logo de la categoría", coverTimeLabel: "TIEMPO TAPADO (SEG)", coverTestBtn: "▶ PROBAR", coverApplyAllBtn: "APLICAR A TODAS", coverHint: "La gráfica aparece tapada por el logo, sobre un fondo difuminado con los colores que se detectan en él, y después se descubren los datos. Los logos se ajustan al tamaño de la gráfica y se cargan más abajo, en Recursos multimedia.", coverNoLogos: "Cargá primero un logo en Recursos multimedia (más abajo) para poder usar esta transición.",
-      overlaySizeTitle: "TAMAÑO DEL OVERLAY", overlaySizeDesc: "Ancho y alto del lienzo en píxeles (por defecto 1920 × 1080). La ventana del overlay se ajusta sola; en OBS o vMix poné la fuente de navegador con la misma medida. Las posiciones de las gráficas no cambian: reacomodalas si hace falta.", overlayPreset: "Medidas comunes…", overlayReset: "Restaurar 1920 × 1080"
+      overlaySizeTitle: "TAMAÑO DEL OVERLAY", overlaySizeDesc: "Ancho y alto del lienzo en píxeles (por defecto 1920 × 1080). La ventana del overlay se ajusta sola; en OBS o vMix poné la fuente de navegador con la misma medida. Las posiciones de las gráficas no cambian: reacomodalas si hace falta.", overlayPreset: "Medidas comunes…", overlayReset: "Restaurar 1920 × 1080",
+      elementsTitle: 'ELEMENTOS DE {name}', elementsDesc: 'Elegí cualquier parte de la gráfica (un texto, una barra o caja de fondo, un borde, una imagen) y cambiale fondo, bordes, textos e imágenes. Cada gráfica guarda sus propios estilos, independientes del tema general.',
+      elPick: 'SELECCIONAR EN LA VISTA', elPickOn: 'SELECCIONANDO: CLIC = ELEGIR · OTRO CLIC = BLOQUE DE ATRÁS', elInherit: 'Igual que la gráfica', elClear: 'Quitar este ajuste', elStyledMark: 'Tiene estilo propio',
+      elTextColor: 'COLOR DEL TEXTO', elBgColor: 'COLOR DE FONDO', elBgOpacity: 'OPACIDAD DEL FONDO (%)', elBorderColor: 'COLOR DEL BORDE',
+      elFont: 'TIPOGRAFÍA', elWeight: 'GROSOR', elWeight400: 'Normal', elWeight700: 'Negrita', elWeight900: 'Extra negrita',
+      elStyle: 'ESTILO', elStyleNormal: 'Normal', elStyleItalic: 'Cursiva',
+      elTransform: 'MAYÚSCULAS', elTfNone: 'Como está escrito', elTfUpper: 'TODO MAYÚSCULAS', elTfLower: 'todo minúsculas', elTfCap: 'Primera Letra Mayúscula',
+      elShadow: 'SOMBRA DEL TEXTO', elShadow_none: 'Sin sombra', elShadow_soft: 'Suave', elShadow_strong: 'Fuerte', elShadow_glow: 'Brillo',
+      elSpacing: 'ESPACIADO DE LETRAS (PX)', elOpacity: 'OPACIDAD (%)',
+      elResetElement: '[[restart_alt]] RESTABLECER ELEMENTO', elResetAll: '🗑 QUITAR ESTILOS DE TODOS LOS ELEMENTOS ({n})', elConfirmResetAll: '¿Quitar los estilos por elemento de esta gráfica?',
+      elHint: 'Los estilos se guardan en la configuración (database.json) junto con todo lo demás, así que entran en la copia de seguridad de AJUSTES. Se eligen sobre la vista de ejemplo: si al aire la gráfica tiene otra forma (por ejemplo, otra cantidad de datos), algún elemento puede no encontrarse.',
+      elNoSelection: 'Activá "Seleccionar en la vista" y hacé clic sobre la gráfica, o empezá por un bloque de la lista. Si hacés clic de nuevo sobre lo ya elegido, se elige el bloque de atrás (por ejemplo, la barra detrás de un título).',
+      elParent: 'BLOQUE CONTENEDOR', elDeselect: 'SOLTAR SELECCIÓN', elInside: 'ADENTRO:',
+      elKind_text: 'Texto', elKind_block: 'Bloque', elKind_image: 'Imagen', elKind_icon: 'Ícono',
+      elSecText: 'TEXTO', elSecBg: 'FONDO', elSecBorder: 'BORDE', elSecImage: 'IMAGEN', elSecEffects: 'EFECTOS',
+      elBgColor2: 'SEGUNDO COLOR (DEGRADÉ)', elBgAngle: 'ÁNGULO DEL DEGRADÉ (°)', elBgImage: 'IMAGEN DE FONDO', elBgSize: 'AJUSTE DE LA IMAGEN',
+      elBgSize_cover: 'Cubrir (recorta)', elBgSize_contain: 'Entera (sin recortar)', elBgSize_stretch: 'Estirar', elLoadImage: '📂 CARGAR IMAGEN',
+      elBorderWidth: 'GROSOR (PX)', elBorderStyle: 'TIPO DE LÍNEA', elBorderStyle_solid: 'Continua', elBorderStyle_dashed: 'Rayada', elBorderStyle_dotted: 'Punteada', elBorderStyle_double: 'Doble', elBorderStyle_none: 'Sin borde',
+      elBorderSides: 'LADOS', elBorderSides_all: 'Todos', elBorderSides_left: 'Izquierda', elBorderSides_right: 'Derecha', elBorderSides_top: 'Arriba', elBorderSides_bottom: 'Abajo', elBorderSides_topBottom: 'Arriba y abajo', elBorderSides_leftRight: 'Izquierda y derecha',
+      elBorderRadius: 'REDONDEO (PX)', elBorderHint: 'Solo con color se recolorea el borde que ya tiene. Con grosor o tipo se dibuja un borde nuevo en los lados elegidos.',
+      elImgSrc: 'REEMPLAZAR IMAGEN', elImgFit: 'AJUSTE', elImgFit_contain: 'Entera', elImgFit_cover: 'Cubrir (recorta)', elImgFit_fill: 'Estirar',
+      elBoxShadow: 'SOMBRA DE LA CAJA', elGrayscale: 'BLANCO Y NEGRO (%)', elBrightness: 'BRILLO (%)',
     },
     hotkeys: {
       title: 'ATAJOS DE TECLADO',
@@ -257,7 +285,63 @@ export const translations = {
       group: { personal: 'PERSONAL / ENTORNO', flags: 'BANDERAS', alerts: 'ALERTAS', lights: 'SEMÁFORO DE LARGADA', grid: 'GRILLA', graphics: 'GRÁFICOS', closing: 'CIERRE', zocalos: 'ZÓCALOS' },
       act: { trackAlertEmit: 'Alerta de curva: emitir', trackAlertHide: 'Alerta de curva: ocultar', penaltyHide: 'Sanción: ocultar', lightsStart: 'Semáforo: iniciar / dar salida', lightsHide: 'Semáforo: ocultar', gridPrev: 'Grilla: anterior', gridNext: 'Grilla: siguiente', finalPrev: 'Resultados finales: página anterior', finalNext: 'Resultados finales: página siguiente', zocalo: 'Zócalo {n}' }
     },
+    race: {
+      categorySection: 'CATEGORÍA, CLASES Y GRILLA', categoryLabel: 'NOMBRE DE LA CATEGORÍA', categoryPlaceholder: 'Escribí la categoría',
+      categoryAuto: 'Completado con lo que informa la fuente de cronometraje. Podés cambiarlo.',
+      categoryManual: 'Escrito a mano: no se reemplaza con lo que informe la fuente.',
+      categoryNone: 'La fuente no informa la categoría: escribila a mano.',
+      categoryDetected: 'La fuente informa: {name}', categoryUse: 'USAR',
+      multiclassLabel: 'MULTICLASE', multiclass_auto: 'AUTO', multiclass_on: 'SÍ', multiclass_off: 'NO',
+      multiclassHint: 'Automático: se activa cuando la fuente informa entre 2 y 8 clases distintas.',
+      classesDetected: '{n} clases detectadas (podés cambiar sus colores)',
+      towerFilter: 'TORRE', finalFilter: 'RESULTADOS', allClasses: 'TODAS LAS CLASES',
+      classLeadersTicker: 'Líderes de cada clase en la tira inferior', classWinnersFinal: 'Ganadores de cada clase en los resultados',
+      gridLabel: 'GRILLA DE LARGADA', grid_auto: 'Automática: orden antes de largar.', grid_manual: 'Fijada a mano.',
+      grid_none: 'Sin grilla: fijala para ver posiciones ganadas y perdidas.', gridQuali: 'En clasificación no se usa grilla.',
+      gridCapture: 'FIJAR CON EL ORDEN ACTUAL', gridClear: 'BORRAR', confirmGridClear: '¿Borrar la grilla de largada? Se dejan de mostrar las posiciones ganadas.',
+      arrowsLabel: 'FLECHAS EN LA TIRA INFERIOR', arrows_start: 'VS LARGADA', arrows_live: 'ÚLTIMO CAMBIO', arrows_off: 'NO',
+      towerGains: 'Posiciones ganadas / perdidas en la torre',
+      analysisSection: 'ANÁLISIS', driver1: 'Piloto 1', driver2Optional: 'Piloto 2 (opcional)',
+      showSectors: 'MOSTRAR SECTORES', hideSectors: 'OCULTAR SECTORES', selectDriverFirst: 'Elegí al menos un piloto.',
+      noSectorsSource: 'Esta fuente no informa sectores (Speedhive sí los informa).',
+      gapLabel: 'BRECHA ENTRE DOS PILOTOS', gapFront: 'Adelante', gapBack: 'Atrás', useBattle: 'USAR BATALLA',
+      showGap: 'MOSTRAR BRECHA', hideGap: 'OCULTAR BRECHA', selectPairFirst: 'Elegí dos pilotos distintos.',
+      gapInfo: 'Brecha {gap} s ({laps} vueltas)', gapWaiting: 'Esperando pasadas por meta de los dos pilotos…',
+      gapClosing: 'se acerca {rate} s/v', gapOpening: 'se aleja {rate} s/v', gapEven: 'ritmo parejo', gapCatch: 'lo alcanza en ~{n} v.',
+      moreGraphics: 'MÁS GRÁFICAS', gainersCount: 'CANTIDAD EN REMONTADAS',
+      trackMapNoPath: 'Para el mapa en vivo dibujá el trazado en la pestaña {tab} (modo TRAZADO).',
+      gainersNoGrid: 'Sin grilla de largada no hay remontadas para mostrar.',
+      qualiSection: 'MODO CLASIFICACIÓN', qualiDetected: 'Sesión detectada: clasificación / entrenamiento.', raceDetected: 'Sesión detectada: carrera.',
+      noSession: 'Todavía no hay sesión cargada.', qualiBtn: 'TABLA DE CLASIFICACIÓN', qualiTitle: 'TÍTULO', qualiCutoff: 'PASAN',
+      qualiCutoffHint: 'Cuántos pasan a la siguiente tanda (0 = sin línea de corte)', qualiRows: 'FILAS',
+      qualiHint: 'Muestra la línea de corte, la zona de eliminación, quién está en vuelta rápida y el tiempo objetivo de los que están afuera.',
+      alertsTitle: 'ALERTAS', alertsClear: 'LIMPIAR', alertOnAir: 'AL AIRE', alertDismiss: 'Descartar',
+      alert_fastestLap: 'Nueva vuelta rápida: #{number} {name} · {time}',
+      alert_leaderChange: 'Nuevo líder: #{number} {name} (antes #{prev})',
+      alert_leaderChangeQuali: 'Nuevo P1: #{number} {name} (antes #{prev})',
+      alert_stopped: 'Posible abandono: #{number} {name} no pasa por meta',
+      alert_flag: 'La fuente informa bandera: {flag}',
+      secondsAgo: 'hace {n} s', minutesAgo: 'hace {n} min',
+      exportPdf: 'EXPORTAR PDF', exportPdfHint: 'Planilla de resultados con logos, categoría, correcciones y vuelta rápida',
+      pdfNoData: 'No hay datos de carrera para exportar.', pdfError: 'No se pudo generar el PDF. {msg}'
+    },
+    corrections: {
+      title: 'CORRECCIONES MANUALES',
+      description: 'Corregí nombres mal cargados, aplicá penalizaciones de tiempo o descalificá pilotos sin depender del cronometrador. Se aplican a la torre, la tira, los resultados finales y el PDF.',
+      active: 'Correcciones activas: {n}', clearPenalties: 'BORRAR PENALIZACIONES Y DSQ', clearAll: 'BORRAR TODO',
+      confirmClearAll: '¿Borrar todas las correcciones (nombres, penalizaciones y descalificaciones)?',
+      confirmClearPenalties: '¿Borrar penalizaciones y descalificaciones? Los nombres corregidos se conservan.',
+      colPos: 'POS', colNum: 'NUM', colDriver: 'NOMBRE EN LA FUENTE', colName: 'NOMBRE CORREGIDO', colPenalty: 'PENALIZACIÓN (s)', colDsq: 'DSQ',
+      namePlaceholder: 'Dejar vacío = sin cambio', penaltyHint: 'Segundos que se suman al tiempo total (reordena a los que están en la misma vuelta)',
+      noDrivers: 'Cargá datos de la carrera para corregir pilotos.',
+      footer: 'En clasificación la penalización de tiempo no se aplica (sólo nombres y DSQ). Las correcciones quedan guardadas aunque cierres el programa.'
+    },
     circuito: {
+      modeCurves: 'CURVAS', modePath: 'TRAZADO (MAPA EN VIVO)',
+      pathInstructions: 'Hacé click siguiendo el recorrido del circuito, en el sentido de marcha, empezando en la línea de largada (punto verde). Arrastrá un punto para moverlo; click derecho para borrarlo. El trazado se cierra solo.',
+      pathPoints: '{n} puntos (mínimo 3)', pathUndo: 'DESHACER', pathClear: 'BORRAR TRAZADO',
+      confirmClearPath: '¿Borrar todo el trazado del mapa en vivo?', mapShowImage: 'Mostrar la imagen del circuito de fondo en el mapa en vivo',
+      pathStart: 'Línea de largada', pathPointTitle: 'Punto {n} (click derecho para borrar)',
       confirmRemoveMap: '¿Seguro que querés quitar el mapa del circuito? Se perderán las curvas marcadas.',
       title: 'MAPA DEL CIRCUITO', loadImageBtn: '📷 CARGAR IMAGEN',
       instructions: 'Hacé click en la imagen para agregar una curva. Arrastrá un marcador para moverlo.',
@@ -281,7 +365,8 @@ export const translations = {
         timing: 'Cómo conectar el timing en vivo (Speedhive / Race Monitor)',
         excel: 'Formato del Excel para el Campeonato', photos: 'Fotos de los pilotos',
         backup: 'Copia de seguridad de la configuración',
-        tabs: 'Guía rápida de cada pestaña'
+        tabs: 'Guía rápida de cada pestaña',
+        analysis: 'Categoría, multiclase, análisis, alertas, correcciones y PDF'
       },
       feedbackNote: '💡 ¿Algo no coincide con cómo lo usás en la práctica, o falta explicar algo? Avisale al equipo de desarrollo para actualizar este manual.',
       contentSpanishOnly: 'ℹ️ El contenido detallado de esta guía está disponible en español por ahora. La traducción completa está planificada como una mejora futura.'
@@ -314,7 +399,8 @@ export const translations = {
       startingLights: 'STARTING LIGHTS', lapTimesHistory: 'LAP TIME EVOLUTION',
       trackAlert: 'CORNER ALERT', penaltyAlert: 'PENALTY / INVESTIGATION',
       branding: 'PRODUCER & CATEGORY LOGOS',
-      evento: 'EVENT'
+      evento: 'EVENT',
+      sectors: 'SECTORS', gapChart: 'GAP', gainers: 'BIGGEST GAINERS', qualifying: 'QUALIFYING', trackMap: 'LIVE MAP', raceNotice: 'RACE NOTICE'
     },
     editor: {
       title: 'GRAPHICS EDITOR',
@@ -341,7 +427,8 @@ export const translations = {
     header: {
       title: 'OVERLAY RACING DASHBOARD', bestLap: 'FASTEST LAP', laps: 'LAPS',
       totalTime: 'TOTAL TIME', live: '🟢 LIVE', paused: 'PAUSED',
-      sysTempHint: 'No temperature data: Windows does not expose it on this PC. Open LibreHardwareMonitor to see it.'
+      sysTempHint: 'No temperature data: Windows does not expose it on this PC. Open LibreHardwareMonitor to see it.',
+      rights: 'All rights reserved.', registered: 'Work registered with Argentina’s National Copyright Office (DNDA) · Registration {registry}'
     },
     panel: {
       battleRecommended: 'Closest battle:', battleRecommendedInfo: '{front} vs {back} · gap {gap} s',
@@ -396,7 +483,11 @@ export const translations = {
       scrapeErrLaunchFailed: "Couldn't open the internal browser that fetches the timing data. Try closing and reopening the program; if it persists, an antivirus may be blocking it.",
       scrapeErrNavFailed: "Couldn't connect to the timing page. Check this PC's internet connection and that no firewall/antivirus is blocking access.",
       scrapeErrNoDrivers: 'Connected, but there are no drivers to show. Check that the race code is correct, that the provider (Speedhive / Race Monitor) is the right one, and that the session is active.',
-      scrapeErrGeneric: 'Error fetching the timing data.'
+      scrapeErrGeneric: 'Error fetching the timing data.',
+      alertNoOrbitsHost: "⚠️ Enter the IP address of the Orbits PC in the SETTINGS tab first.",
+      scrapeErrOrbitsNotConnected: "Couldn't connect to Orbits. Check that the IP and port belong to the timekeeper's PC, that Orbits is open with the \"Results Protocol / Scoreboard\" output enabled, and that the Windows Firewall on that PC allows the port. It retries automatically every 3 seconds.",
+      scrapeErrOrbitsInvalidHost: "The Orbits address is not valid. Type only the IP (for example 192.168.1.50) or the PC name.",
+      scrapeErrOrbitsNoDrivers: "Connected to Orbits, but no drivers have arrived yet. Check that Orbits has an open session (run) with competitors loaded."
     },
     campeonato: {
       title: '🏆 STANDINGS (EXCEL)', driversLoaded: 'DRIVERS LOADED:',
@@ -476,6 +567,7 @@ export const translations = {
       chromaGreen: 'GREEN (CLASSIC)', chromaBlue: 'BLUE', chromaMagenta: 'MAGENTA / PINK',
       chromaBlack: 'BLACK', chromaWhite: 'WHITE', chromaYellow: 'YELLOW',
       providerLabel: 'TIMING PROVIDER', codeLabel: 'RACE CODE',
+      orbitsHostLabel: "TIMEKEEPER IP ADDRESS (PC RUNNING ORBITS)", orbitsPortLabel: "PORT", orbitsHelp: "On the Orbits PC (version 4 or 5) enable the \"Results Protocol\" / \"Scoreboard\" data output (RMonitor protocol, TCP port 50000 by default) and allow that port in the Windows Firewall of that PC. Both PCs must be on the same network. If Orbits runs on this same PC, use 127.0.0.1. The connection stays open and data arrives in real time.", orbitsIdle: "Not connected: press LOAD DATA NOW or turn on LIVE.", orbitsConnected: "Connected to {addr} · {count} drivers · last data {ago} s ago", orbitsConnecting: "Connecting to {addr}...", orbitsDisconnected: "No connection to {addr}, retrying",
       loadNowBtn: '🔄 LOAD DATA NOW', vmixSection: 'VMIX CONNECTION (ON ANOTHER PC)', vmixDescription: 'If vMix is on another computer, you CANNOT use localhost: there "localhost" is the vMix PC, not this one. In vMix add a Web Browser input with one of these addresses (the one of the network adapter wired to that PC). Both PCs must be on the same network; if you join them with a direct cable, give each one a fixed IP (for example 192.168.1.10 and 192.168.1.11, mask 255.255.255.0). If it does not connect, allow Overlay Graphics in the Windows Firewall for private networks.', vmixNoNetwork: 'No network connection detected. Plug in the cable or connect to Wi-Fi and reopen this tab.', vmixCopy: '📋 COPY', vmixCopied: '✓ COPIED', diagSection: 'DIAGNOSTICS', diagDescription: "If the program doesn't fetch timing data on a PC, show these diagnostics (which browser the scraper uses and the last log lines) and copy them to send.", diagShowBtn: '🔍 SHOW DIAGNOSTICS', diagCopyBtn: '📋 COPY', diagCopied: '✓ COPIED', diagOpenBtn: '📁 OPEN LOGS FOLDER', diagUnavailable: 'Diagnostics are only available in the desktop app.', diagLogTitle: 'LAST LOG LINES', loadingBtn: 'LOADING...', loadedBtn: 'DATA LOADED!', loadErrorBtn: 'COULD NOT LOAD', languageLabel: 'LANGUAGE',
       backupSection: 'CONFIGURATION BACKUP',
       backupDescription: "Save a copy of your configuration (colors, text, formats, each graphic's position) before updating the program, so you don't lose it. This saves the database.json and posiciones.json files.",
@@ -522,7 +614,28 @@ export const translations = {
       graphicWidthLabel: "WIDTH (PX)", graphicHeightLabel: "HEIGHT (PX)", graphicSizeAuto: "auto",
       graphicSizeHint: "Empty = the graphic's original size. It applies to the graphic's box; the content keeps its size. Confirm with Enter or by leaving the field.",
       coverTitle: "LOGO TRANSITION (COVERS THE GRAPHIC AS IT APPEARS)", coverProducer: "Producer logo", coverCategory: "Category logo", coverTimeLabel: "COVER TIME (SEC)", coverTestBtn: "▶ TEST", coverApplyAllBtn: "APPLY TO ALL", coverHint: "The graphic appears covered by the logo, over a blurred background made from the colors detected in it, and then the data is revealed. Logos are fitted to the graphic's size and are loaded below, in Media resources.", coverNoLogos: "Load a logo first under Media resources (below) to use this transition.",
-      overlaySizeTitle: "OVERLAY SIZE", overlaySizeDesc: "Canvas width and height in pixels (default 1920 × 1080). The overlay window resizes itself; in OBS or vMix set the browser source to the same size. Graphic positions do not change: rearrange them if needed.", overlayPreset: "Common sizes…", overlayReset: "Restore 1920 × 1080"
+      overlaySizeTitle: "OVERLAY SIZE", overlaySizeDesc: "Canvas width and height in pixels (default 1920 × 1080). The overlay window resizes itself; in OBS or vMix set the browser source to the same size. Graphic positions do not change: rearrange them if needed.", overlayPreset: "Common sizes…", overlayReset: "Restore 1920 × 1080",
+      elementsTitle: 'ELEMENTS OF {name}', elementsDesc: 'Pick any part of the graphic (a text, a background bar or box, a border, an image) and change its background, borders, texts and images. Each graphic keeps its own styles, independent from the general theme.',
+      elPick: 'PICK IN THE PREVIEW', elPickOn: 'PICKING: CLICK = SELECT · CLICK AGAIN = BLOCK BEHIND', elInherit: 'Same as the graphic', elClear: 'Remove this setting', elStyledMark: 'Has its own style',
+      elTextColor: 'TEXT COLOR', elBgColor: 'BACKGROUND COLOR', elBgOpacity: 'BACKGROUND OPACITY (%)', elBorderColor: 'BORDER COLOR',
+      elFont: 'TYPEFACE', elWeight: 'WEIGHT', elWeight400: 'Regular', elWeight700: 'Bold', elWeight900: 'Extra bold',
+      elStyle: 'STYLE', elStyleNormal: 'Normal', elStyleItalic: 'Italic',
+      elTransform: 'CASE', elTfNone: 'As written', elTfUpper: 'ALL CAPS', elTfLower: 'all lowercase', elTfCap: 'Capitalize Words',
+      elShadow: 'TEXT SHADOW', elShadow_none: 'No shadow', elShadow_soft: 'Soft', elShadow_strong: 'Strong', elShadow_glow: 'Glow',
+      elSpacing: 'LETTER SPACING (PX)', elOpacity: 'OPACITY (%)',
+      elResetElement: '[[restart_alt]] RESET ELEMENT', elResetAll: '🗑 REMOVE STYLES FROM ALL ELEMENTS ({n})', elConfirmResetAll: 'Remove the per-element styles of this graphic?',
+      elHint: 'Styles are saved in the configuration (database.json) along with everything else, so they are included in the SETTINGS backup. They are picked on the sample preview: if the on-air graphic has a different shape (for example, a different amount of data), some element may not be found.',
+      elNoSelection: 'Turn on "Pick in the preview" and click the graphic, or start from a block in the list. Clicking again on the selected element picks the block behind it (for example, the bar behind a title).',
+      elParent: 'CONTAINING BLOCK', elDeselect: 'CLEAR SELECTION', elInside: 'INSIDE:',
+      elKind_text: 'Text', elKind_block: 'Block', elKind_image: 'Image', elKind_icon: 'Icon',
+      elSecText: 'TEXT', elSecBg: 'BACKGROUND', elSecBorder: 'BORDER', elSecImage: 'IMAGE', elSecEffects: 'EFFECTS',
+      elBgColor2: 'SECOND COLOR (GRADIENT)', elBgAngle: 'GRADIENT ANGLE (°)', elBgImage: 'BACKGROUND IMAGE', elBgSize: 'IMAGE FIT',
+      elBgSize_cover: 'Cover (crops)', elBgSize_contain: 'Whole (no crop)', elBgSize_stretch: 'Stretch', elLoadImage: '📂 LOAD IMAGE',
+      elBorderWidth: 'WIDTH (PX)', elBorderStyle: 'LINE TYPE', elBorderStyle_solid: 'Solid', elBorderStyle_dashed: 'Dashed', elBorderStyle_dotted: 'Dotted', elBorderStyle_double: 'Double', elBorderStyle_none: 'No border',
+      elBorderSides: 'SIDES', elBorderSides_all: 'All', elBorderSides_left: 'Left', elBorderSides_right: 'Right', elBorderSides_top: 'Top', elBorderSides_bottom: 'Bottom', elBorderSides_topBottom: 'Top and bottom', elBorderSides_leftRight: 'Left and right',
+      elBorderRadius: 'CORNER RADIUS (PX)', elBorderHint: 'Color alone recolors the existing border. Width or type draws a new border on the chosen sides.',
+      elImgSrc: 'REPLACE IMAGE', elImgFit: 'FIT', elImgFit_contain: 'Whole', elImgFit_cover: 'Cover (crops)', elImgFit_fill: 'Stretch',
+      elBoxShadow: 'BOX SHADOW', elGrayscale: 'BLACK & WHITE (%)', elBrightness: 'BRIGHTNESS (%)',
     },
     hotkeys: {
       title: 'KEYBOARD SHORTCUTS',
@@ -536,7 +649,63 @@ export const translations = {
       group: { personal: 'PEOPLE / SETTING', flags: 'FLAGS', alerts: 'ALERTS', lights: 'STARTING LIGHTS', grid: 'GRID', graphics: 'GRAPHICS', closing: 'CLOSING', zocalos: 'LOWER THIRDS' },
       act: { trackAlertEmit: 'Track alert: show', trackAlertHide: 'Track alert: hide', penaltyHide: 'Penalty: hide', lightsStart: 'Lights: start / go', lightsHide: 'Lights: hide', gridPrev: 'Grid: previous', gridNext: 'Grid: next', finalPrev: 'Final results: previous page', finalNext: 'Final results: next page', zocalo: 'Lower third {n}' }
     },
+    race: {
+      categorySection: 'CATEGORY, CLASSES AND GRID', categoryLabel: 'CATEGORY NAME', categoryPlaceholder: 'Type the category',
+      categoryAuto: 'Filled in from the timing source. You can change it.',
+      categoryManual: 'Typed by hand: the timing source will not replace it.',
+      categoryNone: 'The timing source does not report the category: type it in.',
+      categoryDetected: 'The source reports: {name}', categoryUse: 'USE',
+      multiclassLabel: 'MULTI-CLASS', multiclass_auto: 'AUTO', multiclass_on: 'YES', multiclass_off: 'NO',
+      multiclassHint: 'Automatic: turns on when the source reports between 2 and 8 different classes.',
+      classesDetected: '{n} classes detected (you can change their colors)',
+      towerFilter: 'TOWER', finalFilter: 'RESULTS', allClasses: 'ALL CLASSES',
+      classLeadersTicker: 'Class leaders in the bottom ticker', classWinnersFinal: 'Class winners in the final results',
+      gridLabel: 'STARTING GRID', grid_auto: 'Automatic: order before the start.', grid_manual: 'Set by hand.',
+      grid_none: 'No grid: set it to show positions gained and lost.', gridQuali: 'No grid is used in qualifying.',
+      gridCapture: 'SET FROM CURRENT ORDER', gridClear: 'CLEAR', confirmGridClear: 'Clear the starting grid? Positions gained will no longer be shown.',
+      arrowsLabel: 'ARROWS IN THE BOTTOM TICKER', arrows_start: 'VS START', arrows_live: 'LAST CHANGE', arrows_off: 'NO',
+      towerGains: 'Positions gained / lost in the tower',
+      analysisSection: 'ANALYSIS', driver1: 'Driver 1', driver2Optional: 'Driver 2 (optional)',
+      showSectors: 'SHOW SECTORS', hideSectors: 'HIDE SECTORS', selectDriverFirst: 'Pick at least one driver.',
+      noSectorsSource: 'This source does not report sectors (Speedhive does).',
+      gapLabel: 'GAP BETWEEN TWO DRIVERS', gapFront: 'Ahead', gapBack: 'Behind', useBattle: 'USE BATTLE',
+      showGap: 'SHOW GAP', hideGap: 'HIDE GAP', selectPairFirst: 'Pick two different drivers.',
+      gapInfo: 'Gap {gap} s ({laps} laps)', gapWaiting: 'Waiting for both drivers to cross the line…',
+      gapClosing: 'closing {rate} s/lap', gapOpening: 'dropping {rate} s/lap', gapEven: 'even pace', gapCatch: 'catches in ~{n} laps',
+      moreGraphics: 'MORE GRAPHICS', gainersCount: 'GAINERS SHOWN',
+      trackMapNoPath: 'For the live map, draw the track line in the {tab} tab (TRACK LINE mode).',
+      gainersNoGrid: 'Without a starting grid there are no gainers to show.',
+      qualiSection: 'QUALIFYING MODE', qualiDetected: 'Detected session: qualifying / practice.', raceDetected: 'Detected session: race.',
+      noSession: 'No session loaded yet.', qualiBtn: 'QUALIFYING BOARD', qualiTitle: 'TITLE', qualiCutoff: 'ADVANCE',
+      qualiCutoffHint: 'How many advance to the next segment (0 = no cut-off line)', qualiRows: 'ROWS',
+      qualiHint: 'Shows the cut-off line, the elimination zone, who is on a push lap and the target time for those outside.',
+      alertsTitle: 'ALERTS', alertsClear: 'CLEAR', alertOnAir: 'ON AIR', alertDismiss: 'Dismiss',
+      alert_fastestLap: 'New fastest lap: #{number} {name} · {time}',
+      alert_leaderChange: 'New leader: #{number} {name} (was #{prev})',
+      alert_leaderChangeQuali: 'New P1: #{number} {name} (was #{prev})',
+      alert_stopped: 'Possible retirement: #{number} {name} is not crossing the line',
+      alert_flag: 'The source reports flag: {flag}',
+      secondsAgo: '{n} s ago', minutesAgo: '{n} min ago',
+      exportPdf: 'EXPORT PDF', exportPdfHint: 'Results sheet with logos, category, corrections and fastest lap',
+      pdfNoData: 'There is no race data to export.', pdfError: 'The PDF could not be created. {msg}'
+    },
+    corrections: {
+      title: 'MANUAL CORRECTIONS',
+      description: 'Fix misspelled names, apply time penalties or disqualify drivers without waiting for the timekeeper. They apply to the tower, ticker, final results and the PDF.',
+      active: 'Active corrections: {n}', clearPenalties: 'CLEAR PENALTIES AND DSQ', clearAll: 'CLEAR ALL',
+      confirmClearAll: 'Clear all corrections (names, penalties and disqualifications)?',
+      confirmClearPenalties: 'Clear penalties and disqualifications? Corrected names are kept.',
+      colPos: 'POS', colNum: 'NO.', colDriver: 'NAME FROM SOURCE', colName: 'CORRECTED NAME', colPenalty: 'PENALTY (s)', colDsq: 'DSQ',
+      namePlaceholder: 'Empty = no change', penaltyHint: 'Seconds added to the total time (re-orders drivers on the same lap)',
+      noDrivers: 'Load race data to correct drivers.',
+      footer: 'In qualifying, time penalties are not applied (only names and DSQ). Corrections are kept even if you close the program.'
+    },
     circuito: {
+      modeCurves: 'CORNERS', modePath: 'TRACK LINE (LIVE MAP)',
+      pathInstructions: 'Click along the circuit in the direction of travel, starting at the start/finish line (green dot). Drag a point to move it; right-click to delete it. The line closes automatically.',
+      pathPoints: '{n} points (minimum 3)', pathUndo: 'UNDO', pathClear: 'CLEAR LINE',
+      confirmClearPath: 'Delete the whole live map track line?', mapShowImage: 'Show the circuit image behind the live map',
+      pathStart: 'Start/finish line', pathPointTitle: 'Point {n} (right-click to delete)',
       confirmRemoveMap: 'Are you sure you want to remove the track map? The marked corners will be lost.',
       title: 'TRACK MAP', loadImageBtn: '📷 LOAD IMAGE',
       instructions: 'Click on the image to add a corner. Drag a marker to move it.',
@@ -560,7 +729,8 @@ export const translations = {
         timing: 'How to connect live timing (Speedhive / Race Monitor)',
         excel: 'Excel format for the Standings', photos: 'Driver photos',
         backup: 'Configuration backup',
-        tabs: 'Quick guide to each tab'
+        tabs: 'Quick guide to each tab',
+        analysis: 'Category, multi-class, analysis, alerts, corrections and PDF'
       },
       feedbackNote: '💡 Does something not match how you use it in practice, or is something missing? Let the development team know so this manual can be updated.',
       contentSpanishOnly: 'ℹ️ The detailed content of this guide is currently only available in Spanish. A full translation is planned as a future improvement.'
@@ -593,7 +763,8 @@ export const translations = {
       startingLights: 'SEMÁFORO DE LARGADA', lapTimesHistory: 'EVOLUÇÃO DOS TEMPOS DE VOLTA',
       trackAlert: 'ALERTA DE CURVA', penaltyAlert: 'PUNIÇÃO / INVESTIGAÇÃO',
       branding: 'LOGOS PRODUTORA E CATEGORIA',
-      evento: 'EVENTO'
+      evento: 'EVENTO',
+      sectors: 'SETORES', gapChart: 'DIFERENÇA', gainers: 'RECUPERAÇÕES', qualifying: 'CLASSIFICAÇÃO', trackMap: 'MAPA AO VIVO', raceNotice: 'AVISO DE CORRIDA'
     },
     editor: {
       title: 'EDITOR DE GRÁFICOS',
@@ -620,7 +791,8 @@ export const translations = {
     header: {
       title: 'OVERLAY RACING DASHBOARD', bestLap: 'VOLTA MAIS RÁPIDA', laps: 'VOLTAS',
       totalTime: 'TEMPO TOTAL', live: '🟢 AO VIVO', paused: 'PAUSADO',
-      sysTempHint: 'Sem dado de temperatura: o Windows não a expõe neste PC. Abra o LibreHardwareMonitor para vê-la.'
+      sysTempHint: 'Sem dado de temperatura: o Windows não a expõe neste PC. Abra o LibreHardwareMonitor para vê-la.',
+      rights: 'Todos os direitos reservados.', registered: 'Obra registrada na Direção Nacional do Direito Autoral da Argentina (DNDA) · Registro {registry}'
     },
     panel: {
       battleRecommended: 'Batalha mais próxima:', battleRecommendedInfo: '{front} vs {back} · intervalo {gap} s',
@@ -675,7 +847,11 @@ export const translations = {
       scrapeErrLaunchFailed: 'Não foi possível abrir o navegador interno que busca os dados de cronometragem. Tente fechar e reabrir o programa; se persistir, pode ser o antivírus bloqueando.',
       scrapeErrNavFailed: 'Não foi possível conectar à página de cronometragem. Verifique a conexão com a internet deste PC e se o firewall/antivírus não está bloqueando o acesso.',
       scrapeErrNoDrivers: 'Conectou, mas não há pilotos para mostrar. Verifique se o código da corrida está correto, se o provedor (Speedhive / Race Monitor) é o certo e se a sessão está ativa.',
-      scrapeErrGeneric: 'Erro ao buscar os dados de cronometragem.'
+      scrapeErrGeneric: 'Erro ao buscar os dados de cronometragem.',
+      alertNoOrbitsHost: "⚠️ Informe primeiro o endereço IP do PC do Orbits na aba AJUSTES.",
+      scrapeErrOrbitsNotConnected: "Não foi possível conectar ao Orbits. Verifique se o IP e a porta são os do PC do cronometrista, se o Orbits está aberto com a saída \"Results Protocol / Scoreboard\" ativada e se o Firewall do Windows desse PC permite a porta. Tenta de novo sozinho a cada 3 segundos.",
+      scrapeErrOrbitsInvalidHost: "O endereço do Orbits não é válido. Digite só o IP (por exemplo 192.168.1.50) ou o nome do PC.",
+      scrapeErrOrbitsNoDrivers: "Conectado ao Orbits, mas ainda não chegaram pilotos. Verifique se há uma sessão (run) aberta no Orbits com competidores cadastrados."
     },
     campeonato: {
       title: '🏆 CAMPEONATO (EXCEL)', driversLoaded: 'PILOTOS CARREGADOS:',
@@ -755,6 +931,7 @@ export const translations = {
       chromaGreen: 'VERDE (CLÁSSICO)', chromaBlue: 'AZUL', chromaMagenta: 'MAGENTA / ROSA',
       chromaBlack: 'PRETO', chromaWhite: 'BRANCO', chromaYellow: 'AMARELO',
       providerLabel: 'PROVEDOR DE CRONOMETRAGEM (TIMING)', codeLabel: 'CÓDIGO DA CORRIDA',
+      orbitsHostLabel: "ENDEREÇO IP DO CRONOMETRISTA (PC COM ORBITS)", orbitsPortLabel: "PORTA", orbitsHelp: "No PC do Orbits (versão 4 ou 5) ative a saída de dados \"Results Protocol\" / \"Scoreboard\" (protocolo RMonitor, porta TCP 50000 por padrão) e libere essa porta no Firewall do Windows desse PC. Os dois PCs precisam estar na mesma rede. Se o Orbits roda neste mesmo PC, use 127.0.0.1. A conexão fica aberta e os dados chegam em tempo real.", orbitsIdle: "Sem conexão: pressione CARREGAR DADOS AGORA ou ative AO VIVO.", orbitsConnected: "Conectado a {addr} · {count} pilotos · último dado há {ago} s", orbitsConnecting: "Conectando a {addr}...", orbitsDisconnected: "Sem conexão com {addr}, tentando de novo",
       loadNowBtn: '🔄 CARREGAR DADOS AGORA', vmixSection: 'CONEXÃO COM O VMIX (EM OUTRO PC)', vmixDescription: 'Se o vMix estiver em outro computador, NÃO dá para usar localhost: lá "localhost" é o PC do vMix, não este. No vMix adicione um input Web Browser com um destes endereços (o da placa de rede ligada por cabo àquele PC). Os dois PCs precisam estar na mesma rede; se ligá-los com um cabo direto, dê a cada um um IP fixo (por exemplo 192.168.1.10 e 192.168.1.11, máscara 255.255.255.0). Se não conectar, permita o Overlay Graphics no Firewall do Windows para redes privadas.', vmixNoNetwork: 'Nenhuma conexão de rede detectada. Conecte o cabo ou o Wi-Fi e reabra esta aba.', vmixCopy: '📋 COPIAR', vmixCopied: '✓ COPIADO', diagSection: 'DIAGNÓSTICO', diagDescription: 'Se o programa não buscar os dados de cronometragem em um PC, mostre este diagnóstico (qual navegador o scraper usa e as últimas linhas do registro) e copie para enviar.', diagShowBtn: '🔍 VER DIAGNÓSTICO', diagCopyBtn: '📋 COPIAR', diagCopied: '✓ COPIADO', diagOpenBtn: '📁 ABRIR PASTA DE LOGS', diagUnavailable: 'O diagnóstico só está disponível no aplicativo de desktop.', diagLogTitle: 'ÚLTIMAS LINHAS DO LOG', loadingBtn: 'CARREGANDO...', loadedBtn: 'DADOS CARREGADOS!', loadErrorBtn: 'NÃO FOI POSSÍVEL CARREGAR', languageLabel: 'IDIOMA',
       backupSection: 'BACKUP DA CONFIGURAÇÃO',
       backupDescription: 'Salve uma cópia da sua configuração (cores, textos, formatos, posição de cada gráfico) antes de atualizar o programa, para não perdê-la. Isso salva os arquivos database.json e posiciones.json.',
@@ -872,7 +1049,8 @@ export const translations = {
       startingLights: 'STARTAMPEL', lapTimesHistory: 'RUNDENZEIT-VERLAUF',
       trackAlert: 'KURVEN-ALARM', penaltyAlert: 'STRAFE / UNTERSUCHUNG',
       branding: 'LOGOS PRODUKTION & KATEGORIE',
-      evento: 'EVENT'
+      evento: 'EVENT',
+      sectors: 'SEKTOREN', gapChart: 'ABSTAND', gainers: 'AUFHOLJAGDEN', qualifying: 'QUALIFYING', trackMap: 'LIVE-KARTE', raceNotice: 'RENNMELDUNG'
     },
     editor: {
       title: 'GRAFIK-EDITOR',
@@ -899,7 +1077,8 @@ export const translations = {
     header: {
       title: 'OVERLAY RACING DASHBOARD', bestLap: 'SCHNELLSTE RUNDE', laps: 'RUNDEN',
       totalTime: 'GESAMTZEIT', live: '🟢 LIVE', paused: 'PAUSIERT',
-      sysTempHint: 'Keine Temperaturdaten: Windows stellt sie auf diesem PC nicht bereit. Öffne LibreHardwareMonitor, um sie zu sehen.'
+      sysTempHint: 'Keine Temperaturdaten: Windows stellt sie auf diesem PC nicht bereit. Öffne LibreHardwareMonitor, um sie zu sehen.',
+      rights: 'Alle Rechte vorbehalten.', registered: 'Eingetragen beim argentinischen Urheberrechtsamt (DNDA) · Registrierung {registry}'
     },
     panel: {
       battleRecommended: 'Engster Kampf:', battleRecommendedInfo: '{front} vs {back} · Abstand {gap} s',
@@ -954,7 +1133,11 @@ export const translations = {
       scrapeErrLaunchFailed: 'Der interne Browser zum Abrufen der Zeitmessdaten konnte nicht geöffnet werden. Schließe das Programm und öffne es erneut; falls es weiterhin nicht klappt, blockiert eventuell ein Virenscanner.',
       scrapeErrNavFailed: 'Die Zeitmessungsseite konnte nicht erreicht werden. Prüfe die Internetverbindung dieses PCs und ob keine Firewall/kein Virenscanner den Zugriff blockiert.',
       scrapeErrNoDrivers: 'Verbunden, aber es gibt keine Fahrer zum Anzeigen. Prüfe, ob der Renncode stimmt, ob der Anbieter (Speedhive / Race Monitor) der richtige ist und ob die Session aktiv ist.',
-      scrapeErrGeneric: 'Fehler beim Abrufen der Zeitmessdaten.'
+      scrapeErrGeneric: 'Fehler beim Abrufen der Zeitmessdaten.',
+      alertNoOrbitsHost: "⚠️ Gib zuerst im Tab EINSTELLUNGEN die IP-Adresse des Orbits-PCs ein.",
+      scrapeErrOrbitsNotConnected: "Keine Verbindung zu Orbits. Prüfe, ob IP und Port zum PC des Zeitnehmers gehören, ob Orbits geöffnet ist und die Ausgabe „Results Protocol / Scoreboard“ aktiviert hat und ob die Windows-Firewall auf diesem PC den Port erlaubt. Es wird alle 3 Sekunden automatisch erneut versucht.",
+      scrapeErrOrbitsInvalidHost: "Die Orbits-Adresse ist ungültig. Gib nur die IP (z. B. 192.168.1.50) oder den PC-Namen ein.",
+      scrapeErrOrbitsNoDrivers: "Mit Orbits verbunden, aber es sind noch keine Fahrer angekommen. Prüfe, ob in Orbits eine Session (Run) mit Teilnehmern geöffnet ist."
     },
     campeonato: {
       title: '🏆 MEISTERSCHAFT (EXCEL)', driversLoaded: 'GELADENE FAHRER:',
@@ -1034,6 +1217,7 @@ export const translations = {
       chromaGreen: 'GRÜN (KLASSISCH)', chromaBlue: 'BLAU', chromaMagenta: 'MAGENTA / PINK',
       chromaBlack: 'SCHWARZ', chromaWhite: 'WEISS', chromaYellow: 'GELB',
       providerLabel: 'ZEITMESSUNGS-ANBIETER', codeLabel: 'RENNCODE',
+      orbitsHostLabel: "IP-ADRESSE DER ZEITNAHME (PC MIT ORBITS)", orbitsPortLabel: "PORT", orbitsHelp: "Aktiviere auf dem Orbits-PC (Version 4 oder 5) die Datenausgabe „Results Protocol“ / „Scoreboard“ (RMonitor-Protokoll, standardmäßig TCP-Port 50000) und erlaube diesen Port in der Windows-Firewall dieses PCs. Beide PCs müssen im selben Netzwerk sein. Läuft Orbits auf diesem PC, verwende 127.0.0.1. Die Verbindung bleibt offen und die Daten kommen in Echtzeit.", orbitsIdle: "Nicht verbunden: DATEN JETZT LADEN drücken oder LIVE aktivieren.", orbitsConnected: "Verbunden mit {addr} · {count} Fahrer · letzte Daten vor {ago} s", orbitsConnecting: "Verbinde mit {addr}...", orbitsDisconnected: "Keine Verbindung zu {addr}, neuer Versuch",
       loadNowBtn: '🔄 DATEN JETZT LADEN', vmixSection: 'VMIX-VERBINDUNG (AUF EINEM ANDEREN PC)', vmixDescription: 'Wenn vMix auf einem anderen Computer läuft, kann man NICHT localhost verwenden: dort ist "localhost" der vMix-PC, nicht dieser. Füge in vMix einen Web-Browser-Input mit einer dieser Adressen hinzu (die des per Kabel mit diesem PC verbundenen Netzwerkadapters). Beide PCs müssen im selben Netzwerk sein; bei direkter Kabelverbindung gib jedem eine feste IP (z. B. 192.168.1.10 und 192.168.1.11, Maske 255.255.255.0). Falls es nicht verbindet, erlaube Overlay Graphics in der Windows-Firewall für private Netzwerke.', vmixNoNetwork: 'Keine Netzwerkverbindung erkannt. Kabel oder WLAN verbinden und diesen Tab erneut öffnen.', vmixCopy: '📋 KOPIEREN', vmixCopied: '✓ KOPIERT', diagSection: 'DIAGNOSE', diagDescription: 'Wenn das Programm auf einem PC keine Zeitmessdaten abruft, zeige diese Diagnose (welchen Browser der Scraper nutzt und die letzten Logzeilen) und kopiere sie zum Senden.', diagShowBtn: '🔍 DIAGNOSE ANZEIGEN', diagCopyBtn: '📋 KOPIEREN', diagCopied: '✓ KOPIERT', diagOpenBtn: '📁 LOG-ORDNER ÖFFNEN', diagUnavailable: 'Die Diagnose ist nur in der Desktop-App verfügbar.', diagLogTitle: 'LETZTE LOGZEILEN', loadingBtn: 'WIRD GELADEN...', loadedBtn: 'DATEN GELADEN!', loadErrorBtn: 'LADEN FEHLGESCHLAGEN', languageLabel: 'SPRACHE',
       backupSection: 'KONFIGURATIONS-SICHERUNG',
       backupDescription: 'Speichere eine Kopie deiner Konfiguration (Farben, Texte, Formate, Position jeder Grafik), bevor du das Programm aktualisierst, damit du sie nicht verlierst. Dabei werden die Dateien database.json und posiciones.json gespeichert.',
@@ -1151,7 +1335,8 @@ export const translations = {
       startingLights: 'FEUX DE DÉPART', lapTimesHistory: 'ÉVOLUTION DES TEMPS AU TOUR',
       trackAlert: 'ALERTE VIRAGE', penaltyAlert: 'SANCTION / ENQUÊTE',
       branding: 'LOGOS PRODUCTION ET CATÉGORIE',
-      evento: 'ÉVÉNEMENT'
+      evento: 'ÉVÉNEMENT',
+      sectors: 'SECTEURS', gapChart: 'ÉCART', gainers: 'REMONTÉES', qualifying: 'QUALIFICATIONS', trackMap: 'CARTE EN DIRECT', raceNotice: 'AVIS DE COURSE'
     },
     editor: {
       title: 'ÉDITEUR DE GRAPHIQUES',
@@ -1178,7 +1363,8 @@ export const translations = {
     header: {
       title: 'OVERLAY RACING DASHBOARD', bestLap: 'MEILLEUR TOUR', laps: 'TOURS',
       totalTime: 'TEMPS TOTAL', live: '🟢 EN DIRECT', paused: 'EN PAUSE',
-      sysTempHint: 'Pas de donnée de température : Windows ne la fournit pas sur ce PC. Ouvrez LibreHardwareMonitor pour la voir.'
+      sysTempHint: 'Pas de donnée de température : Windows ne la fournit pas sur ce PC. Ouvrez LibreHardwareMonitor pour la voir.',
+      rights: 'Tous droits réservés.', registered: 'Œuvre enregistrée auprès de la Direction nationale du droit d’auteur d’Argentine (DNDA) · Enregistrement {registry}'
     },
     panel: {
       battleRecommended: 'Bataille la plus serrée :', battleRecommendedInfo: '{front} vs {back} · écart {gap} s',
@@ -1233,7 +1419,11 @@ export const translations = {
       scrapeErrLaunchFailed: "Impossible d'ouvrir le navigateur interne qui récupère les données de chronométrage. Fermez puis rouvrez le programme ; si le problème persiste, un antivirus peut le bloquer.",
       scrapeErrNavFailed: "Impossible de se connecter à la page de chronométrage. Vérifiez la connexion internet de ce PC et qu'aucun pare-feu/antivirus ne bloque l'accès.",
       scrapeErrNoDrivers: "Connecté, mais aucun pilote à afficher. Vérifiez que le code de la course est correct, que le fournisseur (Speedhive / Race Monitor) est le bon et que la session est active.",
-      scrapeErrGeneric: 'Erreur lors de la récupération des données de chronométrage.'
+      scrapeErrGeneric: 'Erreur lors de la récupération des données de chronométrage.',
+      alertNoOrbitsHost: "⚠️ Saisissez d'abord l'adresse IP du PC Orbits dans l'onglet PARAMÈTRES.",
+      scrapeErrOrbitsNotConnected: "Impossible de se connecter à Orbits. Vérifiez que l'IP et le port sont ceux du PC du chronométreur, qu'Orbits est ouvert avec la sortie « Results Protocol / Scoreboard » activée et que le pare-feu Windows de ce PC autorise le port. Nouvelle tentative automatique toutes les 3 secondes.",
+      scrapeErrOrbitsInvalidHost: "L'adresse d'Orbits n'est pas valide. Saisissez uniquement l'IP (par exemple 192.168.1.50) ou le nom du PC.",
+      scrapeErrOrbitsNoDrivers: "Connecté à Orbits, mais aucun pilote n'est encore arrivé. Vérifiez qu'une session (run) avec des concurrents est ouverte dans Orbits."
     },
     campeonato: {
       title: '🏆 CHAMPIONNAT (EXCEL)', driversLoaded: 'PILOTES CHARGÉS :',
@@ -1313,6 +1503,7 @@ export const translations = {
       chromaGreen: 'VERT (CLASSIQUE)', chromaBlue: 'BLEU', chromaMagenta: 'MAGENTA / ROSE',
       chromaBlack: 'NOIR', chromaWhite: 'BLANC', chromaYellow: 'JAUNE',
       providerLabel: 'FOURNISSEUR DE CHRONOMÉTRAGE', codeLabel: 'CODE DE LA COURSE',
+      orbitsHostLabel: "ADRESSE IP DU CHRONOMÉTREUR (PC AVEC ORBITS)", orbitsPortLabel: "PORT", orbitsHelp: "Sur le PC Orbits (version 4 ou 5), activez la sortie de données « Results Protocol » / « Scoreboard » (protocole RMonitor, port TCP 50000 par défaut) et autorisez ce port dans le pare-feu Windows de ce PC. Les deux PC doivent être sur le même réseau. Si Orbits tourne sur ce même PC, utilisez 127.0.0.1. La connexion reste ouverte et les données arrivent en temps réel.", orbitsIdle: "Non connecté : appuyez sur CHARGER LES DONNÉES MAINTENANT ou activez LE DIRECT.", orbitsConnected: "Connecté à {addr} · {count} pilotes · dernière donnée il y a {ago} s", orbitsConnecting: "Connexion à {addr}...", orbitsDisconnected: "Pas de connexion avec {addr}, nouvelle tentative",
       loadNowBtn: '🔄 CHARGER LES DONNÉES MAINTENANT', vmixSection: 'CONNEXION À VMIX (SUR UN AUTRE PC)', vmixDescription: "Si vMix est sur un autre ordinateur, on ne peut PAS utiliser localhost : là-bas « localhost » est le PC de vMix, pas celui-ci. Dans vMix, ajoutez une entrée Web Browser avec l'une de ces adresses (celle de la carte réseau reliée par câble à ce PC). Les deux PC doivent être sur le même réseau ; avec un câble direct, donnez à chacun une IP fixe (par exemple 192.168.1.10 et 192.168.1.11, masque 255.255.255.0). Si la connexion échoue, autorisez Overlay Graphics dans le pare-feu Windows pour les réseaux privés.", vmixNoNetwork: "Aucune connexion réseau détectée. Branchez le câble ou le Wi-Fi puis rouvrez cet onglet.", vmixCopy: '📋 COPIER', vmixCopied: '✓ COPIÉ', diagSection: 'DIAGNOSTIC', diagDescription: "Si le programme ne récupère pas les données de chronométrage sur un PC, affichez ce diagnostic (quel navigateur utilise le scraper et les dernières lignes du journal) et copiez-le pour l'envoyer.", diagShowBtn: '🔍 AFFICHER LE DIAGNOSTIC', diagCopyBtn: '📋 COPIER', diagCopied: '✓ COPIÉ', diagOpenBtn: '📁 OUVRIR LE DOSSIER DES LOGS', diagUnavailable: "Le diagnostic n'est disponible que dans l'application de bureau.", diagLogTitle: 'DERNIÈRES LIGNES DU LOG', loadingBtn: 'CHARGEMENT...', loadedBtn: 'DONNÉES CHARGÉES !', loadErrorBtn: 'ÉCHEC DU CHARGEMENT', languageLabel: 'LANGUE',
       backupSection: 'SAUVEGARDE DE LA CONFIGURATION',
       backupDescription: 'Enregistrez une copie de votre configuration (couleurs, textes, formats, position de chaque graphique) avant de mettre à jour le programme, pour ne pas la perdre. Cela enregistre les fichiers database.json et posiciones.json.',

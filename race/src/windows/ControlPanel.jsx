@@ -8,9 +8,12 @@ import UserManual from '../windows/UserManual';
 import VoteHistory from '../windows/VoteHistory';
 import GraphicEditor from '../windows/GraphicEditor';
 import HotkeysPanel from '../windows/HotkeysPanel';
+import { CategorySection, AnalysisSection, QualifyingSection, RaceAlertsBar, CorrectionsPanel } from './RaceSections';
+import { formatDriverName } from '../utils/formatDriverName';
 import Icon from '../components/Icon';
 import banderaCuadrosImg from '../assets/bandera cuadros.jpg';
 import { createTranslator } from '../i18n/translations';
+import { COPYRIGHT } from '../data/copyright';
 import { findMostRelevantBattle } from '../utils/battle';
 import { comboFromEvent, shouldIgnoreHotkey, findHotkeyAction } from '../utils/hotkeys';
 
@@ -290,21 +293,25 @@ export const defaultPositions = {
   trackAlert: { x: 950, y: 610, scale: 1 }, penaltyAlert: { x: 950, y: 500, scale: 1 },
   driverInfo: { x: 380, y: 335, scale: 1 },
   branding: { x: 1640, y: 900, scale: 1 },
-  evento: { x: 560, y: 20, scale: 1 }
+  evento: { x: 560, y: 20, scale: 1 },
+  sectors: { x: 1440, y: 360, scale: 1 }, gapChart: { x: 730, y: 640, scale: 1 },
+  gainers: { x: 1440, y: 470, scale: 1 }, qualifying: { x: 20, y: 20, scale: 1 },
+  trackMap: { x: 1460, y: 610, scale: 1 }, raceNotice: { x: 760, y: 820, scale: 1 }
 };
 
 const GRAPHIC_IDS = [
   'relator', 'comentarista', 'notero1', 'notero2', 'circuito', 'clima', 'ticker', 'tower',
   'grid', 'finalResults', 'winner', 'flags', 'fastestLap', 'driverInfo', 'battle', 'customZocalo',
   'votingQR', 'votingResults', 'lapCounter', 'virtualChamp', 'startingLights',
-  'lapTimesHistory', 'trackAlert', 'penaltyAlert', 'branding', 'evento'
+  'lapTimesHistory', 'trackAlert', 'penaltyAlert', 'branding', 'evento',
+    'sectors', 'gapChart', 'gainers', 'qualifying', 'trackMap', 'raceNotice'
 ];
 
 const TAB_IDS = ['panel', 'campeonato', 'votaciones', 'sanciones', 'cloud', 'zocalos', 'disenos', 'circuito', 'ajustes', 'personalizar', 'editor', 'atajos', 'manual'];
 
 export default function ControlPanel() {
   const [config, setConfig] = useState({
-    relator: '', comentarista: '', notero1: '', notero2: '', circuito: '', clima: '', speedhiveCode: '', chromaColor: '#00FF00', logo: null, blackFlagNumber: '', categoryLogo: null,
+    relator: '', comentarista: '', notero1: '', notero2: '', circuito: '', clima: '', speedhiveCode: '', orbitsHost: '', orbitsPort: 50000, chromaColor: '#00FF00', logo: null, blackFlagNumber: '', categoryLogo: null,
     zocalos: Array(6).fill({ title: '', text: '' })
   });
 
@@ -349,7 +356,9 @@ export default function ControlPanel() {
     SCRAPER_LAUNCH_FAILED: 'panel.scrapeErrLaunchFailed',
     SCRAPER_NAV_FAILED: 'panel.scrapeErrNavFailed',
     SCRAPER_RACE_NOT_LIVE: 'panel.scrapeErrRaceNotLive',
-    NO_DRIVERS: 'panel.scrapeErrNoDrivers'
+    ORBITS_NOT_CONNECTED: 'panel.scrapeErrOrbitsNotConnected',
+    ORBITS_INVALID_HOST: 'panel.scrapeErrOrbitsInvalidHost',
+    NO_DRIVERS: (config.timingProvider === 'orbits') ? 'panel.scrapeErrOrbitsNoDrivers' : 'panel.scrapeErrNoDrivers'
   };
   const scrapeErrorText = scrapeError
     ? t(scrapeErrorKeys[scrapeError.code] || 'panel.scrapeErrGeneric') + (scrapeError.message && scrapeError.code !== 'NO_DRIVERS' ? ` (${scrapeError.message})` : '')
@@ -382,6 +391,16 @@ export default function ControlPanel() {
   const [penaltyAutoHideSeconds, setPenaltyAutoHideSeconds] = useState(10);
   const [penaltyAlertState, setPenaltyAlertState] = useState({ isVisible: false, driverNumber: null, driverName: '', type: 'investigation', reason: '' });
 
+  // --- NUEVO: ANÁLISIS DE CARRERA (alertas, correcciones, sectores, brecha) ---
+  const [raceAlerts, setRaceAlerts] = useState([]);
+  const [corrections, setCorrections] = useState({});
+  const [sectorsSel, setSectorsSel] = useState(['', '']);
+  const [sectorsState, setSectorsState] = useState({ isVisible: false, numbers: [] });
+  const [gapPair, setGapPair] = useState({ front: '', back: '' });
+  const [gapData, setGapData] = useState(null);
+  const [configLoaded, setConfigLoaded] = useState(false);
+  const lastDetectedCategoryRef = useRef('');
+
   // --- NUEVO: SERVIDOR CLOUD (overlayracing.site) — tokens del evento activo ---
   const [cloudQrToken, setCloudQrToken] = useState('');
   const [cloudComisarioToken, setCloudComisarioToken] = useState('');
@@ -403,8 +422,11 @@ export default function ControlPanel() {
         ipcRenderer.invoke('get-positions').then(savedPositions => {
           const mergedPositions = { ...defaultPositions };
           Object.keys(defaultPositions).forEach(key => { if (savedPositions[key]) mergedPositions[key] = savedPositions[key]; });
-          setConfig({ chromaColor: '#00FF00', zocalos: Array(6).fill({ title: '', text: '' }), ...configData });
+          const loaded = { chromaColor: '#00FF00', zocalos: Array(6).fill({ title: '', text: '' }), ...configData };
+          configRef.current = loaded;
+          setConfig(loaded);
           setPositions(mergedPositions);
+          setConfigLoaded(true);
         });
       });
       ipcRenderer.invoke('get-local-ip').then(setLocalIp);
@@ -418,7 +440,17 @@ export default function ControlPanel() {
         setTrackAlertVisible(!!state?.broadcastState?.trackAlert?.isVisible);
         const pa = state?.broadcastState?.penaltyAlert;
         if (pa) setPenaltyAlertState(pa);
+        const sec = state?.broadcastState?.sectors;
+        if (sec) { setSectorsState(sec); if (sec.numbers?.length) setSectorsSel([...sec.numbers, '', ''].slice(0, 2)); }
+        if (state?.gapChart) {
+          setGapData(state.gapChart);
+          if (state.gapChart.front && state.gapChart.back) setGapPair({ front: state.gapChart.front, back: state.gapChart.back });
+        }
+        if (state?.broadcastState?.graphics) setGraphics(prev => ({ ...prev, ...state.broadcastState.graphics }));
+        if (state?.leaderboard?.drivers?.length) { setDrivers(state.leaderboard.drivers); setSessionInfo(state.leaderboard.session || {}); }
       }).catch(() => { });
+      ipcRenderer.invoke('get-race-alerts').then(a => { if (Array.isArray(a)) setRaceAlerts(a); }).catch(() => { });
+      ipcRenderer.invoke('get-corrections').then(c => { if (c) setCorrections(c); }).catch(() => { });
 
       // Carga los tokens del evento cloud ya guardados (si los hay) y el estado de conexión actual
       ipcRenderer.invoke('get-cloud-config').then(cloudData => {
@@ -436,6 +468,12 @@ export default function ControlPanel() {
       const handleUpdateTrackAlert = (event, data) => { if (data) setTrackAlertVisible(!!data.isVisible); };
       const handleCloudStatus = (event, data) => { if (data) setCloudConnected(!!data.connected); };
       const handleUpdateChampionship = (event, data) => { if (data) setChampionship(data); };
+      // El proceso principal vuelve a mandar la tabla cuando cambian correcciones / grilla / multiclase (aunque el cronometraje esté en pausa)
+      const handleUpdateLeaderboard = (event, data) => { if (data && Array.isArray(data.drivers)) { setDrivers(data.drivers); setSessionInfo(data.session || {}); } };
+      const handleRaceAlerts = (event, data) => { if (Array.isArray(data)) setRaceAlerts(data); };
+      const handleCorrections = (event, data) => { if (data) setCorrections(data); };
+      const handleSectors = (event, data) => { if (data) setSectorsState(data); };
+      const handleGapChart = (event, data) => { if (data) setGapData(data); };
 
       ipcRenderer.on('update-votes', handleUpdateVotes);
       ipcRenderer.on('update-ip', handleUpdateIp);
@@ -444,6 +482,11 @@ export default function ControlPanel() {
       ipcRenderer.on('update-track-alert', handleUpdateTrackAlert);
       ipcRenderer.on('cloud-status', handleCloudStatus);
       ipcRenderer.on('update-championship', handleUpdateChampionship);
+      ipcRenderer.on('update-leaderboard', handleUpdateLeaderboard);
+      ipcRenderer.on('update-race-alerts', handleRaceAlerts);
+      ipcRenderer.on('update-corrections', handleCorrections);
+      ipcRenderer.on('update-sectors', handleSectors);
+      ipcRenderer.on('update-gap-chart', handleGapChart);
 
       return () => {
         ipcRenderer.removeListener('update-votes', handleUpdateVotes);
@@ -453,6 +496,11 @@ export default function ControlPanel() {
         ipcRenderer.removeListener('update-track-alert', handleUpdateTrackAlert);
         ipcRenderer.removeListener('cloud-status', handleCloudStatus);
         ipcRenderer.removeListener('update-championship', handleUpdateChampionship);
+        ipcRenderer.removeListener('update-leaderboard', handleUpdateLeaderboard);
+        ipcRenderer.removeListener('update-race-alerts', handleRaceAlerts);
+        ipcRenderer.removeListener('update-corrections', handleCorrections);
+        ipcRenderer.removeListener('update-sectors', handleSectors);
+        ipcRenderer.removeListener('update-gap-chart', handleGapChart);
       }
     }
   }, []);
@@ -688,11 +736,12 @@ export default function ControlPanel() {
   const handleScrape = async () => {
     // Devuelve 'ok' | 'error' | 'busy' | 'nocode' para que el botón de AJUSTES pueda animar el resultado
     if (isScrapingRef.current) return 'busy';
-    let rawCode = configRef.current.speedhiveCode || '';
-    rawCode = rawCode.trim();
     const provider = configRef.current.timingProvider || 'speedhive';
+    // Orbits no usa código de carrera: se conecta por IP a la PC del cronometrador
+    let rawCode = provider === 'orbits' ? (configRef.current.orbitsHost || '') : (configRef.current.speedhiveCode || '');
+    rawCode = rawCode.trim();
 
-    if (!rawCode) { alert(t('panel.alertNoRaceCode')); setAutoScrape(false); return 'nocode'; }
+    if (!rawCode) { alert(t(provider === 'orbits' ? 'panel.alertNoOrbitsHost' : 'panel.alertNoRaceCode')); setAutoScrape(false); return 'nocode'; }
 
     let finalCode = rawCode;
     if (provider === 'speedhive') {
@@ -712,7 +761,7 @@ export default function ControlPanel() {
     let status = 'ok';
     try {
       if (ipcRenderer) {
-        const data = await ipcRenderer.invoke('scrape-timing', { provider, code: finalCode });
+        const data = await ipcRenderer.invoke('scrape-timing', { provider, code: finalCode, port: provider === 'orbits' ? configRef.current.orbitsPort : undefined });
         if (data?.error) {
           // Se conservan los últimos datos buenos en pantalla; solo se avisa del problema
           setScrapeError(data.error);
@@ -874,6 +923,112 @@ export default function ControlPanel() {
   };
   const handleHidePenalty = () => { if (ipcRenderer) ipcRenderer.send('hide-penalty'); };
 
+  // --- NUEVO: CATEGORÍA (se completa sola con lo que informa la fuente, salvo que el operador la haya escrito a mano) ---
+  // Guarda leyendo la configuración más reciente (configRef) para no pisar cambios hechos en el mismo instante.
+  const saveConfigPatch = async (patch) => {
+    const next = { ...configRef.current, ...patch };
+    configRef.current = next;
+    setConfig(next);
+    if (ipcRenderer) await ipcRenderer.invoke('save-config', next);
+  };
+  useEffect(() => {
+    const detected = sessionInfo?.detectedCategory || '';
+    // Hasta que no se cargó la configuración guardada no se escribe nada (se pisaría database.json con valores vacíos)
+    if (!configLoaded || !detected || detected === lastDetectedCategoryRef.current) return;
+    lastDetectedCategoryRef.current = detected;
+    const current = configRef.current;
+    if ((!current.categoryName || current.categoryNameAuto) && current.categoryName !== detected) {
+      saveConfigPatch({ categoryName: detected, categoryNameAuto: true });
+    }
+  }, [sessionInfo?.detectedCategory, configLoaded]);
+  const handleCategoryInput = (value) => {
+    const name = String(value || '').trim();
+    saveConfigPatch({ categoryName: name, categoryNameAuto: name === '' });
+  };
+
+  // --- NUEVO: GRILLA DE LARGADA ---
+  const handleGridAction = async (action) => {
+    if (!ipcRenderer) return;
+    if (action === 'clear' && !window.confirm(t('race.confirmGridClear'))) return;
+    if (action === 'capture' && drivers.length === 0) { alert(t('panel.alertNoDataToSave')); return; }
+    await ipcRenderer.invoke('start-grid', action);
+  };
+
+  // --- NUEVO: CORRECCIONES MANUALES ---
+  const handleSetCorrection = async (number, patch) => {
+    if (!ipcRenderer) return;
+    const next = await ipcRenderer.invoke('set-correction', { number, patch });
+    if (next) setCorrections(next);
+  };
+  const handleClearCorrections = async (mode) => {
+    if (!ipcRenderer) return;
+    if (!window.confirm(t(mode === 'all' ? 'corrections.confirmClearAll' : 'corrections.confirmClearPenalties'))) return;
+    const next = await ipcRenderer.invoke('clear-corrections', mode);
+    if (next) setCorrections(next);
+  };
+
+  // --- NUEVO: SECTORES ---
+  const sendSectors = (isVisible, sel) => { if (ipcRenderer) ipcRenderer.send('toggle-sectors', { isVisible, numbers: sel.filter(Boolean) }); };
+  const handleSectorsSel = (sel) => {
+    setSectorsSel(sel);
+    if (sectorsState.isVisible) sendSectors(sel.some(Boolean), sel);
+  };
+  const handleToggleSectors = () => {
+    if (!sectorsState.isVisible && !sectorsSel.some(Boolean)) { alert(t('race.selectDriverFirst')); return; }
+    sendSectors(!sectorsState.isVisible, sectorsSel);
+  };
+
+  // --- NUEVO: BRECHA ENTRE DOS PILOTOS (el proceso principal calcula la serie aunque no esté al aire, para verla en el panel) ---
+  const sendGap = (isVisible, pair) => {
+    if (ipcRenderer) ipcRenderer.send('toggle-gap-chart', { isVisible, front: pair.front || null, back: pair.back || null });
+  };
+  const handleGapPair = (pair) => {
+    setGapPair(pair);
+    const valid = !!(pair.front && pair.back && pair.front !== pair.back);
+    sendGap(!!gapData?.isVisible && valid, pair);
+  };
+  const handleToggleGap = () => {
+    const valid = !!(gapPair.front && gapPair.back && gapPair.front !== gapPair.back);
+    if (!gapData?.isVisible && !valid) { alert(t('race.selectPairFirst')); return; }
+    sendGap(!gapData?.isVisible, gapPair);
+  };
+
+  // --- NUEVO: ALERTAS AUTOMÁTICAS -> AL AIRE CON UN CLIC ---
+  const flagForAlert = (raw) => {
+    const f = String(raw || '').toLowerCase();
+    if (/red|roja/.test(f)) return 'red';
+    if (/yellow|amarill|caution/.test(f)) return 'tricolor';
+    if (/checker|finish|cuadros/.test(f)) return 'checkered';
+    if (/green|verde/.test(f)) return 'green';
+    return null;
+  };
+  const canActOnAlert = (a) => a.type !== 'flag' || !!flagForAlert(a.flag);
+  const handleAlertAction = (a) => {
+    if (!ipcRenderer) return;
+    const noticeSeconds = Number(config.raceNoticeSeconds) > 0 ? Number(config.raceNoticeSeconds) : 8;
+    const name = formatDriverName(a.name || '', config.nameFormat);
+    if (a.type === 'fastestLap') {
+      if (!showFastestLap) { setShowFastestLap(true); ipcRenderer.send('toggle-fastest-lap', true); }
+    } else if (a.type === 'leaderChange') {
+      ipcRenderer.send('show-race-notice', { kind: a.qualifying ? 'pole' : 'leader', title: a.qualifying ? 'NUEVO P1' : 'NUEVO LÍDER', text: name, number: a.number, autoHideSeconds: noticeSeconds });
+    } else if (a.type === 'stopped') {
+      ipcRenderer.send('show-race-notice', { kind: 'stopped', title: 'POSIBLE ABANDONO', text: name, number: a.number, autoHideSeconds: noticeSeconds });
+    } else if (a.type === 'flag') {
+      const flag = flagForAlert(a.flag);
+      if (flag) { autoFlagRef.current = null; applyFlags({ ...NO_FLAGS, [flag]: true }); }
+    }
+    ipcRenderer.send('dismiss-race-alert', a.id);
+  };
+
+  // --- NUEVO: PLANILLA DE RESULTADOS EN PDF ---
+  const handleExportPdf = async () => {
+    if (!ipcRenderer) return;
+    if (drivers.length === 0) { alert(t('race.pdfNoData')); return; }
+    const res = await ipcRenderer.invoke('export-results-pdf', { language });
+    if (res && res.ok === false && res.reason === 'NO_DATA') alert(t('race.pdfNoData'));
+    else if (res && res.ok === false && res.reason === 'ERROR') alert(t('race.pdfError', { msg: res.message || '' }));
+  };
+
   // --- ATAJOS DE TECLADO (pestaña ATAJOS): config.hotkeys = { idDeAcción: 'Ctrl+Shift+A' } ---
   // El listener se registra una sola vez y lee las acciones de este ref, que se renueva en cada render (así nunca usa estados viejos).
   const hotkeyActionsRef = useRef({});
@@ -899,7 +1054,9 @@ export default function ControlPanel() {
       finalNext: () => { if (ipcRenderer) ipcRenderer.send('final-results-next'); },
       winner: handleToggleWinner,
       zocalo1: () => handleToggleZocalo(0), zocalo2: () => handleToggleZocalo(1), zocalo3: () => handleToggleZocalo(2),
-      zocalo4: () => handleToggleZocalo(3), zocalo5: () => handleToggleZocalo(4), zocalo6: () => handleToggleZocalo(5)
+      zocalo4: () => handleToggleZocalo(3), zocalo5: () => handleToggleZocalo(4), zocalo6: () => handleToggleZocalo(5),
+      qualifying: () => handleToggleGraphic('qualifying'), sectors: handleToggleSectors, gapChart: handleToggleGap,
+      gainers: () => handleToggleGraphic('gainers'), trackMap: () => handleToggleGraphic('trackMap')
     };
   });
 
@@ -920,6 +1077,7 @@ export default function ControlPanel() {
   // --- DIAGNÓSTICO (AJUSTES): información del scraper y log para PCs de clientes ---
   const handleGetNetworkUrls = async () => (ipcRenderer ? ipcRenderer.invoke('get-network-urls') : []);
   const handleGetDiagnostics = async () => (ipcRenderer ? ipcRenderer.invoke('get-diagnostics') : null);
+  const handleGetOrbitsStatus = async () => (ipcRenderer ? ipcRenderer.invoke('orbits-status') : null);
   const handleOpenLogs = () => { if (ipcRenderer) ipcRenderer.invoke('open-logs-folder'); };
 
   // --- NUEVO: RESTABLECER TODAS LAS POSICIONES AL LAYOUT PRECONFIGURADO ---
@@ -948,6 +1106,12 @@ export default function ControlPanel() {
     if (result.imported.config && result.imported.positions) alert(t('ajustes.alertImportBoth'));
     else if (result.imported.config) alert(t('ajustes.alertImportConfigOnly'));
     else alert(t('ajustes.alertImportPositionsOnly'));
+  };
+
+  // Imagen para un elemento de una gráfica (PERSONALIZAR > ELEMENTOS): devuelve la imagen en Base64 o null
+  const handleSelectElementImage = async () => {
+    if (!ipcRenderer) return null;
+    return ipcRenderer.invoke('select-element-image');
   };
 
   // --- NUEVO: GUARDAR TOKENS DEL SERVIDOR CLOUD ---
@@ -1101,6 +1265,8 @@ export default function ControlPanel() {
               </div>
             </div>
             </div>
+
+            <CategorySection config={config} sessionInfo={sessionInfo} onSave={handleDirectSave} onCategoryInput={handleCategoryInput} onGridAction={handleGridAction} colors={colors} inputStyle={inputStyle} btnStyle={btnStyle} t={t} style={panelSectionWideStyle} />
 
             <div className="panel-section" style={panelSectionStyle}>
             <div style={sectionTitleStyle}>{t('graphics.trackAlert')}</div>
@@ -1260,6 +1426,16 @@ export default function ControlPanel() {
             </div>
             </div>
 
+            <AnalysisSection
+              drivers={drivers} config={config} sessionInfo={sessionInfo}
+              sectorsSel={sectorsSel} setSectorsSel={handleSectorsSel} sectorsVisible={!!sectorsState.isVisible} onToggleSectors={handleToggleSectors}
+              gapPair={gapPair} setGapPair={handleGapPair} gapData={gapData} onToggleGap={handleToggleGap}
+              recommendedBattle={recommendedBattle} graphics={graphics} onToggleGraphic={handleToggleGraphic} onSave={handleDirectSave}
+              colors={colors} inputStyle={inputStyle} btnStyle={btnStyle} t={t} style={panelSectionWideStyle}
+            />
+
+            <QualifyingSection config={config} sessionInfo={sessionInfo} isVisible={!!graphics.qualifying} onToggle={() => handleToggleGraphic('qualifying')} onSave={handleDirectSave} colors={colors} inputStyle={inputStyle} btnStyle={btnStyle} t={t} style={panelSectionStyle} />
+
             <div className="panel-section" style={panelSectionStyle}>
             <div style={sectionTitleStyle}>{t('graphics.virtualChamp')}</div>
             <div style={{ display: 'flex', gap: '5px', marginBottom: '15px' }}>
@@ -1333,6 +1509,7 @@ export default function ControlPanel() {
                 {t('panel.finalAutoPage')}
               </label>
               <button onClick={handleToggleWinner} style={btnStyle(showWinner)}>{t('panel.showWinnerBtn')}</button>
+              <button onClick={handleExportPdf} title={t('race.exportPdfHint')} style={{ ...btnStyle(false), backgroundColor: '#2c3e50', color: '#fff', borderColor: '#34495e' }}><Icon name="description" />{t('race.exportPdf')}</button>
             </div>
             </div>
           </div>
@@ -1360,6 +1537,12 @@ export default function ControlPanel() {
                 <Icon name="warning" color="#f1c40f" /> {scrapeErrorText}
               </div>
             )}
+            <RaceAlertsBar
+              alerts={raceAlerts} onAction={handleAlertAction} canAct={canActOnAlert}
+              onDismiss={(id) => { if (ipcRenderer) ipcRenderer.send('dismiss-race-alert', id); }}
+              onClear={() => { if (ipcRenderer) ipcRenderer.send('clear-race-alerts'); }}
+              colors={colors} btnStyle={btnStyle} t={t}
+            />
             <DriversTable
               drivers={drivers}
               colors={colors}
@@ -1659,6 +1842,8 @@ export default function ControlPanel() {
               {t('common.hide')}
             </button>
           </div>
+
+          <CorrectionsPanel drivers={drivers} corrections={corrections} onSetCorrection={handleSetCorrection} onClear={handleClearCorrections} colors={colors} inputStyle={inputStyle} btnStyle={btnStyle} t={t} />
         </div>
       )}
 
@@ -1724,11 +1909,11 @@ export default function ControlPanel() {
       )}
 
       {activeTab === 'ajustes' && (
-        <SettingsPanel config={config} handleDirectSave={handleDirectSave} handleScrape={handleScrape} colors={colors} inputStyle={inputStyle} btnStyle={btnStyle} t={t} language={language} setLanguage={setLanguage} onExportSettings={handleExportSettings} onImportSettings={handleImportSettings} onResetAllPositions={handleResetAllPositions} scrapeErrorText={scrapeErrorText} onGetNetworkUrls={handleGetNetworkUrls} onGetDiagnostics={handleGetDiagnostics} onOpenLogs={handleOpenLogs} />
+        <SettingsPanel config={config} handleDirectSave={handleDirectSave} handleScrape={handleScrape} colors={colors} inputStyle={inputStyle} btnStyle={btnStyle} t={t} language={language} setLanguage={setLanguage} onExportSettings={handleExportSettings} onImportSettings={handleImportSettings} onResetAllPositions={handleResetAllPositions} scrapeErrorText={scrapeErrorText} onGetNetworkUrls={handleGetNetworkUrls} onGetDiagnostics={handleGetDiagnostics} onOpenLogs={handleOpenLogs} onGetOrbitsStatus={handleGetOrbitsStatus} />
       )}
 
       {activeTab === 'personalizar' && (
-        <CustomizePanel drivers={drivers} sessionInfo={sessionInfo} config={config} positions={positions} defaultPositions={defaultPositions} onUpdatePositions={handleUpdatePositions} onSelectLogo={handleSelectLogo} onSelectCategoryLogo={handleSelectCategoryLogo} onSelectPhotosFolder={handleSelectPhotosFolder} onClearLogo={() => handleDirectSave('logo', null)} onClearCategoryLogo={() => handleDirectSave('categoryLogo', null)} onClearPhotosFolder={() => handleDirectSave('photosPath', null)} onConfigChange={handleDirectSave} colors={colors} inputStyle={inputStyle} btnStyle={btnStyle} t={t} />
+        <CustomizePanel drivers={drivers} sessionInfo={sessionInfo} config={config} positions={positions} defaultPositions={defaultPositions} onUpdatePositions={handleUpdatePositions} onSelectLogo={handleSelectLogo} onSelectCategoryLogo={handleSelectCategoryLogo} onSelectPhotosFolder={handleSelectPhotosFolder} onClearLogo={() => handleDirectSave('logo', null)} onClearCategoryLogo={() => handleDirectSave('categoryLogo', null)} onClearPhotosFolder={() => handleDirectSave('photosPath', null)} onConfigChange={handleDirectSave} onSelectElementImage={handleSelectElementImage} colors={colors} inputStyle={inputStyle} btnStyle={btnStyle} t={t} />
       )}
 
       {activeTab === 'editor' && (
@@ -1796,6 +1981,10 @@ export default function ControlPanel() {
         </div>
       )}
 
+      <footer style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', gap: '2px 16px', flexShrink: 0, padding: '6px 20px', borderTop: `1px solid ${colors.border}`, backgroundColor: colors.bgPanel, fontSize: '10px', color: '#666', letterSpacing: '0.3px' }}>
+        <span><b style={{ color: '#999' }}>© {COPYRIGHT.year} {COPYRIGHT.holder}.</b> {t('header.rights')}</span>
+        <span>{t('header.registered', { registry: COPYRIGHT.registry })}</span>
+      </footer>
     </div>
   );
 }

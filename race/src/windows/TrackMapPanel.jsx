@@ -33,6 +33,38 @@ export default function TrackMapPanel({ config, onConfigChange, colors, inputSty
 
   const curves = config?.trackCurves || [];
 
+  // TRAZADO del mapa en vivo (config.trackPath): puntos en % del lienzo, el primero es la línea de largada / llegada
+  const [mode, setMode] = useState('curves'); // 'curves' | 'path'
+  const trackPath = Array.isArray(config?.trackPath) ? config.trackPath : [];
+  const pathDrag = useRef(null);
+  const handlePathClick = (e) => {
+    if (pathDrag.current?.moved) return;
+    const { x, y } = getPercentFromEvent(e);
+    onConfigChange?.('trackPath', [...trackPath, { x: Math.round(x * 10) / 10, y: Math.round(y * 10) / 10 }]);
+  };
+  const handlePathPointDown = (e, index) => {
+    e.stopPropagation();
+    pathDrag.current = { index, moved: false };
+  };
+  const handlePathMove = (e) => {
+    if (!pathDrag.current) return;
+    const { x, y } = getPercentFromEvent(e);
+    pathDrag.current.moved = true;
+    const next = trackPath.map((p, i) => (i === pathDrag.current.index ? { x: Math.round(x * 10) / 10, y: Math.round(y * 10) / 10 } : p));
+    onConfigChange?.('trackPath', next);
+  };
+  const handlePathUp = () => { setTimeout(() => { pathDrag.current = null; }, 50); };
+  const handlePathPointDelete = (e, index) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onConfigChange?.('trackPath', trackPath.filter((_, i) => i !== index));
+  };
+  const handleClearPath = () => {
+    if (typeof window !== 'undefined' && !window.confirm(t('circuito.confirmClearPath'))) return;
+    onConfigChange?.('trackPath', []);
+  };
+  const isPath = mode === 'path';
+
   const handleSelectImage = async () => {
     if (!ipcRenderer) return;
     try {
@@ -108,13 +140,36 @@ export default function TrackMapPanel({ config, onConfigChange, colors, inputSty
           )}
         </div>
 
-        {config?.trackImage && (
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '5px', marginBottom: '15px' }}>
+          <button onClick={() => setMode('curves')} style={{ ...btnStyle(!isPath), padding: '8px' }}>{t('circuito.modeCurves')}</button>
+          <button onClick={() => setMode('path')} style={{ ...btnStyle(isPath), padding: '8px' }}>{t('circuito.modePath')}</button>
+        </div>
+
+        {isPath && (
+          <div style={{ marginBottom: '20px' }}>
+            <p style={{ fontSize: '11px', color: colors.textMuted, marginTop: 0, marginBottom: '10px', lineHeight: '1.5' }}>{t('circuito.pathInstructions')}</p>
+            <div style={{ fontSize: '12px', fontWeight: 'bold', color: trackPath.length >= 3 ? colors.green : '#e67e22', marginBottom: '10px' }}>
+              {t('circuito.pathPoints', { n: trackPath.length })}
+            </div>
+            <div style={{ display: 'flex', gap: '5px', marginBottom: '10px' }}>
+              <button onClick={() => onConfigChange?.('trackPath', trackPath.slice(0, -1))} disabled={!trackPath.length} style={{ ...btnStyle(false), flex: 1, padding: '8px', fontSize: '10px' }}><Icon name="undo" />{t('circuito.pathUndo')}</button>
+              <button onClick={handleClearPath} disabled={!trackPath.length} style={{ ...btnStyle(false), flex: 1, padding: '8px', fontSize: '10px', backgroundColor: '#c0392b', color: '#fff', border: 'none' }}>{t('circuito.pathClear')}</button>
+            </div>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '11px', color: colors.textMuted, cursor: 'pointer' }}>
+              <input type="checkbox" checked={config?.trackMapShowImage !== false} onChange={(e) => onConfigChange?.('trackMapShowImage', e.target.checked)} />
+              {t('circuito.mapShowImage')}
+            </label>
+          </div>
+        )}
+
+        {!isPath && config?.trackImage && (
           <p style={{ fontSize: '11px', color: colors.textMuted, marginBottom: '15px', lineHeight: '1.5' }}>
             {t('circuito.instructions')}
           </p>
         )}
 
-        <h3 style={{ color: colors.yellow, marginBottom: '10px', fontSize: '14px' }}>{t('circuito.curvesTitle', { n: curves.length })}</h3>
+        {!isPath && <h3 style={{ color: colors.yellow, marginBottom: '10px', fontSize: '14px' }}>{t('circuito.curvesTitle', { n: curves.length })}</h3>}
+        {!isPath && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
           {curves.length === 0 && (
             <p style={{ fontSize: '11px', color: colors.textMuted, fontStyle: 'italic' }}>{t('circuito.noCurves')}</p>
@@ -144,24 +199,47 @@ export default function TrackMapPanel({ config, onConfigChange, colors, inputSty
             </div>
           ))}
         </div>
+        )}
       </div>
 
       <div style={{ flex: 1, backgroundColor: colors.bgApp, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', padding: '20px' }}>
-        {config?.trackImage ? (
+        {(config?.trackImage || isPath) ? (
           <div
             ref={imgRef}
-            onClick={handleImageClick}
-            onMouseMove={handleImageMouseMove}
-            onMouseUp={handleImageMouseUp}
-            onMouseLeave={handleImageMouseUp}
+            onClick={isPath ? handlePathClick : handleImageClick}
+            onMouseMove={isPath ? handlePathMove : handleImageMouseMove}
+            onMouseUp={isPath ? handlePathUp : handleImageMouseUp}
+            onMouseLeave={isPath ? handlePathUp : handleImageMouseUp}
             style={{
               position: 'relative', maxWidth: '100%', maxHeight: '100%',
-              backgroundImage: `url(${config.trackImage})`, backgroundSize: 'contain', backgroundRepeat: 'no-repeat', backgroundPosition: 'center',
-              width: '900px', height: '600px', cursor: 'crosshair',
+              backgroundImage: config?.trackImage ? `url(${config.trackImage})` : 'none', backgroundSize: 'contain', backgroundRepeat: 'no-repeat', backgroundPosition: 'center',
+              backgroundColor: config?.trackImage ? 'transparent' : '#0d0d0d',
+              // 3:2 fijo: es la misma proporción del mapa en vivo, así los puntos caen en el mismo lugar
+              width: '900px', aspectRatio: '3 / 2', cursor: 'crosshair',
               border: `2px solid ${colors.border}`, borderRadius: '8px'
             }}
           >
-            {curves.map((c, i) => (
+            {isPath && (
+              <svg viewBox="0 0 100 100" preserveAspectRatio="none" style={{ position: 'absolute', left: 0, top: 0, width: '100%', height: '100%', pointerEvents: 'none' }}>
+                {trackPath.length >= 2 && (
+                  <polygon points={trackPath.map(p => `${p.x},${p.y}`).join(' ')} fill="none" stroke={colors.yellow} strokeWidth="3" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
+                )}
+              </svg>
+            )}
+            {isPath && trackPath.map((p, i) => (
+              <div
+                key={i}
+                onMouseDown={(e) => handlePathPointDown(e, i)}
+                onContextMenu={(e) => handlePathPointDelete(e, i)}
+                title={i === 0 ? t('circuito.pathStart') : t('circuito.pathPointTitle', { n: i + 1 })}
+                style={{
+                  position: 'absolute', left: `${p.x}%`, top: `${p.y}%`, transform: 'translate(-50%, -50%)', cursor: 'grab',
+                  width: i === 0 ? '18px' : '12px', height: i === 0 ? '18px' : '12px', borderRadius: '50%',
+                  backgroundColor: i === 0 ? colors.green : colors.yellow, border: '2px solid #000', userSelect: 'none'
+                }}
+              />
+            ))}
+            {!isPath && curves.map((c, i) => (
               <div
                 key={c.id}
                 onMouseDown={(e) => handleMarkerMouseDown(e, c.id)}

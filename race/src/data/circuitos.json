@@ -322,6 +322,36 @@
   },
 
   {
+    "nombre": "Autódromo de Tocancipá - Colombia",
+    "lat": 4.9606,
+    "lon": -73.9467
+  },
+  {
+    "nombre": "Kartódromo Juan Pablo Montoya - Tocancipá, Colombia",
+    "lat": 4.9606,
+    "lon": -73.9467
+  },
+  {
+    "nombre": "Autódromo XRP Motorpark - Cajicá, Colombia",
+    "lat": 4.9650,
+    "lon": -74.0150
+  },
+  {
+    "nombre": "Circuito Cavasa - Candelaria, Valle del Cauca, Colombia",
+    "lat": 3.4100,
+    "lon": -76.4000
+  },
+  {
+    "nombre": "Kartódromo Internacional de Zarzal - Valle del Cauca, Colombia",
+    "lat": 4.3930,
+    "lon": -76.0710
+  },
+  {
+    "nombre": "Circuito Gran Malecón - Barranquilla, Colombia",
+    "lat": 11.0040,
+    "lon": -74.7900
+  },
+  {
     "nombre": "Silverstone Circuit",
     "lat": 52.0786,
     "lon": -1.0169

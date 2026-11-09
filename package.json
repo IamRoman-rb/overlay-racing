@@ -1,14 +1,14 @@
 {
   "name": "overlay-racing",
   "private": true,
-  "version": "2.1.2",
+  "version": "2.2.2",
   "type": "module",
   "main": "launcher/main.cjs",
   "scripts": {
     "dev": "vite --config race/vite.config.js",
     "build": "vite build --config race/vite.config.js",
     "lint": "eslint .",
-    "test": "node --test football/test/*.test.cjs",
+    "test": "node --test football/test/*.test.cjs race/test/*.test.cjs",
     "preview": "vite preview --config race/vite.config.js",
     "electron:dev": "wait-on http://localhost:5173 && electron .",
     "start": "concurrently -k \"npm run dev\" \"npm run football:dev\" \"npm run electron:dev\"",
@@ -19,7 +19,8 @@
     "module:publish": "node scripts/release-modules.cjs --publish",
     "dist": "node scripts/bundle-chromium.cjs && electron-builder --win nsis",
     "dist:portable": "node scripts/bundle-chromium.cjs && electron-builder --win portable",
-    "module:pack": "node scripts/release-modules.cjs --pack"
+    "module:pack": "node scripts/release-modules.cjs --pack",
+    "orbits:sim": "node scripts/orbits-simulator.cjs"
   },
   "dependencies": {
     "adm-zip": "^0.6.1",
@@ -71,7 +72,7 @@
         "to": "chromium"
       }
     ],
-    "copyright": "Copyright © Overlay Graphics",
+    "copyright": "Copyright © 2026 Roman Manuel Borla. Todos los derechos reservados. Registro DNDA RL-2026-107621619-APN-DNDA#MJ",
     "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
@@ -99,5 +100,7 @@
   "description": "Overlay Graphics: instalador con los módulos del software (carrera, ...), que se descargan del servidor según la licencia",
   "author": {
     "name": "Roman Manuel Borla"
-  }
+  },
+  "license": "UNLICENSED",
+  "copyright": "Copyright © 2026 Roman Manuel Borla. Todos los derechos reservados. Registro DNDA RL-2026-107621619-APN-DNDA#MJ"
 }

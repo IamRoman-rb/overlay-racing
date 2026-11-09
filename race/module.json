@@ -1,7 +1,7 @@
 {
   "id": "racing",
   "name": "Overlay Racing",
-  "version": "2.2.0",
+  "version": "2.3.5",
   "entry": "main.cjs",
   "launcherApi": 1
 }

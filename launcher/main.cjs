@@ -22,7 +22,7 @@ const { installLogger, logDir, logPath } = require('./logger.cjs');
 const { getLoginHtml } = require('./loginHtml.cjs');
 const { getModulesHtml } = require('./modulesHtml.cjs');
 const api = require('./api.cjs');
-const { ensureModule, getModuleStatus, loadModule } = require('./moduleManager.cjs');
+const { ensureModule, ensureModuleVersion, getModuleReleases, getModuleStatus, loadModule } = require('./moduleManager.cjs');
 
 let loginWindow = null;
 let modulesWindow = null;
@@ -105,8 +105,9 @@ ipcMain.handle('get-launcher-state', async () => ({
   modules: session ? await Promise.all((session.moduleCatalog || []).map(entry => getModuleStatus(entry, session.sessionToken))) : []
 }));
 
-// update: true = el usuario eligió actualizar; false = abrir la versión instalada tal cual
-ipcMain.handle('open-module', async (event, { id: moduleId, update = false }) => {
+// update: true = el usuario eligió actualizar; false = abrir la versión instalada tal cual.
+// version: una versión puntual elegida en el historial de actualizaciones (se descarga si hace falta).
+ipcMain.handle('open-module', async (event, { id: moduleId, update = false, version = null }) => {
   if (!session || !session.modules.includes(moduleId)) return { error: 'Tu licencia no incluye este módulo.' };
   if (moduleRunning) return { error: 'Ya hay un módulo abierto.' };
 
@@ -115,7 +116,9 @@ ipcMain.handle('open-module', async (event, { id: moduleId, update = false }) =>
   };
 
   try {
-    const installed = await ensureModule(moduleId, session.sessionToken, sendStatus, { update });
+    const installed = version
+      ? await ensureModuleVersion(moduleId, version, session.sessionToken, sendStatus)
+      : await ensureModule(moduleId, session.sessionToken, sendStatus, { update });
     sendStatus({ phase: 'opening' });
     moduleRunning = true;
     await loadModule(installed, {
@@ -139,6 +142,12 @@ ipcMain.handle('open-module', async (event, { id: moduleId, update = false }) =>
     console.error('[launcher] no se pudo abrir el módulo', moduleId, err);
     return { error: err?.message || 'No se pudo abrir el módulo' };
   }
+});
+
+// Historial de actualizaciones de un módulo (versiones publicadas, notas y cuáles están instaladas)
+ipcMain.handle('get-module-releases', async (event, { id: moduleId }) => {
+  if (!session || !session.modules.includes(moduleId)) return { error: 'Tu licencia no incluye este módulo.', releases: [] };
+  return getModuleReleases(moduleId, session.sessionToken);
 });
 
 ipcMain.handle('update-module', async (event, { id: moduleId }) => {

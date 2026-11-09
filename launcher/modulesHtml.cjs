@@ -1,5 +1,6 @@
 // Ventana de módulos: aparece después del login y muestra sólo los módulos que incluye la licencia.
 const { icon, PATHS } = require('./icons.cjs');
+const { COPYRIGHT } = require('./config.cjs');
 
 function getModulesHtml() {
   // Todos los íconos ya dibujados, para que la ventana pida el que corresponda a cada módulo por nombre
@@ -14,7 +15,7 @@ function getModulesHtml() {
 <title>Overlay Graphics — Módulos</title>
 <style>
   * { box-sizing: border-box; }
-  body { margin: 0; min-height: 100vh; background: #121212; color: #fff; font-family: Arial, Helvetica, sans-serif; }
+  body { margin: 0; min-height: 100vh; background: #121212; color: #fff; font-family: Arial, Helvetica, sans-serif; display: flex; flex-direction: column; }
   header {
     display: flex; align-items: center; justify-content: space-between; gap: 16px;
     padding: 18px 28px; background: #1a1a1a; border-bottom: 1px solid #333;
@@ -27,7 +28,13 @@ function getModulesHtml() {
     padding: 8px 12px; font-size: 11px; font-weight: bold; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;
   }
   .logout:hover { filter: brightness(1.2); }
-  main { padding: 28px; }
+  main { padding: 28px; flex: 1; }
+  .legal {
+    padding: 12px 28px; border-top: 1px solid #333; background: #1a1a1a;
+    font-size: 10px; color: #666; letter-spacing: 0.3px; line-height: 1.6;
+    display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 16px;
+  }
+  .legal b { color: #999; }
   h2 { font-size: 12px; color: #888; letter-spacing: 1px; margin: 0 0 6px; text-transform: uppercase; }
   .hint { font-size: 12px; color: #666; margin: 0 0 22px; }
   .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 18px; }
@@ -65,6 +72,33 @@ function getModulesHtml() {
   .actions { display: flex; flex-direction: column; gap: 8px; }
   .open.update-btn { background: #f1c40f; color: #000; }
   .open.secondary { background: #242424; color: #ccc; border: 1px solid #333; }
+  .history-link {
+    background: none; border: none; color: #888; font-size: 11px; cursor: pointer; padding: 2px 0; text-decoration: underline;
+    display: inline-flex; align-items: center; gap: 4px; align-self: center;
+  }
+  .history-link:hover:not(:disabled) { color: #fff; }
+  .history-link:disabled { opacity: 0.4; cursor: default; }
+
+  /* Historial de actualizaciones */
+  .modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: none; align-items: center; justify-content: center; padding: 24px; z-index: 10; }
+  .modal-bg.show { display: flex; }
+  .modal { background: #1a1a1a; border: 1px solid #333; border-radius: 8px; width: 100%; max-width: 620px; max-height: 100%; display: flex; flex-direction: column; }
+  .modal-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 16px 20px; border-bottom: 1px solid #333; }
+  .modal-head h3 { margin: 0; font-size: 15px; letter-spacing: 0.5px; display: flex; align-items: center; gap: 8px; }
+  .modal-close { background: #242424; color: #ccc; border: 1px solid #333; border-radius: 4px; padding: 6px 12px; font-size: 11px; font-weight: bold; cursor: pointer; }
+  .modal-body { padding: 16px 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
+  .modal-intro { font-size: 12px; color: #888; line-height: 1.5; margin: 0; }
+  .release { background: #121212; border: 1px solid #333; border-radius: 6px; padding: 12px 14px; display: flex; flex-direction: column; gap: 6px; }
+  .release-top { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .release-ver { font-size: 14px; font-weight: bold; }
+  .release-date { font-size: 11px; color: #888; }
+  .badge { font-size: 9px; font-weight: bold; letter-spacing: 0.5px; padding: 2px 6px; border-radius: 3px; text-transform: uppercase; }
+  .badge.latest { background: rgba(46,204,113,0.15); color: #2ecc71; border: 1px solid rgba(46,204,113,0.5); }
+  .badge.installed { background: rgba(255,255,255,0.06); color: #ccc; border: 1px solid #444; }
+  .badge.current { background: rgba(231,76,60,0.15); color: #e74c3c; border: 1px solid rgba(231,76,60,0.5); }
+  .badge.blocked { background: rgba(241,196,15,0.1); color: #f1c40f; border: 1px solid rgba(241,196,15,0.45); }
+  .release-notes { font-size: 12px; color: #bbb; line-height: 1.5; white-space: pre-wrap; }
+  .release .open { width: auto; align-self: flex-start; padding: 8px 14px; font-size: 11px; }
 </style>
 </head>
 <body>
@@ -77,9 +111,23 @@ function getModulesHtml() {
 </header>
 <main>
   <h2>Tus módulos</h2>
-  <p class="hint">Elegí con cuál querés trabajar. Se abre la última versión: si hay una nueva, se descarga sola.</p>
+  <p class="hint">Elegí con cuál querés trabajar. Se abre la última versión instalada; si hay una nueva, te avisamos. Desde "Historial de actualizaciones" podés abrir una versión anterior.</p>
   <div class="grid" id="grid"></div>
 </main>
+<footer class="legal">
+  <span><b>© ${COPYRIGHT.year} ${COPYRIGHT.holder}.</b> Todos los derechos reservados.</span>
+  <span>Obra registrada en la Dirección Nacional del Derecho de Autor · Registro ${COPYRIGHT.registry}</span>
+</footer>
+
+<div class="modal-bg" id="historyBg">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="historyTitle">
+    <div class="modal-head">
+      <h3 id="historyTitle">${icon('update', '#e74c3c', '1.2em')} <span id="historyName">Historial de actualizaciones</span></h3>
+      <button class="modal-close" id="historyClose">Cerrar</button>
+    </div>
+    <div class="modal-body" id="historyBody"></div>
+  </div>
+</div>
 
 <script>
   const { ipcRenderer } = require('electron');
@@ -180,6 +228,16 @@ function getModulesHtml() {
     }
     buttons.forEach(b => actions.appendChild(b));
 
+    // Historial de actualizaciones: permite volver a abrir una versión anterior (no en desarrollo ni sin versiones publicadas)
+    if (m.available && m.installedVersion !== 'dev') {
+      const history = document.createElement('button');
+      history.className = 'history-link';
+      history.innerHTML = small(ICONS.update).split('1.3em').join('1.1em') + ' Historial de actualizaciones';
+      history.addEventListener('click', () => openHistory(m));
+      actions.appendChild(history);
+      buttons.push(history);
+    }
+
     card.append(ico, title, desc, meta, update, bar, error, actions);
     cards[m.id] = { card, buttons, bar, fill, meta, error, m };
     return card;
@@ -189,15 +247,15 @@ function getModulesHtml() {
     Object.values(cards).forEach(c => c.buttons.forEach(b => { b.disabled = !enabled || !c.m.available; }));
   }
 
-  async function openModule(id, update) {
+  async function openModule(id, update, version) {
     const c = cards[id];
     busy = true;
     setButtonsEnabled(false);
     c.error.classList.remove('show');
     c.bar.classList.add('show');
     c.fill.style.width = '0';
-    c.meta.textContent = (update ? PHASES.checking : PHASES.opening).toUpperCase();
-    const result = await ipcRenderer.invoke('open-module', { id, update });
+    c.meta.textContent = (update || version ? PHASES.checking : PHASES.opening).toUpperCase();
+    const result = await ipcRenderer.invoke('open-module', { id, update, version: version || null });
     if (result && result.error) {
       c.error.textContent = result.error;
       c.error.classList.add('show');
@@ -228,6 +286,84 @@ function getModulesHtml() {
     c.meta.textContent = (pct === null ? label : label + ' ' + pct + '%').toUpperCase();
     c.fill.style.width = pct === null ? '100%' : pct + '%';
   });
+
+  // --- Historial de actualizaciones ---
+  const historyBg = document.getElementById('historyBg');
+  const historyBody = document.getElementById('historyBody');
+  function closeHistory() { historyBg.classList.remove('show'); }
+  document.getElementById('historyClose').addEventListener('click', closeHistory);
+  historyBg.addEventListener('click', (e) => { if (e.target === historyBg) closeHistory(); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeHistory(); });
+
+  function formatSize(bytes) {
+    if (!bytes) return '';
+    return (bytes / (1024 * 1024)).toFixed(1).replace('.', ',') + ' MB';
+  }
+
+  function historyMessage(text) {
+    const p = document.createElement('p');
+    p.className = 'modal-intro';
+    p.textContent = text;
+    return p;
+  }
+
+  async function openHistory(m) {
+    document.getElementById('historyName').textContent = 'Historial de actualizaciones · ' + moduleTitle(m);
+    historyBody.innerHTML = '';
+    historyBody.appendChild(historyMessage('Buscando versiones...'));
+    historyBg.classList.add('show');
+
+    const data = await ipcRenderer.invoke('get-module-releases', { id: m.id });
+    historyBody.innerHTML = '';
+    historyBody.appendChild(historyMessage(
+      'Todas las versiones publicadas, de la más nueva a la más vieja. Podés abrir cualquiera: si no está en esta PC se descarga '
+      + '(verificada igual que una actualización). Al volver a "Abrir" desde la tarjeta se usa otra vez la versión más nueva instalada. '
+      + 'Tu configuración, posiciones y estilos se conservan entre versiones.'));
+    if (data.error) historyBody.appendChild(historyMessage(data.error + (data.releases && data.releases.length ? ' Se muestran solo las versiones instaladas en esta PC.' : '')));
+    const releases = data.releases || [];
+    if (!releases.length && !data.error) historyBody.appendChild(historyMessage('Todavía no hay versiones publicadas.'));
+
+    const newestPublished = releases.find(r => !r.localOnly);
+    releases.forEach(r => {
+      const row = document.createElement('div');
+      row.className = 'release';
+      const top = document.createElement('div');
+      top.className = 'release-top';
+      const ver = document.createElement('span');
+      ver.className = 'release-ver';
+      ver.textContent = 'Versión ' + r.version;
+      top.appendChild(ver);
+      const date = formatDate(r.releasedAt);
+      if (date) {
+        const d = document.createElement('span');
+        d.className = 'release-date';
+        d.textContent = date + (r.size ? ' · ' + formatSize(r.size) : '');
+        top.appendChild(d);
+      }
+      const badge = (cls, text) => { const b = document.createElement('span'); b.className = 'badge ' + cls; b.textContent = text; top.appendChild(b); };
+      if (newestPublished && r.version === newestPublished.version) badge('latest', 'Más nueva');
+      if (r.version === data.newestInstalled) badge('current', 'Se abre por defecto');
+      if (r.installed) badge('installed', 'En esta PC');
+      if (r.blocked) badge('blocked', 'Necesita instalador nuevo');
+      row.appendChild(top);
+
+      if (r.notes) {
+        const notes = document.createElement('div');
+        notes.className = 'release-notes';
+        notes.textContent = r.notes;
+        row.appendChild(notes);
+      }
+
+      const label = r.installed ? ' Abrir esta versión' : ' Descargar y abrir esta versión';
+      const btn = makeButton(r.installed ? 'secondary' : '', small(r.installed ? ICONS.play_arrow : ICONS.download) + label, () => {
+        closeHistory();
+        openModule(m.id, false, r.version);
+      });
+      btn.disabled = !!r.blocked || busy;
+      row.appendChild(btn);
+      historyBody.appendChild(row);
+    });
+  }
 
   document.getElementById('btnLogout').addEventListener('click', () => ipcRenderer.send('launcher-logout'));
 

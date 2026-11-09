@@ -3,6 +3,7 @@ import { getSkinStyle } from '../utils/skinStyles';
 import pilotoAnonimo from '../assets/piloto_anonimo.png';
 import { getAnimDuration, getRollClip } from '../utils/animationTiming';
 import { getFinalResultsSize } from '../utils/finalResultsSize';
+import { getClassColor } from '../utils/raceVisuals';
 
 const PODIUM_COLORS = { 1: '#ffd700', 2: '#c0c0c0', 3: '#cd7f32' };
 
@@ -15,8 +16,21 @@ function parseLapSeconds(str) {
 }
 
 // navSignal: { dir: 1 | -1, n } -> el operador pasó de página a mano (botones ANT / SIG del panel). n cuenta los pedidos.
-export default function FinalResults({ drivers, config, isVisible, id = 'finalResults', navSignal = null }) {
+export default function FinalResults({ drivers: allDrivers, config, isVisible, id = 'finalResults', navSignal = null, sessionInfo = null }) {
   const pos = config?.positions?.[id] || { x: 240, y: 40, scale: 1 };
+
+  // MULTICLASE: se puede mostrar una sola clase (con la posición dentro de la clase) y, con todas, los ganadores de cada clase
+  const multiclass = !!sessionInfo?.multiclass;
+  const classes = sessionInfo?.classes || [];
+  const classFilter = multiclass && classes.includes(config?.finalResultsClassFilter) ? config.finalResultsClassFilter : '';
+  const drivers = classFilter
+    ? allDrivers.filter(d => d.cls === classFilter).map(d => ({ ...d, pos: d.dsq ? 'DSQ' : String(d.classPos || d.pos) }))
+    : allDrivers;
+  const classWinners = multiclass && !classFilter && config?.finalResultsClassWinners !== false
+    ? classes.map(cls => allDrivers.find(d => d.cls === cls && d.classLeader)).filter(Boolean)
+    : [];
+  const baseEvent = config.eventName || config.campeonato || 'CARRERA';
+  const eventLabel = classFilter ? `${baseEvent} · ${classFilter}` : baseEvent;
 
   const themeBg = config?.themeBg || 'rgba(0,0,0,0.95)';
   const themeHeaderBg = config?.themeHeaderBg || '#1a1a1a';
@@ -139,7 +153,7 @@ export default function FinalResults({ drivers, config, isVisible, id = 'finalRe
             {/* COLUMNA IZQUIERDA: TABLA DE RESULTADOS (62,67 % del ancho, como los 940 de 1500 px originales) */}
             <div style={{ flex: '0 0 62.67%', minWidth: 0, boxSizing: 'border-box', padding: '24px 26px', display: 'flex', flexDirection: 'column' }}>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: '10px', marginBottom: '14px' }}>
-                <span style={{ fontSize: '30px', fontWeight: 900, color: themeNormalText, letterSpacing: '1px', maxWidth: '700px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', textTransform: 'uppercase' }}>{config.eventName || 'CARRERA'}</span>
+                <span style={{ fontSize: '30px', fontWeight: 900, color: themeNormalText, letterSpacing: '1px', maxWidth: '700px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', textTransform: 'uppercase' }}>{classFilter ? eventLabel : (config.eventName || 'CARRERA')}</span>
                 {broadcastPages > 1 && (
                   <span style={{ fontSize: '12px', color: themeTitleText, fontWeight: 'bold' }}>PÁGINA {page + 1} DE {broadcastPages}</span>
                 )}
@@ -195,6 +209,14 @@ export default function FinalResults({ drivers, config, isVisible, id = 'finalRe
                   <span style={{ color: themeNumberText, fontFamily: 'monospace' }}>{fastestDriver.bestLap}</span>
                 </div>
               )}
+              <div style={{ display: classWinners.length ? 'block' : 'none', paddingTop: '8px', fontSize: '13px', fontWeight: 'bold' }}>
+                {classWinners.map(w => (
+                  <span key={w.cls} style={{ marginRight: '18px', whiteSpace: 'nowrap' }}>
+                    <span style={{ color: getClassColor(config, w.cls, classes) }}>{w.cls}:</span>{' '}
+                    <span style={{ color: themeNormalText, textTransform: 'uppercase' }}>#{w.number} {w.name}</span>
+                  </span>
+                ))}
+              </div>
             </div>
 
             {/* COLUMNA DERECHA: FOTO DEL GANADOR */}
@@ -277,7 +299,7 @@ export default function FinalResults({ drivers, config, isVisible, id = 'finalRe
                    <img src={config.logo} alt="Logo Productora" style={{ height: isCompact ? '38px' : '55px', maxWidth: '180px', objectFit: 'contain' }} />
                  )}
                  <h1 style={{ color: themeTitleText, fontSize: isCompact ? '28px' : '40px', fontWeight: '900', textTransform: 'uppercase', margin: 0 }}>
-                     RESULTADOS FINALES - {config.eventName || config.campeonato || 'CARRERA'}
+                     RESULTADOS FINALES - {eventLabel}
                  </h1>
              </div>
 
@@ -310,7 +332,8 @@ export default function FinalResults({ drivers, config, isVisible, id = 'finalRe
                        display: 'flex', alignItems: 'center', padding: isCompact ? '7px 10px' : '12px 10px',
                        borderBottom: (i === currentDrivers.length - 1 || transparent) ? 'none' : '1px solid rgba(255,255,255,0.05)',
                        borderLeft: podiumColor ? `4px solid ${podiumColor}` : 'none',
-                       fontSize: isCompact ? '16px' : '20px'
+                       fontSize: isCompact ? '16px' : '20px',
+                       opacity: d.dsq ? 0.55 : 1
                      }}>
                         <span style={{ width: '60px', color: podiumColor || themeAccent, fontWeight: '900', fontSize: isCompact ? '18px' : '24px' }}>{d.pos}</span>
                         <span style={{ width: '80px' }}>
@@ -318,7 +341,10 @@ export default function FinalResults({ drivers, config, isVisible, id = 'finalRe
                         </span>
                         <span style={{ flex: 1, fontWeight: '900', color: themeNormalText, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{d.name.toUpperCase()}</span>
                         {!isCompact && <span style={{ width: '120px', textAlign: 'center', color: themeNumberText, fontWeight: 'bold' }}>{d.laps}</span>}
-                        <span style={{ width: '180px', textAlign: 'right', color: themeNumberText, fontWeight: 'bold' }}>{d.totalTime}</span>
+                        <span style={{ width: '180px', textAlign: 'right', color: themeNumberText, fontWeight: 'bold' }}>
+                          {d.dsq ? 'DSQ' : d.totalTime}
+                          <span style={{ display: d.penaltySeconds ? 'inline' : 'none', color: '#e74c3c', fontSize: '0.65em', marginLeft: '6px' }}>(+{d.penaltySeconds}s)</span>
+                        </span>
                         {!isCompact && <span style={{ width: '160px', textAlign: 'right', color: themeAccent, fontWeight: '900' }}>{d.bestLap}</span>}
                      </div>
                     );
@@ -334,6 +360,16 @@ export default function FinalResults({ drivers, config, isVisible, id = 'finalRe
                     PÁGINA {page + 1} DE {totalPages}
                   </div>
                 )}
+             </div>
+
+             {/* GANADORES POR CLASE (multiclase, mostrando todas las clases) */}
+             <div style={{ display: classWinners.length ? 'flex' : 'none', flexWrap: 'wrap', justifyContent: 'center', width: '100%', marginTop: '14px', flexShrink: 0 }}>
+               {classWinners.map(w => (
+                 <span key={w.cls} style={{ margin: '3px 10px', fontSize: isCompact ? '14px' : '16px', fontWeight: 'bold', color: themeNormalText, whiteSpace: 'nowrap' }}>
+                   <span style={{ color: getClassColor(config, w.cls, classes), fontWeight: 900 }}>{w.cls}</span>{' '}
+                   <span style={{ color: themeTitleText }}>#{w.number}</span> {w.name.toUpperCase()}
+                 </span>
+               ))}
              </div>
          </div>
      </div>

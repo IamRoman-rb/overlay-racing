@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { LANGUAGES } from '../i18n/translations';
 import Icon from '../components/Icon';
 
-export default function SettingsPanel({ config, handleDirectSave, handleScrape, colors, inputStyle, btnStyle, t, language, setLanguage, onExportSettings, onImportSettings, onResetAllPositions, scrapeErrorText, onGetDiagnostics, onOpenLogs, onGetNetworkUrls }) {
+export default function SettingsPanel({ config, handleDirectSave, handleScrape, colors, inputStyle, btnStyle, t, language, setLanguage, onExportSettings, onImportSettings, onResetAllPositions, scrapeErrorText, onGetDiagnostics, onOpenLogs, onGetNetworkUrls, onGetOrbitsStatus }) {
 
   const chromaColors = [
     { label: t('ajustes.chromaGreen'), value: '#00FF00' },
@@ -20,6 +20,29 @@ export default function SettingsPanel({ config, handleDirectSave, handleScrape, 
     setLocalCode(config.speedhiveCode || '');
   }, [config.speedhiveCode]);
 
+  // Orbits: IP (o nombre) de la PC del cronometrador y puerto del Results Protocol (50000 por defecto)
+  const [localHost, setLocalHost] = useState(config.orbitsHost || '');
+  const [localPort, setLocalPort] = useState(String(config.orbitsPort || 50000));
+  useEffect(() => { setLocalHost(config.orbitsHost || ''); }, [config.orbitsHost]);
+  useEffect(() => { setLocalPort(String(config.orbitsPort || 50000)); }, [config.orbitsPort]);
+  const normalizedPort = () => {
+    const n = parseInt(localPort, 10);
+    return Number.isFinite(n) && n >= 1 && n <= 65535 ? n : 50000;
+  };
+
+  // Indicador de conexión con Orbits (se consulta cada 2 s mientras esta pestaña está abierta)
+  const [orbitsStatus, setOrbitsStatus] = useState(null);
+  const getOrbitsStatusRef = useRef(onGetOrbitsStatus);
+  useEffect(() => { getOrbitsStatusRef.current = onGetOrbitsStatus; });
+  useEffect(() => {
+    if (provider !== 'orbits') return undefined;
+    let cancelled = false;
+    const poll = () => Promise.resolve(getOrbitsStatusRef.current?.()).then(st => { if (!cancelled) setOrbitsStatus(st || null); }).catch(() => {});
+    poll();
+    const id = setInterval(poll, 2000);
+    return () => { cancelled = true; clearInterval(id); };
+  }, [provider]);
+
   // Estado del botón "CARGAR DATOS AHORA": idle -> loading -> ok | error -> idle
   const [loadState, setLoadState] = useState('idle');
   const loadResetTimer = useRef(null);
@@ -32,7 +55,12 @@ export default function SettingsPanel({ config, handleDirectSave, handleScrape, 
 
     // Si se escribió el código y se hizo clic directo en el botón, el guardado por onBlur puede no
     // haberse aplicado todavía: se guarda primero para que el scraper use el código nuevo.
-    if (localCode.trim() !== (config.speedhiveCode || '')) {
+    if (provider === 'orbits') {
+      let changed = false;
+      if (localHost.trim() !== (config.orbitsHost || '')) { await handleDirectSave('orbitsHost', localHost.trim()); changed = true; }
+      if (normalizedPort() !== (config.orbitsPort || 50000)) { await handleDirectSave('orbitsPort', normalizedPort()); changed = true; }
+      if (changed) await new Promise(resolve => setTimeout(resolve, 60));
+    } else if (localCode.trim() !== (config.speedhiveCode || '')) {
       await handleDirectSave('speedhiveCode', localCode.trim());
       await new Promise(resolve => setTimeout(resolve, 60));
     }
@@ -149,8 +177,58 @@ export default function SettingsPanel({ config, handleDirectSave, handleScrape, 
         >
           <option value="speedhive">Speedhive (MyLaps)</option>
           <option value="racemonitor">Race Monitor</option>
+          <option value="orbits">MYLAPS Orbits 4 / 5 (IP)</option>
         </select>
 
+        {provider === 'orbits' ? (
+          <>
+            {/* DIRECCIÓN IP DEL CRONOMETRADOR (ORBITS) */}
+            <label style={{ display: 'block', marginBottom: '10px', fontSize: '12px', fontWeight: 'bold', color: colors.textMuted }}>
+              {t('ajustes.orbitsHostLabel')}
+            </label>
+            <div style={{ display: 'flex', gap: '10px', alignItems: 'center', backgroundColor: colors.bgApp, padding: '10px', borderRadius: '4px', border: `1px solid ${colors.border}` }}>
+              <span style={{ color: colors.textMuted, fontSize: '14px' }}>IP</span>
+              <input
+                value={localHost}
+                onChange={(e) => setLocalHost(e.target.value)}
+                onBlur={() => handleDirectSave('orbitsHost', localHost.trim())}
+                style={{ ...inputStyle, fontSize: '14px', padding: '10px', textTransform: 'none', flex: 1, backgroundColor: colors.bgPanel, color: colors.yellow, fontFamily: 'monospace' }}
+                placeholder="Ej: 192.168.1.50"
+                spellCheck={false}
+              />
+              <span style={{ color: colors.textMuted, fontSize: '14px' }}>{t('ajustes.orbitsPortLabel')}</span>
+              <input
+                value={localPort}
+                onChange={(e) => setLocalPort(e.target.value.replace(/[^0-9]/g, '').slice(0, 5))}
+                onBlur={() => { const n = normalizedPort(); setLocalPort(String(n)); handleDirectSave('orbitsPort', n); }}
+                style={{ ...inputStyle, fontSize: '14px', padding: '10px', width: '90px', backgroundColor: colors.bgPanel, color: colors.yellow, fontFamily: 'monospace', textAlign: 'center' }}
+                placeholder="50000"
+                inputMode="numeric"
+              />
+            </div>
+            <p style={{ fontSize: '12px', color: colors.textMuted, lineHeight: '1.6', marginTop: '10px', marginBottom: 0, maxWidth: '760px' }}>
+              {t('ajustes.orbitsHelp')}
+            </p>
+            {(() => {
+              const st = orbitsStatus;
+              let dot = colors.textMuted; let text = t('ajustes.orbitsIdle');
+              if (st?.connected) {
+                dot = '#2ecc71';
+                text = t('ajustes.orbitsConnected', { addr: `${st.host}:${st.port}`, count: st.competitors, ago: st.secondsSinceData ?? '-' }) + (st.session ? ` · ${st.session}` : '');
+              } else if (st?.connecting) {
+                dot = colors.yellow; text = t('ajustes.orbitsConnecting', { addr: `${st.host}:${st.port}` });
+              } else if (st?.host) {
+                dot = '#e74c3c'; text = t('ajustes.orbitsDisconnected', { addr: `${st.host}:${st.port}` }) + (st.lastError ? ` (${st.lastError})` : '');
+              }
+              return (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '12px', fontSize: '12px', fontWeight: 'bold', color: colors.textMain }}>
+                  <span style={{ width: '10px', height: '10px', borderRadius: '50%', backgroundColor: dot, flexShrink: 0, boxShadow: st?.connected ? '0 0 8px #2ecc71' : 'none' }} />
+                  <span style={{ wordBreak: 'break-word' }}>{text}</span>
+                </div>
+              );
+            })()}
+          </>
+        ) : (<>
         {/* INPUT DEL CÓDIGO */}
         <label style={{ display: 'block', marginBottom: '10px', fontSize: '12px', fontWeight: 'bold', color: colors.textMuted }}>
           {t('ajustes.codeLabel')}
@@ -173,6 +251,7 @@ export default function SettingsPanel({ config, handleDirectSave, handleScrape, 
             <span style={{ color: colors.textMuted, fontSize: '14px' }}>/active</span>
           )}
         </div>
+        </>)}
 
         {/* Botón rápido para testear */}
         <div style={{ marginTop: '15px' }}>
