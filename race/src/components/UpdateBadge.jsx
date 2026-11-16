@@ -1,9 +1,30 @@
 import { useEffect, useState } from 'react';
 
-// AVISO DE ACTUALIZACIÓN PENDIENTE (arriba al centro del panel). Le pregunta al módulo (main.cjs -> instalador) si el
-// servidor tiene una versión más nueva que la que está abierta. Se revisa al abrir el panel y cada 30 minutos.
-// Con un instalador viejo (sin esa consulta) la respuesta es null y no se muestra nada.
+// AVISO DE ACTUALIZACIÓN PENDIENTE (arriba al centro del panel). Le pregunta al módulo (main.cjs) si el servidor tiene
+// una versión más nueva que la que está abierta. Se revisa al abrir el panel y cada 30 minutos.
+//  - Instalador nuevo: el módulo responde con lo que le dice el instalador (checkForUpdate).
+//  - Instalador viejo: el módulo responde { fallback, moduleId, runningVersion } y acá se usa 'get-launcher-state', la
+//    consulta del menú de módulos (el instalador corre en el mismo proceso), comparando con la versión abierta.
 const CHECK_MS = 30 * 60 * 1000;
+
+const compareVersions = (a, b) => {
+  const pa = String(a).split('.').map(n => parseInt(n, 10) || 0);
+  const pb = String(b).split('.').map(n => parseInt(n, 10) || 0);
+  for (let i = 0; i < Math.max(pa.length, pb.length); i += 1) {
+    if ((pa[i] || 0) !== (pb[i] || 0)) return (pa[i] || 0) - (pb[i] || 0);
+  }
+  return 0;
+};
+
+async function fetchUpdateInfo(ipc) {
+  const r = await ipc.invoke('get-module-update');
+  if (!r || !r.fallback) return r || null;
+  const state = await ipc.invoke('get-launcher-state');
+  const mod = (state?.modules || []).find(m => m.id === r.moduleId);
+  if (!mod || !mod.version) return null;
+  const updateAvailable = compareVersions(mod.version, r.runningVersion) > 0;
+  return { runningVersion: r.runningVersion, latestVersion: mod.version, updateAvailable, updateBlocked: updateAvailable && !!mod.updateBlocked, notes: mod.notes || null };
+}
 
 function getIpc() {
   try { return typeof window !== 'undefined' && typeof window.require === 'function' ? window.require('electron').ipcRenderer : null; } catch { return null; }
@@ -16,7 +37,7 @@ export default function UpdateBadge({ style }) {
     const ipc = getIpc();
     if (!ipc) return undefined;
     let alive = true;
-    const check = () => ipc.invoke('get-module-update').then(r => { if (alive) setInfo(r || null); }).catch(() => {});
+    const check = () => fetchUpdateInfo(ipc).then(r => { if (alive) setInfo(r); }).catch(() => {});
     check();
     const iv = setInterval(check, CHECK_MS);
     return () => { alive = false; clearInterval(iv); };

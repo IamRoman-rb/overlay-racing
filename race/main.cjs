@@ -1375,9 +1375,16 @@ ipc.handle('get-system-stats', () => getSystemStats());
 ipc.handle('get-local-ip', () => getVotingUrl());
 ipc.handle('get-steward-url', () => getStewardUrl());
 ipc.handle('get-votes', () => votesData);
-// Aviso de actualización pendiente en el panel (lo responde el instalador; con un instalador viejo, null)
+// Aviso de actualización pendiente en el panel
 ipc.handle('get-module-update', async () => {
-  try { return (await moduleCtx.checkForUpdate?.()) || null; } catch { return null; }
+  // Instalador nuevo: responde él. Instalador viejo: el panel usa 'get-launcher-state' (existe desde la primera versión
+  // con módulos) y lo compara con la versión abierta, que se manda acá.
+  if (typeof moduleCtx.checkForUpdate === 'function') {
+    try { return (await moduleCtx.checkForUpdate()) || null; } catch { return null; }
+  }
+  const version = moduleCtx.moduleVersion;
+  if (!version || version === 'dev' || !moduleCtx.moduleId) return null;
+  return { fallback: true, moduleId: moduleCtx.moduleId, runningVersion: version };
 });
 
 ipc.handle('get-config', () => {
