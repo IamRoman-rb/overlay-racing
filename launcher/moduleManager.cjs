@@ -258,4 +258,4 @@ function loadModule(installed, ctx) {
   return mod.start(global.overlayModuleCtx);
 }
 
-module.exports = { ensureModule, ensureModuleVersion, getModuleReleases, getModuleStatus, loadModule, installedVersions };
+module.exports = { ensureModule, ensureModuleVersion, getModuleReleases, getModuleStatus, loadModule, installedVersions, compareVersions };

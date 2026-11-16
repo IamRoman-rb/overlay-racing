@@ -938,6 +938,30 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
           </div>
         )}
 
+        {selectedGraphic === 'evento' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', marginBottom: '30px', backgroundColor: '#111', padding: '15px', borderRadius: '8px', border: `1px solid ${colors.border}` }}>
+            <label style={{ fontSize: '10px', color: colors.textMuted, fontWeight: 'bold' }}>{t('personalizar.formatOf', { name: t('graphics.evento') })}</label>
+            <select
+              value={config.eventoFormat || 'standard'}
+              onChange={(e) => onConfigChange('eventoFormat', e.target.value)}
+              style={{ ...inputStyle, padding: '10px', fontSize: '11px', cursor: 'pointer', border: `1px solid ${colors.border}` }}
+            >
+              <option value="standard">Clásico (Productora · Circuito · Clima en Fila)</option>
+              <option value="compact">Compacto (Una Fila)</option>
+              <option value="vertical">Vertical (Columna Angosta)</option>
+              <option value="minimal">Minimalista (Sin Caja)</option>
+              <option value="elite">Elite (Caja "El Clima en…")</option>
+              <option value="eliteBar">Elite Barra (Horizontal)</option>
+              <option value="compass">Rosa de los Vientos (Viento Protagonista)</option>
+              <option value="forecast">Pronóstico (Próximas Horas)</option>
+              <option value="strip">Franja (Barra Fina con Todos los Datos)</option>
+              <option value="hero">Destacado (Temperatura Grande + Fondo Animado)</option>
+              {renderSkinOptions()}
+            </select>
+            <span style={{ fontSize: '10px', color: colors.textMuted, lineHeight: '1.5', marginTop: '6px' }}>{t('personalizar.eventoFormatHint')}</span>
+          </div>
+        )}
+
         {selectedGraphic === 'flags' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', marginBottom: '30px', backgroundColor: '#111', padding: '15px', borderRadius: '8px', border: `1px solid ${colors.border}` }}>
             <label style={{ fontSize: '10px', color: colors.textMuted, fontWeight: 'bold' }}>{t('personalizar.formatOf', { name: t('graphics.flags') })}</label>

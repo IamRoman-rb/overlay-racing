@@ -1,11 +1,13 @@
-import { WeatherIcon } from './Weather';
-import { getWeatherVisual, getWindDirLabel } from '../utils/weather';
+import Weather, { WeatherIcon } from './Weather';
+import { getWeatherVisual, getWindDirLabel, WEATHER_BRAND_FORMATS } from '../utils/weather';
 import { getSkinStyle } from '../utils/skinStyles';
 import { getAnimDuration, getRollClip } from '../utils/animationTiming';
 import { makeFx } from '../utils/contentAnim';
 
 // EVENTO: una sola gráfica con el nombre de la productora (con su logo si está cargado), el nombre del circuito y el clima.
 // Cada bloque aparece sólo si tiene datos: config.productora, config.circuito y config.weatherData.
+// Formatos (PERSONALIZAR > EVENTO, config.eventoFormat): 'standard' (bloques en fila, admite los skins) o los mismos formatos
+// de la gráfica del CLIMA con la productora y el circuito agregados. Esos necesitan datos de clima: sin clima se usa el clásico.
 export default function Evento({ isVisible, config, id = 'evento' }) {
   const pos = config?.positions?.[id] || { x: 560, y: 20, scale: 1 };
   const themeBg = config?.themeBg || 'rgba(0,0,0,0.85)';
@@ -20,12 +22,21 @@ export default function Evento({ isVisible, config, id = 'evento' }) {
   const animStyle = config?.[`animationStyle_${id}`] || 'slide';
   const fx = makeFx(config, id, isVisible);
   const animDur = getAnimDuration(config, id);
-  const skin = getSkinStyle(config?.[`eventoFormat_${id}`] || config?.eventoFormat || 'standard', { themeMain, themeAccent });
+  const format = config?.[`eventoFormat_${id}`] || config?.eventoFormat || 'standard';
+  const skin = getSkinStyle(format, { themeMain, themeAccent });
 
   const producer = (config?.productora || '').trim();
   const circuit = (config?.circuito || '').trim();
   const weather = config?.weatherData || null;
   const weatherInfo = weather ? getWeatherVisual(weather.weathercode) : null;
+
+  // Formatos del clima con la marca del evento
+  if (WEATHER_BRAND_FORMATS.includes(format) && weather && weatherInfo) {
+    return (
+      <Weather data={weather} isVisible={isVisible} config={config} id={id} format={format} defaultPos={{ x: 560, y: 20, scale: 1 }}
+        brand={{ logo: config?.logo || null, producer, circuit }} />
+    );
+  }
 
   let transformHidden = `scale(${pos.scale}) translateX(-40px)`;
   if (animStyle === 'fade') transformHidden = `scale(${pos.scale})`;

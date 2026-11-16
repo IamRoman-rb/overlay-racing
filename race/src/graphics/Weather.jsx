@@ -109,8 +109,10 @@ import { getAnimDuration, getRollClip } from '../utils/animationTiming';
 import { getElitePalette, ELITE_FONT, rgba } from '../utils/elite';
 import { makeFx } from '../utils/contentAnim';
 
-export default function Weather({ data, isVisible, config, id = 'clima' }) {
-  const pos = config?.positions?.[id] || { x: 20, y: 160, scale: 1 };
+// brand (opcional, gráfica EVENTO): { logo, producer, circuit } -> cada formato suma el logo / nombre de la productora y
+// muestra el circuito como lugar.
+export default function Weather({ data, isVisible, config, id = 'clima', format, brand = null, defaultPos }) {
+  const pos = config?.positions?.[id] || defaultPos || { x: 20, y: 160, scale: 1 };
   const themeBg = config?.themeBg || 'rgba(0,0,0,0.85)';
   const themeHeaderBg = config?.themeHeaderBg || '#000000';
   const themeMain = config?.themeMain || '#e74c3c';
@@ -122,7 +124,7 @@ export default function Weather({ data, isVisible, config, id = 'clima' }) {
   const bRad = config?.[`borderRadius_${id}`] || '8px';
   const animStyle = config?.[`animationStyle_${id}`] || 'slide';
   const animDur = getAnimDuration(config, id);
-  const climaFormat = config?.climaFormat || 'standard';
+  const climaFormat = format || config?.climaFormat || 'standard';
   const skin = getSkinStyle(climaFormat, { themeMain, themeAccent });
 
   let transformHidden = `scale(${pos.scale}) translateX(-40px)`;
@@ -139,6 +141,12 @@ export default function Weather({ data, isVisible, config, id = 'clima' }) {
   const iconsAnimated = config?.climaAnimatedIcons !== false;
   const fx = makeFx(config, id, isVisible);
 
+  // Marca (EVENTO): logo + nombre de la productora; el circuito reemplaza al lugar del clima
+  const hasBrand = !!(brand && (brand.logo || brand.producer));
+  const brandPlace = brand?.circuit || '';
+  const brandLogo = (h) => (brand?.logo ? <img src={brand.logo} alt="" style={{ height: `${h}px`, maxWidth: `${h * 2.6}px`, objectFit: 'contain', flexShrink: 0, display: 'block' }} /> : null);
+  const brandName = (style) => (brand?.producer ? <span style={{ fontWeight: '900', textTransform: 'uppercase', whiteSpace: 'nowrap', ...style }}>{brand.producer}</span> : null);
+
   const wrapperStyle = {
     position: 'absolute', left: `${pos.x}px`, top: `${pos.y}px`,
     transformOrigin: 'top left', zIndex: 15,
@@ -150,7 +158,7 @@ export default function Weather({ data, isVisible, config, id = 'clima' }) {
   // FORMATOS ELITE (paquete azul de transmisión): caja "EL CLIMA EN ..." o barra horizontal
   if (climaFormat === 'elite' || climaFormat === 'eliteBar') {
     const pal = getElitePalette(config);
-    const place = (data.place || config?.circuitCity || config?.circuito || '').split(',')[0];
+    const place = brandPlace || (data.place || config?.circuitCity || config?.circuito || '').split(',')[0];
     const val = (v) => (v === null || v === undefined ? '-' : Math.round(v));
     const stats = [
       { key: 'VIENTO', value: val(data.windSpeed), unit: 'km/h', icon: 'M3 8h11a3 3 0 1 0-3-3M3 12h16a3 3 0 1 1-3 3M3 16h7', stroke: true },
@@ -167,7 +175,11 @@ export default function Weather({ data, isVisible, config, id = 'clima' }) {
     if (climaFormat === 'eliteBar') {
       return (
         <div style={wrapperStyle}>
-          <div className={fx.group} style={{ ...box, display: 'flex', height: '50px', width: '700px' }}>
+          <div className={fx.group} style={{ ...box, display: 'flex', height: '50px', minWidth: '700px' }}>
+            <div style={{ display: hasBrand ? 'flex' : 'none', alignItems: 'center', gap: '10px', padding: '0 16px', backgroundColor: rgba(pal.deep, 0.6), borderRight: `1px solid ${rgba('#ffffff', 0.18)}` }}>
+              {brandLogo(34)}
+              {brandName({ fontSize: '16px', fontWeight: 700 })}
+            </div>
             <div style={{ display: 'flex', alignItems: 'center', padding: '0 14px', minWidth: '150px' }}>
               {pin}
               <div style={{ display: 'flex', flexDirection: 'column', marginLeft: '8px', lineHeight: 1.05 }}>
@@ -183,7 +195,7 @@ export default function Weather({ data, isVisible, config, id = 'clima' }) {
               </div>
             </div>
             {stats.map(s => (
-              <div key={s.key} style={{ ...cell, flex: 1 }}>
+              <div key={s.key} style={{ ...cell, flex: 1, minWidth: '86px' }}>
                 <span style={{ display: 'flex', alignItems: 'center', fontSize: '10px', color: pal.muted }}>{statIcon(s)}<span style={{ marginLeft: '4px' }}>{s.key}</span></span>
                 <span style={{ fontSize: '17px', fontWeight: 700, lineHeight: 1 }}>{s.value}<span style={{ fontSize: '10px', marginLeft: '2px' }}>{s.unit}</span></span>
               </div>
@@ -195,7 +207,11 @@ export default function Weather({ data, isVisible, config, id = 'clima' }) {
 
     return (
       <div style={wrapperStyle}>
-        <div className={fx.group} style={{ ...box, width: '230px' }}>
+        <div className={fx.group} style={{ ...box, width: hasBrand ? '260px' : '230px' }}>
+          <div style={{ display: hasBrand ? 'flex' : 'none', alignItems: 'center', justifyContent: 'center', gap: '10px', padding: '8px 12px', backgroundColor: rgba(pal.deep, 0.6), borderBottom: `1px solid ${rgba('#ffffff', 0.18)}` }}>
+            {brandLogo(36)}
+            {brandName({ fontSize: '16px', fontWeight: 700 })}
+          </div>
           <div style={{ display: 'flex', alignItems: 'center', padding: '10px 12px 0' }}>
             {pin}
             <div style={{ display: 'flex', flexDirection: 'column', marginLeft: '8px', lineHeight: 1.05 }}>
@@ -225,7 +241,7 @@ export default function Weather({ data, isVisible, config, id = 'clima' }) {
   }
 
   // ---- FORMATOS NUEVOS: rosa de los vientos, pronóstico, franja y destacado ----
-  const place = (data.place || config?.circuitCity || config?.circuito || '').split(',')[0];
+  const place = brandPlace || (data.place || config?.circuitCity || config?.circuito || '').split(',')[0];
   const val = (v) => (v === null || v === undefined || !Number.isFinite(Number(v)) ? '-' : Math.round(v));
   const hasDir = Number.isFinite(Number(data.windDir));
   const boxBg = {
@@ -236,7 +252,9 @@ export default function Weather({ data, isVisible, config, id = 'clima' }) {
   };
   const headBar = (title) => (
     <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'space-between', backgroundColor: customBg ? 'transparent' : themeHeaderBg, padding: '6px 14px', borderBottom: `2px solid ${themeMain}` }}>
-      <span style={{ color: themeAccent, fontSize: '11px', fontWeight: '900', letterSpacing: '1px' }}>{title}</span>
+      {hasBrand
+        ? <span style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0 }}>{brandLogo(24)}{brandName({ color: themeAccent, fontSize: '12px', letterSpacing: '1px' })}</span>
+        : <span style={{ color: themeAccent, fontSize: '11px', fontWeight: '900', letterSpacing: '1px' }}>{title}</span>}
       <span style={{ color: themeNumberText, fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', marginLeft: '10px' }}>{place}</span>
     </div>
   );
@@ -319,6 +337,10 @@ export default function Weather({ data, isVisible, config, id = 'clima' }) {
     return (
       <div style={wrapperStyle}>
         <div className={fx.group} style={{ ...boxBg, display: 'inline-flex', alignItems: 'center', height: '38px', borderLeft: customBg ? 'none' : `5px solid ${themeMain}` }}>
+          <div style={{ display: hasBrand ? 'flex' : 'none', alignItems: 'center', gap: '8px', height: '100%', padding: '0 14px', borderRight: '1px solid rgba(255,255,255,0.15)' }}>
+            {brandLogo(26)}
+            {brandName({ color: themeNormalText, fontSize: '13px', letterSpacing: '0.5px' })}
+          </div>
           <div style={{ display: place ? 'flex' : 'none', alignItems: 'center', height: '100%', padding: '0 14px', backgroundColor: customBg ? 'transparent' : themeHeaderBg }}>
             <span style={{ color: themeAccent, fontSize: '12px', fontWeight: '900', letterSpacing: '1px', textTransform: 'uppercase' }}>{place}</span>
           </div>
@@ -334,7 +356,7 @@ export default function Weather({ data, isVisible, config, id = 'clima' }) {
 
   // DESTACADO: temperatura gigante con el clima animado de fondo (lluvia, nubes, nieve...) y un brillo según la condición
   if (climaFormat === 'hero') {
-    const W = 440; const H = 190;
+    const W = 440; const H = hasBrand ? 226 : 190;
     const glow = { clear: 'rgba(255,190,60,0.38)', partlyCloudy: 'rgba(255,200,90,0.24)', cloudy: 'rgba(160,175,195,0.22)', fog: 'rgba(200,205,215,0.22)', rain: 'rgba(60,140,230,0.3)', snow: 'rgba(220,235,255,0.3)', storm: 'rgba(130,90,220,0.32)' }[category] || 'rgba(255,255,255,0.15)';
     return (
       <div style={wrapperStyle}>
@@ -344,6 +366,10 @@ export default function Weather({ data, isVisible, config, id = 'clima' }) {
             <WeatherIcon animated={iconsAnimated} category={category} color={themeAccent} size={74} />
           </div>
           <div className={fx.group} style={{ position: 'relative', padding: '14px 20px', display: 'flex', flexDirection: 'column' }}>
+            <div style={{ display: hasBrand ? 'flex' : 'none', alignItems: 'center', gap: '10px', marginBottom: '6px' }}>
+              {brandLogo(30)}
+              {brandName({ color: themeNormalText, fontSize: '15px', letterSpacing: '0.5px' })}
+            </div>
             <span style={{ color: themeAccent, fontSize: '12px', fontWeight: '900', letterSpacing: '1.5px', textTransform: 'uppercase' }}>{place ? `CLIMA EN ${place}` : 'CLIMA'}</span>
             <div style={{ display: 'flex', alignItems: 'flex-start', lineHeight: 0.9, marginTop: '6px' }}>
               <span style={{ color: themeNormalText, fontSize: '84px', fontWeight: '900', letterSpacing: '-3px', textShadow: '0 4px 14px rgba(0,0,0,0.5)' }}>{Math.round(data.temp)}</span>
@@ -369,7 +395,7 @@ export default function Weather({ data, isVisible, config, id = 'clima' }) {
     return (
       <div style={wrapperStyle}>
         <div className={fx.group} style={{
-          width: '220px', display: 'flex', alignItems: 'center', gap: '10px', padding: '8px 14px',
+          minWidth: '220px', display: 'flex', alignItems: 'center', gap: '10px', padding: '8px 14px',
           backgroundColor: customBg ? 'transparent' : themeBg,
           backgroundImage: customBg ? `url(${customBg})` : 'none',
           backgroundSize: '100% 100%', backgroundRepeat: 'no-repeat', backgroundPosition: 'center',
@@ -377,6 +403,15 @@ export default function Weather({ data, isVisible, config, id = 'clima' }) {
           borderRadius: bRad,
           boxShadow: customBg ? 'none' : '2px 2px 10px rgba(0,0,0,0.5)'
         }}>
+          {(hasBrand || brandPlace) && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', paddingRight: '12px', marginRight: '2px', borderRight: `1px solid ${themeMain}` }}>
+              {brandLogo(34)}
+              <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.1 }}>
+                {brandName({ color: themeNormalText, fontSize: '15px' })}
+                {brandPlace && <span style={{ color: themeNumberText, fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>{brandPlace}</span>}
+              </div>
+            </div>
+          )}
           <WeatherIcon animated={iconsAnimated} category={category} color={themeAccent} size={32} />
           <div style={{ display: 'flex', flexDirection: 'column' }}>
             <span style={{ color: themeNormalText, fontSize: '22px', fontWeight: '900', lineHeight: 1 }}>
@@ -396,7 +431,7 @@ export default function Weather({ data, isVisible, config, id = 'clima' }) {
     return (
       <div style={wrapperStyle}>
         <div style={{
-          width: '160px', textAlign: 'center', overflow: 'hidden',
+          width: hasBrand ? '190px' : '160px', textAlign: 'center', overflow: 'hidden',
           backgroundColor: customBg ? 'transparent' : themeBg,
           backgroundImage: customBg ? `url(${customBg})` : 'none',
           backgroundSize: '100% 100%', backgroundRepeat: 'no-repeat', backgroundPosition: 'center',
@@ -405,8 +440,11 @@ export default function Weather({ data, isVisible, config, id = 'clima' }) {
           boxShadow: customBg ? 'none' : '2px 2px 10px rgba(0,0,0,0.5)'
         }}>
           <div style={{ backgroundColor: customBg ? 'transparent' : themeHeaderBg, padding: '6px 0', borderBottom: customBg ? 'none' : `2px solid ${themeMain}` }}>
-            <span style={{ color: themeAccent, fontSize: '10px', fontWeight: '900', letterSpacing: '1px' }}>CLIMA</span>
+            {hasBrand
+              ? <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', padding: '4px 8px' }}>{brandLogo(40)}{brandName({ color: themeAccent, fontSize: '12px', letterSpacing: '1px', whiteSpace: 'normal' })}</div>
+              : <span style={{ color: themeAccent, fontSize: '10px', fontWeight: '900', letterSpacing: '1px' }}>CLIMA</span>}
           </div>
+          {brandPlace && <div style={{ padding: '8px 8px 0', color: themeNormalText, fontSize: '14px', fontWeight: '900', textTransform: 'uppercase', lineHeight: 1.1 }}>{brandPlace}</div>}
           <div className={fx.group} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '12px 10px', gap: '4px' }}>
             <WeatherIcon animated={iconsAnimated} category={category} color={themeAccent} size={40} />
             <span style={{ color: themeNormalText, fontSize: '26px', fontWeight: '900', lineHeight: 1 }}>{Math.round(data.temp)}°C</span>
@@ -432,6 +470,15 @@ export default function Weather({ data, isVisible, config, id = 'clima' }) {
     return (
       <div style={wrapperStyle}>
         <div className={fx.group} style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          {(hasBrand || brandPlace) && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginRight: '8px', paddingRight: '16px', borderRight: `2px solid ${themeAccent}` }}>
+              {brandLogo(44)}
+              <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.1, textShadow: '2px 2px 6px rgba(0,0,0,0.9)' }}>
+                {brandName({ color: themeNormalText, fontSize: '20px' })}
+                {brandPlace && <span style={{ color: themeAccent, fontSize: '12px', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '1px', whiteSpace: 'nowrap' }}>{brandPlace}</span>}
+              </div>
+            </div>
+          )}
           <WeatherIcon animated={iconsAnimated} category={category} color={themeAccent} size={38} />
           <div style={{ display: 'flex', flexDirection: 'column' }}>
             <span style={{ color: themeNormalText, fontSize: '28px', fontWeight: '900', lineHeight: 1, textShadow: '2px 2px 6px rgba(0,0,0,0.9)' }}>

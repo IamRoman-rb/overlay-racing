@@ -1375,6 +1375,11 @@ ipc.handle('get-system-stats', () => getSystemStats());
 ipc.handle('get-local-ip', () => getVotingUrl());
 ipc.handle('get-steward-url', () => getStewardUrl());
 ipc.handle('get-votes', () => votesData);
+// Aviso de actualización pendiente en el panel (lo responde el instalador; con un instalador viejo, null)
+ipc.handle('get-module-update', async () => {
+  try { return (await moduleCtx.checkForUpdate?.()) || null; } catch { return null; }
+});
+
 ipc.handle('get-config', () => {
   try { if (fs.existsSync(dbPath)) return JSON.parse(fs.readFileSync(dbPath, 'utf-8')); } catch { /* no crítico: se ignora */ }
   return { campeonato: '', relator: '', comentarista: '' };

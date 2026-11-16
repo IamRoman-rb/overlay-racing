@@ -22,7 +22,7 @@ const { installLogger, logDir, logPath } = require('./logger.cjs');
 const { getLoginHtml } = require('./loginHtml.cjs');
 const { getModulesHtml } = require('./modulesHtml.cjs');
 const api = require('./api.cjs');
-const { ensureModule, ensureModuleVersion, getModuleReleases, getModuleStatus, loadModule } = require('./moduleManager.cjs');
+const { ensureModule, ensureModuleVersion, getModuleReleases, getModuleStatus, loadModule, compareVersions } = require('./moduleManager.cjs');
 
 let loginWindow = null;
 let modulesWindow = null;
@@ -129,6 +129,20 @@ ipcMain.handle('open-module', async (event, { id: moduleId, update = false, vers
       logDir,
       logPath,
       launcherVersion: app.getVersion(),
+      // Para el aviso del panel: ¿el servidor tiene una versión más nueva que la que está abierta? (null en desarrollo
+      // o sin sesión). Nunca lanza: si el servidor no responde, devuelve updateAvailable: false.
+      checkForUpdate: async () => {
+        if (!session || installed.version === 'dev') return null;
+        const entry = (session.moduleCatalog || []).find(m => m.id === moduleId) || { id: moduleId };
+        try {
+          const st = await getModuleStatus(entry, session.sessionToken);
+          const latestVersion = st.version || null;
+          const updateAvailable = !!latestVersion && compareVersions(latestVersion, installed.version) > 0;
+          return { runningVersion: installed.version, latestVersion, updateAvailable, updateBlocked: updateAvailable && !!st.updateBlocked, notes: st.notes || null };
+        } catch {
+          return { runningVersion: installed.version, latestVersion: null, updateAvailable: false, updateBlocked: false, notes: null };
+        }
+      },
       returnToLauncher: () => {
         moduleRunning = false;
         if (!modulesWindow || modulesWindow.isDestroyed()) createModulesWindow();

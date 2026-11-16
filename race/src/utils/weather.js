@@ -28,3 +28,6 @@ export function windIntensityColor(kmh) {
   if (v < 45) return '#ffc93c';
   return '#ff6b4a';
 }
+
+// Formatos de la gráfica del CLIMA que también usa EVENTO (con la productora y el circuito agregados)
+export const WEATHER_BRAND_FORMATS = ['compact', 'vertical', 'minimal', 'elite', 'eliteBar', 'compass', 'forecast', 'strip', 'hero'];

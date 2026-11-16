@@ -146,6 +146,10 @@ function logDiag(who, payload, count) {
 }
 
 ipcMain.handle('fb-get-state', () => state);
+// Aviso de actualización pendiente en el panel (lo responde el instalador; con un instalador viejo, null)
+ipcMain.handle('get-module-update', async () => {
+  try { return (await moduleCtx.checkForUpdate?.()) || null; } catch { return null; }
+});
 ipcMain.on('fb-push-state', (e, next) => pushState(next, { webContents: e.sender }));
 let windowDiagCount = 0;
 ipcMain.on('fb-diag', (e, payload) => logDiag('ventana overlay', payload, ++windowDiagCount));

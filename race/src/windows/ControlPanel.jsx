@@ -15,6 +15,7 @@ import { findMostRelevantBattle } from '../utils/battle';
 import { formationCategory } from '../utils/raceVisuals';
 import { comboFromEvent, shouldIgnoreHotkey, findHotkeyAction } from '../utils/hotkeys';
 import { defaultPositions } from '../data/defaultPositions';
+import UpdateBadge from '../components/UpdateBadge';
 
 // Pestañas pesadas que sólo se muestran al abrirlas: se descargan recién entonces (archivos .js aparte).
 const SettingsPanel = lazy(() => import('../windows/SettingsPanel'));
@@ -1229,7 +1230,9 @@ export default function ControlPanel() {
       `}</style>
 
       <SystemMonitor t={t} />
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 20px', borderBottom: `1px solid ${colors.border}` }}>
+      <div style={{ position: 'relative', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 20px', borderBottom: `1px solid ${colors.border}` }}>
+        {/* Aviso de actualización pendiente, arriba al centro */}
+        <div style={{ position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%, -50%)', zIndex: 5 }}><UpdateBadge /></div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <div style={{ width: '15px', height: '15px', backgroundColor: colors.yellow }}></div>
           <h1 style={{ fontSize: '16px', margin: 0, letterSpacing: '1px' }}>{t('header.title')}</h1>

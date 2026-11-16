@@ -9,6 +9,7 @@ import { bridge, mode } from '../bridge';
 import { useNow } from '../useNow';
 import { normalizeState, CANVAS, PERIODS, clockText, teamOfSide, teamInfo } from '../state';
 import { COPYRIGHT } from '../copyright';
+import UpdateBadge from './UpdateBadge';
 
 const TABS = [
   { id: 'live', label: 'EN VIVO' },
@@ -123,13 +124,17 @@ export default function ControlPanel() {
   const scale = previewWidth / CANVAS.width;
   return (
     <div className="app">
-      <header className="topbar">
+      <header className="topbar" style={{ position: 'relative' }}>
         <div className="brand">
           <div className="brand-mark" />
           <h1>OVERLAY FÚTBOL</h1>
         </div>
-        <HeaderInfo state={state} />
-        {window.require && <button onClick={() => window.require('electron').ipcRenderer.send('return-to-launcher')} className="btn tiny">Cambiar software</button>}
+        {/* Aviso de actualización pendiente, arriba al centro */}
+        <div style={{ position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%, -50%)', zIndex: 5 }}><UpdateBadge /></div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+          <HeaderInfo state={state} />
+          {window.require && <button onClick={() => window.require('electron').ipcRenderer.send('return-to-launcher')} className="btn tiny">Cambiar software</button>}
+        </div>
       </header>
 
       <nav className="tabs">
