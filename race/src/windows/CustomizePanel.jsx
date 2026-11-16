@@ -64,15 +64,16 @@ const RACE_GRAPHIC_FORMATS = {
   circuitRecord: [['elite', 'Elite']],
   lapCompare: [['standard', 'Clásico (Tiempos + Diferencias)'], ['compact', 'Compacto (Columnas Angostas)'], ['minimal', 'Minimalista (Sin Caja)']],
   windVectors: [['standard', 'Clásico (Flechas)'], ['flow', 'Profesional (Corrientes con Estela)'], ['dense', 'Denso (Muchas Flechas Chicas)'], ['light', 'Liviano (Líneas Finas)']],
+  lapProgress: [['bar', 'Barra (Vuelta X/Y + Progreso)'], ['fraction', 'Fracción (6/10 Grande)'], ['text', 'Texto (Van 6 Vueltas de 10)']],
   sessionStatus: [['bar', 'Barra (Todos los Datos en una Franja)'], ['card', 'Tarjeta (Compacta, Dos Columnas)'], ['minimal', 'Minimalista (Sin Caja)']],
   formationLap: [['standard', 'Clásico (Tarjeta con la Categoría)'], ['compact', 'Compacto (Una Línea)'], ['banner', 'Banner (Barra de Todo el Ancho)'], ['elite', 'Elite (Como la Torre Elite)'], ['minimal', 'Minimalista (Sin Caja)']]
 };
 // Gráficas que sólo existen en estilo Elite (no llevan los skins comunes)
 const ELITE_ONLY = ['circuitIntro', 'circuitRecord'];
 // Formato por defecto distinto de 'standard'
-const DEFAULT_FORMAT = { sessionStatus: 'bar' };
+const DEFAULT_FORMAT = { sessionStatus: 'bar', lapProgress: 'bar' };
 // Gráficas sin los skins comunes (no tienen caja)
-const NO_SKINS = [...ELITE_ONLY, 'windVectors', 'sessionStatus'];
+const NO_SKINS = [...ELITE_ONLY, 'windVectors', 'sessionStatus', 'lapProgress'];
 // Gráficas que pueden mostrar las fotos de los pilotos (config.showPhotos_<id>)
 const PHOTO_GRAPHICS = ['sectors', 'gapChart', 'gainers', 'raceNotice', 'lapCompare', 'qualifying', 'lapTimesHistory', 'ticker'];
 // Gráficas con pilotos que entran con la aparición de filas configurable (como la torre). La torre y los resultados
@@ -433,7 +434,7 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
     'grid', 'finalResults', 'winner', 'flags', 'fastestLap', 'driverInfo', 'battle', 'customZocalo',
     'votingQR', 'votingResults', 'lapCounter', 'virtualChamp', 'pitStop', 'startingLights',
     'lapTimesHistory', 'trackAlert', 'penaltyAlert', 'branding', 'evento',
-    'sectors', 'gapChart', 'gainers', 'qualifying', 'trackMap', 'raceNotice', 'circuitIntro', 'circuitRecord', 'lapCompare', 'windVectors', 'sponsorLive', 'formationLap', 'sessionStatus'
+    'sectors', 'gapChart', 'gainers', 'qualifying', 'trackMap', 'raceNotice', 'circuitIntro', 'circuitRecord', 'lapCompare', 'windVectors', 'sponsorLive', 'formationLap', 'sessionStatus', 'lapProgress'
   ];
   const allGraphics = GRAPHIC_IDS.map(id => ({ id, label: t(`graphics.${id}`) }));
   const shownGraphics = allGraphics.filter(g => matchesSearch(graphicQuery, g.label, g.id));

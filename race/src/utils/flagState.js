@@ -47,7 +47,7 @@ export function currentFlag(sessionInfo, config) {
 // PROGRESO DE LA SESIÓN a partir de lo que informa el cronometraje:
 //   lap: vueltas del líder · lapsToGo / total: vueltas que faltan y total (Race Monitor "Laps to go", Speedhive "laps")
 //   timeToGo: tiempo restante (carreras por tiempo; "00:00:00" no cuenta) · elapsed: tiempo transcurrido
-// Con la sesión terminada no se muestran faltantes.
+// Con la sesión terminada no se muestran faltantes. sessionInfo.manualTotalLaps: total cargado a mano en el PANEL.
 export function sessionProgress(sessionInfo) {
   const s = sessionInfo || {};
   const lap = parseInt(s.laps, 10);
@@ -55,6 +55,19 @@ export function sessionProgress(sessionInfo) {
   const finished = timingFlagKey(s.flag) === 'finish';
   const hasToGo = !finished && Number.isFinite(toGo) && toGo >= 0 && toGo < 500;
   const lapOk = Number.isFinite(lap) && lap >= 0;
+  // Total de vueltas cargado a mano en el PANEL (manda sobre lo que informa el cronometraje)
+  const manualTotal = parseInt(s.manualTotalLaps, 10);
+  if (Number.isFinite(manualTotal) && manualTotal > 0) {
+    return {
+      lap: lapOk ? lap : null,
+      lapsToGo: lapOk && !finished ? Math.max(0, manualTotal - lap) : null,
+      total: manualTotal,
+      timeToGo: !finished && s.timeToGo && /[1-9]/.test(String(s.timeToGo)) ? String(s.timeToGo) : '',
+      elapsed: s.totalTime && s.totalTime !== '-' ? String(s.totalTime) : '',
+      finished,
+      manual: true
+    };
+  }
   return {
     lap: lapOk ? lap : null,
     lapsToGo: hasToGo ? toGo : null,

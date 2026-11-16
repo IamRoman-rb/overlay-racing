@@ -76,7 +76,7 @@ export default function LayoutEdits({ id, config, children, visible, coverReplay
   }, [coverOn]);
 
   return (
-    <div ref={ref} data-le-wrap="1" style={{ display: 'contents' }}>
+    <div ref={ref} data-le-wrap="1" data-le-id={id} data-le-visible={visible === undefined ? undefined : (visible ? '1' : '0')} style={{ display: 'contents' }}>
       {children}
       {coverOn && roots.map((root, i) => (
         <LogoCover key={i} root={root} logos={cover.logos} time={cover.time} visible={visible} replay={coverReplay} config={config} id={id} />

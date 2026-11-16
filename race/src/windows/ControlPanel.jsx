@@ -15,6 +15,7 @@ import { findMostRelevantBattle } from '../utils/battle';
 import { formationCategory } from '../utils/raceVisuals';
 import { comboFromEvent, shouldIgnoreHotkey, findHotkeyAction } from '../utils/hotkeys';
 import { defaultPositions } from '../data/defaultPositions';
+import { sessionProgress } from '../utils/flagState';
 import UpdateBadge from '../components/UpdateBadge';
 
 // Pestañas pesadas que sólo se muestran al abrirlas: se descargan recién entonces (archivos .js aparte).
@@ -323,7 +324,7 @@ const GRAPHIC_IDS = [
   'grid', 'finalResults', 'winner', 'flags', 'fastestLap', 'driverInfo', 'battle', 'customZocalo',
   'votingQR', 'votingResults', 'lapCounter', 'virtualChamp', 'startingLights',
   'lapTimesHistory', 'trackAlert', 'penaltyAlert', 'branding', 'evento',
-    'sectors', 'gapChart', 'gainers', 'qualifying', 'trackMap', 'raceNotice', 'circuitIntro', 'circuitRecord', 'lapCompare', 'windVectors', 'formationLap', 'sessionStatus'
+    'sectors', 'gapChart', 'gainers', 'qualifying', 'trackMap', 'raceNotice', 'circuitIntro', 'circuitRecord', 'lapCompare', 'windVectors', 'formationLap', 'sessionStatus', 'lapProgress'
 ];
 
 const TAB_IDS = ['panel', 'campeonato', 'votaciones', 'sanciones', 'cloud', 'zocalos', 'pilotos', 'sponsors', 'circuito', 'ajustes', 'personalizar', 'editor', 'atajos', 'manual'];
@@ -1123,7 +1124,8 @@ export default function ControlPanel() {
       circuitIntro: () => handleToggleGraphic('circuitIntro'), circuitRecord: () => handleToggleGraphic('circuitRecord'),
       lapCompare: handleToggleLapCompare, windVectors: () => handleToggleGraphic('windVectors'),
       formationLap: () => handleToggleGraphic('formationLap'),
-      sessionStatus: () => handleToggleGraphic('sessionStatus')
+      sessionStatus: () => handleToggleGraphic('sessionStatus'),
+      lapProgress: () => handleToggleGraphic('lapProgress')
     };
   });
 
@@ -1440,6 +1442,17 @@ export default function ControlPanel() {
               <button onClick={handleToggleTicker} style={btnStyle(showTicker)}>{t('graphics.ticker')}</button>
               <button onClick={handleToggleTower} style={btnStyle(showTower)}>{t('panel.towerShort')}</button>
               <button onClick={handleToggleLapCounter} style={btnStyle(showLapCounter)}>{t('panel.lapsShort')}</button>
+              {/* VUELTA X DE Y + total de vueltas a mano (por si el cronometraje no lo informa o se equivoca) */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                <button onClick={() => handleToggleGraphic('lapProgress')} title={t('panel.lapProgressTitle')} style={btnStyle(!!graphics.lapProgress)}>{t('graphics.lapProgress')}</button>
+                <label title={t('panel.raceTotalLapsHint')} style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '9px', color: colors.textMuted, fontWeight: 'bold' }}>
+                  {t('panel.raceTotalLaps')}
+                  <input type="number" min="0" max="999" value={config.raceTotalLaps || ''}
+                    placeholder={(() => { const p = sessionProgress({ ...sessionInfo, manualTotalLaps: '' }); return p.total !== null ? String(p.total) : t('panel.raceTotalLapsAuto'); })()}
+                    onChange={(e) => handleDirectSave('raceTotalLaps', e.target.value === '' ? '' : Math.max(0, Math.min(999, parseInt(e.target.value, 10) || 0)))}
+                    style={{ ...inputStyle, padding: '4px', width: '58px', fontSize: '10px' }} />
+                </label>
+              </div>
               <button
                 onClick={handleToggleFastestLap}
                 style={{

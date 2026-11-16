@@ -33,6 +33,7 @@ import CircuitRecord from '../graphics/CircuitRecord';
 import LapCompare from '../graphics/LapCompare';
 import WindVectors from '../graphics/WindField';
 import SessionStatus from '../graphics/SessionStatus';
+import LapProgress from '../graphics/LapProgress';
 import FormationLap from '../graphics/FormationLap';
 import SponsorLive from '../graphics/SponsorLive';
 import LayoutEdits from '../components/LayoutEdits';
@@ -194,6 +195,8 @@ function GraphicPreviewContent({ id, config, positions, drivers, sessionInfo }) 
       return <LapCompare state={{ isVisible: true, a: list[0]?.number, b: list[1]?.number }} drivers={enrichDemo(list, realDrivers)} history={demoLapCompare(list)} config={fullConfig} />;
     case 'windVectors':
       return <WindVectors isVisible config={{ ...fullConfig, weatherData: config?.weatherData || { temp: 22, weathercode: 2, windSpeed: 18, windDir: 240, precipProb: 10, feelsLike: 21 } }} />;
+    case 'lapProgress':
+      return <LapProgress isVisible config={fullConfig} sessionInfo={{ ...session, manualTotalLaps: config?.raceTotalLaps || '', lapsToGo: session.lapsToGo ?? '14' }} />;
     case 'sessionStatus':
       return <SessionStatus isVisible drivers={enrichDemo(list, realDrivers)} config={fullConfig} sessionInfo={{ ...session, lapsToGo: session.lapsToGo ?? '14', bestLap: session.bestLap || list[0]?.bestLap }} />;
     case 'formationLap':

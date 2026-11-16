@@ -27,7 +27,7 @@ export const translations = {
       ajustes: 'AJUSTES', personalizar: 'PERSONALIZAR', editor: 'EDITOR', manual: 'MANUAL', atajos: 'ATAJOS'
     },
     graphics: {
-      lapCompare: 'ÚLTIMAS VUELTAS', windVectors: 'VECTORES DE VIENTO', sponsorLive: 'SPONSOR AL AIRE', formationLap: 'VUELTA DE FORMACIÓN', sessionStatus: 'ESTADO DE SESIÓN',
+      lapCompare: 'ÚLTIMAS VUELTAS', windVectors: 'VECTORES DE VIENTO', sponsorLive: 'SPONSOR AL AIRE', formationLap: 'VUELTA DE FORMACIÓN', sessionStatus: 'ESTADO DE SESIÓN', lapProgress: 'VUELTA X DE Y',
       relator: 'RELATOR', comentarista: 'COMENTARISTA', notero1: 'NOTERO 1', notero2: 'NOTERO 2',
       circuito: 'CIRCUITO', clima: 'CLIMA', ticker: 'TIRA INFERIOR', tower: 'TORRE POSICIONES',
       grid: 'GRILLA PARTIDA', finalResults: 'RESULTADOS FINALES', winner: 'GANADOR',
@@ -74,6 +74,7 @@ export const translations = {
       rights: 'Todos los derechos reservados.', registered: 'Obra registrada en la Dirección Nacional del Derecho de Autor · Registro {registry}'
     },
     panel: {
+      lapProgressTitle: 'Muestra cuántas vueltas van de las que tiene la carrera (6/10), avisa la última vuelta', raceTotalLaps: 'TOTAL VUELTAS', raceTotalLapsAuto: 'auto', raceTotalLapsHint: 'Vueltas que tiene la carrera. Vacío = las que informa el cronometraje. Cargalo si no las informa o se equivoca: se usa en todas las gráficas (vuelta 6/10, faltan 4).',
       sessionStatusTitle: 'Bandera vigente, vuelta (y faltantes), tiempo restante o transcurrido, mejor vuelta y temperatura en una sola gráfica',
       formationTitle: 'Saca al aire la categoría que está en vuelta de formación con el texto VUELTA DE FORMACIÓN', formationCategoryPlaceholder: 'Categoría (se toma sola)', formationCategoryHint: 'Vacío = la categoría actual (PANEL > CATEGORÍA o la que informa la fuente). Escribí otra sólo si la que gira es distinta.', formationInTower: 'Mostrarlo también en la torre',
       windVectorsTitle: 'Flechas de viento en toda la pantalla, con la dirección y la fuerza del clima cargado', introModeTitle: 'Cómo se muestra el circuito en la presentación', introWeatherFx: 'CLIMA ANIMADO', introWeatherFxTitle: 'Lluvia, nubes, nieve, niebla o tormenta de fondo según el clima cargado', introModeStatic: 'Circuito completo', introModeTour: 'Vuelta en primera persona', introModeCurves: 'Curva por curva', introTourSec: 'SEG. POR VUELTA',
@@ -241,6 +242,7 @@ export const translations = {
     },
     ajustes: {
       title: 'AJUSTES DEL SISTEMA', chromaLabel: 'COLOR DE FONDO (CHROMA KEY)',
+      autoArrange: 'ACOMODAR GRÁFICAS SUPERPUESTAS AUTOMÁTICAMENTE', autoArrangeHint: 'Si dos gráficas al aire se pisan, la última en salir se corre al lado libre más cercano de la otra (arriba, abajo, izquierda o derecha, sin alejarse mucho). Cuando la otra sale, vuelve a su lugar.',
       chromaGreen: 'VERDE (CLÁSICO)', chromaBlue: 'AZUL', chromaMagenta: 'MAGENTA / ROSA',
       chromaBlack: 'NEGRO', chromaWhite: 'BLANCO', chromaYellow: 'AMARILLO',
       providerLabel: 'PROVEEDOR DE TIEMPOS (TIMING)', codeLabel: 'CÓDIGO DE LA CARRERA',
@@ -459,7 +461,7 @@ export const translations = {
       ajustes: 'SETTINGS', personalizar: 'CUSTOMIZE', editor: 'EDITOR', manual: 'MANUAL', atajos: 'SHORTCUTS'
     },
     graphics: {
-      lapCompare: 'LAST LAPS', windVectors: 'WIND VECTORS', sponsorLive: 'SPONSOR ON AIR', formationLap: 'FORMATION LAP', sessionStatus: 'SESSION STATUS',
+      lapCompare: 'LAST LAPS', windVectors: 'WIND VECTORS', sponsorLive: 'SPONSOR ON AIR', formationLap: 'FORMATION LAP', sessionStatus: 'SESSION STATUS', lapProgress: 'LAP X OF Y',
       relator: 'COMMENTATOR', comentarista: 'CO-COMMENTATOR', notero1: 'REPORTER 1', notero2: 'REPORTER 2',
       circuito: 'TRACK', clima: 'WEATHER', ticker: 'BOTTOM TICKER', tower: 'POSITION TOWER',
       grid: 'STARTING GRID', finalResults: 'FINAL RESULTS', winner: 'WINNER',
@@ -506,6 +508,7 @@ export const translations = {
       rights: 'All rights reserved.', registered: 'Work registered with Argentina’s National Copyright Office (DNDA) · Registration {registry}'
     },
     panel: {
+      lapProgressTitle: 'Shows how many laps have been completed out of the race total (6/10) and warns the last lap', raceTotalLaps: 'TOTAL LAPS', raceTotalLapsAuto: 'auto', raceTotalLapsHint: 'Race length in laps. Empty = the one reported by the timing. Fill it in if it is missing or wrong: it is used in every graphic (lap 6/10, 4 to go).',
       sessionStatusTitle: 'Current flag, lap (and laps to go), time to go or elapsed, fastest lap and temperature in a single graphic',
       formationTitle: 'Puts on air the category on its formation lap with the text FORMATION LAP', formationCategoryPlaceholder: 'Category (automatic)', formationCategoryHint: 'Empty = the current category (PANEL > CATEGORY or the one reported by the source). Type another only if a different one is running.', formationInTower: 'Also show it in the tower',
       windVectorsTitle: 'Full-screen wind arrows using the direction and strength of the loaded weather', introModeTitle: 'How the track is shown in the intro', introWeatherFx: 'ANIMATED WEATHER', introWeatherFxTitle: 'Rain, clouds, snow, fog or storm in the background according to the loaded weather', introModeStatic: 'Whole track', introModeTour: 'First-person lap', introModeCurves: 'Corner by corner', introTourSec: 'SEC. PER LAP',
@@ -673,6 +676,7 @@ export const translations = {
     },
     ajustes: {
       title: 'SYSTEM SETTINGS', chromaLabel: 'BACKGROUND COLOR (CHROMA KEY)',
+      autoArrange: 'AUTOMATICALLY REARRANGE OVERLAPPING GRAPHICS', autoArrangeHint: 'If two on-air graphics overlap, the last one shown moves to the nearest free side of the other (above, below, left or right, not too far). When the other leaves, it goes back to its place.',
       chromaGreen: 'GREEN (CLASSIC)', chromaBlue: 'BLUE', chromaMagenta: 'MAGENTA / PINK',
       chromaBlack: 'BLACK', chromaWhite: 'WHITE', chromaYellow: 'YELLOW',
       providerLabel: 'TIMING PROVIDER', codeLabel: 'RACE CODE',

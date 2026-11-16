@@ -167,6 +167,15 @@ export default function SettingsPanel({ config, handleDirectSave, handleScrape, 
         </div>
       </div>
 
+      {/* ACOMODO AUTOMÁTICO: gráficas superpuestas buscan otro lugar */}
+      <div style={{ marginTop: '20px', backgroundColor: colors.bgPanel, padding: '20px', borderRadius: '8px', border: `1px solid ${colors.border}` }}>
+        <label style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '12px', fontWeight: 'bold', color: colors.textMain, cursor: 'pointer' }}>
+          <input type="checkbox" checked={config.autoArrange !== false} onChange={(e) => handleDirectSave('autoArrange', e.target.checked)} style={{ cursor: 'pointer' }} />
+          {t('ajustes.autoArrange')}
+        </label>
+        <span style={{ display: 'block', marginTop: '8px', fontSize: '11px', color: colors.textMuted, lineHeight: 1.5 }}>{t('ajustes.autoArrangeHint')}</span>
+      </div>
+
       {/* SECCIÓN 2: ORIGEN DE DATOS */}
       <div style={{ marginTop: '20px', backgroundColor: colors.bgPanel, padding: '20px', borderRadius: '8px', border: `1px solid ${colors.border}` }}>
 

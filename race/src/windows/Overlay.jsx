@@ -1,4 +1,5 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
+import { useAutoArrange } from '../utils/useAutoArrange';
 import { io } from 'socket.io-client';
 import TimingTower from '../graphics/TimingTower';
 import Ticker from '../graphics/Ticker';
@@ -36,6 +37,7 @@ import LapCompare from '../graphics/LapCompare';
 import WindVectors from '../graphics/WindField';
 import FormationLap from '../graphics/FormationLap';
 import SessionStatus from '../graphics/SessionStatus';
+import LapProgress from '../graphics/LapProgress';
 import SponsorLive from '../graphics/SponsorLive';
 import LayoutEdits from '../components/LayoutEdits';
 import { getCanvasSize } from '../utils/canvasSize';
@@ -305,8 +307,12 @@ export default function Overlay() {
   const combinedConfig = { ...safeConfig, positions: positions || {}, eventName };
   // Datos de la sesión + las banderas puestas a mano en el PANEL: así las gráficas (tira, torre, vueltas...) muestran la
   // bandera vigente (ver utils/flagState).
-  const liveSession = useMemo(() => ({ ...(sessionInfo || {}), manualFlags: activeFlags }), [sessionInfo, activeFlags]);
+  // También el total de vueltas cargado a mano (PANEL > TOTAL VUELTAS), que manda sobre el del cronometraje.
+  const liveSession = useMemo(() => ({ ...(sessionInfo || {}), manualFlags: activeFlags, manualTotalLaps: safeConfig.raceTotalLaps || '' }), [sessionInfo, activeFlags, safeConfig.raceTotalLaps]);
   const canvas = getCanvasSize(safeConfig); // tamaño del overlay (por defecto 1920x1080)
+  // Gráficas superpuestas: la última en salir se corre al lado libre más cercano (AJUSTES > acomodar gráficas)
+  const stageRef = useRef(null);
+  useAutoArrange(stageRef, safeConfig.autoArrange !== false, canvas);
   const summary = editSummary(config);
   const hasConfig = !!(config && Object.keys(config).length);
   // Sólo cuando cambia el resumen (no en cada guardado ni en cada render), y no con la configuración vacía de antes de cargar
@@ -326,6 +332,7 @@ export default function Overlay() {
 
   return (
     <div
+      ref={stageRef}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       style={{
@@ -460,6 +467,9 @@ export default function Overlay() {
       </LayoutEdits>
       <LayoutEdits id="windVectors" config={combinedConfig} visible={!!(graphics?.windVectors)}>
         <WindVectors config={combinedConfig} isVisible={!!graphics?.windVectors} />
+      </LayoutEdits>
+      <LayoutEdits id="lapProgress" config={combinedConfig} visible={!!(graphics?.lapProgress)}>
+        <LapProgress config={combinedConfig} isVisible={!!graphics?.lapProgress} sessionInfo={liveSession} />
       </LayoutEdits>
       <LayoutEdits id="sessionStatus" config={combinedConfig} visible={!!(graphics?.sessionStatus)}>
         <SessionStatus drivers={formattedDrivers} config={combinedConfig} isVisible={!!graphics?.sessionStatus} sessionInfo={liveSession} />
