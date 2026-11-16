@@ -3,7 +3,9 @@ import { getSkinStyle } from '../utils/skinStyles';
 import { getAnimDuration, getRollClip } from '../utils/animationTiming';
 import CategoryTag from '../components/CategoryTag';
 import DriverPhoto from '../components/DriverPhoto';
+import { makeFx } from '../utils/contentAnim';
 import { useSuitColors } from '../utils/suitColor';
+import SuitNumber from '../components/SuitNumber';
 
 export default function FastestLap({ drivers, config, isVisible, id = 'fastestLap' }) {
   const pos = config?.positions?.[id] || { x: 440, y: 150, scale: 1 };
@@ -60,6 +62,9 @@ export default function FastestLap({ drivers, config, isVisible, id = 'fastestLa
     return best;
   }, [drivers]);
 
+  // Contenido escalonado; si cambia el récord estando al aire, la caja se vuelve a armar (y se repite la animación)
+  const fx = makeFx(config, id, isVisible, 0.2);
+  const recKey = `${fastestDriver?.number || ''}-${fastestDriver?.bestLap || ''}`;
   const wrapperStyle = {
     position: 'absolute', left: `${pos.x}px`, top: `${pos.y}px`,
     transform: `scale(${pos.scale})`, transformOrigin: 'top left',
@@ -79,11 +84,11 @@ export default function FastestLap({ drivers, config, isVisible, id = 'fastestLa
           transform: isVisible || animStyle === 'roll' ? 'translateY(0) scale(1)' : transformHidden, ...getRollClip(animStyle, isVisible),
           transition: `transform ${animDur}s cubic-bezier(0.175, 0.885, 0.32, 1.275), clip-path ${animDur}s ease-in-out`
         }}>
-          <div style={{ width: '150px', height: '130px', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', flexShrink: 0, background: `linear-gradient(180deg, transparent, ${themeHeaderBg})` }}>
+          <div key={recKey} className={fx.group} style={{ width: '150px', height: '130px', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', flexShrink: 0, background: `linear-gradient(180deg, transparent, ${themeHeaderBg})` }}>
             <DriverPhoto number={fastestDriver?.number} config={config} height={130} maxWidth={150} />
           </div>
-          <div style={{ flex: 1, minWidth: 0, padding: '12px 16px' }}>
-            <span style={{ color: themeTitleText, fontWeight: '900', fontSize: '14px', fontStyle: 'italic', letterSpacing: '1px' }}>RECORD DE VUELTA<CategoryTag config={config} id={id} /></span>
+          <div key={`t-${recKey}`} className={fx.group} style={{ flex: 1, minWidth: 0, padding: '12px 16px' }}>
+            <span style={{ display: 'block', color: themeTitleText, fontWeight: '900', fontSize: '14px', fontStyle: 'italic', letterSpacing: '1px' }}>RECORD DE VUELTA<CategoryTag config={config} id={id} /></span>
             <div style={{ display: 'flex', alignItems: 'center', marginTop: '6px' }}>
               <span style={{ backgroundColor: themeSecondary, color: '#000', fontWeight: '900', fontSize: '16px', padding: '2px 8px', borderRadius: '3px', marginRight: '10px', ...sc(fastestDriver?.number) }}>{fastestDriver?.number || '-'}</span>
               <span style={{ color: themeNormalText, fontWeight: 'bold', fontSize: '20px', textTransform: 'uppercase', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{fastestDriver?.name || '---'}</span>
@@ -99,7 +104,7 @@ export default function FastestLap({ drivers, config, isVisible, id = 'fastestLa
   if (fastestLapFormat === 'compact') {
     return (
       <div style={wrapperStyle}>
-        <div style={{
+        <div key={recKey} className={fx.group} style={{
           display: 'flex', alignItems: 'center', gap: '10px', width: '380px', padding: '10px 15px',
           backgroundColor: hasCustomBg ? 'transparent' : themeBg,
           backgroundImage: hasCustomBg ? `url(${customBg})` : 'none',
@@ -131,7 +136,7 @@ export default function FastestLap({ drivers, config, isVisible, id = 'fastestLa
   if (fastestLapFormat === 'spotlight') {
     return (
       <div style={wrapperStyle}>
-        <div style={{
+        <div key={recKey} className={fx.group} style={{
           display: 'flex', flexDirection: 'column', alignItems: 'center', width: '380px', textAlign: 'center',
           backgroundColor: hasCustomBg ? 'transparent' : themeMain,
           backgroundImage: hasCustomBg ? `url(${customBg})` : 'none',
@@ -148,7 +153,7 @@ export default function FastestLap({ drivers, config, isVisible, id = 'fastestLa
             {fastestDriver?.bestLap || '-:--.---'}
           </span>
           <span style={{ color: 'rgba(255,255,255,0.9)', fontWeight: 'bold', fontSize: '16px', textTransform: 'uppercase' }}>
-            #{fastestDriver?.number || '-'} {fastestDriver?.name || '---'}
+            {fastestDriver?.number ? <SuitNumber number={fastestDriver.number} config={config} /> : '#-'} {fastestDriver?.name || '---'}
           </span>
         </div>
       </div>
@@ -159,7 +164,7 @@ export default function FastestLap({ drivers, config, isVisible, id = 'fastestLa
   if (fastestLapFormat === 'minimal') {
     return (
       <div style={wrapperStyle}>
-        <div style={{
+        <div key={recKey} className={fx.group} style={{
           display: 'flex', flexDirection: 'column', gap: '2px',
           transform: isVisible || animStyle === 'roll' ? 'translateY(0) scale(1)' : transformHidden, ...getRollClip(animStyle, isVisible),
           transition: `transform ${animDur}s cubic-bezier(0.175, 0.885, 0.32, 1.275), clip-path ${animDur}s ease-in-out`
@@ -169,7 +174,7 @@ export default function FastestLap({ drivers, config, isVisible, id = 'fastestLa
           </span>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: '10px' }}>
             <span style={{ color: themeNormalText, fontWeight: '900', fontSize: '24px', textTransform: 'uppercase', textShadow: '2px 2px 6px rgba(0,0,0,0.9)' }}>
-              #{fastestDriver?.number || '-'} {fastestDriver?.name || '---'}
+              {fastestDriver?.number ? <SuitNumber number={fastestDriver.number} config={config} /> : '#-'} {fastestDriver?.name || '---'}
             </span>
             <span style={{ color: themeAccent, fontWeight: '900', fontSize: '26px', textShadow: '2px 2px 6px rgba(0,0,0,0.9)' }}>
               {fastestDriver?.bestLap || '-:--.---'}
@@ -198,7 +203,7 @@ export default function FastestLap({ drivers, config, isVisible, id = 'fastestLa
          padding: hasCustomBg ? '10px' : '0'
        }}>
          {/* ENCABEZADO */}
-         <div style={{
+         <div className={fx.group} style={{
            backgroundColor: skin ? 'transparent' : (hasCustomBg ? 'transparent' : themeHeaderBg),
            borderBottom: skin ? `1px solid ${skin.border !== 'none' ? themeAccent : 'rgba(255,255,255,0.2)'}` : (hasCustomBg ? 'none' : `3px solid ${themeMain}`),
            display: 'flex', alignItems: 'center', padding: '8px 15px'
@@ -209,7 +214,7 @@ export default function FastestLap({ drivers, config, isVisible, id = 'fastestLa
          </div>
 
          {/* DATOS DEL PILOTO */}
-         <div style={{ backgroundColor: 'transparent', display: 'flex', alignItems: 'center', padding: '15px' }}>
+         <div key={recKey} className={fx.group} style={{ backgroundColor: 'transparent', display: 'flex', alignItems: 'center', padding: '15px' }}>
             <div style={{ backgroundColor: themeSecondary, color: '#000', fontWeight: '900', fontSize: '20px', width: '45px', height: '35px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '4px', marginRight: '15px', ...sc(fastestDriver?.number) }}>
               {fastestDriver?.number || '-'}
             </div>

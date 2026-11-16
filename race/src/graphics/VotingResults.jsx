@@ -1,5 +1,8 @@
 import { getSkinStyle } from '../utils/skinStyles';
 import { getAnimDuration, getRollClip } from '../utils/animationTiming';
+import SuitNumber from '../components/SuitNumber';
+import { makeFx } from '../utils/contentAnim';
+import { ChangeTick } from '../components/ChangeAnim';
 
 export default function VotingResults({ isVisible, drivers, votes, config, id = 'votingResults' }) {
   const pos = config?.positions?.[id] || { x: 1550, y: 50, scale: 1 };
@@ -20,6 +23,7 @@ export default function VotingResults({ isVisible, drivers, votes, config, id = 
   const isMinimal = resultsFormat === 'minimal';
   const skin = getSkinStyle(resultsFormat, { themeMain, themeAccent });
   const transparent = hasCustomBg || isMinimal;
+  const fx = makeFx(config, id, isVisible, 0.2);
 
   // Animación de entrada (Slide desde la derecha)
   let transformHidden = `scale(${pos.scale}) translateX(40px)`;
@@ -66,7 +70,7 @@ export default function VotingResults({ isVisible, drivers, votes, config, id = 
           padding: isCompact ? '8px' : '15px', textAlign: 'center',
           borderBottom: hasCustomBg ? 'none' : `2px solid ${themeMain}`
         }}>
-          <span style={{ color: themeAccent, fontSize: isCompact ? '12px' : '15px', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '1px' }}>
+          <span style={{ display: 'inline-block', color: themeAccent, fontSize: isCompact ? '12px' : '15px', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '1px', ...fx.text(0) }}>
             RESULTADOS DE VOTACIÓN
           </span>
         </div>
@@ -79,13 +83,13 @@ export default function VotingResults({ isVisible, drivers, votes, config, id = 
             const percentage = Math.round((votes[driver.number] / totalVotes) * 100);
             const podiumColor = isPodium ? PODIUM_COLORS[idx] : null;
             return (
-              <div key={driver.number} style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+              <div key={driver.number} style={{ display: 'flex', flexDirection: 'column', gap: '5px', ...fx.row(idx, topDrivers.length, 0.3) }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', color: '#fff', fontSize: isCompact ? '11px' : '13px', fontWeight: 'bold' }}>
-                  <span className="text-truncate" style={{ maxWidth: '200px', color: podiumColor || '#fff' }}>#{driver.number} {driver.name}</span>
-                  <span style={{ color: podiumColor || themeAccent }}>{percentage}%</span>
+                  <span className="text-truncate" style={{ maxWidth: '200px', color: podiumColor || '#fff' }}><SuitNumber number={driver.number} config={config} /> {driver.name}</span>
+                  <span style={{ color: podiumColor || themeAccent }}><ChangeTick value={percentage} enabled={fx.on}>{percentage}%</ChangeTick></span>
                 </div>
                 <div style={{ width: '100%', height: isCompact ? '5px' : '8px', backgroundColor: 'rgba(255,255,255,0.15)', borderRadius: '4px', overflow: 'hidden' }}>
-                  <div style={{ width: `${percentage}%`, height: '100%', backgroundColor: podiumColor || themeMain, transition: 'width 0.5s ease' }} />
+                  <div style={{ width: `${percentage}%`, height: '100%', backgroundColor: podiumColor || themeMain, transition: 'width 0.5s ease', ...fx.grow(idx + 3) }} />
                 </div>
               </div>
             );

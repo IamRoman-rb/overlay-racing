@@ -2,6 +2,8 @@
 import { getSkinStyle } from '../utils/skinStyles';
 import { getAnimDuration, getRollClip } from '../utils/animationTiming';
 import CategoryTag from '../components/CategoryTag';
+import { makeFx } from '../utils/contentAnim';
+import { ChangeTick, ChangeSweep } from '../components/ChangeAnim';
 
 export default function LapCounter({ isVisible, config, sessionInfo, id = 'lapCounter' }) {
   const pos = config?.positions?.[id] || { x: 1700, y: 40, scale: 1 };
@@ -21,6 +23,11 @@ export default function LapCounter({ isVisible, config, sessionInfo, id = 'lapCo
   const animDur = getAnimDuration(config, id);
   const lapCounterFormat = config?.lapCounterFormat || 'standard';
   const skin = getSkinStyle(lapCounterFormat, { themeMain, themeAccent });
+  // Al cambiar de vuelta el número viejo cae y entra el nuevo con un golpe, y un brillo cruza la caja
+  const fx = makeFx(config, id, isVisible);
+  const laps = sessionInfo?.laps || '0';
+  const lapNum = <ChangeTick value={laps} enabled={fx.on} />;
+  const sweep = <ChangeSweep value={laps} enabled={fx.on} />;
 
   // Animación que viene desde arriba por estar en la parte superior
   let transformHidden = `scale(${pos.scale}) translateY(-30px)`;
@@ -49,13 +56,14 @@ export default function LapCounter({ isVisible, config, sessionInfo, id = 'lapCo
         borderRadius: bRad, boxShadow: hasCustomBg ? 'none' : '0 10px 30px rgba(0,0,0,0.8)', overflow: 'hidden'
       }}>
         <div style={{ backgroundColor: hasCustomBg ? 'transparent' : themeHeaderBg, padding: '5px', borderBottom: hasCustomBg ? 'none' : `3px solid ${themeMain}` }}>
-          <span style={{ color: themeTitleText, fontSize: '11px', fontWeight: '900', letterSpacing: '2px' }}>VUELTA<CategoryTag config={config} id={id} block size="0.85em" style={{ letterSpacing: '1px' }} /></span>
+          <span style={{ display: 'inline-block', color: themeTitleText, fontSize: '11px', fontWeight: '900', letterSpacing: '2px', ...fx.text(0) }}>VUELTA<CategoryTag config={config} id={id} block size="0.85em" style={{ letterSpacing: '1px' }} /></span>
         </div>
         <div style={{ padding: '8px 20px' }}>
-          <span style={{ color: themeNumberText, fontSize: '34px', fontWeight: '900', textShadow: '2px 2px 4px rgba(0,0,0,0.5)' }}>
-            {sessionInfo?.laps || '0'}
+          <span style={{ display: 'inline-block', color: themeNumberText, fontSize: '34px', fontWeight: '900', textShadow: '2px 2px 4px rgba(0,0,0,0.5)', ...fx.num(1) }}>
+            {lapNum}
           </span>
         </div>
+        {sweep}
       </div>
     );
   }
@@ -71,12 +79,14 @@ export default function LapCounter({ isVisible, config, sessionInfo, id = 'lapCo
           backgroundImage: hasCustomBg ? `url(${customBg})` : 'none',
           backgroundSize: '100% 100%', backgroundRepeat: 'no-repeat', backgroundPosition: 'center',
           border: hasCustomBg ? 'none' : `4px solid ${themeMain}`,
-          boxShadow: hasCustomBg ? 'none' : '0 10px 30px rgba(0,0,0,0.8)'
+          boxShadow: hasCustomBg ? 'none' : '0 10px 30px rgba(0,0,0,0.8)',
+          position: 'relative', overflow: 'hidden'
         }}>
-          <span style={{ color: themeAccent, fontSize: '9px', fontWeight: '900', letterSpacing: '1px' }}>VUELTA</span>
-          <span style={{ color: themeNumberText, fontSize: '34px', fontWeight: '900', lineHeight: 1 }}>
-            {sessionInfo?.laps || '0'}
+          <span style={{ display: 'inline-block', color: themeAccent, fontSize: '9px', fontWeight: '900', letterSpacing: '1px', ...fx.text(0) }}>VUELTA</span>
+          <span style={{ display: 'inline-block', color: themeNumberText, fontSize: '34px', fontWeight: '900', lineHeight: 1, ...fx.num(1) }}>
+            {lapNum}
           </span>
+          {sweep}
         </div>
       </div>
     );
@@ -87,9 +97,9 @@ export default function LapCounter({ isVisible, config, sessionInfo, id = 'lapCo
     return (
       <div style={wrapperStyle}>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-          <span style={{ color: themeAccent, fontSize: '11px', fontWeight: '900', letterSpacing: '2px', textShadow: '2px 2px 6px rgba(0,0,0,0.9)' }}>VUELTA<CategoryTag config={config} id={id} block size="0.85em" style={{ letterSpacing: '1px' }} /></span>
-          <span style={{ color: themeNumberText, fontSize: '40px', fontWeight: '900', lineHeight: 1, textShadow: '2px 2px 6px rgba(0,0,0,0.9)' }}>
-            {sessionInfo?.laps || '0'}
+          <span style={{ display: 'inline-block', color: themeAccent, fontSize: '11px', fontWeight: '900', letterSpacing: '2px', textShadow: '2px 2px 6px rgba(0,0,0,0.9)', ...fx.text(0) }}>VUELTA<CategoryTag config={config} id={id} block size="0.85em" style={{ letterSpacing: '1px' }} /></span>
+          <span style={{ display: 'inline-block', color: themeNumberText, fontSize: '40px', fontWeight: '900', lineHeight: 1, textShadow: '2px 2px 6px rgba(0,0,0,0.9)', ...fx.num(1) }}>
+            {lapNum}
           </span>
         </div>
       </div>
@@ -111,10 +121,11 @@ export default function LapCounter({ isVisible, config, sessionInfo, id = 'lapCo
       overflow: 'hidden', borderTop: skin ? skin.border : (hasCustomBg ? 'none' : `5px solid ${themeMain}`),
     }}>
       <div style={{ padding: '8px 20px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-        <span style={{ color: themeNumberText, fontSize: '38px', fontWeight: '900', textShadow: '2px 2px 4px rgba(0,0,0,0.5)' }}>
-          {sessionInfo?.laps || '0'}
+        <span style={{ display: 'inline-block', color: themeNumberText, fontSize: '38px', fontWeight: '900', textShadow: '2px 2px 4px rgba(0,0,0,0.5)', ...fx.num(0) }}>
+          {lapNum}
         </span>
       </div>
+      {sweep}
     </div>
   );
 }

@@ -57,7 +57,7 @@ function startHardwarePoller() {
   if (child || process.platform !== 'win32') return;
   try {
     child = spawn('powershell.exe', ['-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-Command', POWERSHELL_LOOP], { windowsHide: true });
-  } catch (e) { child = null; return; }
+  } catch { child = null; return; }
   child.stdout.on('data', (chunk) => {
     buffer += chunk.toString();
     let nl;
@@ -68,7 +68,7 @@ function startHardwarePoller() {
       try {
         const d = JSON.parse(line);
         latestHw = { gpu: d.gpu ?? null, gpuTemp: d.gpuTemp ?? null, cpuTemp: d.cpuTemp ?? null };
-      } catch (e) { /* línea parcial o ruido de PowerShell */ }
+      } catch { /* línea parcial o ruido de PowerShell */ }
     }
   });
   child.stderr.on('data', () => {});
@@ -77,7 +77,7 @@ function startHardwarePoller() {
 }
 
 function stopHardwarePoller() {
-  if (child) { try { child.kill(); } catch (e) {} child = null; }
+  if (child) { try { child.kill(); } catch { /* no crítico: se ignora */ } child = null; }
 }
 
 // Devuelve porcentajes (0-100) y temperaturas en °C; null cuando el dato no está disponible.

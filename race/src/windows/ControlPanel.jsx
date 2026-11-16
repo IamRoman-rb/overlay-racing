@@ -1,15 +1,9 @@
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useEffectEvent, useRef, useMemo, lazy, Suspense } from 'react';
 import circuitosData from '../data/circuitos.json';
-import SettingsPanel from '../windows/SettingsPanel';
-import CustomizePanel from '../windows/CustomizePanel';
 import DriversTable from '../windows/DriversTable';
-import TrackMapPanel from '../windows/TrackMapPanel';
-import UserManual from '../windows/UserManual';
 import VoteHistory from '../windows/VoteHistory';
-import GraphicEditor from '../windows/GraphicEditor';
 import HotkeysPanel from '../windows/HotkeysPanel';
 import DriversRoster from '../windows/DriversRoster';
-import SponsorsPanel from '../windows/SponsorsPanel';
 import { CategorySection, AnalysisSection, QualifyingSection, RaceAlertsBar, CorrectionsPanel } from './RaceSections';
 import { formatDriverName } from '../utils/formatDriverName';
 import { sectionPlacement } from '../utils/panelSections';
@@ -18,13 +12,23 @@ import banderaCuadrosImg from '../assets/bandera cuadros.jpg';
 import { createTranslator } from '../i18n/translations';
 import { COPYRIGHT } from '../data/copyright';
 import { findMostRelevantBattle } from '../utils/battle';
+import { formationCategory } from '../utils/raceVisuals';
 import { comboFromEvent, shouldIgnoreHotkey, findHotkeyAction } from '../utils/hotkeys';
+import { defaultPositions } from '../data/defaultPositions';
+
+// Pestañas pesadas que sólo se muestran al abrirlas: se descargan recién entonces (archivos .js aparte).
+const SettingsPanel = lazy(() => import('../windows/SettingsPanel'));
+const CustomizePanel = lazy(() => import('../windows/CustomizePanel'));
+const TrackMapPanel = lazy(() => import('../windows/TrackMapPanel'));
+const UserManual = lazy(() => import('../windows/UserManual'));
+const GraphicEditor = lazy(() => import('../windows/GraphicEditor'));
+const SponsorsPanel = lazy(() => import('../windows/SponsorsPanel'));
 
 let ipcRenderer = null;
 if (typeof window !== 'undefined' && typeof window.require === 'function') {
   try {
     ipcRenderer = window.require('electron').ipcRenderer;
-  } catch (e) { }
+  } catch { /* no crítico: se ignora */ }
 }
 
 const colors = {
@@ -191,36 +195,58 @@ const StartingLightsIndicator = ({ visible, step, t }) => {
   );
 };
 
-const WeatherControl = ({ id, label, config, isActive, onToggle, setConfig, t }) => {
+// CLIMA (Open-Meteo): datos actuales + las próximas horas (formato PRONÓSTICO de la gráfica del clima)
+const WEATHER_REFRESH_MS = 10 * 60 * 1000;   // actualización automática cada 10 min (PANEL > CLIMA > AUTO)
+
+async function fetchWeatherData(lat, lon, place = null) {
+  const res = await fetch(
+    `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true&hourly=temperature_2m,weathercode,relative_humidity_2m,apparent_temperature,precipitation_probability&windspeed_unit=kmh&timezone=auto&forecast_days=2`
+  );
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const data = await res.json();
+  const cw = data.current_weather;
+  if (!cw) throw new Error('Sin datos de clima');
+  const h = data.hourly || {};
+  // Índice de la hora actual dentro del array horario para sacar humedad / ST / lluvia
+  const hourIdx = h.time?.findIndex(tm => tm === cw.time?.slice(0, 13) + ':00' || tm.startsWith(cw.time?.slice(0, 13)));
+  const idx = hourIdx >= 0 ? hourIdx : 0;
+  const forecast = [];
+  for (let i = idx + 1; i < (h.time?.length || 0) && forecast.length < 6; i += 1) {
+    forecast.push({ time: String(h.time[i]).slice(11, 16), temp: h.temperature_2m?.[i] ?? null, code: h.weathercode?.[i] ?? null, precip: h.precipitation_probability?.[i] ?? null });
+  }
+  return {
+    temp: cw.temperature,
+    windSpeed: cw.windspeed,
+    windDir: cw.winddirection,
+    weathercode: cw.weathercode,
+    feelsLike: h.apparent_temperature?.[idx] ?? null,
+    humidity: h.relative_humidity_2m?.[idx] ?? null,
+    precipProb: h.precipitation_probability?.[idx] ?? null,
+    forecast,
+    place,
+    updatedAt: Date.now()
+  };
+}
+
+// Coordenadas del origen guardado del clima: el circuito (si sigue elegido, toma el actual) o la ubicación de la PC
+function weatherSourceCoords(cfg) {
+  const src = cfg?.weatherSource;
+  if (!src) return null;
+  if (src.kind === 'circuit') {
+    const c = circuitosData.find(x => x.nombre === cfg.circuito);
+    if (c) return { lat: c.lat, lon: c.lon, place: null };
+  }
+  return Number.isFinite(src.lat) && Number.isFinite(src.lon) ? { lat: src.lat, lon: src.lon, place: src.place || null } : null;
+}
+
+const WeatherControl = ({ id, label, config, isActive, onToggle, onSave, t }) => {
   const [loading, setLoading] = useState(false);
 
-  const fetchWeatherAt = async (lat, lon, place = null) => {
+  const fetchWeatherAt = async (lat, lon, place, source) => {
     setLoading(true);
     try {
-      const weatherRes = await fetch(
-        `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true&hourly=relative_humidity_2m,apparent_temperature,precipitation_probability&windspeed_unit=kmh&timezone=auto`
-      );
-      const weatherData = await weatherRes.json();
-      const cw = weatherData.current_weather;
-
-      // Buscamos el índice de la hora actual dentro del array horario para sacar humedad/ST/lluvia
-      const hourIdx = weatherData.hourly?.time?.findIndex(t => t === cw.time?.slice(0, 13) + ':00' || t.startsWith(cw.time?.slice(0, 13)));
-      const idx = hourIdx >= 0 ? hourIdx : 0;
-
-      const newWeatherData = {
-        temp: cw.temperature,
-        windSpeed: cw.windspeed,
-        windDir: cw.winddirection,
-        weathercode: cw.weathercode,
-        feelsLike: weatherData.hourly?.apparent_temperature?.[idx] ?? null,
-        humidity: weatherData.hourly?.relative_humidity_2m?.[idx] ?? null,
-        precipProb: weatherData.hourly?.precipitation_probability?.[idx] ?? null,
-        place,
-      };
-
-      const newConfig = { ...config, weatherData: newWeatherData };
-      setConfig(newConfig);
-      if (ipcRenderer) await ipcRenderer.invoke('save-config', newConfig);
+      const weatherData = await fetchWeatherData(lat, lon, place);
+      await onSave({ weatherData, weatherSource: source });
     } catch (error) {
       console.error(error);
       alert(t('panel.weatherError'));
@@ -231,7 +257,8 @@ const WeatherControl = ({ id, label, config, isActive, onToggle, setConfig, t })
   const fetchWeather = () => {
     const circuitoSeleccionado = circuitosData.find(c => c.nombre === config.circuito);
     if (!circuitoSeleccionado) { alert(t('panel.weatherNeedCircuit')); return; }
-    return fetchWeatherAt(circuitoSeleccionado.lat, circuitoSeleccionado.lon);
+    const { lat, lon } = circuitoSeleccionado;
+    return fetchWeatherAt(lat, lon, null, { kind: 'circuit', lat, lon, circuit: circuitoSeleccionado.nombre });
   };
 
   // Ubicación aproximada de la PC por IP (navigator.geolocation en Electron/Windows
@@ -253,10 +280,13 @@ const WeatherControl = ({ id, label, config, isActive, onToggle, setConfig, t })
     }
     setLoading(false);
     if (!loc) { alert(t('panel.weatherLocError')); return; }
-    return fetchWeatherAt(loc.lat, loc.lon, loc.place);
+    return fetchWeatherAt(loc.lat, loc.lon, loc.place, { kind: 'here', lat: loc.lat, lon: loc.lon, place: loc.place });
   };
 
   const wd = config.weatherData;
+  const src = config.weatherSource;
+  const updated = wd?.updatedAt ? new Date(wd.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : null;
+  const srcLabel = src ? (src.kind === 'here' ? (src.place || t('panel.weatherSrcHere')) : (config.circuito || src.circuit || '')) : '';
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
@@ -272,36 +302,19 @@ const WeatherControl = ({ id, label, config, isActive, onToggle, setConfig, t })
       <div style={{ ...inputStyle, textTransform: 'none', cursor: 'default', display: 'flex', alignItems: 'center', minHeight: '32px' }}>
         {wd ? (
           <span style={{ fontSize: '10px' }}>
-            {Math.round(wd.temp)}°C · ST {wd.feelsLike !== null ? Math.round(wd.feelsLike) + '°' : '-'} · <Icon name="air" /> {wd.windSpeed !== undefined ? Math.round(wd.windSpeed) : '-'}km/h · <Icon name="water_drop" /> {wd.humidity !== null ? Math.round(wd.humidity) + '%' : '-'} · <Icon name="rainy" /> {wd.precipProb !== null ? Math.round(wd.precipProb) + '%' : '-'}{wd.place ? <> · <Icon name="location_on" /> {wd.place}</> : ''}
+            {Math.round(wd.temp)}°C · ST {wd.feelsLike !== null && wd.feelsLike !== undefined ? Math.round(wd.feelsLike) + '°' : '-'} · <Icon name="air" /> {wd.windSpeed !== undefined ? Math.round(wd.windSpeed) : '-'}km/h · <Icon name="water_drop" /> {wd.humidity !== null && wd.humidity !== undefined ? Math.round(wd.humidity) + '%' : '-'} · <Icon name="rainy" /> {wd.precipProb !== null && wd.precipProb !== undefined ? Math.round(wd.precipProb) + '%' : '-'}{wd.place ? <> · <Icon name="location_on" /> {wd.place}</> : ''}
           </span>
         ) : (
           <span style={{ color: colors.textMuted, fontSize: '10px' }}>{t('panel.weatherNoData')}</span>
         )}
       </div>
+      <label title={src ? t('panel.weatherAutoTitle', { src: srcLabel }) : t('panel.weatherAutoNeedSrc')} style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '9px', color: colors.textMuted, fontWeight: 'bold', cursor: src ? 'pointer' : 'not-allowed', opacity: src ? 1 : 0.6 }}>
+        <input type="checkbox" disabled={!src} checked={!!config.weatherAutoRefresh} onChange={(e) => onSave({ weatherAutoRefresh: e.target.checked })} />
+        {t('panel.weatherAuto')}
+        {updated && <span style={{ marginLeft: 'auto', fontWeight: 'normal' }}>{t('panel.weatherUpdatedAt', { time: updated })}</span>}
+      </label>
     </div>
   );
-};
-
-// Debe quedar idéntico al defaultPositions de main.cjs (ahí vive la copia que se usa
-// para sembrar posiciones.json en el primer arranque).
-export const defaultPositions = {
-  relator: { x: 380, y: 935, scale: 1 }, comentarista: { x: 380, y: 860, scale: 1 }, notero1: { x: 380, y: 785, scale: 1 },
-  notero2: { x: 380, y: 710, scale: 1 }, circuito: { x: 380, y: 635, scale: 1 }, clima: { x: 380, y: 520, scale: 1 },
-  ticker: { x: 0, y: 1020, scale: 1 }, grid: { x: 320, y: 180, scale: 1 }, finalResults: { x: 395, y: 190, scale: 1 },
-  tower: { x: 20, y: 20, scale: 1 }, winner: { x: 680, y: 800, scale: 1 }, flags: { x: 640, y: 30, scale: 1 },
-  fastestLap: { x: 1440, y: 110, scale: 1 }, battle: { x: 730, y: 140, scale: 1 }, customZocalo: { x: 380, y: 420, scale: 1 },
-  votingQR: { x: 20, y: 745, scale: 1 }, votingResults: { x: 1440, y: 655, scale: 1 }, lapCounter: { x: 1740, y: 20, scale: 1 },
-  virtualChamp: { x: 1440, y: 235, scale: 1 }, pitStop: { x: 850, y: 900, scale: 1 },
-  startingLights: { x: 775, y: 470, scale: 1 }, lapTimesHistory: { x: 950, y: 350, scale: 1 },
-  trackAlert: { x: 950, y: 610, scale: 1 }, penaltyAlert: { x: 950, y: 500, scale: 1 },
-  driverInfo: { x: 380, y: 335, scale: 1 },
-  branding: { x: 1640, y: 900, scale: 1 },
-  evento: { x: 560, y: 20, scale: 1 },
-  sectors: { x: 1440, y: 360, scale: 1 }, gapChart: { x: 730, y: 640, scale: 1 },
-  gainers: { x: 1440, y: 470, scale: 1 }, qualifying: { x: 20, y: 20, scale: 1 },
-  trackMap: { x: 1460, y: 610, scale: 1 }, raceNotice: { x: 760, y: 820, scale: 1 },
-  circuitIntro: { x: 470, y: 230, scale: 1 }, circuitRecord: { x: 1500, y: 700, scale: 1 },
-  lapCompare: { x: 640, y: 880, scale: 1 }, windVectors: { x: 0, y: 0, scale: 1 }, sponsorLive: { x: 1560, y: 40, scale: 1 }
 };
 
 const GRAPHIC_IDS = [
@@ -309,7 +322,7 @@ const GRAPHIC_IDS = [
   'grid', 'finalResults', 'winner', 'flags', 'fastestLap', 'driverInfo', 'battle', 'customZocalo',
   'votingQR', 'votingResults', 'lapCounter', 'virtualChamp', 'startingLights',
   'lapTimesHistory', 'trackAlert', 'penaltyAlert', 'branding', 'evento',
-    'sectors', 'gapChart', 'gainers', 'qualifying', 'trackMap', 'raceNotice', 'circuitIntro', 'circuitRecord', 'lapCompare', 'windVectors'
+    'sectors', 'gapChart', 'gainers', 'qualifying', 'trackMap', 'raceNotice', 'circuitIntro', 'circuitRecord', 'lapCompare', 'windVectors', 'formationLap'
 ];
 
 const TAB_IDS = ['panel', 'campeonato', 'votaciones', 'sanciones', 'cloud', 'zocalos', 'pilotos', 'sponsors', 'circuito', 'ajustes', 'personalizar', 'editor', 'atajos', 'manual'];
@@ -420,6 +433,33 @@ export default function ControlPanel() {
   const stewardUrl = isTunnelReady ? localIp.replace('/votar', '/comisarios') : '';
 
   useEffect(() => { configRef.current = config; }, [config]);
+
+  // CLIMA AUTOMÁTICO: con la casilla activada y un origen ya elegido (circuito o ubicación de la PC), revisa cada minuto
+  // y vuelve a pedir el clima cuando el último dato tiene 10 min o más. Los errores no muestran alertas (se reintenta solo).
+  const weatherBusyRef = useRef(false);
+  useEffect(() => {
+    if (!config.weatherAutoRefresh || !config.weatherSource) return undefined;
+    const check = async () => {
+      const cur = configRef.current;
+      if (weatherBusyRef.current || !cur.weatherAutoRefresh) return;
+      const age = Date.now() - (cur.weatherData?.updatedAt || 0);
+      if (age < WEATHER_REFRESH_MS) return;
+      const at = weatherSourceCoords(cur);
+      if (!at) return;
+      weatherBusyRef.current = true;
+      try {
+        const weatherData = await fetchWeatherData(at.lat, at.lon, at.place);
+        const latest = { ...configRef.current, weatherData };
+        configRef.current = latest;
+        setConfig(latest);
+        if (ipcRenderer) await ipcRenderer.invoke('save-config', latest);
+      } catch (e) { console.error('[clima auto]', e); }
+      weatherBusyRef.current = false;
+    };
+    check();
+    const iv = setInterval(check, 60 * 1000);
+    return () => clearInterval(iv);
+  }, [config.weatherAutoRefresh, config.weatherSource]);
   useEffect(() => { activeFlagsRef.current = activeFlags; }, [activeFlags]);
 
   useEffect(() => {
@@ -668,7 +708,8 @@ export default function ControlPanel() {
       };
   const panelTableStyle = {
     flex: panelSideBySide ? 1 : '1 0 auto', minHeight: panelSideBySide ? undefined : '320px', padding: '20px',
-    overflowY: panelSideBySide ? 'auto' : 'visible', backgroundColor: colors.bgApp, position: 'relative',
+    minWidth: 0, boxSizing: 'border-box',
+    overflowY: panelSideBySide ? 'auto' : 'visible', overflowX: panelSideBySide ? 'hidden' : 'visible', backgroundColor: colors.bgApp, position: 'relative',
     order: panelButtonsFirst ? 2 : 0
   };
   const panelDividerStyle = {
@@ -743,6 +784,33 @@ export default function ControlPanel() {
     else { if (ipcRenderer) ipcRenderer.send('preview-positions', newPositions); }
   };
 
+  // Declaradas antes de handleScrape, que las usa al recibir datos.
+  const applyFlags = (newFlags) => {
+    activeFlagsRef.current = newFlags;
+    setActiveFlags(newFlags);
+    if (ipcRenderer) ipcRenderer.send('toggle-flag', newFlags);
+  };
+
+  // BANDERAS AUTOMÁTICAS (Race Monitor): amarilla -> auto de seguridad, roja -> bandera roja, verde -> las baja.
+  // Solo reacciona cuando el estado de pista CAMBIA y solo baja las banderas que puso él mismo, así no pisa
+  // lo que el operador active a mano (azul, negra, cuadros) ni una bandera manual.
+  const handleAutoFlag = (rawFlag) => {
+    const flag = (rawFlag || '').toLowerCase();
+    if (!flag || flag === lastRmFlagRef.current) return;
+    lastRmFlagRef.current = flag;
+    if (configRef.current.autoFlags === false) return;
+
+    const target = flag.includes('red') ? 'red' : (flag.includes('yellow') ? 'tricolor' : null);
+    if (target) {
+      autoFlagRef.current = target;
+      applyFlags({ ...NO_FLAGS, [target]: true });
+    } else if (autoFlagRef.current) {
+      const own = autoFlagRef.current;
+      autoFlagRef.current = null;
+      if (activeFlagsRef.current?.[own]) applyFlags({ ...NO_FLAGS });
+    }
+  };
+
   const handleScrape = async () => {
     // Devuelve 'ok' | 'error' | 'busy' | 'nocode' para que el botón de AJUSTES pueda animar el resultado
     if (isScrapingRef.current) return 'busy';
@@ -756,7 +824,7 @@ export default function ControlPanel() {
     let finalCode = rawCode;
     if (provider === 'speedhive') {
       if (rawCode.includes('speedhive.mylaps.com')) {
-        const match = rawCode.match(/livetiming\/([a-zA-Z0-9\-]+)/);
+        const match = rawCode.match(/livetiming\/([a-zA-Z0-9-]+)/);
         if (match) finalCode = match[1];
       }
       finalCode = finalCode.replace(/\/active\/?$/i, '').replace(/^\/+|\/+$/g, '');
@@ -821,17 +889,20 @@ export default function ControlPanel() {
     }
   };
 
+  // Al prender o apagar la lectura automática la barra de progreso arranca de cero (ajuste durante el render).
+  const [prevAutoScrape, setPrevAutoScrape] = useState(autoScrape);
+  if (prevAutoScrape !== autoScrape) {
+    setPrevAutoScrape(autoScrape);
+    setScrapeProgress(0);
+  }
+
+  // Los intervalos se crean sólo al cambiar autoScrape, pero cada lectura usa la versión actual de handleScrape.
+  const scrapeTick = useEffectEvent(() => handleScrape());
   useEffect(() => {
-    let progressInterval;
-    let scrapeInterval;
-    if (autoScrape) {
-      handleScrape();
-      setScrapeProgress(0);
-      progressInterval = setInterval(() => { setScrapeProgress(prev => (prev >= 100 ? 0 : prev + 1)); }, 10);
-      scrapeInterval = setInterval(() => { handleScrape(); setScrapeProgress(0); }, 1000);
-    } else {
-      setScrapeProgress(0);
-    }
+    if (!autoScrape) return undefined;
+    scrapeTick();
+    const progressInterval = setInterval(() => { setScrapeProgress(prev => (prev >= 100 ? 0 : prev + 1)); }, 10);
+    const scrapeInterval = setInterval(() => { scrapeTick(); setScrapeProgress(0); }, 1000);
     return () => { clearInterval(progressInterval); clearInterval(scrapeInterval); };
   }, [autoScrape]);
 
@@ -864,37 +935,11 @@ export default function ControlPanel() {
     if (saved === false) alert(t('campeonato.alertTemplateError'));
   };
 
-  const applyFlags = (newFlags) => {
-    activeFlagsRef.current = newFlags;
-    setActiveFlags(newFlags);
-    if (ipcRenderer) ipcRenderer.send('toggle-flag', newFlags);
-  };
-
   const handleToggleFlag = (type) => {
     const newFlags = { ...NO_FLAGS };
     if (!activeFlags[type]) newFlags[type] = true;
     autoFlagRef.current = null; // el operador toma el control: el modo automático ya no toca esta bandera
     applyFlags(newFlags);
-  };
-
-  // BANDERAS AUTOMÁTICAS (Race Monitor): amarilla -> auto de seguridad, roja -> bandera roja, verde -> las baja.
-  // Solo reacciona cuando el estado de pista CAMBIA y solo baja las banderas que puso él mismo, así no pisa
-  // lo que el operador active a mano (azul, negra, cuadros) ni una bandera manual.
-  const handleAutoFlag = (rawFlag) => {
-    const flag = (rawFlag || '').toLowerCase();
-    if (!flag || flag === lastRmFlagRef.current) return;
-    lastRmFlagRef.current = flag;
-    if (configRef.current.autoFlags === false) return;
-
-    const target = flag.includes('red') ? 'red' : (flag.includes('yellow') ? 'tricolor' : null);
-    if (target) {
-      autoFlagRef.current = target;
-      applyFlags({ ...NO_FLAGS, [target]: true });
-    } else if (autoFlagRef.current) {
-      const own = autoFlagRef.current;
-      autoFlagRef.current = null;
-      if (activeFlagsRef.current?.[own]) applyFlags({ ...NO_FLAGS });
-    }
   };
 
   const handleSelectPhotosFolder = async () => {
@@ -1075,7 +1120,8 @@ export default function ControlPanel() {
       qualifying: () => handleToggleGraphic('qualifying'), sectors: handleToggleSectors, gapChart: handleToggleGap,
       gainers: () => handleToggleGraphic('gainers'), trackMap: () => handleToggleGraphic('trackMap'),
       circuitIntro: () => handleToggleGraphic('circuitIntro'), circuitRecord: () => handleToggleGraphic('circuitRecord'),
-      lapCompare: handleToggleLapCompare, windVectors: () => handleToggleGraphic('windVectors')
+      lapCompare: handleToggleLapCompare, windVectors: () => handleToggleGraphic('windVectors'),
+      formationLap: () => handleToggleGraphic('formationLap')
     };
   });
 
@@ -1234,7 +1280,7 @@ export default function ControlPanel() {
       </div>
 
       {activeTab === 'panel' && (
-        <div ref={panelContainerRef} style={{ display: 'flex', flexDirection: panelSideBySide ? 'row' : 'column', flex: 1, overflow: panelSideBySide ? 'hidden' : 'auto' }}>
+        <div ref={panelContainerRef} style={{ display: 'flex', flexDirection: panelSideBySide ? 'row' : 'column', flex: 1, minWidth: 0, overflowY: panelSideBySide ? 'hidden' : 'auto', overflowX: 'hidden' }}>
           <style>{`.panel-section > :last-child { margin-bottom: 0 !important; }`}</style>
           <div ref={panelButtonsRef} style={panelButtonsStyle}>
             <div className="panel-section" style={{ ...panelSectionStyle, ...sectionPlacement(config, 'flags') }}>
@@ -1278,9 +1324,22 @@ export default function ControlPanel() {
               <GraphicControl id="notero2" label={t('graphics.notero2')} value={config.notero2} isActive={graphics.notero2} onChange={handleChange} onBlur={handleSave} onToggle={handleToggleGraphic} t={t} />
               <SearchSelectControl id="circuito" label={t('graphics.circuito')} value={config.circuito} options={circuitosData} isActive={graphics.circuito} onChange={(v) => setConfig({ ...config, circuito: v })} onCommit={handleCommitCircuit} onToggle={handleToggleGraphic} t={t} />
               <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                <WeatherControl id="clima" label={t('graphics.clima')} config={config} setConfig={setConfig} isActive={graphics.clima} onToggle={handleToggleGraphic} t={t} />
+                <WeatherControl id="clima" label={t('graphics.clima')} config={config} onSave={handleDirectSave} isActive={graphics.clima} onToggle={handleToggleGraphic} t={t} />
                 <button onClick={() => handleToggleGraphic('windVectors')} title={t('panel.windVectorsTitle')} style={btnStyle(!!graphics.windVectors)}>{t('graphics.windVectors')}</button>
               </div>
+                          {/* VUELTA DE FORMACIÓN: la categoría que está girando (la de CATEGORÍA o la que informa la fuente) */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginBottom: '15px' }}>
+              <button onClick={() => handleToggleGraphic('formationLap')} title={t('panel.formationTitle')} style={btnStyle(!!graphics.formationLap)}><Icon name="flag" />{t('graphics.formationLap')}</button>
+              <input
+                name="formationLapCategory" value={config.formationLapCategory || ''} onChange={handleChange} onBlur={handleSave}
+                placeholder={formationCategory({ ...config, formationLapCategory: '' }, sessionInfo) || t('panel.formationCategoryPlaceholder')}
+                title={t('panel.formationCategoryHint')} style={{ ...inputStyle, textTransform: 'none' }}
+              />
+              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '11px', color: colors.textMuted, cursor: 'pointer' }}>
+                <input type="checkbox" checked={config.formationLapInTower !== false} onChange={(e) => handleDirectSave('formationLapInTower', e.target.checked)} />
+                {t('panel.formationInTower')}
+              </label>
+            </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
                 <button onClick={() => handleToggleGraphic('evento')} title={t('panel.eventoTitle')} style={btnStyle(!!graphics.evento)}>{t('graphics.evento')}</button>
                 <input name="productora" value={config.productora || ''} onChange={handleChange} onBlur={handleSave} style={inputStyle} placeholder={t('panel.productoraPlaceholder')} />
@@ -1392,6 +1451,10 @@ export default function ControlPanel() {
                   <option value="tour">{t('panel.introModeTour')}</option>
                   <option value="curves">{t('panel.introModeCurves')}</option>
                 </select>
+                <label title={t('panel.introWeatherFxTitle')} style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '9px', color: colors.textMuted, fontWeight: 'bold', cursor: 'pointer' }}>
+                  <input type="checkbox" checked={config.circuitIntroWeatherFx !== false} onChange={(e) => handleDirectSave('circuitIntroWeatherFx', e.target.checked)} />
+                  {t('panel.introWeatherFx')}
+                </label>
                 {config.circuitIntroMode === 'tour' && (
                   <label style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '9px', color: colors.textMuted, fontWeight: 'bold' }}>
                     {t('panel.introTourSec')}
@@ -1583,6 +1646,8 @@ export default function ControlPanel() {
             />
             <DriversTable
               drivers={drivers}
+              config={config}
+              onConfigChange={handleDirectSave}
               colors={colors}
               activeDriverNumber={activeDriverInfo?.number}
               onToggleInfo={handleToggleDriverInfo}
@@ -1629,7 +1694,7 @@ export default function ControlPanel() {
               {t('campeonato.emptyState', { btn: t.i('campeonato.loadExcelBtn') })}
             </div>
           ) : (
-            <div style={{ width: '100%', overflowX: 'auto', backgroundColor: colors.bgPanel, borderRadius: '8px', border: `1px solid ${colors.border}` }}>
+            <div style={{ width: '100%', boxSizing: 'border-box', overflowX: 'auto', backgroundColor: colors.bgPanel, borderRadius: '8px', border: `1px solid ${colors.border}` }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', textAlign: 'center' }}>
                 <thead>
                   <tr style={{ backgroundColor: colors.bgInput, color: colors.textMuted, borderBottom: `2px solid ${colors.border}` }}>
@@ -1947,15 +2012,21 @@ export default function ControlPanel() {
       )}
 
       {activeTab === 'ajustes' && (
-        <SettingsPanel config={config} handleDirectSave={handleDirectSave} handleScrape={handleScrape} colors={colors} inputStyle={inputStyle} btnStyle={btnStyle} t={t} language={language} setLanguage={setLanguage} onExportSettings={handleExportSettings} onImportSettings={handleImportSettings} onResetAllPositions={handleResetAllPositions} scrapeErrorText={scrapeErrorText} onGetNetworkUrls={handleGetNetworkUrls} onGetDiagnostics={handleGetDiagnostics} onOpenLogs={handleOpenLogs} onGetOrbitsStatus={handleGetOrbitsStatus} />
+        <Suspense fallback={null}>
+          <SettingsPanel config={config} handleDirectSave={handleDirectSave} handleScrape={handleScrape} colors={colors} inputStyle={inputStyle} btnStyle={btnStyle} t={t} language={language} setLanguage={setLanguage} onExportSettings={handleExportSettings} onImportSettings={handleImportSettings} onResetAllPositions={handleResetAllPositions} scrapeErrorText={scrapeErrorText} onGetNetworkUrls={handleGetNetworkUrls} onGetDiagnostics={handleGetDiagnostics} onOpenLogs={handleOpenLogs} onGetOrbitsStatus={handleGetOrbitsStatus} />
+        </Suspense>
       )}
 
       {activeTab === 'personalizar' && (
-        <CustomizePanel drivers={drivers} sessionInfo={sessionInfo} config={config} positions={positions} defaultPositions={defaultPositions} onUpdatePositions={handleUpdatePositions} onSelectLogo={handleSelectLogo} onSelectCategoryLogo={handleSelectCategoryLogo} onSelectPhotosFolder={handleSelectPhotosFolder} onClearLogo={() => handleDirectSave('logo', null)} onClearCategoryLogo={() => handleDirectSave('categoryLogo', null)} onClearPhotosFolder={() => handleDirectSave('photosPath', null)} onConfigChange={handleDirectSave} onSelectElementImage={handleSelectElementImage} colors={colors} inputStyle={inputStyle} btnStyle={btnStyle} t={t} />
+        <Suspense fallback={null}>
+          <CustomizePanel drivers={drivers} sessionInfo={sessionInfo} config={config} positions={positions} defaultPositions={defaultPositions} onUpdatePositions={handleUpdatePositions} onSelectLogo={handleSelectLogo} onSelectCategoryLogo={handleSelectCategoryLogo} onSelectPhotosFolder={handleSelectPhotosFolder} onClearLogo={() => handleDirectSave('logo', null)} onClearCategoryLogo={() => handleDirectSave('categoryLogo', null)} onClearPhotosFolder={() => handleDirectSave('photosPath', null)} onConfigChange={handleDirectSave} onSelectElementImage={handleSelectElementImage} colors={colors} inputStyle={inputStyle} btnStyle={btnStyle} t={t} />
+        </Suspense>
       )}
 
       {activeTab === 'editor' && (
-        <GraphicEditor drivers={drivers} sessionInfo={sessionInfo} config={config} positions={positions} onConfigChange={handleDirectSave} colors={colors} inputStyle={inputStyle} btnStyle={btnStyle} t={t} />
+        <Suspense fallback={null}>
+          <GraphicEditor drivers={drivers} sessionInfo={sessionInfo} config={config} positions={positions} onConfigChange={handleDirectSave} colors={colors} inputStyle={inputStyle} btnStyle={btnStyle} t={t} />
+        </Suspense>
       )}
 
       {activeTab === 'atajos' && (
@@ -1963,11 +2034,15 @@ export default function ControlPanel() {
       )}
 
       {activeTab === 'circuito' && (
-        <TrackMapPanel config={config} onConfigChange={handleDirectSave} colors={colors} inputStyle={inputStyle} btnStyle={btnStyle} t={t} />
+        <Suspense fallback={null}>
+          <TrackMapPanel config={config} onConfigChange={handleDirectSave} colors={colors} inputStyle={inputStyle} btnStyle={btnStyle} t={t} />
+        </Suspense>
       )}
 
       {activeTab === 'manual' && (
-        <UserManual colors={colors} t={t} language={language} />
+        <Suspense fallback={null}>
+          <UserManual colors={colors} t={t} language={language} />
+        </Suspense>
       )}
 
       {activeTab === 'zocalos' && (
@@ -1997,7 +2072,9 @@ export default function ControlPanel() {
       )}
 
       {activeTab === 'sponsors' && (
-        <SponsorsPanel config={config} positions={positions} drivers={drivers} sessionInfo={sessionInfo} graphicIds={GRAPHIC_IDS} onConfigChange={handleDirectSave} colors={colors} inputStyle={inputStyle} btnStyle={btnStyle} t={t} />
+        <Suspense fallback={null}>
+          <SponsorsPanel config={config} positions={positions} drivers={drivers} sessionInfo={sessionInfo} graphicIds={GRAPHIC_IDS} onConfigChange={handleDirectSave} colors={colors} inputStyle={inputStyle} btnStyle={btnStyle} t={t} />
+        </Suspense>
       )}
 
       <footer style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', gap: '2px 16px', flexShrink: 0, padding: '6px 20px', borderTop: `1px solid ${colors.border}`, backgroundColor: colors.bgPanel, fontSize: '10px', color: '#666', letterSpacing: '0.3px' }}>

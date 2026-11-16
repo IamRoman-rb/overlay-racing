@@ -11,6 +11,7 @@ export const LANGUAGES = [
 export const translations = {
   es: {
     common: {
+      searchGraphic: 'Buscar gráfica por nombre...', clearSearch: 'Borrar búsqueda', noGraphicFound: 'Ninguna gráfica coincide con la búsqueda.',
       searchPlaceholder: 'ESCRIBÍ PARA BUSCAR...', noMatches: 'Sin coincidencias: se usará el texto escrito (el clima necesita uno de la lista)', selectPlaceholder: 'SELECCIONAR...',
       selectCurvePlaceholder: 'SELECCIONAR CURVA...',
       selectDriverPlaceholder: 'SELECCIONAR PILOTO...',
@@ -26,7 +27,7 @@ export const translations = {
       ajustes: 'AJUSTES', personalizar: 'PERSONALIZAR', editor: 'EDITOR', manual: 'MANUAL', atajos: 'ATAJOS'
     },
     graphics: {
-      lapCompare: 'ÚLTIMAS VUELTAS', windVectors: 'VECTORES DE VIENTO', sponsorLive: 'SPONSOR AL AIRE',
+      lapCompare: 'ÚLTIMAS VUELTAS', windVectors: 'VECTORES DE VIENTO', sponsorLive: 'SPONSOR AL AIRE', formationLap: 'VUELTA DE FORMACIÓN',
       relator: 'RELATOR', comentarista: 'COMENTARISTA', notero1: 'NOTERO 1', notero2: 'NOTERO 2',
       circuito: 'CIRCUITO', clima: 'CLIMA', ticker: 'TIRA INFERIOR', tower: 'TORRE POSICIONES',
       grid: 'GRILLA PARTIDA', finalResults: 'RESULTADOS FINALES', winner: 'GANADOR',
@@ -73,7 +74,8 @@ export const translations = {
       rights: 'Todos los derechos reservados.', registered: 'Obra registrada en la Dirección Nacional del Derecho de Autor · Registro {registry}'
     },
     panel: {
-      windVectorsTitle: 'Flechas de viento en toda la pantalla, con la dirección y la fuerza del clima cargado', introModeTitle: 'Cómo se muestra el circuito en la presentación', introModeStatic: 'Circuito completo', introModeTour: 'Vuelta en primera persona', introModeCurves: 'Curva por curva', introTourSec: 'SEG. POR VUELTA',
+      formationTitle: 'Saca al aire la categoría que está en vuelta de formación con el texto VUELTA DE FORMACIÓN', formationCategoryPlaceholder: 'Categoría (se toma sola)', formationCategoryHint: 'Vacío = la categoría actual (PANEL > CATEGORÍA o la que informa la fuente). Escribí otra sólo si la que gira es distinta.', formationInTower: 'Mostrarlo también en la torre',
+      windVectorsTitle: 'Flechas de viento en toda la pantalla, con la dirección y la fuerza del clima cargado', introModeTitle: 'Cómo se muestra el circuito en la presentación', introWeatherFx: 'CLIMA ANIMADO', introWeatherFxTitle: 'Lluvia, nubes, nieve, niebla o tormenta de fondo según el clima cargado', introModeStatic: 'Circuito completo', introModeTour: 'Vuelta en primera persona', introModeCurves: 'Curva por curva', introTourSec: 'SEG. POR VUELTA',
       battleRecommended: 'Batalla más cercana:', battleRecommendedInfo: '{front} vs {back} · intervalo {gap} s',
       battleNone: 'Sin batallas cercanas por ahora.', battleAuto: 'Elegir la posición automáticamente (mientras no está al aire)', battleUse: 'USAR BATALLA RECOMENDADA (POS {pos})',
       flagGreen: 'VERDE',
@@ -97,6 +99,7 @@ export const translations = {
       weatherNoData: 'SIN DATOS DE CLIMA...',
       weatherLocError: '❌ No se pudo detectar la ubicación de esta PC. Revisá la conexión a internet.',
       weatherHereTitle: 'Obtener clima en la ubicación actual de esta PC',
+      weatherAuto: 'ACTUALIZAR SOLO CADA 10 MIN', weatherAutoTitle: 'Vuelve a pedir el clima de {src} cada 10 minutos', weatherAutoNeedSrc: 'Primero obtené el clima del circuito o de la ubicación de la PC', weatherUpdatedAt: 'ACT. {time}', weatherSrcHere: 'esta PC',
       trackAlertYellow: '⚠️ AMARILLA', trackAlertIncident: '🚨 INCIDENTE', emitAlert: '🔴 EMITIR ALERTA',
       gridSection: 'GRILLA', gridPrev: '[[skip_previous]] ANT', showGrid: 'MOSTRAR GRILLA', gridNext: 'SIG [[skip_next]]',
       autoScrapeStop: '⏹ DETENER (1s)', autoScrapeStart: '▶ AUTO-CARGA',
@@ -207,15 +210,25 @@ export const translations = {
       notInData: 'no está en los datos', namePlaceholder: 'Nombre', detected: 'detectada', brandPlaceholder: 'Elegí la marca', brandUnknown: 'No se encontró la marca "{name}". Elegila de la lista.',
       teamPlaceholder: 'Equipo', removeTitle: 'Borrar los datos cargados a mano', confirmRemove: '¿Borrar los datos cargados para el #{n}?',
       footer: 'Los cambios se aplican en vivo. Si dejás un campo vacío se usa lo que informa el cronometraje.',
-      suitColors: 'Color del número según el traje de la foto', suitColorsHint: 'Toma el color dominante del traje en la foto de cada piloto y lo usa de fondo del número en todas las gráficas.', suitColorsNoFolder: 'Elegí la carpeta de fotos de los pilotos en PERSONALIZAR para usar esta opción.'
+      suitColors: 'Color del número según el traje de la foto', suitColorsHint: 'Toma el color dominante del traje en la foto de cada piloto y lo usa de fondo del número en todas las gráficas.', suitColorsNoFolder: 'Elegí la carpeta de fotos de los pilotos en PERSONALIZAR para usar esta opción.',
+      remembered: 'recordada',
+      listsTitle: 'LISTADOS GUARDADOS', listsHint: 'Guardá lo cargado en esta tabla (marcas, números, nombres y equipos) con el nombre de la categoría. Cuando esa categoría vuelva a correr, cargá su listado y no tenés que completar todo de nuevo.',
+      listsNamePlaceholder: 'Nombre del listado', listsSave: 'GUARDAR LISTADO ({n})', listsNothing: 'Todavía no cargaste datos en la tabla para guardar.',
+      listsConfirmReplace: 'Ya hay un listado "{name}". ¿Reemplazarlo por lo cargado ahora?', listsConfirmLoad: '¿Cargar "{name}"? Reemplaza lo que está cargado ahora en la tabla.', listsConfirmDelete: '¿Borrar el listado "{name}"?',
+      listsCurrent: 'CATEGORÍA ACTUAL', listsInfo: '{n} pilotos · guardado el {date}', listsLoad: 'CARGAR', listsLoadTitle: 'Reemplaza lo de la tabla por este listado', listsMerge: 'SUMAR', listsMergeTitle: 'Agrega este listado a lo que ya está cargado (pisa sólo los mismos números)', listsDelete: 'Borrar listado',
+      memoryLabel: 'Recordar la marca de cada piloto por su nombre', memoryCount: '({n} recordados)', memoryForget: 'OLVIDAR TODAS',
+      memoryHint: 'Cuando elegís la marca de un piloto queda guardada con su nombre. Si vuelve a correr (aunque cambie de número o de categoría), su marca aparece sola.', memoryConfirmForget: '¿Olvidar las marcas recordadas de {n} pilotos? Lo cargado en la tabla no se borra.'
     },
     sponsors: {
+      magnet: 'Imán a la gráfica y a la pantalla (Alt para soltarlo)',
+      newGroup: 'NUEVO GRUPO', groupDefault: 'GRUPO {n}', ungrouped: 'SIN GRUPO', groupCount: '{n} sponsors · {a} activos', allActive: 'ACTIVAR TODOS', allPaused: 'PAUSAR TODOS', rotateGroup: 'ROTAR GRUPO AL AIRE', groupUp: 'Subir grupo', groupDown: 'Bajar grupo', deleteGroup: 'Borrar grupo (los sponsors quedan sin grupo)', confirmDeleteGroup: '¿Borrar el grupo "{name}"? Sus sponsors no se borran: quedan sin grupo.', groupEmpty: 'Arrastrá sponsors o archivos acá.', activeTitle: 'Los pausados no salen en las rotaciones ni en las gráficas (igual se pueden sacar al aire a mano).', active: 'ACTIVO', paused: 'PAUSADO', onAirBadge: 'AL AIRE', libraryHint: 'Arrastrá imágenes o videos desde el Explorador a la biblioteca o a un grupo. Agarrá las tarjetas de la manija o la miniatura para ordenarlas o pasarlas de grupo: el orden es el de la rotación.', dropHere: 'SOLTÁ LOS ARCHIVOS PARA AGREGARLOS', copying: 'COPIANDO ARCHIVOS...', dragCard: 'Arrastrá para ordenar o cambiar de grupo', soundTitle: 'El sonido sale sólo al aire y sólo del video que se está viendo; en el panel siempre está en silencio.', withSound: 'CON SONIDO', muted: 'SIN SONIDO', wholeGroup: 'Todo el grupo {name}',
+      editBtn: 'Recortar / quitar fondo', editTitle: 'EDITAR: {name}', editCrop: 'RECORTE', editCropHint: 'Arrastrá el recuadro amarillo para moverlo y sus esquinas para recortar. El archivo no se modifica: podés cambiar el recorte cuando quieras.', editTrim: 'RECORTAR BORDES VACÍOS', editResetCrop: 'IMAGEN ENTERA', editBg: 'FONDO', editBgHint: 'Vuelve transparente el fondo de color liso que rodea al logo (por ejemplo, blanco). Si se come parte del logo, bajá la tolerancia.', editTolerance: 'TOLERANCIA', editRemoveBg: 'QUITAR FONDO', editRestore: 'RESTAURAR ORIGINAL', editNoBg: 'No se encontró un fondo liso en los bordes (puede que ya sea transparente).', editNoTrim: 'La imagen no tiene bordes transparentes para recortar.', editError: 'No se pudo procesar la imagen.', editCancel: 'CANCELAR', editSave: 'GUARDAR',
       title: 'SPONSORS', description: 'Cargá los logos o videos de los sponsors. Podés sacarlos al aire solos o rotando, y pegarlos a cualquier gráfica: aparecen y se van junto con ella.',
-      library: 'BIBLIOTECA', addBtn: 'AGREGAR IMÁGENES O VIDEOS', rotateAll: 'ROTAR TODOS AL AIRE', stopRotate: 'DETENER ROTACIÓN', offAir: 'SACAR DEL AIRE', onAir: 'AL AIRE',
+      library: 'BIBLIOTECA', addBtn: 'AGREGAR IMÁGENES O VIDEOS', rotateAll: 'ROTAR ACTIVOS AL AIRE', stopRotate: 'DETENER ROTACIÓN', offAir: 'SACAR DEL AIRE', onAir: 'AL AIRE',
       empty: 'No hay sponsors cargados.', confirmRemove: '¿Borrar el sponsor "{name}"? Se quita también de las gráficas.',
-      liveFormat: 'FORMATO AL AIRE', formatCard: 'Recuadro con fondo', formatClean: 'Solo el logo', formatFull: 'Pantalla completa (spots)', liveWidth: 'ANCHO', rotateSec: 'SEG. POR SPONSOR',
-      liveHint: 'La posición y el tamaño del sponsor al aire se ajustan en PERSONALIZAR (SPONSOR AL AIRE).',
-      inGraphics: 'SPONSORS EN LAS GRÁFICAS', whichOnes: 'Sponsors en esta gráfica (rotan si hay varios)', width: 'ANCHO', height: 'ALTO', everySec: 'CADA (S)',
+      liveFormat: 'FORMATO AL AIRE', formatCard: 'Recuadro con fondo (los PNG salen sin fondo)', formatClean: 'Solo el logo', formatFull: 'Pantalla completa (spots)', liveWidth: 'ANCHO', rotateSec: 'SEG. POR IMAGEN',
+      liveHint: 'Al rotar, las imágenes duran los segundos elegidos y los videos se pasan completos antes de seguir. La posición y el tamaño del sponsor al aire se ajustan en PERSONALIZAR (SPONSOR AL AIRE).',
+      inGraphics: 'SPONSORS EN LAS GRÁFICAS', whichOnes: 'Sponsors en esta gráfica (rotan si hay varios)', width: 'ANCHO', height: 'ALTO', everySec: 'SEG. POR IMAGEN',
       quickPlace: 'UBICACIÓN RÁPIDA', place_above: 'ARRIBA', place_below: 'ABAJO', place_left: 'IZQUIERDA', place_right: 'DERECHA',
       clearGraphic: 'QUITAR SPONSORS DE ESTA GRÁFICA', dragHint: 'Arrastrá el recuadro amarillo para moverlo y tirá de la esquina para cambiar el tamaño.',
       oldDesigns: 'DISEÑOS CARGADOS ANTES (CLIC PARA QUITAR)'
@@ -261,7 +274,7 @@ export const translations = {
       textTypography: 'TEXTO Y TIPOGRAFÍA', fontLabel: 'TIPOGRAFÍA GENERAL',
       fontArial: 'Arial (Clásica)', fontOswald: 'Oswald (TV)', fontMontserrat: 'Montserrat (Moderna)',
       fontTeko: 'Teko (Racing)', fontExo: 'Exo 2 (Futurista)',
-      panelLayoutTitle: 'DISTRIBUCIÓN DEL PANEL', panelLayoutDesc: 'Cambia cómo se acomodan los botones y la tabla de pilotos en la pestaña PANEL.', panelLayout_left: 'Botones a la izquierda', panelLayout_right: 'Botones a la derecha', panelLayout_top: 'Botones arriba (en columnas)', panelLayout_bottom: 'Botones abajo (en columnas)', guidesToggle: 'Ejes y zona segura', gridToggle: 'Cuadrícula', snapToggle: 'Imán a los ejes', centerH: '↔ Centrar horizontal', centerV: '↕ Centrar vertical', centerBoth: '✛ Centrar', nudgeHint: 'Hacé clic en la vista y usá las flechas para mover 1 px (Shift + flechas: 10 px). Al arrastrar, mantené Alt para desactivar el imán. Línea celeste = centro, línea punteada = zona segura.', gridRowsLabel: 'FILAS POR PANTALLA (GRILLA, 2 PILOTOS POR FILA)', gridRowsOption: '{n} filas ({m} pilotos)', gridRowsOne: '1 fila (2 pilotos)', towerBlurLabel: 'DIFUMINADO DEL FONDO (TORRE)', blurNone: 'Sin difuminado', blurSoft: 'Suave', blurMedium: 'Medio', blurStrong: 'Fuerte', nameFormatLabel: 'FORMATO NOMBRES', nameOriginal: 'Original', nameUppercase: 'MAYÚSCULAS',
+      panelLayoutTitle: 'DISTRIBUCIÓN DEL PANEL', panelLayoutDesc: 'Cambia cómo se acomodan los botones y la tabla de pilotos en la pestaña PANEL.', panelLayout_left: 'Botones a la izquierda', panelLayout_right: 'Botones a la derecha', panelLayout_top: 'Botones arriba (en columnas)', panelLayout_bottom: 'Botones abajo (en columnas)', guidesToggle: 'Ejes y zona segura', gridToggle: 'Cuadrícula', snapToggle: 'Imán a los ejes', centerH: '↔ Centrar horizontal', centerV: '↕ Centrar vertical', centerBoth: '✛ Centrar', nudgeHint: 'Hacé clic en la vista y usá las flechas para mover 1 px (Shift + flechas: 10 px). Al arrastrar, mantené Alt para desactivar el imán. Línea celeste = centro, línea punteada = zona segura.', gridRowsLabel: 'FILAS POR PANTALLA (GRILLA, 2 PILOTOS POR FILA)', gridRowsOption: '{n} filas ({m} pilotos)', gridRowsOne: '1 fila (2 pilotos)', towerBlurLabel: 'DIFUMINADO DEL FONDO (TORRE)', rowAnimLabel: 'APARICIÓN DE LAS FILAS', rowAnimStep: 'ENTRE FILAS', towerPagingLabel: 'PILOTOS QUE NO ENTRAN EN LA TORRE', towerPagingHint: 'Si hay más pilotos de los que entran, las últimas filas se reemplazan por los que faltan (ej.: 20 pilotos y 15 filas: del 11 al 15, después del 16 al 20), con la aparición de filas elegida arriba.', towerPageRows: 'FILAS QUE ROTAN (ABAJO)', towerNarrowRows: 'FILAS VISIBLES (TORRE ANGOSTA)', towerPageSeconds: 'CADA TANDA', contentAnim: 'Animar textos, íconos, fotos y números (entran de a uno después de la caja)', lowerThirdMic: 'Micrófono en la caja', tickerInfoPos: 'LUGAR DE LOS DATOS (CATEGORÍA / CARRERA, VUELTAS Y TIEMPO)', tickerInfo_auto: 'Automático (el del modelo)', tickerInfo_split: 'Separados (nombre a la izquierda, vueltas y tiempo a la derecha)', tickerInfo_left: 'Todo a la izquierda', tickerInfo_right: 'Todo a la derecha', tickerInfo_topLeft: 'Pestaña arriba a la izquierda', tickerInfo_topCenter: 'Pestaña arriba al centro', tickerInfo_topRight: 'Pestaña arriba a la derecha', tickerInfo_top: 'Franja arriba de todo el ancho', tickerInfo_hidden: 'Ocultos (sólo pilotos)', tickerShowEvent: 'Categoría / carrera', tickerShowLaps: 'Vueltas', tickerShowTime: 'Tiempo total', tickerTimeField: 'TIEMPO DE CADA PILOTO', tickerTime_lastLap: 'Última vuelta', tickerTime_bestLap: 'Mejor vuelta', tickerTime_diff: 'Diferencia con el líder', tickerTime_totalTime: 'Tiempo total', tickerTime_none: 'Ninguno (sólo nombre)', climaAnimatedIcons: 'Íconos con movimiento (sol que gira, lluvia que cae...)', blurNone: 'Sin difuminado', blurSoft: 'Suave', blurMedium: 'Medio', blurStrong: 'Fuerte', nameFormatLabel: 'FORMATO NOMBRES', nameOriginal: 'Original', nameUppercase: 'MAYÚSCULAS',
       nameFirstInitialLast: 'R. Borla', nameFirstLastInitial: 'Roman B.', nameLastOnly: 'Borla (Solo Apellido)',
       formatOf: 'FORMATO DE {name}', styleOf: 'ESTILO: {name}', lowerThirdFormatLabel: 'FORMATO DE ZÓCALO',
       borderRadiusLabel: 'BORDES (REDONDEO)', radius0: '0px (Cuadrados)', radius8: '8px (Normal)',
@@ -381,7 +394,7 @@ export const translations = {
       dataRecordDriver: 'PILOTO', dataRecordNumber: 'NÚMERO', dataRecordTeam: 'EQUIPO',
       dataPhotoHint: 'La foto del piloto sale de la carpeta de fotos de PERSONALIZAR (archivo con su número, por ejemplo 7.png).',
       pathInstructions: 'Hacé click siguiendo el recorrido del circuito, en el sentido de marcha, empezando en la línea de largada (punto verde). Arrastrá un punto para moverlo; click derecho para borrarlo. El trazado se cierra solo.',
-      pathPoints: '{n} puntos (mínimo 3)', pathUndo: 'DESHACER', pathClear: 'BORRAR TRAZADO',
+      pathPoints: '{n} puntos (mínimo 3)', pathUndo: 'DESHACER', pathClear: 'BORRAR TRAZADO', fileSave: 'GUARDAR TRAZADO', fileLoad: 'CARGAR TRAZADO', fileSaveTitle: 'Guarda en un archivo el trazado punteado (largada, sentido, sectores y curvas), la imagen del mapa y los datos del circuito', fileLoadTitle: 'Carga un trazado guardado antes con GUARDAR TRAZADO', fileSaved: 'Trazado guardado en {path}', fileLoaded: 'Trazado cargado: {n} puntos y {curves} curvas.', fileError: 'No se pudo usar el archivo. {error}', fileConfirmLoad: 'Cargar un trazado reemplaza el trazado, las curvas, los sectores y los datos del circuito que hay ahora. ¿Seguir?',
       confirmClearPath: '¿Borrar todo el trazado del mapa en vivo?', mapShowImage: 'Mostrar también la imagen de fondo en el mapa en vivo (por defecto se dibuja sólo con el trazado)',
       suggestBtn: 'SUGERIR TRAZADO DESDE LA IMAGEN', suggesting: 'Buscando el circuito en la imagen…',
       suggestOkAlpha: 'Se detectó el circuito en la imagen sin fondo: {n} puntos sugeridos.',
@@ -401,6 +414,7 @@ export const translations = {
       curveDefaultName: 'Curva {n}', emptyState: 'Cargá una imagen del circuito para empezar a marcar curvas.'
     },
     driversTable: {
+      onboardShow: 'ONBOARD', onboardRemove: 'CERRAR', onboardTitle: 'Abre un espacio negro debajo del piloto en la torre para poner encima la cámara onboard desde otro programa (vMix, OBS)', onboardOn: 'ONBOARD ABIERTO: #{n} {name}', onboardOff: 'CÁMARA ONBOARD: elegí un piloto con el botón ONBOARD', onboardClose: 'CERRAR ONBOARD', onboardHeight: 'ALTO DEL ESPACIO', onboardHeightTitle: 'Alto del espacio negro en la torre clásica (320 px de ancho). 180 = 16:9. En la torre Elite se ajusta a su ancho.', onboardLock: 'FIJAR EL ESPACIO', onboardLockTitle: 'El espacio queda en la fila donde se abrió aunque el piloto cambie de posición, así la cámara puesta encima en vMix no se desalinea.',
       noData: 'No hay datos de telemetría. Conecta Speedhive o RaceMonitor para ver la tabla en vivo.',
       colPos: 'POS', colNum: 'NUM', colDriver: 'PILOTO', colLaps: 'VUELTAS', colLastLap: 'ÚLTIMA V.',
       colDiff: 'DIFERENCIA', colTotalTime: 'T. TOTAL', colBestLap: 'MEJOR V.', colAction: 'ACCIÓN',
@@ -427,6 +441,7 @@ export const translations = {
 
   en: {
     common: {
+      searchGraphic: 'Search graphic by name...', clearSearch: 'Clear search', noGraphicFound: 'No graphic matches the search.',
       searchPlaceholder: 'TYPE TO SEARCH...', noMatches: 'No matches: the typed text will be used (weather needs one from the list)', selectPlaceholder: 'SELECT...',
       selectCurvePlaceholder: 'SELECT CORNER...',
       selectDriverPlaceholder: 'SELECT DRIVER...',
@@ -442,7 +457,7 @@ export const translations = {
       ajustes: 'SETTINGS', personalizar: 'CUSTOMIZE', editor: 'EDITOR', manual: 'MANUAL', atajos: 'SHORTCUTS'
     },
     graphics: {
-      lapCompare: 'LAST LAPS', windVectors: 'WIND VECTORS', sponsorLive: 'SPONSOR ON AIR',
+      lapCompare: 'LAST LAPS', windVectors: 'WIND VECTORS', sponsorLive: 'SPONSOR ON AIR', formationLap: 'FORMATION LAP',
       relator: 'COMMENTATOR', comentarista: 'CO-COMMENTATOR', notero1: 'REPORTER 1', notero2: 'REPORTER 2',
       circuito: 'TRACK', clima: 'WEATHER', ticker: 'BOTTOM TICKER', tower: 'POSITION TOWER',
       grid: 'STARTING GRID', finalResults: 'FINAL RESULTS', winner: 'WINNER',
@@ -489,7 +504,8 @@ export const translations = {
       rights: 'All rights reserved.', registered: 'Work registered with Argentina’s National Copyright Office (DNDA) · Registration {registry}'
     },
     panel: {
-      windVectorsTitle: 'Full-screen wind arrows using the direction and strength of the loaded weather', introModeTitle: 'How the track is shown in the intro', introModeStatic: 'Whole track', introModeTour: 'First-person lap', introModeCurves: 'Corner by corner', introTourSec: 'SEC. PER LAP',
+      formationTitle: 'Puts on air the category on its formation lap with the text FORMATION LAP', formationCategoryPlaceholder: 'Category (automatic)', formationCategoryHint: 'Empty = the current category (PANEL > CATEGORY or the one reported by the source). Type another only if a different one is running.', formationInTower: 'Also show it in the tower',
+      windVectorsTitle: 'Full-screen wind arrows using the direction and strength of the loaded weather', introModeTitle: 'How the track is shown in the intro', introWeatherFx: 'ANIMATED WEATHER', introWeatherFxTitle: 'Rain, clouds, snow, fog or storm in the background according to the loaded weather', introModeStatic: 'Whole track', introModeTour: 'First-person lap', introModeCurves: 'Corner by corner', introTourSec: 'SEC. PER LAP',
       battleRecommended: 'Closest battle:', battleRecommendedInfo: '{front} vs {back} · gap {gap} s',
       battleNone: 'No close battles right now.', battleAuto: 'Pick the position automatically (while it is off air)', battleUse: 'USE RECOMMENDED BATTLE (POS {pos})',
       flagGreen: 'GREEN',
@@ -513,6 +529,7 @@ export const translations = {
       weatherNoData: 'NO WEATHER DATA...',
       weatherLocError: '❌ Could not detect the location of this PC. Check your internet connection.',
       weatherHereTitle: 'Get weather for the current location of this PC',
+      weatherAuto: 'AUTO-UPDATE EVERY 10 MIN', weatherAutoTitle: 'Fetches the weather for {src} again every 10 minutes', weatherAutoNeedSrc: 'First get the weather for the track or this PC location', weatherUpdatedAt: 'UPD. {time}', weatherSrcHere: 'this PC',
       trackAlertYellow: '⚠️ YELLOW', trackAlertIncident: '🚨 INCIDENT', emitAlert: '🔴 SEND ALERT',
       gridSection: 'STARTING GRID', gridPrev: '[[skip_previous]] PREV', showGrid: 'SHOW GRID', gridNext: 'NEXT [[skip_next]]',
       autoScrapeStop: '⏹ STOP (1s)', autoScrapeStart: '▶ AUTO-REFRESH',
@@ -623,15 +640,25 @@ export const translations = {
       notInData: 'not in the data', namePlaceholder: 'Name', detected: 'detected', brandPlaceholder: 'Choose the brand', brandUnknown: 'Brand "{name}" not found. Pick it from the list.',
       teamPlaceholder: 'Team', removeTitle: 'Delete the data entered by hand', confirmRemove: 'Delete the data entered for #{n}?',
       footer: 'Changes apply live. An empty field uses what the timing sends.',
-      suitColors: 'Number color from the suit in the photo', suitColorsHint: 'Takes the dominant suit color from each driver photo and uses it as the number background in every graphic.', suitColorsNoFolder: 'Choose the driver photos folder in CUSTOMIZE to use this option.'
+      suitColors: 'Number color from the suit in the photo', suitColorsHint: 'Takes the dominant suit color from each driver photo and uses it as the number background in every graphic.', suitColorsNoFolder: 'Choose the driver photos folder in CUSTOMIZE to use this option.',
+      remembered: 'remembered',
+      listsTitle: 'SAVED LISTS', listsHint: 'Save what is loaded in this table (brands, numbers, names and teams) under the category name. When that category races again, load its list instead of filling everything again.',
+      listsNamePlaceholder: 'List name', listsSave: 'SAVE LIST ({n})', listsNothing: 'There is no data in the table to save yet.',
+      listsConfirmReplace: 'A list "{name}" already exists. Replace it with the current data?', listsConfirmLoad: 'Load "{name}"? It replaces what is loaded in the table now.', listsConfirmDelete: 'Delete the list "{name}"?',
+      listsCurrent: 'CURRENT CATEGORY', listsInfo: '{n} drivers · saved {date}', listsLoad: 'LOAD', listsLoadTitle: 'Replaces the table with this list', listsMerge: 'ADD', listsMergeTitle: 'Adds this list to what is already loaded (only overwrites the same numbers)', listsDelete: 'Delete list',
+      memoryLabel: 'Remember each driver brand by name', memoryCount: '({n} remembered)', memoryForget: 'FORGET ALL',
+      memoryHint: 'When you choose a driver brand it is saved with the driver name. If they race again (even with another number or category), the brand appears automatically.', memoryConfirmForget: 'Forget the remembered brands of {n} drivers? The table data is not deleted.'
     },
     sponsors: {
+      magnet: 'Snap to the graphic and the screen (hold Alt to release)',
+      newGroup: 'NEW GROUP', groupDefault: 'GROUP {n}', ungrouped: 'NO GROUP', groupCount: '{n} sponsors · {a} active', allActive: 'ACTIVATE ALL', allPaused: 'PAUSE ALL', rotateGroup: 'ROTATE GROUP ON AIR', groupUp: 'Move group up', groupDown: 'Move group down', deleteGroup: 'Delete group (sponsors are kept without a group)', confirmDeleteGroup: 'Delete group "{name}"? Its sponsors are not deleted: they stay without a group.', groupEmpty: 'Drag sponsors or files here.', activeTitle: 'Paused sponsors are skipped in rotations and graphics (they can still be put on air by hand).', active: 'ACTIVE', paused: 'PAUSED', onAirBadge: 'ON AIR', libraryHint: 'Drag images or videos from Explorer onto the library or a group. Grab cards by the handle or thumbnail to reorder them or move them between groups: the order is the rotation order.', dropHere: 'DROP THE FILES TO ADD THEM', copying: 'COPYING FILES...', dragCard: 'Drag to reorder or change group', soundTitle: 'Sound plays only on air and only from the video being shown; the panel is always muted.', withSound: 'WITH SOUND', muted: 'MUTED', wholeGroup: 'Whole group {name}',
+      editBtn: 'Crop / remove background', editTitle: 'EDIT: {name}', editCrop: 'CROP', editCropHint: 'Drag the yellow box to move it and its corners to crop. The file is not changed: you can change the crop any time.', editTrim: 'TRIM EMPTY EDGES', editResetCrop: 'WHOLE IMAGE', editBg: 'BACKGROUND', editBgHint: 'Makes the solid background around the logo transparent (white, for example). If it eats part of the logo, lower the tolerance.', editTolerance: 'TOLERANCE', editRemoveBg: 'REMOVE BACKGROUND', editRestore: 'RESTORE ORIGINAL', editNoBg: 'No solid background found on the edges (it may already be transparent).', editNoTrim: 'The image has no transparent edges to trim.', editError: 'The image could not be processed.', editCancel: 'CANCEL', editSave: 'SAVE',
       title: 'SPONSORS', description: 'Load the sponsor logos or videos. Put them on air alone or rotating, and attach them to any graphic: they show and hide with it.',
-      library: 'LIBRARY', addBtn: 'ADD IMAGES OR VIDEOS', rotateAll: 'ROTATE ALL ON AIR', stopRotate: 'STOP ROTATION', offAir: 'TAKE OFF AIR', onAir: 'ON AIR',
+      library: 'LIBRARY', addBtn: 'ADD IMAGES OR VIDEOS', rotateAll: 'ROTATE ACTIVE ON AIR', stopRotate: 'STOP ROTATION', offAir: 'TAKE OFF AIR', onAir: 'ON AIR',
       empty: 'No sponsors loaded.', confirmRemove: 'Delete sponsor "{name}"? It is also removed from the graphics.',
-      liveFormat: 'ON-AIR FORMAT', formatCard: 'Box with background', formatClean: 'Logo only', formatFull: 'Full screen (spots)', liveWidth: 'WIDTH', rotateSec: 'SEC. PER SPONSOR',
-      liveHint: 'The on-air sponsor position and size are set in CUSTOMIZE (SPONSOR ON AIR).',
-      inGraphics: 'SPONSORS ON GRAPHICS', whichOnes: 'Sponsors on this graphic (they rotate if several)', width: 'WIDTH', height: 'HEIGHT', everySec: 'EVERY (S)',
+      liveFormat: 'ON-AIR FORMAT', formatCard: 'Box with background (PNGs show without it)', formatClean: 'Logo only', formatFull: 'Full screen (spots)', liveWidth: 'WIDTH', rotateSec: 'SEC. PER IMAGE',
+      liveHint: 'When rotating, images last the chosen seconds and videos play to the end before moving on. The on-air sponsor position and size are set in CUSTOMIZE (SPONSOR ON AIR).',
+      inGraphics: 'SPONSORS ON GRAPHICS', whichOnes: 'Sponsors on this graphic (they rotate if several)', width: 'WIDTH', height: 'HEIGHT', everySec: 'SEC. PER IMAGE',
       quickPlace: 'QUICK PLACEMENT', place_above: 'ABOVE', place_below: 'BELOW', place_left: 'LEFT', place_right: 'RIGHT',
       clearGraphic: 'REMOVE SPONSORS FROM THIS GRAPHIC', dragHint: 'Drag the yellow box to move it and pull the corner to resize.',
       oldDesigns: 'DESIGNS LOADED BEFORE (CLICK TO REMOVE)'
@@ -677,7 +704,7 @@ export const translations = {
       textTypography: 'TEXT & TYPOGRAPHY', fontLabel: 'GENERAL FONT',
       fontArial: 'Arial (Classic)', fontOswald: 'Oswald (TV)', fontMontserrat: 'Montserrat (Modern)',
       fontTeko: 'Teko (Racing)', fontExo: 'Exo 2 (Futuristic)',
-      panelLayoutTitle: 'PANEL LAYOUT', panelLayoutDesc: 'Changes how the buttons and the drivers table are arranged in the PANEL tab.', panelLayout_left: 'Buttons on the left', panelLayout_right: 'Buttons on the right', panelLayout_top: 'Buttons on top (in columns)', panelLayout_bottom: 'Buttons at the bottom (in columns)', guidesToggle: 'Axes and safe area', gridToggle: 'Grid', snapToggle: 'Snap to axes', centerH: '↔ Center horizontally', centerV: '↕ Center vertically', centerBoth: '✛ Center', nudgeHint: 'Click the preview and use the arrow keys to move 1 px (Shift + arrows: 10 px). While dragging, hold Alt to disable snapping. Cyan line = center, dashed line = safe area.', gridRowsLabel: 'ROWS PER SCREEN (GRID, 2 DRIVERS PER ROW)', gridRowsOption: '{n} rows ({m} drivers)', gridRowsOne: '1 row (2 drivers)', towerBlurLabel: 'BACKGROUND BLUR (TOWER)', blurNone: 'No blur', blurSoft: 'Soft', blurMedium: 'Medium', blurStrong: 'Strong', nameFormatLabel: 'NAME FORMAT', nameOriginal: 'Original', nameUppercase: 'UPPERCASE',
+      panelLayoutTitle: 'PANEL LAYOUT', panelLayoutDesc: 'Changes how the buttons and the drivers table are arranged in the PANEL tab.', panelLayout_left: 'Buttons on the left', panelLayout_right: 'Buttons on the right', panelLayout_top: 'Buttons on top (in columns)', panelLayout_bottom: 'Buttons at the bottom (in columns)', guidesToggle: 'Axes and safe area', gridToggle: 'Grid', snapToggle: 'Snap to axes', centerH: '↔ Center horizontally', centerV: '↕ Center vertically', centerBoth: '✛ Center', nudgeHint: 'Click the preview and use the arrow keys to move 1 px (Shift + arrows: 10 px). While dragging, hold Alt to disable snapping. Cyan line = center, dashed line = safe area.', gridRowsLabel: 'ROWS PER SCREEN (GRID, 2 DRIVERS PER ROW)', gridRowsOption: '{n} rows ({m} drivers)', gridRowsOne: '1 row (2 drivers)', towerBlurLabel: 'BACKGROUND BLUR (TOWER)', rowAnimLabel: 'ROWS ENTRANCE', rowAnimStep: 'BETWEEN ROWS', towerPagingLabel: 'DRIVERS THAT DO NOT FIT IN THE TOWER', towerPagingHint: 'If there are more drivers than fit, the last rows are replaced by the remaining drivers (e.g. 20 drivers and 15 rows: 11 to 15, then 16 to 20), using the rows entrance chosen above.', towerPageRows: 'ROTATING ROWS (BOTTOM)', towerNarrowRows: 'VISIBLE ROWS (NARROW TOWER)', towerPageSeconds: 'EACH BATCH', contentAnim: 'Animate texts, icons, photos and numbers (one after another, after the box)', lowerThirdMic: 'Microphone in the box', tickerInfoPos: 'DATA PLACEMENT (CATEGORY / RACE, LAPS AND TIME)', tickerInfo_auto: 'Automatic (the model default)', tickerInfo_split: 'Split (name on the left, laps and time on the right)', tickerInfo_left: 'All on the left', tickerInfo_right: 'All on the right', tickerInfo_topLeft: 'Tab on top, left', tickerInfo_topCenter: 'Tab on top, center', tickerInfo_topRight: 'Tab on top, right', tickerInfo_top: 'Full-width strip on top', tickerInfo_hidden: 'Hidden (drivers only)', tickerShowEvent: 'Category / race', tickerShowLaps: 'Laps', tickerShowTime: 'Total time', tickerTimeField: 'TIME SHOWN FOR EACH DRIVER', tickerTime_lastLap: 'Last lap', tickerTime_bestLap: 'Best lap', tickerTime_diff: 'Gap to leader', tickerTime_totalTime: 'Total time', tickerTime_none: 'None (name only)', climaAnimatedIcons: 'Animated icons (spinning sun, falling rain...)', blurNone: 'No blur', blurSoft: 'Soft', blurMedium: 'Medium', blurStrong: 'Strong', nameFormatLabel: 'NAME FORMAT', nameOriginal: 'Original', nameUppercase: 'UPPERCASE',
       nameFirstInitialLast: 'R. Borla', nameFirstLastInitial: 'Roman B.', nameLastOnly: 'Borla (Last Name Only)',
       formatOf: 'FORMAT FOR {name}', styleOf: 'STYLE: {name}', lowerThirdFormatLabel: 'LOWER THIRD FORMAT',
       borderRadiusLabel: 'BORDERS (ROUNDING)', radius0: '0px (Square)', radius8: '8px (Normal)',
@@ -797,7 +824,7 @@ export const translations = {
       dataRecordDriver: 'DRIVER', dataRecordNumber: 'NUMBER', dataRecordTeam: 'TEAM',
       dataPhotoHint: 'The driver photo comes from the photos folder set in CUSTOMIZE (a file named with the number, e.g. 7.png).',
       pathInstructions: 'Click along the circuit in the direction of travel, starting at the start/finish line (green dot). Drag a point to move it; right-click to delete it. The line closes automatically.',
-      pathPoints: '{n} points (minimum 3)', pathUndo: 'UNDO', pathClear: 'CLEAR LINE',
+      pathPoints: '{n} points (minimum 3)', pathUndo: 'UNDO', pathClear: 'CLEAR LINE', fileSave: 'SAVE TRACK', fileLoad: 'LOAD TRACK', fileSaveTitle: 'Saves the dotted track line (start, direction, sectors and corners), the map image and the circuit data to a file', fileLoadTitle: 'Loads a track saved before with SAVE TRACK', fileSaved: 'Track saved to {path}', fileLoaded: 'Track loaded: {n} points and {curves} corners.', fileError: 'The file could not be used. {error}', fileConfirmLoad: 'Loading a track replaces the current line, corners, sectors and circuit data. Continue?',
       confirmClearPath: 'Delete the whole live map track line?', mapShowImage: 'Also show the background image on the live map (by default it is drawn only from the track line)',
       suggestBtn: 'SUGGEST TRACK LINE FROM IMAGE', suggesting: 'Looking for the circuit in the image…',
       suggestOkAlpha: 'The circuit was detected in the transparent image: {n} points suggested.',
@@ -817,6 +844,7 @@ export const translations = {
       curveDefaultName: 'Corner {n}', emptyState: 'Load a track image to start marking corners.'
     },
     driversTable: {
+      onboardShow: 'ONBOARD', onboardRemove: 'CLOSE', onboardTitle: 'Opens a black space under the driver in the tower to place the onboard camera on top from another program (vMix, OBS)', onboardOn: 'ONBOARD OPEN: #{n} {name}', onboardOff: 'ONBOARD CAMERA: pick a driver with the ONBOARD button', onboardClose: 'CLOSE ONBOARD', onboardHeight: 'SPACE HEIGHT', onboardHeightTitle: 'Height of the black space in the classic tower (320 px wide). 180 = 16:9. The Elite tower scales it to its width.', onboardLock: 'LOCK THE SPACE', onboardLockTitle: 'The space stays on the row where it opened even if the driver changes position, so the camera placed on top in vMix stays aligned.',
       noData: 'No telemetry data. Connect Speedhive or RaceMonitor to see the live table.',
       colPos: 'POS', colNum: 'NO.', colDriver: 'DRIVER', colLaps: 'LAPS', colLastLap: 'LAST LAP',
       colDiff: 'GAP', colTotalTime: 'TOTAL T.', colBestLap: 'BEST LAP', colAction: 'ACTION',
@@ -922,6 +950,7 @@ export const translations = {
       weatherNoData: 'SEM DADOS DO CLIMA...',
       weatherLocError: '❌ Não foi possível detectar a localização deste PC. Verifique a conexão com a internet.',
       weatherHereTitle: 'Obter o clima na localização atual deste PC',
+      weatherAuto: 'ATUALIZAR SOZINHO A CADA 10 MIN', weatherAutoTitle: 'Busca o clima de {src} novamente a cada 10 minutos', weatherAutoNeedSrc: 'Primeiro obtenha o clima do circuito ou da localização do PC', weatherUpdatedAt: 'ATUAL. {time}', weatherSrcHere: 'este PC',
       trackAlertYellow: '⚠️ AMARELA', trackAlertIncident: '🚨 INCIDENTE', emitAlert: '🔴 EMITIR ALERTA',
       gridSection: 'GRID', gridPrev: '[[skip_previous]] ANT', showGrid: 'MOSTRAR GRID', gridNext: 'PRÓX [[skip_next]]',
       autoScrapeStop: '⏹ PARAR (1s)', autoScrapeStart: '▶ ATUALIZAÇÃO AUTOMÁTICA',
@@ -1208,6 +1237,7 @@ export const translations = {
       weatherNoData: 'KEINE WETTERDATEN...',
       weatherLocError: '❌ Standort dieses PCs konnte nicht ermittelt werden. Internetverbindung prüfen.',
       weatherHereTitle: 'Wetter für den aktuellen Standort dieses PCs abrufen',
+      weatherAuto: 'ALLE 10 MIN AKTUALISIEREN', weatherAutoTitle: 'Ruft das Wetter für {src} alle 10 Minuten neu ab', weatherAutoNeedSrc: 'Zuerst das Wetter der Strecke oder des PC-Standorts abrufen', weatherUpdatedAt: 'AKT. {time}', weatherSrcHere: 'diesen PC',
       trackAlertYellow: '⚠️ GELB', trackAlertIncident: '🚨 ZWISCHENFALL', emitAlert: '🔴 ALARM SENDEN',
       gridSection: 'STARTAUFSTELLUNG', gridPrev: '[[skip_previous]] ZURÜCK', showGrid: 'GRID ANZEIGEN', gridNext: 'WEITER [[skip_next]]',
       autoScrapeStop: '⏹ STOPPEN (1s)', autoScrapeStart: '▶ AUTO-AKTUALISIERUNG',
@@ -1494,6 +1524,7 @@ export const translations = {
       weatherNoData: 'AUCUNE DONNÉE MÉTÉO...',
       weatherLocError: '❌ Impossible de détecter la position de ce PC. Vérifiez la connexion internet.',
       weatherHereTitle: 'Obtenir la météo à la position actuelle de ce PC',
+      weatherAuto: 'MISE À JOUR AUTO TOUTES LES 10 MIN', weatherAutoTitle: 'Récupère la météo de {src} toutes les 10 minutes', weatherAutoNeedSrc: 'Obtenez d\'abord la météo du circuit ou de la position du PC', weatherUpdatedAt: 'MAJ {time}', weatherSrcHere: 'ce PC',
       trackAlertYellow: '⚠️ JAUNE', trackAlertIncident: '🚨 INCIDENT', emitAlert: '🔴 ENVOYER L\'ALERTE',
       gridSection: 'GRILLE', gridPrev: '[[skip_previous]] PRÉC', showGrid: 'AFFICHER LA GRILLE', gridNext: 'SUIV [[skip_next]]',
       autoScrapeStop: '⏹ ARRÊTER (1s)', autoScrapeStart: '▶ ACTUALISATION AUTO',

@@ -50,7 +50,9 @@ function scheduleSave() {
   clearTimeout(saveTimer);
   saveTimer = setTimeout(() => {
     try {
-      const { live, ...persistent } = state || {};
+      // El estado en vivo (reloj, marcador en curso) no se persiste.
+      const persistent = { ...(state || {}) };
+      delete persistent.live;
       // Escritura en dos pasos: si la PC se apaga a mitad de guardado no se pierde la carga de equipos
       const tmp = `${dataPath}.tmp`;
       fs.writeFileSync(tmp, JSON.stringify(persistent));

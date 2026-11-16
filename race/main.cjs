@@ -5,7 +5,7 @@ const fs = require('fs');
 const path = require('path');
 const { scrapeSpeedhive, scrapeRaceMonitor, getBrowserInfo } = require('./src/scripts/scraper.cjs');
 const { fetchOrbits, disconnectOrbits, getOrbitsStatus } = require('./src/scripts/orbits.cjs');
-const { RaceAnalyzer, normalizeCorrections, normalizeRoster } = require('./src/scripts/raceData.cjs');
+const { RaceAnalyzer, normalizeCorrections, normalizeRoster, normalizeBrandMemory, learnBrands, driverKey } = require('./src/scripts/raceData.cjs');
 const { buildResultsHtml } = require('./src/scripts/resultsPdf.cjs');
 const { networkInterfaces } = require('os');
 const express = require('express');
@@ -47,7 +47,7 @@ function releaseIpc() {
 }
 // Si una versión anterior de este módulo (con esta misma limpieza) quedó cargada en el proceso, se liberan sus canales
 if (typeof global.overlayRacingReleaseIpc === 'function') {
-  try { global.overlayRacingReleaseIpc(); } catch (e) {}
+  try { global.overlayRacingReleaseIpc(); } catch { /* no crítico: se ignora */ }
 }
 global.overlayRacingReleaseIpc = releaseIpc;
 
@@ -75,6 +75,9 @@ const lapTimesPath = path.join(userDataPath, 'lap_times.json');
 const votesHistoryPath = path.join(userDataPath, 'votes_history.json');
 const correctionsPath = path.join(userDataPath, 'race_corrections.json');
 const rosterPath = path.join(userDataPath, 'race_drivers.json');
+// Marcas recordadas por nombre de piloto y listados de PILOTOS guardados (por categoría)
+const brandMemoryPath = path.join(userDataPath, 'race_brand_memory.json');
+const rosterListsPath = path.join(userDataPath, 'race_roster_lists.json');
 // Archivos de los sponsors (imágenes y videos) que se cargan en la pestaña SPONSORS
 const sponsorsDir = path.join(userDataPath, 'sponsors');
 const SPONSOR_EXT = { png: 'image', jpg: 'image', jpeg: 'image', svg: 'image', webp: 'image', gif: 'image', mp4: 'video', webm: 'video' };
@@ -116,7 +119,8 @@ const defaultPositions = {
   circuitRecord: { x: 1500, y: 700, scale: 1 },
   lapCompare: { x: 640, y: 880, scale: 1 },
   windVectors: { x: 0, y: 0, scale: 1 },
-  sponsorLive: { x: 1560, y: 40, scale: 1 }
+  sponsorLive: { x: 1560, y: 40, scale: 1 },
+  formationLap: { x: 660, y: 60, scale: 1 }
 };
 
 if (!fs.existsSync(posPath)) fs.writeFileSync(posPath, JSON.stringify(defaultPositions, null, 2));
@@ -151,7 +155,7 @@ try {
   if (fs.existsSync(lapTimesPath)) {
     lapTimesHistory = JSON.parse(fs.readFileSync(lapTimesPath, 'utf-8'));
   }
-} catch (e) {
+} catch {
   lapTimesHistory = {};
 }
 
@@ -194,7 +198,7 @@ function parseLapTimeToSeconds(str) {
 }
 
 function saveLapTimesToDisk() {
-  try { fs.writeFileSync(lapTimesPath, JSON.stringify(lapTimesHistory, null, 2)); } catch (e) {}
+  try { fs.writeFileSync(lapTimesPath, JSON.stringify(lapTimesHistory, null, 2)); } catch { /* no crítico: se ignora */ }
 }
 
 function updateLapTimesHistory(leaderboard) {
@@ -237,7 +241,7 @@ const raceAnalyzer = new RaceAnalyzer();
 let rawLeaderboard = { session: {}, drivers: [] };
 
 function readJsonFile(file, fallback) {
-  try { if (fs.existsSync(file)) return JSON.parse(fs.readFileSync(file, 'utf-8')); } catch (e) {}
+  try { if (fs.existsSync(file)) return JSON.parse(fs.readFileSync(file, 'utf-8')); } catch { /* no crítico: se ignora */ }
   return fallback;
 }
 // Configuración en memoria (la misma que database.json): el analizador necesita el modo multiclase
@@ -246,12 +250,36 @@ let raceCorrections = normalizeCorrections(readJsonFile(correctionsPath, {}));
 // Pestaña PILOTOS: datos por número de la fuente (nombre, número a mostrar, marca, equipo)
 let raceRoster = normalizeRoster(readJsonFile(rosterPath, {}));
 function saveRoster() {
-  try { fs.writeFileSync(rosterPath, JSON.stringify(raceRoster, null, 2)); } catch (e) {}
+  try { fs.writeFileSync(rosterPath, JSON.stringify(raceRoster, null, 2)); } catch { /* no crítico: se ignora */ }
   broadcast('update-roster', raceRoster);
 }
 
+let brandMemory = normalizeBrandMemory(readJsonFile(brandMemoryPath, {}));
+function saveBrandMemory() {
+  try { fs.writeFileSync(brandMemoryPath, JSON.stringify(brandMemory, null, 2)); } catch { /* no crítico: se ignora */ }
+  broadcast('update-brand-memory', Object.keys(brandMemory).length);
+}
+const rememberBrandsOn = () => currentConfig.rememberBrands !== false;
+
+// Listados guardados: [{ id, name, savedAt, roster, names: { número de la fuente: nombre } }]
+function normalizeRosterLists(raw) {
+  if (!Array.isArray(raw)) return [];
+  return raw.filter(l => l && typeof l === 'object' && l.id).slice(0, 200).map(l => ({
+    id: String(l.id).slice(0, 40),
+    name: String(l.name || '').replace(/\s+/g, ' ').trim().slice(0, 80) || 'LISTADO',
+    savedAt: Number(l.savedAt) || 0,
+    roster: normalizeRoster(l.roster),
+    names: l.names && typeof l.names === 'object' ? Object.fromEntries(Object.entries(l.names).slice(0, 500).map(([k, v]) => [String(k).slice(0, 12), String(v || '').slice(0, 80)])) : {}
+  }));
+}
+let rosterLists = normalizeRosterLists(readJsonFile(rosterListsPath, []));
+function saveRosterLists() {
+  try { fs.writeFileSync(rosterListsPath, JSON.stringify(rosterLists, null, 2)); } catch { /* no crítico: se ignora */ }
+  broadcast('update-roster-lists', rosterLists);
+}
+
 function saveCorrections() {
-  try { fs.writeFileSync(correctionsPath, JSON.stringify(raceCorrections, null, 2)); } catch (e) {}
+  try { fs.writeFileSync(correctionsPath, JSON.stringify(raceCorrections, null, 2)); } catch { /* no crítico: se ignora */ }
   broadcast('update-corrections', raceCorrections);
 }
 
@@ -261,11 +289,17 @@ function processLeaderboard(raw, opts = {}) {
   const { leaderboard, newAlerts } = raceAnalyzer.update(rawLeaderboard, {
     corrections: raceCorrections,
     roster: raceRoster,
+    brandMemory: rememberBrandsOn() ? brandMemory : null,
     multiclassMode: currentConfig.multiclassMode || 'auto',
     now: Date.now(),
     reprocess: !!opts.reprocess
   });
   lastLeaderboard = leaderboard;
+  // Las marcas elegidas a mano en PILOTOS quedan recordadas por el nombre del piloto para las próximas carreras
+  if (rememberBrandsOn()) {
+    const learned = learnBrands(leaderboard.drivers, raceRoster, brandMemory);
+    if (learned) { brandMemory = learned; saveBrandMemory(); }
+  }
   if (leaderboard.drivers.length > 0) {
     currentDriversForVote = leaderboard.drivers;
     pushDriversToCloud();
@@ -333,7 +367,7 @@ async function createPublicTunnel() {
   tunnelConnecting = true;
   try {
     if (publicTunnel) {
-      try { await publicTunnel.close(); } catch (e) {}
+      try { await publicTunnel.close(); } catch { /* no crítico: se ignora */ }
       publicTunnel = null;
     }
     publicVotingUrl = null;
@@ -353,7 +387,7 @@ async function createPublicTunnel() {
     publicVotingUrl = `${tunnelUrl}/votar`;
     broadcast('update-ip', publicVotingUrl);
     startTunnelHealthCheck(); // arranca (o reinicia) el monitoreo sobre el túnel recién creado
-  } catch (err) {
+  } catch {
     publicVotingUrl = null;
     broadcast('update-ip', `http://${getLocalIP()}:8080/votar`);
     scheduleTunnelRetry();
@@ -378,7 +412,7 @@ function checkUrlAlive(url, timeoutMs = 6000) {
       req.on('timeout', () => { req.destroy(); resolve(false); });
       req.on('error', () => resolve(false));
       req.end();
-    } catch (e) {
+    } catch {
       resolve(false);
     }
   });
@@ -420,14 +454,14 @@ function loadCloudConfig() {
         };
       }
     }
-  } catch (e) {}
+  } catch { /* no crítico: se ignora */ }
   broadcast('update-ip', getVotingUrl());
 }
 
 function connectToCloud() {
   try {
     if (cloudSocket) {
-      try { cloudSocket.removeAllListeners(); cloudSocket.disconnect(); } catch (e) {}
+      try { cloudSocket.removeAllListeners(); cloudSocket.disconnect(); } catch { /* no crítico: se ignora */ }
       cloudSocket = null;
     }
 
@@ -459,19 +493,19 @@ function connectToCloud() {
         if (!num) return;
         votesData[num] = (votesData[num] || 0) + 1;
         broadcast('update-votes', votesData);
-      } catch (e) {}
+      } catch { /* no crítico: se ignora */ }
     });
 
     // Cuando el comisario carga una sanción desde su celular, sale al aire acá mismo
     cloudSocket.on('penalty:trigger', (data) => {
-      try { triggerPenalty(data); } catch (e) {}
+      try { triggerPenalty(data); } catch { /* no crítico: se ignora */ }
     });
 
     // Cuando el comisario la oculta manualmente desde su celular
     cloudSocket.on('penalty:hide', () => {
-      try { hidePenaltyAlert(); } catch (e) {}
+      try { hidePenaltyAlert(); } catch { /* no crítico: se ignora */ }
     });
-  } catch (e) {
+  } catch {
     cloudSocket = null;
   }
 }
@@ -481,7 +515,7 @@ function pushDriversToCloud() {
     if (!cloudSocket?.connected || !cloudConfig?.qrToken) return;
     const drivers = (currentDriversForVote || []).map(d => ({ number: d?.number, name: d?.name }));
     cloudSocket.emit('push-drivers', { qr_token: cloudConfig.qrToken, drivers });
-  } catch (e) {}
+  } catch { /* no crítico: se ignora */ }
 }
 
 // Tabla completa del scraper (posiciones, vueltas, tiempos, sectores) para la vista de
@@ -493,7 +527,7 @@ function pushLeaderboardToCloud(leaderboard) {
       qr_token: cloudConfig.qrToken,
       leaderboard: { session: leaderboard.session || {}, drivers: leaderboard.drivers || [] }
     });
-  } catch (e) {}
+  } catch { /* no crítico: se ignora */ }
 }
 
 function pushPenaltyToCloud(penalty) {
@@ -506,7 +540,7 @@ function pushPenaltyToCloud(penalty) {
       decision: penalty?.type || null,
       payload: penalty
     });
-  } catch (e) {}
+  } catch { /* no crítico: se ignora */ }
 }
 
 let broadcastState = {
@@ -528,6 +562,7 @@ let broadcastState = {
   gapChart: { isVisible: false, front: null, back: null },
   lapCompare: { isVisible: false, a: null, b: null },
   sponsorLive: { isVisible: false, sponsorId: null, rotate: false },
+  towerOnboard: { number: null },
   raceNotice: { isVisible: false, kind: '', title: '', text: '', number: null }
 };
 
@@ -560,7 +595,7 @@ const OVERLAY_BUILD_ID = (() => {
     const html = fs.readFileSync(path.join(__dirname, 'dist', 'index.html'), 'utf-8');
     const m = html.match(/assets\/(index-[A-Za-z0-9_-]+\.js)/);
     return m ? m[1] : null;
-  } catch (e) { return null; }
+  } catch { return null; }
 })();
 
 // Reemplaza únicamente los logos Base64 por URLs locales. Electron sigue recibiendo
@@ -569,7 +604,7 @@ function getNetworkConfig(config) {
   if (!config || typeof config !== 'object') return config;
   const networkConfig = { ...config };
   let version = Date.now();
-  try { if (fs.existsSync(dbPath)) version = fs.statSync(dbPath).mtimeMs; } catch (e) {}
+  try { if (fs.existsSync(dbPath)) version = fs.statSync(dbPath).mtimeMs; } catch { /* no crítico: se ignora */ }
   ['logo', 'categoryLogo'].forEach((key) => {
     const value = networkConfig[key];
     if (typeof value === 'string' && /^data:image\/[a-zA-Z0-9.+-]+;base64,/.test(value)) {
@@ -617,7 +652,7 @@ expressApp.get('/overlay-assets/element/:configKey/:elementPath/:field', (req, r
     const styles = config[configKey];
     const style = styles && typeof styles === 'object' && Object.prototype.hasOwnProperty.call(styles, elementPath) ? styles[elementPath] : null;
     return sendDataImage(res, style && style[field]);
-  } catch (error) {
+  } catch {
     return res.sendStatus(404);
   }
 });
@@ -635,19 +670,19 @@ expressApp.get('/overlay-assets/:asset', (req, res) => {
     const mime = match[1] === 'image/jpg' ? 'image/jpeg' : match[1];
     res.set('Cache-Control', 'no-store');
     res.type(mime).send(Buffer.from(match[2], 'base64'));
-  } catch (error) {
+  } catch {
     res.sendStatus(404);
   }
 });
 
 io.on('connection', (socket) => {
-  try { if (fs.existsSync(dbPath)) socket.emit('update-config', getNetworkConfig(JSON.parse(fs.readFileSync(dbPath, 'utf-8')))); } catch (e) {}
+  try { if (fs.existsSync(dbPath)) socket.emit('update-config', getNetworkConfig(JSON.parse(fs.readFileSync(dbPath, 'utf-8')))); } catch { /* no crítico: se ignora */ }
   try {
     let savedPos = {};
     if (fs.existsSync(posPath)) savedPos = JSON.parse(fs.readFileSync(posPath, 'utf-8'));
     const mergedPositions = { ...defaultPositions, ...savedPos };
     socket.emit('update-positions', mergedPositions);
-  } catch (e) {
+  } catch {
     socket.emit('update-positions', defaultPositions);
   }
 
@@ -676,6 +711,7 @@ io.on('connection', (socket) => {
   socket.emit('update-sectors', broadcastState.sectors);
   socket.emit('update-lap-compare', broadcastState.lapCompare);
   socket.emit('update-sponsor-live', broadcastState.sponsorLive);
+  socket.emit('update-tower-onboard', broadcastState.towerOnboard);
   socket.emit('update-gap-chart', getGapChartData());
   socket.emit('update-race-notice', broadcastState.raceNotice);
   socket.emit('cloud-status', { connected: !!cloudSocket?.connected });
@@ -710,7 +746,7 @@ expressApp.get('/votar', (req, res) => {
       const configData = JSON.parse(fs.readFileSync(dbPath, 'utf-8'));
       if (configData.campeonato) campeonato = configData.campeonato;
     }
-  } catch (e) {}
+  } catch { /* no crítico: se ignora */ }
   res.send(getVotingHtml(currentDriversForVote, campeonato));
 });
 
@@ -729,7 +765,7 @@ expressApp.get('/comisarios', (req, res) => {
       const configData = JSON.parse(fs.readFileSync(dbPath, 'utf-8'));
       if (configData.campeonato) campeonato = configData.campeonato;
     }
-  } catch (e) {}
+  } catch { /* no crítico: se ignora */ }
   res.send(getPenaltyHtml(currentDriversForVote, campeonato, broadcastState.penaltyAlert));
 });
 
@@ -737,7 +773,7 @@ expressApp.post('/comisarios/trigger', (req, res) => {
   try {
     triggerPenalty(req.body || {});
     res.sendStatus(200);
-  } catch (e) {
+  } catch {
     res.sendStatus(500);
   }
 });
@@ -746,7 +782,7 @@ expressApp.post('/comisarios/hide', (req, res) => {
   try {
     hidePenaltyAlert();
     res.sendStatus(200);
-  } catch (e) {
+  } catch {
     res.sendStatus(500);
   }
 });
@@ -775,7 +811,7 @@ expressApp.get('/photo/:number', (req, res) => {
       if (fs.existsSync(checkPath)) return res.sendFile(checkPath);
     }
     res.sendStatus(404);
-  } catch (e) {
+  } catch {
     res.sendStatus(500);
   }
 });
@@ -812,7 +848,7 @@ function startServer() {
 const broadcast = (event, data) => {
   // La ventana local recibe Base64 por IPC; los overlays remotos reciben URLs HTTP
   // para evitar paquetes enormes y permitir que vMix cargue las imágenes desde la LAN.
-  try { io.emit(event, event === 'update-config' ? getNetworkConfig(data) : data); } catch (e) {}
+  try { io.emit(event, event === 'update-config' ? getNetworkConfig(data) : data); } catch { /* no crítico: se ignora */ }
   if (overlayWindow && !overlayWindow.isDestroyed()) {
     overlayWindow.webContents.send(event, data);
   }
@@ -855,11 +891,11 @@ function readVotesHistory() {
       const parsed = JSON.parse(fs.readFileSync(votesHistoryPath, 'utf-8'));
       if (Array.isArray(parsed)) return parsed;
     }
-  } catch (e) {}
+  } catch { /* no crítico: se ignora */ }
   return [];
 }
 function writeVotesHistory(list) {
-  try { fs.writeFileSync(votesHistoryPath, JSON.stringify(list, null, 2)); return true; } catch (e) { return false; }
+  try { fs.writeFileSync(votesHistoryPath, JSON.stringify(list, null, 2)); return true; } catch { return false; }
 }
 function localDayString(date) {
   const pad = (n) => String(n).padStart(2, '0');
@@ -991,10 +1027,55 @@ ipc.handle('clear-corrections', (e, mode) => {
 });
 
 // --- PILOTOS (datos que la fuente no informa o informa mal) ---
+// Olvida la marca recordada del piloto que hoy corre con ese número de la fuente
+function forgetDriverBrand(num) {
+  const d = (lastLeaderboard.drivers || []).find(x => String(x.srcNumber || x.number) === String(num));
+  const keys = [d && d.srcName, d && d.name, raceRoster[num] && raceRoster[num].name].map(driverKey).filter(k => k && brandMemory[k]);
+  if (!keys.length) return;
+  brandMemory = { ...brandMemory };
+  keys.forEach(k => { delete brandMemory[k]; });
+  saveBrandMemory();
+}
+ipc.handle('get-brand-memory', () => Object.keys(brandMemory).length);
+ipc.handle('forget-brand-memory', () => {
+  brandMemory = {};
+  saveBrandMemory();
+  reprocessLeaderboard();
+  return 0;
+});
+ipc.handle('get-roster-lists', () => rosterLists);
+// Guarda lo cargado hoy en PILOTOS con un nombre (por defecto el de la categoría). Con el mismo nombre se reemplaza.
+ipc.handle('save-roster-list', (e, data) => {
+  const name = String(data?.name || '').replace(/\s+/g, ' ').trim().slice(0, 80);
+  if (!name) return rosterLists;
+  const names = {};
+  (lastLeaderboard.drivers || []).forEach(d => { const src = String(d.srcNumber || d.number); if (raceRoster[src]) names[src] = d.srcName || d.name || ''; });
+  const same = rosterLists.find(l => l.name.toLowerCase() === name.toLowerCase());
+  const entry = { id: same ? same.id : `l${Date.now().toString(36)}`, name, savedAt: Date.now(), roster: { ...raceRoster }, names };
+  rosterLists = normalizeRosterLists([entry, ...rosterLists.filter(l => l !== same)]);
+  saveRosterLists();
+  return rosterLists;
+});
+// Carga un listado: reemplaza lo de PILOTOS (mode 'replace') o lo suma pisando sólo los mismos números (mode 'merge')
+ipc.handle('load-roster-list', (e, data) => {
+  const list = rosterLists.find(l => l.id === String(data?.id || ''));
+  if (!list) return raceRoster;
+  raceRoster = normalizeRoster(data?.mode === 'merge' ? { ...raceRoster, ...list.roster } : list.roster);
+  saveRoster();
+  reprocessLeaderboard();
+  return raceRoster;
+});
+ipc.handle('delete-roster-list', (e, id) => {
+  rosterLists = rosterLists.filter(l => l.id !== String(id || ''));
+  saveRosterLists();
+  return rosterLists;
+});
 ipc.handle('get-roster', () => raceRoster);
 ipc.handle('set-roster-entry', (e, data) => {
   const num = String(data?.number ?? '').trim();
   if (!num) return raceRoster;
+  // Marca borrada a mano: también se olvida la recordada para ese piloto (si no, volvería a aparecer sola)
+  if (data?.patch && data.patch.brand === '') forgetDriverBrand(num);
   const next = { ...raceRoster };
   next[num] = { ...(next[num] || {}), ...(data?.patch || {}) };
   raceRoster = normalizeRoster(next);
@@ -1003,6 +1084,7 @@ ipc.handle('set-roster-entry', (e, data) => {
   return raceRoster;
 });
 ipc.handle('delete-roster-entry', (e, number) => {
+  forgetDriverBrand(String(number));
   const next = { ...raceRoster };
   delete next[String(number)];
   raceRoster = next;
@@ -1047,36 +1129,72 @@ ipc.on('toggle-lap-compare', (e, data) => {
 });
 // --- SPONSORS ---
 // Copia los archivos elegidos a la carpeta del programa y devuelve [{ id, name, file, type }] (el panel los guarda en la config)
+// Copia archivos a la carpeta de sponsors y devuelve [{ id, name, file, type }] (los que no son imagen/video se ignoran)
+function copySponsorFiles(paths) {
+  try { fs.mkdirSync(sponsorsDir, { recursive: true }); } catch { /* no crítico: se ignora */ }
+  const added = [];
+  (Array.isArray(paths) ? paths : []).slice(0, 200).forEach((src, i) => {
+    if (typeof src !== 'string' || !src) return;
+    const ext = path.extname(src).slice(1).toLowerCase();
+    if (!SPONSOR_EXT[ext]) return;
+    try {
+      if (!fs.statSync(src).isFile()) return;
+      const id = `sp_${Date.now().toString(36)}${i.toString(36)}${Math.random().toString(36).slice(2, 6)}`;
+      const file = `${id}.${ext === 'jpeg' ? 'jpg' : ext}`;
+      fs.copyFileSync(src, path.join(sponsorsDir, file));
+      added.push({ id, name: path.basename(src, path.extname(src)).toUpperCase(), file, type: SPONSOR_EXT[ext] });
+    } catch (e) { console.error('No se pudo copiar el sponsor', src, e.message); }
+  });
+  return added;
+}
 ipc.handle('add-sponsor-files', async () => {
   const result = await dialog.showOpenDialog(controlWindow, {
     title: 'Agregar sponsors (imágenes o videos)', properties: ['openFile', 'multiSelections'],
     filters: [{ name: 'Imágenes y videos', extensions: Object.keys(SPONSOR_EXT) }]
   });
   if (result.canceled || !result.filePaths.length) return [];
-  try { fs.mkdirSync(sponsorsDir, { recursive: true }); } catch (e) {}
-  const added = [];
-  result.filePaths.forEach((src, i) => {
-    const ext = path.extname(src).slice(1).toLowerCase();
-    if (!SPONSOR_EXT[ext]) return;
-    const id = `sp_${Date.now().toString(36)}${i.toString(36)}${Math.random().toString(36).slice(2, 6)}`;
-    const file = `${id}.${ext === 'jpeg' ? 'jpg' : ext}`;
-    try {
-      fs.copyFileSync(src, path.join(sponsorsDir, file));
-      added.push({ id, name: path.basename(src, path.extname(src)).toUpperCase(), file, type: SPONSOR_EXT[ext] });
-    } catch (e) { console.error('No se pudo copiar el sponsor', src, e.message); }
-  });
-  return added;
+  return copySponsorFiles(result.filePaths);
 });
+// Archivos arrastrados desde el Explorador a la pestaña SPONSORS
+ipc.handle('add-sponsor-paths', (e, paths) => copySponsorFiles(paths));
 ipc.handle('delete-sponsor-file', (e, file) => {
   const name = String(file || '');
   if (!SPONSOR_FILE_RE.test(name)) return false;
-  try { fs.unlinkSync(path.join(sponsorsDir, name)); return true; } catch (err) { return false; }
+  try { fs.unlinkSync(path.join(sponsorsDir, name)); return true; } catch { return false; }
+});
+// Imagen editada en SPONSORS (fondo quitado): se guarda como PNG nuevo; el archivo original queda para poder restaurarlo
+ipc.handle('save-sponsor-image', (e, dataUrl) => {
+  const m = /^data:image\/png;base64,([A-Za-z0-9+/=]+)$/.exec(String(dataUrl || ''));
+  if (!m) return null;
+  const buf = Buffer.from(m[1], 'base64');
+  if (!buf.length || buf.length > 40 * 1024 * 1024) return null;
+  try {
+    fs.mkdirSync(sponsorsDir, { recursive: true });
+    const file = `sp_${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}.png`;
+    fs.writeFileSync(path.join(sponsorsDir, file), buf);
+    return { file };
+  } catch (err) {
+    console.error('No se pudo guardar la imagen del sponsor', err.message);
+    return null;
+  }
 });
 ipc.on('sponsor-live', (e, data) => {
-  broadcastState.sponsorLive = { isVisible: !!data?.isVisible, sponsorId: data?.sponsorId ? String(data.sponsorId) : null, rotate: !!data?.rotate };
+  // rotate: rota los sponsors activos (de un grupo si llega groupId, si no todos)
+  broadcastState.sponsorLive = {
+    isVisible: !!data?.isVisible, sponsorId: data?.sponsorId ? String(data.sponsorId) : null, rotate: !!data?.rotate,
+    groupId: data?.rotate && data?.groupId ? String(data.groupId) : null
+  };
   broadcast('update-sponsor-live', broadcastState.sponsorLive);
 });
 ipc.handle('get-sponsor-live', () => broadcastState.sponsorLive);
+
+// --- CÁMARA ONBOARD EN LA TORRE: espacio negro debajo de un piloto para poner encima la cámara desde otro programa ---
+ipc.on('tower-onboard', (e, data) => {
+  const num = data && data.number !== undefined && data.number !== null && String(data.number).trim() ? String(data.number).trim().slice(0, 12) : null;
+  broadcastState.towerOnboard = { number: num };
+  broadcast('update-tower-onboard', broadcastState.towerOnboard);
+});
+ipc.handle('get-tower-onboard', () => broadcastState.towerOnboard);
 ipc.on('show-race-notice', (e, data) => showRaceNotice(data));
 ipc.on('hide-race-notice', () => hideRaceNotice());
 
@@ -1112,7 +1230,7 @@ ipc.handle('export-results-pdf', async (e, options) => {
     return { ok: false, reason: 'ERROR', message: err?.message || '' };
   } finally {
     if (pdfWindow && !pdfWindow.isDestroyed()) pdfWindow.destroy();
-    try { fs.unlinkSync(tmpFile); } catch (e) {}
+    try { fs.unlinkSync(tmpFile); } catch { /* no crítico: se ignora */ }
   }
 });
 
@@ -1193,7 +1311,7 @@ ipc.handle('load-excel', async () => {
       championshipData = { drivers, pointScale };
       calculateLiveChampionship();
       return true;
-    } catch (e) { return false; }
+    } catch { return false; }
   }
   return false;
 });
@@ -1258,7 +1376,7 @@ ipc.handle('get-local-ip', () => getVotingUrl());
 ipc.handle('get-steward-url', () => getStewardUrl());
 ipc.handle('get-votes', () => votesData);
 ipc.handle('get-config', () => {
-  try { if (fs.existsSync(dbPath)) return JSON.parse(fs.readFileSync(dbPath, 'utf-8')); } catch (e) {}
+  try { if (fs.existsSync(dbPath)) return JSON.parse(fs.readFileSync(dbPath, 'utf-8')); } catch { /* no crítico: se ignora */ }
   return { campeonato: '', relator: '', comentarista: '' };
 });
 // Tamaño del lienzo del overlay (config.overlayWidth / overlayHeight); por defecto 1920x1080
@@ -1270,40 +1388,68 @@ function getOverlaySize(cfg) {
   return { width: dim(cfg && cfg.overlayWidth, 1920), height: dim(cfg && cfg.overlayHeight, 1080) };
 }
 
-function applyOverlaySize(cfg) {
-  if (!overlayWindow || overlayWindow.isDestroyed()) return;
-  const { width, height } = getOverlaySize(cfg);
-  const [curW, curH] = overlayWindow.getContentSize();
-  if (curW === width && curH === height) return;
+function setOverlayContentSize(width, height) {
   // La ventana del overlay no es redimensionable a mano: se habilita un instante para poder cambiarle el tamaño por código
   overlayWindow.setResizable(true);
   overlayWindow.setContentSize(width, height);
   overlayWindow.setResizable(false);
 }
 
+// Windows trata como "app a pantalla completa" a una ventana sin barra de título que cubre el monitor entero, y manda la
+// barra de tareas atrás mientras esté activa cualquier ventana del mismo programa (el overlay y el panel comparten hilo).
+// Con el lienzo de 1920x1080 en un monitor de 1080p (o con la escala de Windows en 125/150%) el overlay tapa todo: el
+// panel maximizado se veía "cortado" abajo y por esa franja asomaba el overlay en vez de la barra de tareas. Correr el
+// overlay 1 px hacia abajo alcanza para que Windows no lo considere pantalla completa. Sólo se hace en el monitor del
+// panel: si el overlay está en otro monitor (por ejemplo, de salida), ahí sí se deja que tape la barra.
+function keepOverlayOffFullscreen() {
+  if (process.platform !== 'win32' || !overlayWindow || overlayWindow.isDestroyed()) return;
+  if (overlayWindow.isMinimized() || overlayWindow.isMaximized()) return;
+  const { screen } = require('electron');
+  const b = overlayWindow.getBounds();
+  const display = screen.getDisplayMatching(b);
+  const d = display.bounds;
+  const coversDisplay = b.x <= d.x && b.y <= d.y && b.x + b.width >= d.x + d.width && b.y + b.height >= d.y + d.height;
+  if (!coversDisplay) return;
+  if (controlWindow && !controlWindow.isDestroyed() && screen.getDisplayMatching(controlWindow.getBounds()).id !== display.id) return;
+  const [contentW, contentH] = overlayWindow.getContentSize();
+  overlayWindow.setPosition(b.x, d.y + 1);
+  // Con escala de Windows no entera el reposicionamiento puede redondear el tamaño: el lienzo tiene que quedar exacto
+  const [w, h] = overlayWindow.getContentSize();
+  if (w !== contentW || h !== contentH) setOverlayContentSize(contentW, contentH);
+}
+
+function applyOverlaySize(cfg) {
+  if (!overlayWindow || overlayWindow.isDestroyed()) return;
+  const { width, height } = getOverlaySize(cfg);
+  const [curW, curH] = overlayWindow.getContentSize();
+  if (curW !== width || curH !== height) setOverlayContentSize(width, height);
+  keepOverlayOffFullscreen();
+}
+
 ipc.handle('save-config', (event, data) => {
   try {
     fs.writeFileSync(dbPath, JSON.stringify(data, null, 2));
     const multiclassChanged = (data?.multiclassMode || 'auto') !== (currentConfig.multiclassMode || 'auto');
+    const rememberChanged = (data?.rememberBrands !== false) !== (currentConfig.rememberBrands !== false);
     currentConfig = data || {};
     applyOverlaySize(data);
     broadcast('update-config', data);
-    if (multiclassChanged) reprocessLeaderboard();
+    if (multiclassChanged || rememberChanged) reprocessLeaderboard();
     return true;
-  } catch (e) { return false; }
+  } catch { return false; }
 });
 ipc.handle('get-default-positions', () => defaultPositions);
 ipc.handle('get-positions', () => {
   try {
     let savedPos = JSON.parse(fs.readFileSync(posPath, 'utf-8'));
     return { ...defaultPositions, ...savedPos };
-  } catch (e) { return defaultPositions; }
+  } catch { return defaultPositions; }
 });
 ipc.handle('save-positions', (event, data) => {
-  try { fs.writeFileSync(posPath, JSON.stringify(data, null, 2)); broadcast('update-positions', data); return true; } catch (e) { return false; }
+  try { fs.writeFileSync(posPath, JSON.stringify(data, null, 2)); broadcast('update-positions', data); return true; } catch { return false; }
 });
 ipc.handle('save-backup', (event, data) => {
-  try { fs.writeFileSync(backupPath, JSON.stringify(data, null, 2)); return true; } catch (e) { return false; }
+  try { fs.writeFileSync(backupPath, JSON.stringify(data, null, 2)); return true; } catch { return false; }
 });
 
 // --- COPIA DE SEGURIDAD DE LA CONFIGURACIÓN (database.json + posiciones.json) ---
@@ -1321,7 +1467,7 @@ ipc.handle('export-settings', async () => {
     if (fs.existsSync(dbPath)) { fs.copyFileSync(dbPath, path.join(destDir, 'database.json')); exportedAny = true; }
     if (fs.existsSync(posPath)) { fs.copyFileSync(posPath, path.join(destDir, 'posiciones.json')); exportedAny = true; }
     return exportedAny;
-  } catch (e) { return false; }
+  } catch { return false; }
 });
 
 ipc.handle('import-settings', async () => {
@@ -1345,7 +1491,7 @@ ipc.handle('import-settings', async () => {
       broadcast('update-config', configData);
       imported.config = true;
     }
-  } catch (e) {}
+  } catch { /* no crítico: se ignora */ }
 
   try {
     const srcPosPath = path.join(srcDir, 'posiciones.json');
@@ -1356,7 +1502,7 @@ ipc.handle('import-settings', async () => {
       broadcast('update-positions', positionsData);
       imported.positions = true;
     }
-  } catch (e) {}
+  } catch { /* no crítico: se ignora */ }
 
   if (!imported.config && !imported.positions) return null;
   return { imported, config: configData, positions: positionsData };
@@ -1367,16 +1513,16 @@ ipc.handle('load-backup', () => {
       const bData = JSON.parse(fs.readFileSync(backupPath, 'utf-8'));
       return processLeaderboard(bData, { reprocess: true });
     }
-  } catch (e) {} return null;
+  } catch { /* no crítico: se ignora */ } return null;
 });
 
 ipc.handle('get-diagnostics', () => {
-  let logTail = '';
+  let logTail;
   try {
     const lines = fs.readFileSync(logPath, 'utf-8').split('\n').filter(Boolean);
     logTail = lines.slice(-40).join('\n');
-  } catch (e) { logTail = '(sin log todavía)'; }
-  let browserInfo = {};
+  } catch { logTail = '(sin log todavía)'; }
+  let browserInfo;
   try { browserInfo = getBrowserInfo(); } catch (e) { browserInfo = { error: e.message }; }
   return {
     version: app.getVersion(),
@@ -1430,12 +1576,12 @@ ipc.handle('save-cloud-config', (event, data) => {
     broadcast('update-ip', getVotingUrl());
     connectToCloud(); // reconecta / reaplica con los tokens nuevos
     return true;
-  } catch (e) { return false; }
+  } catch { return false; }
 });
 
 ipc.handle('get-initial-state', () => {
   let config = {};
-  try { if (fs.existsSync(dbPath)) config = JSON.parse(fs.readFileSync(dbPath, 'utf-8')); } catch (e) {}
+  try { if (fs.existsSync(dbPath)) config = JSON.parse(fs.readFileSync(dbPath, 'utf-8')); } catch { /* no crítico: se ignora */ }
 
   let positions = defaultPositions;
   try {
@@ -1443,7 +1589,7 @@ ipc.handle('get-initial-state', () => {
       const savedPos = JSON.parse(fs.readFileSync(posPath, 'utf-8'));
       positions = { ...defaultPositions, ...savedPos };
     }
-  } catch (e) {}
+  } catch { /* no crítico: se ignora */ }
 
   return {
   config,
@@ -1472,6 +1618,28 @@ const handleFileSelect = async (title, extensions) => {
 ipc.handle('select-logo', () => handleFileSelect('Seleccionar Logo', ['png', 'jpg', 'jpeg']));
 ipc.handle('select-category-logo', () => handleFileSelect('Seleccionar Logo Categoría', ['png', 'jpg', 'jpeg']));
 ipc.handle('select-track-image', () => handleFileSelect('Seleccionar Imagen del Circuito', ['png', 'jpg', 'jpeg']));
+// Trazado del circuito en un archivo aparte (pestaña CIRCUITO): el contenido lo arma y lo valida la ventana del panel
+const CIRCUIT_FILE_MAX = 25 * 1024 * 1024;
+ipc.handle('save-circuit-file', async (e, data) => {
+  const text = typeof data?.text === 'string' ? data.text : '';
+  if (!text || text.length > CIRCUIT_FILE_MAX) return { ok: false, error: 'too-big' };
+  const name = String(data?.fileName || 'circuito.circuito.json').replace(/[\\/:*?"<>|]+/g, '').slice(0, 120) || 'circuito.circuito.json';
+  const result = await dialog.showSaveDialog(controlWindow, {
+    title: 'Guardar trazado del circuito', defaultPath: path.join(app.getPath('documents'), name),
+    filters: [{ name: 'Circuito', extensions: ['json'] }]
+  });
+  if (result.canceled || !result.filePath) return { ok: false, canceled: true };
+  try { fs.writeFileSync(result.filePath, text, 'utf-8'); return { ok: true, path: result.filePath }; } catch (err) { return { ok: false, error: err.message }; }
+});
+ipc.handle('open-circuit-file', async () => {
+  const result = await dialog.showOpenDialog(controlWindow, { title: 'Cargar trazado del circuito', properties: ['openFile'], filters: [{ name: 'Circuito', extensions: ['json'] }] });
+  if (result.canceled || !result.filePaths.length) return { ok: false, canceled: true };
+  try {
+    const file = result.filePaths[0];
+    if (fs.statSync(file).size > CIRCUIT_FILE_MAX) return { ok: false, error: 'too-big' };
+    return { ok: true, path: file, text: fs.readFileSync(file, 'utf-8') };
+  } catch (err) { return { ok: false, error: err.message }; }
+});
 ipc.handle('select-design-image', (e, title) => handleFileSelect(`Diseño PNG/SVG: ${title}`, ['png', 'svg']));
 ipc.handle('select-element-image', () => handleFileSelect('Imagen para el elemento de la gráfica', ['png', 'jpg', 'jpeg', 'svg']));
 ipc.handle('select-photos-folder', async () => {
@@ -1501,9 +1669,25 @@ function createWindows() {
 
   controlWindow = new BrowserWindow({ width: 1050, height: 700, icon: iconPath, webPreferences: { nodeIntegration: true, contextIsolation: false }, autoHideMenuBar: true });
   let savedConfig = {};
-  try { if (fs.existsSync(dbPath)) savedConfig = JSON.parse(fs.readFileSync(dbPath, 'utf-8')); } catch (e) { savedConfig = {}; }
+  try { if (fs.existsSync(dbPath)) savedConfig = JSON.parse(fs.readFileSync(dbPath, 'utf-8')); } catch { savedConfig = {}; }
   const overlaySize = getOverlaySize(savedConfig);
-  overlayWindow = new BrowserWindow({ width: overlaySize.width, height: overlaySize.height, useContentSize: true, icon: iconPath, frame: false, resizable: false, transparent: true, hasShadow: false, webPreferences: { nodeIntegration: true, contextIsolation: false } });
+  overlayWindow = new BrowserWindow({ show: false, width: overlaySize.width, height: overlaySize.height, useContentSize: true, icon: iconPath, frame: false, resizable: false, transparent: true, hasShadow: false, webPreferences: { nodeIntegration: true, contextIsolation: false } });
+  // El overlay tapa todo el escritorio: antes, al ser la última ventana en crearse, quedaba activa y encima del panel.
+  // Se muestra sin activarlo y el foco vuelve al panel de control. Windows achica al crearla una ventana más grande que
+  // el área de trabajo, así que recién ahí se le da el tamaño real del lienzo (antes quedaba recortada hasta que se
+  // guardaba la configuración) y se evita que cuente como pantalla completa (ver keepOverlayOffFullscreen).
+  let overlayShown = false;
+  const showOverlay = () => {
+    if (overlayShown || !overlayWindow || overlayWindow.isDestroyed()) return;
+    overlayShown = true;
+    overlayWindow.showInactive();
+    applyOverlaySize(savedConfig);
+    if (controlWindow && !controlWindow.isDestroyed()) { controlWindow.moveTop(); controlWindow.focus(); }
+  };
+  overlayWindow.once('ready-to-show', showOverlay);
+  overlayWindow.on('moved', keepOverlayOffFullscreen);
+  overlayWindow.on('unmaximize', keepOverlayOffFullscreen);
+  setTimeout(showOverlay, 5000); // por si la página tarda o el evento no llega: el overlay tiene que aparecer igual
 
   if (isDev) {
     controlWindow.loadURL('http://localhost:5173/#/');

@@ -34,12 +34,12 @@ function installedVersions(moduleId) {
     return fs.readdirSync(dir)
       .filter(v => /^\d+\.\d+\.\d+$/.test(v) && fs.existsSync(path.join(dir, v, COMPLETE_MARK)))
       .sort(compareVersions);
-  } catch (e) { return []; }
+  } catch { return []; }
 }
 
 function readPublicKey() {
   try { return crypto.createPublicKey(fs.readFileSync(path.join(__dirname, 'release-public-key.pem'), 'utf-8')); }
-  catch (e) { return null; }
+  catch { return null; }
 }
 
 // La firma cubre módulo + versión + hash: sólo el servidor propio (que tiene la clave privada) puede publicar código
@@ -78,7 +78,7 @@ function extractSafely(zipFile, destDir) {
 function pruneOldVersions(moduleId, keep = []) {
   const versions = installedVersions(moduleId);
   versions.slice(0, Math.max(0, versions.length - KEEP_VERSIONS)).filter(v => !keep.includes(v)).forEach(v => {
-    try { fs.rmSync(path.join(modulesRoot(), moduleId, v), { recursive: true, force: true }); } catch (e) {}
+    try { fs.rmSync(path.join(modulesRoot(), moduleId, v), { recursive: true, force: true }); } catch { /* no crítico: se ignora */ }
   });
 }
 

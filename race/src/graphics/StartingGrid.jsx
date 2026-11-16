@@ -1,16 +1,20 @@
 import { useState, useEffect } from 'react';
+import { io } from 'socket.io-client';
 import { withCategory } from '../utils/raceVisuals';
 import pilotoAnonimo from '../assets/piloto_anonimo.png';
+import { useDriverPhoto } from '../utils/useDriverPhoto';
 import { getSkinStyle } from '../utils/skinStyles';
 import MarqueeText from './MarqueeText';
 import { getAnimDuration, getRollClip } from '../utils/animationTiming';
 import { getCanvasSize } from '../utils/canvasSize';
+import SuitNumber from '../components/SuitNumber';
+import { makeFx } from '../utils/contentAnim';
 
 let ipcRenderer = null;
 if (typeof window !== 'undefined' && typeof window.require === 'function') {
   try {
     ipcRenderer = window.require('electron').ipcRenderer;
-  } catch (e) {}
+  } catch { /* no crítico: se ignora */ }
 }
 
 export default function StartingGrid({ drivers, config, isVisible, id = 'grid' }) {
@@ -30,6 +34,8 @@ export default function StartingGrid({ drivers, config, isVisible, id = 'grid' }
   const bRad = config[`borderRadius_${id}`] || '8px';
   const animStyle = config[`animationStyle_${id}`] || 'slide';
   const animDur = getAnimDuration(config, id);
+  // Cada página entra con la aparición de filas configurada (tarjetas de a una), foto que se descubre y textos que suben
+  const fx = makeFx(config, id, isVisible, 0.3);
 
   // TIPO DE GRILLA: 'standard', 'photos', 'cinematic' o un skin (pro/gradient/glass, que reusan el layout estándar)
   const gridFormat = config?.gridFormat || 'standard';
@@ -47,9 +53,13 @@ export default function StartingGrid({ drivers, config, isVisible, id = 'grid' }
   if (animStyle === 'flip') transformHidden = `scale(${config?.positions?.[id]?.scale || 1}) scaleY(0.05)`;
   if (animStyle === 'rotate') transformHidden = `scale(${(config?.positions?.[id]?.scale || 1) * 0.85}) rotate(-15deg)`;
 
-  useEffect(() => {
-    if (!isVisible || drivers.length === 0) { setPage(0); return; }
-  }, [isVisible, drivers]);
+  // Al ocultarse o quedarse sin pilotos vuelve a la primera página. Igual que antes, sólo se evalúa cuando
+  // cambian `isVisible` o `drivers` (con la gráfica oculta, ANT/SIG pueden dejar preparada otra página).
+  const [resetDeps, setResetDeps] = useState({ isVisible, drivers });
+  if (resetDeps.isVisible !== isVisible || resetDeps.drivers !== drivers) {
+    setResetDeps({ isVisible, drivers });
+    if ((!isVisible || drivers.length === 0) && page !== 0) setPage(0);
+  }
 
   useEffect(() => {
     const totalPages = Math.ceil(drivers.length / itemsPerPage);
@@ -70,14 +80,11 @@ export default function StartingGrid({ drivers, config, isVisible, id = 'grid' }
       };
     } else {
       // --- MODO NAVEGADOR: fallback por Socket.io (para preview fuera de Electron) ---
-      let socket;
-      import('socket.io-client').then(({ io }) => {
-        const host = window.location.hostname || 'localhost';
-        socket = io(`http://${host}:8080`);
-        socket.on('grid-next', handleNext);
-        socket.on('grid-prev', handlePrev);
-      });
-      return () => { if (socket) socket.disconnect(); };
+      const host = window.location.hostname || 'localhost';
+      const socket = io(`http://${host}:8080`);
+      socket.on('grid-next', handleNext);
+      socket.on('grid-prev', handlePrev);
+      return () => { socket.disconnect(); };
     }
   }, [drivers, itemsPerPage]);
 
@@ -123,12 +130,12 @@ export default function StartingGrid({ drivers, config, isVisible, id = 'grid' }
           }}>
             {(config?.logo || config?.categoryLogo) && (
               <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginRight: '10px', flexShrink: 0 }}>
-                {config?.logo && <img src={config.logo} alt="Productora" style={{ height: '45px', maxWidth: '100px', objectFit: 'contain' }} />}
+                {config?.logo && <img src={config.logo} alt="Productora" style={{ height: '45px', maxWidth: '100px', objectFit: 'contain', ...fx.icon(0) }} />}
                 {config?.logo && config?.categoryLogo && <div style={{ height: '35px', width: '3px', backgroundColor: 'rgba(255, 255, 255, 0.2)' }} />}
-                {config?.categoryLogo && <img src={config.categoryLogo} alt="Categoría" style={{ height: '45px', maxWidth: '100px', objectFit: 'contain' }} />}
+                {config?.categoryLogo && <img src={config.categoryLogo} alt="Categoría" style={{ height: '45px', maxWidth: '100px', objectFit: 'contain', ...fx.icon(1) }} />}
               </div>
             )}
-            <div style={{ minWidth: 0, flex: '0 1 auto' }}>
+            <div style={{ minWidth: 0, flex: '0 1 auto', ...fx.text(1) }}>
               <MarqueeText
                 text={`Ordenamiento de partida - ${withCategory(config, id, config?.eventName || config?.campeonato) || 'CARRERA'}`}
                 style={{ textShadow: gridSkin?.textShadow }}
@@ -136,10 +143,10 @@ export default function StartingGrid({ drivers, config, isVisible, id = 'grid' }
             </div>
           </div>
 
-          <div key={`std-${page}`} className="grid-page" style={{ marginTop: '150px' }}>
-            {currentDrivers.map((driver) => (
+          <div key={`std-${page}`} className="grid-page" style={{ marginTop: '150px', ...(fx.on ? { animation: 'none' } : {}) }}>
+            {currentDrivers.map((driver, i) => (
               <DriverCardStandard
-                key={driver.pos} driver={driver} config={config} customBg={customBg} bRad={bRad} skin={gridSkin}
+                key={driver.pos} driver={driver} config={config} customBg={customBg} bRad={bRad} skin={gridSkin} fx={fx} index={i} total={currentDrivers.length}
                 themeBg={themeBg} themeHeaderBg={themeHeaderBg} themeSecondary={themeSecondary}
                 themeAccent={themeAccent} themeNormalText={themeNormalText} themeNumberText={themeNumberText}
               />
@@ -153,7 +160,7 @@ export default function StartingGrid({ drivers, config, isVisible, id = 'grid' }
           {/* MODO FOTOS: HEADER BROADCAST (TIPO FÓRMULA 1) */}
           <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', display: 'flex', flexDirection: 'column' }}>
             <div style={{ backgroundColor: themeHeaderBg, padding: '15px', textAlign: 'center', color: '#fff', fontSize: '28px', fontWeight: '900', letterSpacing: '2px' }}>
-               {withCategory(config, id, config?.eventName || config?.campeonato) || 'CAMPEONATO'}
+               <span style={{ display: 'inline-block', ...fx.text(0) }}>{withCategory(config, id, config?.eventName || config?.campeonato) || 'CAMPEONATO'}</span>
             </div>
             <div style={{ display: 'flex', width: '100%', height: '40px' }}>
                <div style={{ backgroundColor: themeMain, color: '#fff', width: '30%', display: 'flex', alignItems: 'center', paddingLeft: '40px', fontSize: '24px', fontWeight: '900', letterSpacing: '1px' }}>
@@ -167,13 +174,13 @@ export default function StartingGrid({ drivers, config, isVisible, id = 'grid' }
           </div>
 
           {/* MODO FOTOS: PILOTOS */}
-          <div key={`photo-${page}`} className="grid-page" style={{ height: '100%', width: '100%', alignItems: 'flex-end', paddingBottom: '150px', position: 'relative' }}>
-            {currentDrivers[0] && <PhotoDriverCard driver={currentDrivers[0]} align="left" config={config} themeMain={themeMain} themeAccent={themeAccent} themeHeaderBg={themeHeaderBg} />}
-            {currentDrivers[1] && <PhotoDriverCard driver={currentDrivers[1]} align="right" config={config} themeMain={themeMain} themeAccent={themeAccent} themeHeaderBg={themeHeaderBg} />}
+          <div key={`photo-${page}`} className="grid-page" style={{ height: '100%', width: '100%', alignItems: 'flex-end', paddingBottom: '150px', position: 'relative', ...(fx.on ? { animation: 'none' } : {}) }}>
+            {currentDrivers[0] && <PhotoDriverCard driver={currentDrivers[0]} align="left" config={config} themeAccent={themeAccent} themeHeaderBg={themeHeaderBg} fx={fx} index={0} />}
+            {currentDrivers[1] && <PhotoDriverCard driver={currentDrivers[1]} align="right" config={config} themeAccent={themeAccent} themeHeaderBg={themeHeaderBg} fx={fx} index={1} />}
 
             {/* INDICADOR DE FILA CENTRAL */}
             <div style={{ position: 'absolute', bottom: '80px', left: '50%', transform: 'translateX(-50%)', backgroundColor: themeMain, color: '#fff', padding: '10px 50px', fontSize: '30px', fontWeight: '900', fontStyle: 'italic', boxShadow: '0 10px 20px rgba(0,0,0,0.5)' }}>
-               FILA {page + 1}
+               <span style={{ display: 'inline-block', ...fx.num(4) }}>FILA {page + 1}</span>
             </div>
           </div>
 
@@ -199,6 +206,7 @@ export default function StartingGrid({ drivers, config, isVisible, id = 'grid' }
           themeTitleText={themeTitleText}
           themeNormalText={themeNormalText}
           themeNumberText={themeNumberText}
+          fx={fx}
         />
       )}
     </div>
@@ -208,19 +216,9 @@ export default function StartingGrid({ drivers, config, isVisible, id = 'grid' }
 // ----------------------------------------------------------------------------------
 // TARJETA MODO ESTÁNDAR (La que ya tenías)
 // ----------------------------------------------------------------------------------
-function DriverCardStandard({ driver, config, customBg, bRad, themeBg, themeHeaderBg, themeSecondary, themeAccent, themeNormalText, themeNumberText, skin }) {
-  const [imgSrc, setImgSrc] = useState(pilotoAnonimo);
+function DriverCardStandard({ driver, config, customBg, bRad, themeBg, themeHeaderBg, themeSecondary, themeAccent, themeNormalText, themeNumberText, skin, fx, index = 0, total = 1 }) {
+  // La tarjeta estándar no muestra foto (antes se descargaba igual y no se usaba).
   const hasCustomBg = !!customBg;
-
-  useEffect(() => {
-    if (!config?.photosPath) { setImgSrc(pilotoAnonimo); return; }
-    const host = window.location.hostname || 'localhost';
-    const photoUrl = `http://${host}:8080/photo/${driver.number}`;
-    const img = new Image();
-    img.onload = () => setImgSrc(photoUrl);
-    img.onerror = () => setImgSrc(pilotoAnonimo);
-    img.src = photoUrl;
-  }, [config?.photosPath, driver.number]);
 
   return (
     <div style={{
@@ -233,16 +231,17 @@ function DriverCardStandard({ driver, config, customBg, bRad, themeBg, themeHead
       borderRadius: bRad, width: '450px', height: '110px', margin: '0 45px 40px',
       boxShadow: skin ? skin.boxShadow : (hasCustomBg ? 'none' : '10px 15px 30px rgba(0,0,0,0.8)'),
       backdropFilter: skin?.backdropFilter,
-      position: 'relative', overflow: 'visible'
+      position: 'relative', overflow: 'visible',
+      ...fx.row(index, total, 0.3)
     }}>
       <div style={{ width: '90px', backgroundColor: hasCustomBg ? 'transparent' : themeHeaderBg, height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '48px', fontWeight: '900', color: themeNumberText, borderTopLeftRadius: bRad, borderBottomLeftRadius: bRad, zIndex: 2 }}>
-        {driver.pos}
+        <span style={{ display: 'inline-block', ...fx.num(index * 2 + 3) }}>{driver.pos}</span>
       </div>
       <div style={{ flex: 1, padding: '0 20px', display: 'flex', flexDirection: 'column', justifyContent: 'center', zIndex: 3, overflow: 'hidden' }}>
-        <span style={{ fontSize: '18px', color: themeAccent, fontWeight: 'bold', textShadow: '2px 2px 4px rgba(0,0,0,0.8)' }}>
-          #{driver.number} {driver.make ? `| ${driver.make}` : ''}
+        <span style={{ fontSize: '18px', color: themeAccent, fontWeight: 'bold', textShadow: '2px 2px 4px rgba(0,0,0,0.8)', ...fx.text(index * 2 + 4) }}>
+          <SuitNumber number={driver.number} config={config} /> {driver.make ? `| ${driver.make}` : ''}
         </span>
-        <span style={{ fontSize: '26px', fontWeight: '900', textTransform: 'uppercase', color: themeNormalText, whiteSpace: 'nowrap', overflow: 'hidden', textShadow: '2px 2px 4px rgba(0,0,0,0.8)', textOverflow: 'ellipsis' }}>
+        <span style={{ fontSize: '26px', fontWeight: '900', textTransform: 'uppercase', color: themeNormalText, whiteSpace: 'nowrap', overflow: 'hidden', textShadow: '2px 2px 4px rgba(0,0,0,0.8)', textOverflow: 'ellipsis', ...fx.text(index * 2 + 5) }}>
           {driver.name}
         </span>
       </div>
@@ -253,19 +252,9 @@ function DriverCardStandard({ driver, config, customBg, bRad, themeBg, themeHead
 // ----------------------------------------------------------------------------------
 // TARJETA MODO FOTOS (Cuerpo entero tipo Broadcast)
 // ----------------------------------------------------------------------------------
-function PhotoDriverCard({ driver, align, config, themeMain, themeAccent, themeHeaderBg }) {
-  const [imgSrc, setImgSrc] = useState(pilotoAnonimo);
+function PhotoDriverCard({ driver, align, config, themeAccent, themeHeaderBg, fx, index = 0 }) {
+  const imgSrc = useDriverPhoto(driver.number, !!config?.photosPath, pilotoAnonimo);
   const isLeft = align === 'left';
-
-  useEffect(() => {
-    if (!config?.photosPath) { setImgSrc(pilotoAnonimo); return; }
-    const host = window.location.hostname || 'localhost';
-    const photoUrl = `http://${host}:8080/photo/${driver.number}`;
-    const img = new Image();
-    img.onload = () => setImgSrc(photoUrl);
-    img.onerror = () => setImgSrc(pilotoAnonimo);
-    img.src = photoUrl;
-  }, [config?.photosPath, driver.number]);
 
   return (
     <div style={{
@@ -285,13 +274,13 @@ function PhotoDriverCard({ driver, align, config, themeMain, themeAccent, themeH
            position: 'absolute', top: '150px',
            left: isLeft ? '-80px' : 'auto', right: !isLeft ? '-80px' : 'auto',
            fontSize: '80px', fontWeight: '900', color: '#e0e0e0',
-           textShadow: '5px 5px 15px rgba(0,0,0,0.8)', zIndex: 1
+           textShadow: '5px 5px 15px rgba(0,0,0,0.8)', zIndex: 1, ...fx.num(index * 3 + 2)
        }}>
           P{driver.pos}
        </div>
 
        {/* FOTO DEL PILOTO GIGANTE (o genérica si no se encuentra) */}
-       <img src={imgSrc} style={{ height: '100%', objectFit: 'contain', filter: 'drop-shadow(0px 15px 25px rgba(0,0,0,0.9))', zIndex: 2 }} />
+       <img src={imgSrc} style={{ height: '100%', objectFit: 'contain', filter: 'drop-shadow(0px 15px 25px rgba(0,0,0,0.9))', zIndex: 2, ...fx.photo(index * 3 + 1) }} />
 
        {/* CAJA DE NOMBRE (TIPO REFERENCIA) */}
        <div style={{
@@ -299,9 +288,9 @@ function PhotoDriverCard({ driver, align, config, themeMain, themeAccent, themeH
            backgroundColor: themeHeaderBg || '#050505',
            borderTop: `5px solid ${themeAccent || '#00e5ff'}`,
            padding: '18px 0', textAlign: 'center',
-           boxShadow: '0 15px 30px rgba(0,0,0,0.9)', zIndex: 3
+           boxShadow: '0 15px 30px rgba(0,0,0,0.9)', zIndex: 3, ...fx.wipe(index * 3 + 2)
        }}>
-           <span style={{ color: '#fff', fontSize: '38px', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '1px' }}>
+           <span style={{ display: 'inline-block', color: '#fff', fontSize: '38px', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '1px', ...fx.text(index * 3 + 3) }}>
                {driver.name}
            </span>
        </div>
@@ -312,19 +301,8 @@ function PhotoDriverCard({ driver, align, config, themeMain, themeAccent, themeH
 // ----------------------------------------------------------------------------------
 // NUEVO MODO CINEMATIC: grilla completa a la izquierda (resaltada), foto centrada, info a la derecha
 // ----------------------------------------------------------------------------------
-function CinematicGridView({ allDrivers, currentDriver, page, config, bRad, themeMain, themeHeaderBg, themeAccent, themeTitleText, themeNormalText, themeNumberText }) {
-  const [imgSrc, setImgSrc] = useState(pilotoAnonimo);
-
-  useEffect(() => {
-    if (!currentDriver) return;
-    if (!config?.photosPath) { setImgSrc(pilotoAnonimo); return; }
-    const host = window.location.hostname || 'localhost';
-    const photoUrl = `http://${host}:8080/photo/${currentDriver.number}`;
-    const img = new Image();
-    img.onload = () => setImgSrc(photoUrl);
-    img.onerror = () => setImgSrc(pilotoAnonimo);
-    img.src = photoUrl;
-  }, [config?.photosPath, currentDriver?.number]);
+function CinematicGridView({ allDrivers, currentDriver, page, config, bRad, themeMain, themeHeaderBg, themeAccent, themeTitleText, themeNormalText, themeNumberText, fx }) {
+  const imgSrc = useDriverPhoto(currentDriver?.number, !!(currentDriver && config?.photosPath), pilotoAnonimo);
 
   if (!currentDriver) return null;
 
@@ -353,7 +331,8 @@ function CinematicGridView({ allDrivers, currentDriver, page, config, bRad, them
   const rowPaddingH = Math.max(4, Math.round(rowBoxHeight * 0.32));
   const rowRadius = rowBoxHeight < 24 ? '3px' : bRad;
 
-  const renderRow = (driver) => {
+  const total = (allDrivers || []).length;
+  const renderRow = (driver, i, col) => {
     const isActive = driver?.pos === currentDriver?.pos;
     return (
       <div
@@ -365,7 +344,8 @@ function CinematicGridView({ allDrivers, currentDriver, page, config, bRad, them
           border: `1px solid ${isActive ? themeAccent : 'rgba(255,255,255,0.12)'}`,
           borderRadius: rowRadius, padding: `0 ${rowPaddingH}px`, marginBottom: `${rowGap}px`,
           transition: 'background-color 0.3s ease, border-color 0.3s ease',
-          boxShadow: isActive ? `0 0 18px ${themeAccent}88` : 'none'
+          boxShadow: isActive ? `0 0 18px ${themeAccent}88` : 'none',
+          ...fx.row(i * 2 + col, total, 0.3)
         }}
       >
         <span style={{
@@ -419,19 +399,19 @@ function CinematicGridView({ allDrivers, currentDriver, page, config, bRad, them
 
         {/* DOS COLUMNAS: altura tope fija = AVAILABLE_HEIGHT, así nunca se sale del panel */}
         <div style={{ display: 'flex', gap: '20px', height: `${AVAILABLE_HEIGHT}px`, overflow: 'hidden' }}>
-          <div style={{ flex: 1 }}>{colA.map(renderRow)}</div>
-          <div style={{ flex: 1 }}>{colB.map(renderRow)}</div>
+          <div style={{ flex: 1 }}>{colA.map((d, i) => renderRow(d, i, 0))}</div>
+          <div style={{ flex: 1 }}>{colB.map((d, i) => renderRow(d, i, 1))}</div>
         </div>
       </div>
 
       {/* CENTRO: FOTO DEL PILOTO ACTIVO */}
       <div key={`cinematic-photo-${page}`} style={{
         flex: 1, height: '100%', display: 'flex', alignItems: 'flex-end', justifyContent: 'center',
-        position: 'relative', animation: 'cinematicFade 0.5s ease forwards'
+        position: 'relative', animation: fx.on ? 'none' : 'cinematicFade 0.5s ease forwards'
       }}>
         <img
           src={imgSrc}
-          style={{ height: '95%', objectFit: 'contain', filter: 'drop-shadow(0px 15px 30px rgba(0,0,0,0.85))' }}
+          style={{ height: '95%', objectFit: 'contain', filter: 'drop-shadow(0px 15px 30px rgba(0,0,0,0.85))', ...fx.photo(0) }}
         />
       </div>
 
@@ -440,25 +420,25 @@ function CinematicGridView({ allDrivers, currentDriver, page, config, bRad, them
         width: '520px', height: '100%', flexShrink: 0,
         display: 'flex', flexDirection: 'column', justifyContent: 'center',
         padding: '40px 60px', boxSizing: 'border-box',
-        animation: 'cinematicFade 0.5s ease forwards'
+        animation: fx.on ? 'none' : 'cinematicFade 0.5s ease forwards'
       }}>
-        <span style={{ fontSize: '90px', fontWeight: '900', color: themeTitleText, lineHeight: 1 }}>
+        <span style={{ display: 'inline-block', fontSize: '90px', fontWeight: '900', color: themeTitleText, lineHeight: 1, ...fx.num(1) }}>
           {currentDriver?.pos}°
         </span>
-        <div style={{ width: '100%', height: '4px', backgroundColor: themeAccent, margin: '15px 0' }} />
-        <span style={{ fontSize: '28px', fontWeight: '400', color: themeNormalText, textTransform: 'uppercase', letterSpacing: '1px' }}>
+        <div style={{ width: '100%', height: '4px', backgroundColor: themeAccent, margin: '15px 0', ...fx.wipe(2) }} />
+        <span style={{ fontSize: '28px', fontWeight: '400', color: themeNormalText, textTransform: 'uppercase', letterSpacing: '1px', ...fx.text(3) }}>
           {(currentDriver?.name || '').split(' ').slice(0, -1).join(' ')}
         </span>
-        <span style={{ fontSize: '46px', fontWeight: '900', color: themeNormalText, textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '10px' }}>
+        <span style={{ fontSize: '46px', fontWeight: '900', color: themeNormalText, textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '10px', ...fx.text(4) }}>
           {(currentDriver?.name || '').split(' ').slice(-1).join(' ')}
         </span>
         {currentDriver?.make && (
-          <span style={{ fontSize: '20px', fontWeight: '700', color: themeNumberText, textTransform: 'uppercase' }}>
-            #{currentDriver.number} — {currentDriver.make}
+          <span style={{ fontSize: '20px', fontWeight: '700', color: themeNumberText, textTransform: 'uppercase', ...fx.text(5) }}>
+            <SuitNumber number={currentDriver.number} config={config} /> — {currentDriver.make}
           </span>
         )}
         {(currentDriver?.bestLap || currentDriver?.points) && (
-          <span style={{ fontSize: '70px', fontWeight: '900', color: themeAccent, marginTop: '20px' }}>
+          <span style={{ fontSize: '70px', fontWeight: '900', color: themeAccent, marginTop: '20px', ...fx.num(6) }}>
             {currentDriver?.points || currentDriver?.bestLap}
           </span>
         )}

@@ -1,6 +1,8 @@
-import { getWeatherVisual, WeatherIcon, getWindDirLabel } from './Weather';
+import { WeatherIcon } from './Weather';
+import { getWeatherVisual, getWindDirLabel } from '../utils/weather';
 import { getSkinStyle } from '../utils/skinStyles';
 import { getAnimDuration, getRollClip } from '../utils/animationTiming';
+import { makeFx } from '../utils/contentAnim';
 
 // EVENTO: una sola gráfica con el nombre de la productora (con su logo si está cargado), el nombre del circuito y el clima.
 // Cada bloque aparece sólo si tiene datos: config.productora, config.circuito y config.weatherData.
@@ -16,6 +18,7 @@ export default function Evento({ isVisible, config, id = 'evento' }) {
   const customBg = config?.[`design_${id}`];
   const bRad = config?.[`borderRadius_${id}`] || '8px';
   const animStyle = config?.[`animationStyle_${id}`] || 'slide';
+  const fx = makeFx(config, id, isVisible);
   const animDur = getAnimDuration(config, id);
   const skin = getSkinStyle(config?.[`eventoFormat_${id}`] || config?.eventoFormat || 'standard', { themeMain, themeAccent });
 
@@ -55,7 +58,7 @@ export default function Evento({ isVisible, config, id = 'evento' }) {
 
   return (
     <div style={wrapperStyle}>
-      <div style={{
+      <div className={fx.group} style={{
         display: 'flex', alignItems: 'center', minHeight: '86px',
         backgroundColor: skin ? skin.background : (customBg ? 'transparent' : themeBg),
         backgroundImage: customBg ? `url(${customBg})` : (skin?.backgroundImage || 'none'),
@@ -69,13 +72,13 @@ export default function Evento({ isVisible, config, id = 'evento' }) {
         {/* Sin `gap` en el bloque de productora: con el logo oculto, el polyfill de gap de Chromium viejo correría el texto */}
         <div style={{ display: 'flex', alignItems: 'center', padding: '0 24px', ...show(hasProducer) }}>
           <img src={config?.logo || undefined} alt="Productora" style={{ height: '52px', maxWidth: '120px', objectFit: 'contain', ...show(!!config?.logo) }} />
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', marginLeft: config?.logo ? '14px' : 0, ...show(!!producer) }}>
+          <div className={fx.group} style={{ display: 'flex', flexDirection: 'column', gap: '3px', marginLeft: config?.logo ? '14px' : 0, ...show(!!producer) }}>
             <span style={labelStyle}>PRODUCTORA</span>
             <span style={valueStyle}>{producer}</span>
           </div>
         </div>
         <div style={dividerStyle(hasProducer && hasCircuit)} />
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', padding: '0 24px', justifyContent: 'center', ...show(hasCircuit) }}>
+        <div className={fx.group} style={{ display: 'flex', flexDirection: 'column', gap: '3px', padding: '0 24px', justifyContent: 'center', ...show(hasCircuit) }}>
           <span style={labelStyle}>CIRCUITO</span>
           <span style={valueStyle}>{circuit}</span>
         </div>
@@ -84,7 +87,7 @@ export default function Evento({ isVisible, config, id = 'evento' }) {
           {hasWeather && (
             <>
               <WeatherIcon category={weatherInfo.category} color={themeAccent} size={46} />
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+              <div className={fx.group} style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
                   <span style={{ ...valueStyle, fontSize: '30px' }}>{Math.round(weather.temp)}°C</span>
                   <span style={{ color: themeNumberText, fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase' }}>{weatherInfo.label}</span>

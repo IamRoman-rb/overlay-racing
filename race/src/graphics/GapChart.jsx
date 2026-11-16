@@ -1,6 +1,11 @@
 import { getGraphicFrame, getFormatStyles } from '../utils/raceVisuals';
 import CategoryTag from '../components/CategoryTag';
-import DriverPhoto, { photosEnabled } from '../components/DriverPhoto';
+import DriverPhoto from '../components/DriverPhoto';
+import { photosEnabled } from '../utils/photos';
+import { useSuitStyle } from '../utils/suitColor';
+import SuitNumber from '../components/SuitNumber';
+import { makeFx } from '../utils/contentAnim';
+import { ChangeTick } from '../components/ChangeAnim';
 
 const PAD = { l: 44, r: 14, t: 12, b: 22 };
 
@@ -20,6 +25,8 @@ function chartGeometry(series, W, H, pad) {
 // cuánto descuenta por vuelta y en cuántas vueltas lo alcanza.
 // Formatos (PERSONALIZAR): standard | compact (sin gráfico) | duel (los dos pilotos enfrentados) | minimal | skins.
 export default function GapChart({ data, config, id = 'gapChart', formatName = (n) => n }) {
+  // Color del número tomado del traje (foto del piloto), si está activado en PILOTOS
+  const sc = useSuitStyle([data?.front, data?.back], config);
   const isVisible = !!data?.isVisible;
   const { wrapperStyle, bRad, customBg, theme: baseTheme } = getGraphicFrame(config, id, isVisible, { x: 730, y: 640, scale: 1 });
   const format = config?.gapChartFormat || 'standard';
@@ -27,6 +34,7 @@ export default function GapChart({ data, config, id = 'gapChart', formatName = (
   const theme = f.theme;
   const ts = f.textShadow;
   const showPh = photosEnabled(config, id);
+  const fx = makeFx(config, id, isVisible, 0.2);
   const series = (data?.series || []).slice(-25);
 
   const rate = data?.rate;
@@ -51,7 +59,7 @@ export default function GapChart({ data, config, id = 'gapChart', formatName = (
         <line x1={pad.l} x2={W - pad.r} y1={g.y(0)} y2={g.y(0)} stroke="rgba(255,255,255,0.35)" strokeDasharray="4 4" />
         {labels && <text x={pad.l - 6} y={g.y(0) + 4} fill={theme.number} fontSize="10" textAnchor="end">0.0</text>}
         {labels && <text x={pad.l - 6} y={pad.t + 8} fill={theme.number} fontSize="10" textAnchor="end">{g.top.toFixed(1)}</text>}
-        {series.length > 1 && <polyline points={g.points} fill="none" stroke={theme.accent} strokeWidth="3" strokeLinejoin="round" />}
+        {series.length > 1 && <polyline points={g.points} fill="none" stroke={theme.accent} strokeWidth="3" strokeLinejoin="round" pathLength="1" style={fx.draw(2)} />}
         {series.map((p, i) => (
           <g key={p.lap}>
             {(dots || i === series.length - 1) && <circle cx={g.x(i)} cy={g.y(p.gap)} r={i === series.length - 1 ? 5 : 3} fill={i === series.length - 1 ? theme.main : theme.accent} />}
@@ -66,11 +74,11 @@ export default function GapChart({ data, config, id = 'gapChart', formatName = (
   };
 
   const driverTag = (d, align) => (
-    <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', alignItems: align === 'right' ? 'flex-end' : 'flex-start' }}>
+    <div className={fx.group} style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', alignItems: align === 'right' ? 'flex-end' : 'flex-start' }}>
       {showPh && <DriverPhoto number={d.num} config={config} height={96} maxWidth={130} fade style={{ marginBottom: '4px' }} />}
       <span style={{ display: 'flex', alignItems: 'center', flexDirection: align === 'right' ? 'row-reverse' : 'row' }}>
         <span style={{ color: theme.accent, fontWeight: 900, fontSize: '18px', margin: '0 6px', textShadow: ts }}>P{d.pos}</span>
-        <span style={{ backgroundColor: theme.secondary, color: '#000', fontWeight: 900, fontSize: '14px', padding: '2px 7px', borderRadius: '3px' }}>{d.num}</span>
+        <span style={{ backgroundColor: theme.secondary, color: '#000', fontWeight: 900, fontSize: '14px', padding: '2px 7px', borderRadius: '3px', ...sc(d.num) }}>{d.num}</span>
       </span>
       <span style={{ color: theme.text, fontWeight: 900, fontSize: '16px', textTransform: 'uppercase', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '100%', marginTop: '4px', textShadow: ts }}>{d.name}</span>
     </div>
@@ -80,12 +88,12 @@ export default function GapChart({ data, config, id = 'gapChart', formatName = (
   if (f.compact) {
     return (
       <div style={wrapperStyle}>
-        <div style={{ ...f.box, width: '560px', display: 'flex', alignItems: 'center', padding: '10px 14px' }}>
+        <div className={fx.group} style={{ ...f.box, width: '560px', display: 'flex', alignItems: 'center', padding: '10px 14px' }}>
           <span style={{ color: theme.title, fontWeight: 900, fontSize: '11px', letterSpacing: '2px', marginRight: '12px', whiteSpace: 'nowrap' }}>BRECHA<CategoryTag config={config} id={id} block size="0.8em" /></span>
           <span style={{ flex: 1, minWidth: 0, color: theme.text, fontWeight: 900, fontSize: '14px', textTransform: 'uppercase', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-            #{front.num} {front.name} <span style={{ color: theme.number }}>vs</span> #{back.num} {back.name}
+            <SuitNumber number={front.num} config={config} /> {front.name} <span style={{ color: theme.number }}>vs</span> <SuitNumber number={back.num} config={config} /> {back.name}
           </span>
-          <span style={{ color: theme.text, fontWeight: 900, fontSize: '20px', fontFamily: 'monospace', margin: '0 12px' }}>{gapText}</span>
+          <span style={{ color: theme.text, fontWeight: 900, fontSize: '20px', fontFamily: 'monospace', margin: '0 12px' }}><ChangeTick value={gapText} enabled={fx.on} /></span>
           <span style={{ color: trendColor, fontWeight: 900, fontSize: '12px', whiteSpace: 'nowrap' }}>{trendShort}</span>
         </div>
       </div>
@@ -98,12 +106,12 @@ export default function GapChart({ data, config, id = 'gapChart', formatName = (
       <div style={wrapperStyle}>
         <div style={{ ...f.box, width: '600px', padding: '0 0 10px' }}>
           <div style={{ padding: '6px 14px', backgroundColor: f.headerBg, borderBottom: f.headerBorder, color: theme.title, fontWeight: 900, fontSize: '12px', letterSpacing: '2px', textAlign: 'center' }}>
-            BRECHA VUELTA A VUELTA<CategoryTag config={config} id={id} />
+            <span style={{ display: 'inline-block', ...fx.text(0) }}>BRECHA VUELTA A VUELTA<CategoryTag config={config} id={id} /></span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', padding: '12px 16px 4px' }}>
             {driverTag(front, 'left')}
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '0 14px' }}>
-              <span style={{ color: theme.text, fontWeight: 900, fontSize: '34px', fontFamily: 'monospace', lineHeight: 1, textShadow: ts }}>{gapText}</span>
+              <span style={{ display: 'inline-block', color: theme.text, fontWeight: 900, fontSize: '34px', fontFamily: 'monospace', lineHeight: 1, textShadow: ts, ...fx.num(3) }}><ChangeTick value={gapText} enabled={fx.on} /></span>
               <span style={{ color: trendColor, fontWeight: 900, fontSize: '12px', marginTop: '4px' }}>{trendShort}</span>
             </div>
             {driverTag(back, 'right')}
@@ -120,18 +128,18 @@ export default function GapChart({ data, config, id = 'gapChart', formatName = (
   return (
     <div style={wrapperStyle}>
       <div style={{ ...f.box, width: `${W + 20}px`, padding: '0 0 10px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', padding: '8px 14px', backgroundColor: f.headerBg, borderBottom: f.headerBorder }}>
+        <div className={fx.group} style={{ display: 'flex', alignItems: 'center', padding: '8px 14px', backgroundColor: f.headerBg, borderBottom: f.headerBorder }}>
           <span style={{ color: theme.title, fontWeight: 900, fontSize: '13px', letterSpacing: '2px', marginRight: '12px', whiteSpace: 'nowrap', textShadow: ts }}>BRECHA<CategoryTag config={config} id={id} block size="0.7em" /></span>
           <span style={{ flex: 1, color: theme.text, fontWeight: 900, fontSize: '14px', textTransform: 'uppercase', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', textShadow: ts }}>
-            <span style={{ color: theme.accent }}>P{front.pos}</span> #{front.num} {front.name}
+            <span style={{ color: theme.accent }}>P{front.pos}</span> <SuitNumber number={front.num} config={config} /> {front.name}
             <span style={{ color: theme.number }}>{'  vs  '}</span>
-            <span style={{ color: theme.accent }}>P{back.pos}</span> #{back.num} {back.name}
+            <span style={{ color: theme.accent }}>P{back.pos}</span> <SuitNumber number={back.num} config={config} /> {back.name}
           </span>
         </div>
         {renderChart(W + 20, 150, PAD)}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', padding: '0 14px', fontWeight: 'bold', textShadow: ts }}>
           <span style={{ color: theme.title, fontSize: '12px' }}>
-            BRECHA <span style={{ color: theme.text, fontSize: '20px', fontFamily: 'monospace' }}>{gapText}</span>
+            BRECHA <span style={{ color: theme.text, fontSize: '20px', fontFamily: 'monospace' }}><ChangeTick value={gapText} enabled={fx.on} /></span>
           </span>
           <span style={{ color: trendColor, fontSize: '12px' }}>{trendText}</span>
         </div>

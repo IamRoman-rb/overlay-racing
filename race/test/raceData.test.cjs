@@ -130,6 +130,7 @@ test('RaceAnalyzer: brecha vuelta a vuelta y alertas', () => {
   // Reprocesar (por ejemplo al cargar una corrección) no genera alertas aunque cambie el líder
   const back = mk(6, tA + 92, tB + 89, 92, 89);
   r = a.update({ session, drivers: back }, { now: 6 * 90000 + 1500, reprocess: true });
+  assert.equal(r.newAlerts.length, 0);
   r = a.update({ session, drivers: back }, { now: 6 * 90000 + 1600, reprocess: true });
   assert.equal(r.newAlerts.length, 0);
   a.update({ session, drivers: swapped }, { now: 6 * 90000 + 1700, reprocess: true });
@@ -173,4 +174,30 @@ test('RaceAnalyzer: sectores y vuelta teórica', () => {
   assert.equal(A.theoreticalBest, '1:32.900');
   assert.equal(r.leaderboard.session.idealLap, '1:32.400');
   assert.equal(r.leaderboard.session.qualifying, true);
+});
+
+test('marcas recordadas por nombre: se aprenden de PILOTOS y se aplican aunque cambie el número', () => {
+  const { learnBrands, normalizeBrandMemory, driverKey } = require('../src/scripts/raceData.cjs');
+  assert.equal(driverKey('Pérez, Juan  '), 'PEREZ JUAN');
+  assert.deepEqual(normalizeBrandMemory({ 'pérez juan': 'citroen', X: 'citroen', 'ANA GOMEZ': 'marca-que-no-existe' }), { 'PEREZ JUAN': 'citroen' });
+
+  // Carrera 1: el #7 tiene la marca elegida a mano
+  const a1 = new RaceAnalyzer();
+  const roster1 = { 7: { brand: 'citroen' } };
+  const r1 = a1.update({ session: {}, drivers: [drv(1, 7, 'Juan Pérez'), drv(2, 22, 'Ana Gómez')] }, { roster: roster1, now: 1000 });
+  assert.equal(r1.leaderboard.drivers[0].brandFrom, 'manual');
+  const memory = learnBrands(r1.leaderboard.drivers, roster1, {});
+  assert.deepEqual(memory, { 'JUAN PEREZ': 'citroen' });
+  assert.equal(learnBrands(r1.leaderboard.drivers, roster1, memory), null, 'sin cambios no se vuelve a guardar');
+
+  // Carrera 2: otra categoría, mismo piloto con el #31 y sin nada cargado en PILOTOS
+  const a2 = new RaceAnalyzer();
+  const r2 = a2.update({ session: {}, drivers: [drv(1, 31, 'JUAN PEREZ'), drv(2, 22, 'Ana Gómez')] }, { roster: {}, brandMemory: memory, now: 1000 });
+  const juan = r2.leaderboard.drivers.find(d => d.number === '31');
+  assert.equal(juan.brand, 'citroen');
+  assert.equal(juan.brandFrom, 'memory');
+  assert.notEqual(r2.leaderboard.drivers.find(d => d.number === '22').brandFrom, 'memory');
+  // La elegida a mano gana sobre la recordada
+  const r3 = new RaceAnalyzer().update({ session: {}, drivers: [drv(1, 31, 'JUAN PEREZ')] }, { roster: { 31: { brand: 'abarth' } }, brandMemory: memory, now: 1000 });
+  assert.equal(r3.leaderboard.drivers[0].brand, 'abarth');
 });

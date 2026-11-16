@@ -5,7 +5,7 @@ import Icon from '../components/Icon';
 
 let ipcRenderer = null;
 if (typeof window !== 'undefined' && typeof window.require === 'function') {
-  try { ipcRenderer = window.require('electron').ipcRenderer; } catch (e) {}
+  try { ipcRenderer = window.require('electron').ipcRenderer; } catch { /* no crítico: se ignora */ }
 }
 
 const ALL_DAYS = 'all';

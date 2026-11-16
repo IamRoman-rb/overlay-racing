@@ -1,15 +1,31 @@
-import { useState, useEffect, useRef } from 'react';
+import { Fragment, useState, useEffect, useLayoutEffect, useRef } from 'react';
 import { getSkinStyle } from '../utils/skinStyles';
 import Icon from '../components/Icon';
 import { getAnimDuration, getRollClip } from '../utils/animationTiming';
-import { getClassColor, ARROW_COLORS, getCategory } from '../utils/raceVisuals';
-import { getElitePalette, ELITE_FONT, rgba, numberColor, textOnColor, surnameCode } from '../utils/elite';
+import { getClassColor, ARROW_COLORS, getCategory, FORMATION_TEXT } from '../utils/raceVisuals';
+import { getElitePalette, getSlimPalette, ELITE_FONT, rgba, numberColor, textOnColor, surnameCode } from '../utils/elite';
 import BrandLogo from '../components/BrandLogo';
 import { useSuitColors } from '../utils/suitColor';
+import { rowEntranceStyle, ROW_ANIM_CSS, towerPageRows, towerPageSeconds, towerNarrowRows } from '../utils/rowEntrance';
+import { makeFx } from '../utils/contentAnim';
+import { ChangeTick } from '../components/ChangeAnim';
 
 const PODIUM_COLORS = { 1: '#ffd700', 2: '#c0c0c0', 3: '#cd7f32' };
+const TOWER_BOX_H = 650; // alto fijo de la caja de la torre (sin el espacio onboard)
+const PAGE_FADE_MS = 350; // salida de la tanda que se va antes de que entre la siguiente
 
-export default function TimingTower({ drivers, config, isVisible, id = 'tower', sessionInfo }) {
+// Alto del espacio onboard: el elegido en el PANEL (px, para la torre de 320 px de ancho) o 16:9 del ancho de la torre
+const onboardHeight = (config, towerWidth) => {
+  const h = parseInt(config?.towerOnboardHeight, 10);
+  return Math.round((Number.isFinite(h) && h >= 40 && h <= 600 ? h : 180) * towerWidth / 320);
+};
+
+// onboard: número del piloto debajo del cual se abre un espacio negro para poner encima la cámara onboard desde otro
+// programa (vMix, OBS). Con config.towerOnboardLock (por defecto) el espacio queda en la fila donde se abrió aunque el
+// piloto cambie de posición, para que la cámara puesta encima no quede desalineada.
+// formationLap: la gráfica VUELTA DE FORMACIÓN está al aire; con config.formationLapInTower (por defecto) la torre lo muestra
+// en el encabezado.
+export default function TimingTower({ drivers, config, isVisible, id = 'tower', sessionInfo, onboard = null, formationLap = false }) {
   const towerFormat = config?.towerFormat || 'standard';
   const isCompact = towerFormat === 'compact';
   const isPodium = towerFormat === 'podium';
@@ -41,6 +57,94 @@ export default function TimingTower({ drivers, config, isVisible, id = 'tower', 
   const shownDrivers = classFilter ? drivers.filter(d => d.cls === classFilter) : drivers;
   const showGains = config?.towerShowGains !== false;
   const headerCategory = [getCategory(config, id), classFilter].filter(Boolean).join(' · ');
+  const showFormation = !!formationLap && config?.formationLapInTower !== false;
+
+  // --- PILOTOS QUE NO ENTRAN ---
+  // La caja mide TOWER_BOX_H: se mide cuántas filas entran debajo del encabezado (en las angostas, que crecen a lo
+  // alto, es el máximo elegido en PERSONALIZAR). Si hay más pilotos, las últimas
+  // `pageSize` filas se van reemplazando por los que faltan (ej.: 20 pilotos y 15 filas -> 11-15, después 16-20), con
+  // el mismo efecto de aparición de filas elegido para la torre. La última tanda muestra siempre los últimos de la
+  // tabla, así queda completa.
+  const isNarrow = towerFormat === 'elite' || towerFormat === 'slim';
+  const rowsRef = useRef(null);
+  const customBgKey = config?.[`design_${id}`];
+  const [rowsArea, setRowsArea] = useState(0);
+  useLayoutEffect(() => {
+    const el = rowsRef.current;
+    if (!el) return;
+    setRowsArea(TOWER_BOX_H - el.offsetTop);
+  }, [towerFormat, isVisible, sessionInfo?.name, headerCategory, showFormation, config?.logo, config?.categoryLogo, customBgKey, TOWER_ROW_HEIGHT]);
+  const capacity = isNarrow ? towerNarrowRows(config) : (rowsArea > 0 ? Math.max(1, Math.floor(rowsArea / TOWER_ROW_HEIGHT)) : Infinity);
+  const paging = shownDrivers.length > capacity && capacity >= 2;
+  const pageSize = paging ? Math.min(towerPageRows(config), capacity - 1) : 1;
+  const fixedCount = paging ? capacity - pageSize : shownDrivers.length;
+  const pageCount = paging ? Math.ceil((shownDrivers.length - fixedCount) / pageSize) : 1;
+
+  // n: tanda actual (contador, va en la key para que cada tanda nueva vuelva a hacer la entrada);
+  // leaving: la tanda actual se está yendo; rotated: ya pasó al menos una tanda desde que salió al aire.
+  const [pager, setPager] = useState({ n: 0, leaving: false, rotated: false });
+  const [wasVisible, setWasVisible] = useState(isVisible);
+  if (wasVisible !== isVisible) {
+    setWasVisible(isVisible);
+    if (isVisible) setPager({ n: 0, leaving: false, rotated: false });
+  }
+
+  // --- CÁMARA ONBOARD ---
+  // Se recuerda el último piloto y la fila donde se abrió, así el espacio se cierra con animación en el mismo lugar
+  const liveIndex = onboard ? shownDrivers.findIndex(d => String(d.number) === String(onboard)) : -1;
+  const onboardOpen = !!onboard && liveIndex >= 0;
+  // Con la cámara abierta sobre un piloto de las tandas se muestra su tanda, y no se rota hasta cerrarla
+  const onboardPage = paging && onboardOpen && liveIndex >= fixedCount ? Math.min(pageCount - 1, Math.floor((liveIndex - fixedCount) / pageSize)) : -1;
+  if (onboardPage >= 0 && (pager.n % pageCount !== onboardPage || pager.leaving)) {
+    const ahead = (onboardPage - (pager.n % pageCount) + pageCount) % pageCount;
+    setPager({ n: pager.n + (ahead || pageCount), leaving: false, rotated: true });
+  }
+  const page = !paging ? 0 : (onboardPage >= 0 ? onboardPage : pager.n % pageCount);
+  const pageStart = Math.min(fixedCount + page * pageSize, shownDrivers.length - pageSize);
+  // Fila en pantalla de un piloto (índice en shownDrivers), o -1 si no está en la tanda que se ve
+  const slotOf = (i) => {
+    if (i < 0) return -1;
+    if (!paging || i < fixedCount) return i;
+    return i >= pageStart && i < pageStart + pageSize ? fixedCount + i - pageStart : -1;
+  };
+
+  const [onboardState, setOnboardState] = useState({ number: null, slot: -1, open: false });
+  if (onboardOpen && (onboard !== onboardState.number || !onboardState.open)) setOnboardState({ number: onboard, slot: slotOf(liveIndex), open: true });
+  else if (!onboardOpen && onboardState.open) setOnboardState({ ...onboardState, open: false });
+  const lockSlot = config?.towerOnboardLock !== false;
+  const lastIndex = onboardState.number ? shownDrivers.findIndex(d => String(d.number) === String(onboardState.number)) : -1;
+  const onboardSlot = lockSlot ? onboardState.slot : slotOf(onboardOpen ? liveIndex : lastIndex);
+
+  // Rotación: cada towerPageSeconds la tanda se desvanece y entra la siguiente
+  const pageSecs = towerPageSeconds(config);
+  const rotate = paging && pageCount > 1 && isVisible && !onboardOpen;
+  useEffect(() => {
+    if (!rotate || pager.leaving) return undefined;
+    const t = setTimeout(() => setPager(p => ({ ...p, leaving: true })), pageSecs * 1000);
+    return () => clearTimeout(t);
+  }, [rotate, pager.n, pager.leaving, pageSecs]);
+  useEffect(() => {
+    if (!pager.leaving) return undefined;
+    const t = setTimeout(() => setPager(p => (p.leaving ? { n: p.n + 1, leaving: false, rotated: true } : p)), PAGE_FADE_MS);
+    return () => clearTimeout(t);
+  }, [pager.leaving]);
+  // Filas en pantalla: las fijas y la tanda actual (o todas, si entran). index: lugar en la tabla; slot: fila en pantalla
+  const visibleRows = paging
+    ? [
+        ...shownDrivers.slice(0, fixedCount).map((driver, i) => ({ driver, index: i, slot: i, paged: false })),
+        ...shownDrivers.slice(pageStart, pageStart + pageSize).map((driver, j) => ({ driver, index: pageStart + j, slot: fixedCount + j, paged: true }))
+      ]
+    : shownDrivers.map((driver, i) => ({ driver, index: i, slot: i, paged: false }));
+  const rowKey = (driver, paged) => (paged ? `${driver.number || driver.name}@${pager.n}` : (driver.number || driver.name));
+  // Entrada de cada fila: las de una tanda nueva entran solas, con el efecto elegido, apenas se fue la anterior
+  const rowAnim = (slot, paged, baseDelay) => (paged && pager.rotated
+    ? rowEntranceStyle(config, id, slot - fixedCount, visibleRows.length - fixedCount, isVisible, 0.05)
+    : rowEntranceStyle(config, id, slot, visibleRows.length, isVisible, baseDelay));
+
+  const onboardStyle = (h) => ({
+    height: `${onboardOpen ? h : 0}px`, overflow: 'hidden', backgroundColor: '#000', boxSizing: 'border-box',
+    transition: 'height 0.6s ease-in-out, top 0.6s ease-in-out'
+  });
 
   // Difuminado del fondo (backdrop blur) elegible en PERSONALIZAR; por defecto un blur suave.
   const configuredBlur = config?.towerBlur;
@@ -59,6 +163,7 @@ export default function TimingTower({ drivers, config, isVisible, id = 'tower', 
   const bRad = config[`borderRadius_${id}`] || '8px';
   const animStyle = config[`animationStyle_${id}`] || 'slide';
   const animDur = getAnimDuration(config, id);
+  const fx = makeFx(config, id, isVisible, 0.15);
 
   // Animación de entrada
   let transformHidden = `scale(${pos.scale}) translateX(-40px)`; 
@@ -90,12 +195,16 @@ export default function TimingTower({ drivers, config, isVisible, id = 'tower', 
     prevDriversRef.current = currentDriversMap;
   }, [drivers]);
 
-  // FORMATO ELITE (paquete azul de transmisión): torre angosta con código de 4 letras y número de color por auto
-  if (towerFormat === 'elite') {
-    const pal = getElitePalette(config);
+  // FORMATO ELITE (paquete azul de transmisión): torre angosta con código de 4 letras y número de color por auto.
+  // FORMATO ANGOSTA (slim): el mismo armado con los colores de PERSONALIZAR > COLORES (fondo, encabezado, principal,
+  // secundario, acento y textos), el número en el color secundario y el difuminado elegido para la torre.
+  if (towerFormat === 'elite' || towerFormat === 'slim') {
+    const slim = towerFormat === 'slim';
+    const pal = slim ? getSlimPalette(config) : getElitePalette(config);
     const flagRaw = String(sessionInfo?.flag || '').toLowerCase();
     const flagColor = /red|roja/.test(flagRaw) ? '#e8183f' : /yellow|amarill/.test(flagRaw) ? '#ffd60a' : /checker|finish/.test(flagRaw) ? '#ffffff' : '#2fd17f';
-    const sessionLabel = sessionInfo?.qualifying ? 'CLASIFICACIÓN' : (sessionInfo?.name ? String(sessionInfo.name).split(/\s+[-–—]\s+/).pop() : 'CARRERA');
+    const sessionLabel = showFormation ? FORMATION_TEXT : (sessionInfo?.qualifying ? 'CLASIFICACIÓN' : (sessionInfo?.name ? String(sessionInfo.name).split(/\s+[-–—]\s+/).pop() : 'CARRERA'));
+    const W = slim ? 200 : 186;
     const ROW = 25;
     return (
       <div style={{
@@ -105,41 +214,48 @@ export default function TimingTower({ drivers, config, isVisible, id = 'tower', 
         transform: isVisible || animStyle === 'roll' ? `scale(${pos.scale}) translateX(0)` : transformHidden, ...getRollClip(animStyle, isVisible),
         pointerEvents: isVisible ? 'auto' : 'none', fontFamily: ELITE_FONT, color: pal.text, textTransform: 'uppercase'
       }}>
-        <div style={{ width: '186px', background: pal.background, borderRadius: bRad, overflow: 'hidden', boxShadow: '0 10px 28px rgba(0,0,0,0.5)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '34px', backgroundColor: '#0b0b0b', padding: '0 8px' }}>
+        <style>{ROW_ANIM_CSS}</style>
+        <div style={{ width: `${W}px`, background: pal.background, borderRadius: bRad, overflow: 'hidden', boxShadow: '0 10px 28px rgba(0,0,0,0.5)', borderTop: slim ? `3px solid ${pal.red}` : 'none', backdropFilter: slim ? backdropFilter : undefined }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '34px', backgroundColor: slim ? pal.deep : '#0b0b0b', padding: '0 8px' }}>
             {config?.categoryLogo
               ? <img src={config.categoryLogo} alt="" style={{ maxHeight: '28px', maxWidth: '170px', objectFit: 'contain' }} />
-              : <span style={{ fontSize: '15px', fontWeight: 700, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{headerCategory || sessionInfo?.name || ''}</span>}
+              : <span style={{ fontSize: '15px', fontWeight: 700, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', color: slim ? pal.title : undefined }}>{headerCategory || sessionInfo?.name || ''}</span>}
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', padding: '4px 6px', backgroundColor: rgba(pal.deep, 0.6) }}>
-            <span style={{ width: '14px', height: '30px', backgroundColor: flagColor, borderRadius: '2px', marginRight: '7px', flexShrink: 0 }} />
+          <div style={{ display: 'flex', alignItems: 'center', padding: '4px 6px', backgroundColor: slim ? pal.panel : rgba(pal.deep, 0.6) }}>
+            <span style={{ width: '14px', height: '30px', backgroundColor: showFormation ? '#2fd17f' : flagColor, borderRadius: '2px', marginRight: '7px', flexShrink: 0 }} />
             <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.1, minWidth: 0 }}>
-              <span style={{ fontSize: '13px', fontWeight: 700, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{classFilter || sessionLabel}</span>
+              <span style={{ fontSize: '13px', fontWeight: 700, lineHeight: '16px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', color: showFormation ? '#2fd17f' : undefined }}>{showFormation ? sessionLabel : (classFilter || sessionLabel)}</span>
               <span style={{ fontSize: '13px', fontWeight: 600, color: pal.muted }}>{sessionInfo?.totalTime || '-'}</span>
             </div>
           </div>
-          {shownDrivers.map((d, idx) => {
-            const nb = numberColor(d.number);
+          {visibleRows.map(({ driver: d, index: idx, slot, paged }) => {
+            const nb = slim ? pal.accent : numberColor(d.number);
             const isLeader = idx === 0;
+            const cut = idx === 10 || (paging && slot === fixedCount);
             const gap = isLeader ? (sessionInfo?.qualifying ? (d.bestLap || '-') : 'LÍDER') : (d.diff && d.diff !== '-' ? d.diff : (d.gap || '-'));
             const clsColor = multiclass && d.cls ? getClassColor(config, d.cls, classes) : null;
             return (
-              <div key={d.number || d.name} style={{ display: 'flex', alignItems: 'center', height: `${ROW}px`, borderTop: idx === 10 ? `2px solid ${rgba('#ffffff', 0.5)}` : `1px solid ${rgba('#ffffff', 0.06)}`, boxShadow: clsColor ? `inset 3px 0 0 ${clsColor}` : 'none' }}>
-                <span style={{ width: '20px', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: pal.accent, color: textOnColor(pal.accent), fontSize: '12px', fontWeight: 800 }}>{classFilter ? (d.classPos || d.pos) : d.pos}</span>
+              <Fragment key={rowKey(d, paged)}>
+              <div style={{ display: 'flex', alignItems: 'center', height: `${ROW}px`, borderTop: cut ? `2px solid ${slim ? pal.cut : rgba('#ffffff', 0.5)}` : `1px solid ${rgba('#ffffff', 0.06)}`, boxShadow: clsColor ? `inset 3px 0 0 ${clsColor}` : 'none', opacity: paged && pager.leaving ? 0 : 1, transition: `opacity ${PAGE_FADE_MS}ms ease-in`, ...rowAnim(slot, paged, 0.15) }}>
+                <span style={{ width: '20px', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: slim ? pal.red : pal.accent, color: textOnColor(slim ? pal.red : pal.accent), fontSize: '12px', fontWeight: 800 }}>{classFilter ? (d.classPos || d.pos) : d.pos}</span>
                 <span style={{ width: '34px', margin: '0 6px', textAlign: 'center', backgroundColor: nb, color: textOnColor(nb), fontSize: '13px', fontWeight: 800, lineHeight: '18px', ...sc(d.number) }}>{d.number}</span>
                 <span style={{ flex: 1, fontSize: '15px', fontWeight: 700, letterSpacing: '0.5px' }}>{surnameCode(d.name)}</span>
                 <span style={{ width: '24px', display: 'flex', justifyContent: 'center' }}><BrandLogo brand={d.brand} config={config} size={14} /></span>
-                <span style={{ fontSize: '13px', fontWeight: 600, paddingRight: '7px', fontFamily: ELITE_FONT }}>{d.dsq ? 'DSQ' : gap}</span>
+                <span style={{ fontSize: '13px', fontWeight: 600, paddingRight: '7px', fontFamily: ELITE_FONT, color: slim ? (isLeader ? pal.cut : pal.muted) : undefined }}>{d.dsq ? 'DSQ' : gap}</span>
               </div>
+              {slot === onboardSlot && <div data-tower-onboard="1" style={onboardStyle(onboardHeight(config, W))} />}
+              </Fragment>
             );
           })}
-          <div style={{ display: config?.logo ? 'flex' : 'none', justifyContent: 'center', padding: '5px 0', backgroundColor: rgba(pal.deep, 0.6) }}>
+          <div style={{ display: config?.logo ? 'flex' : 'none', justifyContent: 'center', padding: '5px 0', backgroundColor: slim ? pal.panel : rgba(pal.deep, 0.6) }}>
             {config?.logo && <img src={config.logo} alt="" style={{ maxHeight: '22px', maxWidth: '150px', objectFit: 'contain' }} />}
           </div>
         </div>
       </div>
     );
   }
+
+  const slotTop = (slot) => slot * TOWER_ROW_HEIGHT + (onboardOpen && onboardSlot >= 0 && slot > onboardSlot ? onboardHeight(config, 320) : 0);
 
   const renderTrend = (trend) => {
     if (trend === 'up') return <span style={{ color: '#2ecc71', fontSize: '16px', lineHeight: 1 }}><Icon name="arrow_drop_up" size="1.4em" /></span>;
@@ -150,7 +266,7 @@ export default function TimingTower({ drivers, config, isVisible, id = 'tower', 
   return (
     <div style={{
       position: 'absolute', left: `${pos.x}px`, top: `${pos.y}px`, transformOrigin: 'top left',
-      width: '320px', height: '650px',
+      width: '320px', height: `${TOWER_BOX_H + (onboardOpen && onboardSlot >= 0 ? onboardHeight(config, 320) : 0)}px`,
 
       backgroundColor: skin ? towerSkinBackground : ((hasCustomBg || isMinimal) ? 'transparent' : themeBg),
       border: skin ? skin.border : 'none',
@@ -182,7 +298,7 @@ export default function TimingTower({ drivers, config, isVisible, id = 'tower', 
 
           {/* LOGOS ARRIBA */}
           {!hasCustomBg && (config?.logo || config?.categoryLogo) && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+            <div className={fx.group} style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
               {config?.logo && <img src={config.logo} alt="Productora" style={{ height: '35px', maxWidth: '80px', objectFit: 'contain' }} />}
               {config?.logo && config?.categoryLogo && <div style={{ height: '25px', width: '2px', backgroundColor: 'rgba(255, 255, 255, 0.3)' }} />}
               {config?.categoryLogo && <img src={config.categoryLogo} alt="Categoría" style={{ height: '35px', maxWidth: '80px', objectFit: 'contain' }} />}
@@ -190,7 +306,7 @@ export default function TimingTower({ drivers, config, isVisible, id = 'tower', 
           )}
 
           {/* TEXTOS ABAJO */}
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%' }}>
+          <div className={fx.group} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%' }}>
 
             {sessionInfo?.name && (
               <span style={{ fontWeight: '900', fontSize: '15px', textAlign: 'center', width: '100%', color: themeTitleText, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', textTransform: 'uppercase' }}>
@@ -199,6 +315,9 @@ export default function TimingTower({ drivers, config, isVisible, id = 'tower', 
             )}
             <span style={{ display: headerCategory ? 'block' : 'none', fontWeight: 'bold', fontSize: '11px', letterSpacing: '1px', textAlign: 'center', width: '100%', color: classFilter ? getClassColor(config, classFilter, classes) : themeNumberText, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', textTransform: 'uppercase' }}>
               {headerCategory}
+            </span>
+            <span style={{ display: showFormation ? 'block' : 'none', marginTop: '4px', fontWeight: 900, fontSize: '12px', letterSpacing: '1.5px', textAlign: 'center', width: '100%', color: '#2fd17f', whiteSpace: 'nowrap' }}>
+              {FORMATION_TEXT}
             </span>
           </div>
 
@@ -209,7 +328,7 @@ export default function TimingTower({ drivers, config, isVisible, id = 'tower', 
         <div style={{ backgroundColor: hasCustomBg ? 'transparent' : 'rgba(0,0,0,0.4)', padding: '8px 15px', display: 'flex', justifyContent: 'space-evenly', borderBottom: hasCustomBg ? 'none' : '1px solid rgba(255,255,255,0.1)' }}>
            <span style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
             <span style={{ fontSize: '10px', color: themeTitleText, fontWeight: 'bold', letterSpacing: '1px' }}>VUELTAS</span>
-            <span style={{ color: themeNumberText, fontSize: '16px', fontWeight: 'bold' }}>{sessionInfo?.laps || '-'}</span>
+            <span style={{ color: themeNumberText, fontSize: '16px', fontWeight: 'bold' }}><ChangeTick value={sessionInfo?.laps || '-'} enabled={fx.on} /></span>
           </span>
           <span style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
             <span style={{ fontSize: '10px', color: themeTitleText, fontWeight: 'bold', letterSpacing: '1px' }}>TIEMPO</span>
@@ -218,22 +337,25 @@ export default function TimingTower({ drivers, config, isVisible, id = 'tower', 
         </div>
       )}
 
-      <div style={{ position: 'relative', flex: 1, overflow: 'hidden' }}>
-        {shownDrivers.map((driver, index) => {
+      <style>{ROW_ANIM_CSS}</style>
+      <div ref={rowsRef} style={{ position: 'relative', flex: 1, overflow: 'hidden' }}>
+        {visibleRows.map(({ driver, slot: index, paged }) => {
           const podiumColor = isPodium ? PODIUM_COLORS[Number(driver.pos)] : null;
           const classColor = multiclass && driver.cls ? getClassColor(config, driver.cls, classes) : null;
           const gain = showGains && Number.isFinite(driver.posGain) && driver.posGain !== 0 ? driver.posGain : 0;
           const zebraBg = isMinimal ? (index % 2 === 0 ? 'rgba(0,0,0,0.55)' : 'rgba(0,0,0,0.35)') : null;
           return (
-          <div key={driver.number || driver.name} style={{
-            position: 'absolute', top: `${index * TOWER_ROW_HEIGHT}px`, left: 0, width: '100%', height: `${TOWER_ROW_HEIGHT}px`,
+          <div key={rowKey(driver, paged)} style={{
+            position: 'absolute', top: `${slotTop(index)}px`, left: 0, width: '100%', height: `${TOWER_ROW_HEIGHT}px`,
             display: 'flex', alignItems: 'center', padding: '0 15px', boxSizing: 'border-box',
             backgroundColor: zebraBg || 'transparent',
             borderLeft: podiumColor ? `4px solid ${podiumColor}` : 'none',
             boxShadow: classColor && !podiumColor ? `inset 4px 0 0 ${classColor}` : 'none',
             borderRadius: isMinimal ? bRad : 0,
             borderBottom: (hasCustomBg || isMinimal) ? 'none' : '1px solid rgba(255,255,255,0.05)',
-            transition: 'top 0.6s ease-in-out', fontSize: isCompact || isMinimal ? '13px' : '16px'
+            transition: `top 0.6s ease-in-out, opacity ${PAGE_FADE_MS}ms ease-in`, fontSize: isCompact || isMinimal ? '13px' : '16px',
+            opacity: paged && pager.leaving ? 0 : 1,
+            ...rowAnim(index, paged, 0.3)
           }}>
             <span style={{ width: '25px', color: podiumColor || themeAccent, fontWeight: 'bold' }}>{classFilter ? (driver.classPos || driver.pos) : driver.pos}</span>
             {!isCompact && <span style={{ width: '15px', display: 'flex', justifyContent: 'center' }}>{renderTrend(trends[driver.name])}</span>}
@@ -246,6 +368,12 @@ export default function TimingTower({ drivers, config, isVisible, id = 'tower', 
           </div>
           );
         })}
+        {paging && fixedCount > 0 && (
+          <div style={{ position: 'absolute', left: 0, width: '100%', height: '2px', top: `${slotTop(fixedCount) - 1}px`, backgroundColor: themeMain, opacity: 0.7, zIndex: 1, transition: 'top 0.6s ease-in-out' }} />
+        )}
+        {onboardSlot >= 0 && (
+          <div data-tower-onboard="1" style={{ position: 'absolute', left: 0, width: '100%', top: `${(onboardSlot + 1) * TOWER_ROW_HEIGHT}px`, zIndex: 2, ...onboardStyle(onboardHeight(config, 320)) }} />
+        )}
       </div>
     </div>
   );

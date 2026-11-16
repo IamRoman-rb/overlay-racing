@@ -61,7 +61,7 @@ function getMachineId() {
     }
     const raw = `${mac || 'nomac'}-${os.hostname()}-${os.platform()}-${os.arch()}`;
     return crypto.createHash('sha256').update(raw).digest('hex');
-  } catch (e) {
+  } catch {
     return crypto.createHash('sha256').update(`fallback-${Date.now()}`).digest('hex');
   }
 }

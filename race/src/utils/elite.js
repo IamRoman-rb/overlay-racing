@@ -46,6 +46,26 @@ export function getElitePalette(config) {
   };
 }
 
+// Torre ANGOSTA (slim): los colores tal cual se eligieron en PERSONALIZAR > COLORES. El fondo admite transparencia
+// (rgba), así se ve el difuminado de la torre; los colores que llegan en otro formato caen a los valores de fábrica.
+export function getSlimPalette(config) {
+  const pick = (key, fallback) => (hexOk(config?.[key]) ? config[key] : fallback);
+  const bgRaw = typeof config?.themeBg === 'string' && config.themeBg.trim() ? config.themeBg.trim() : 'rgba(0,0,0,0.85)';
+  const headerBg = pick('themeHeaderBg', '#000000');
+  const text = pick('themeNormalText', '#ffffff');
+  return {
+    background: bgRaw,
+    deep: headerBg,
+    panel: rgba(headerBg, 0.55),
+    red: pick('themeMain', '#e74c3c'),        // borde superior y posición
+    accent: pick('themeSecondary', '#3498db'), // fondo del número
+    cut: pick('themeAccent', '#f39c12'),       // línea del top 10 y diferencia del líder
+    title: pick('themeTitleText', '#ffcc00'),
+    text,
+    muted: pick('themeNumberText', '#bdc3c7')
+  };
+}
+
 // Código de 4 letras con el apellido ("Julio Manavella" -> "MANA"), como en las torres de TV
 export function surnameCode(name, letters = 4) {
   const clean = String(name || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^A-Za-z\s,]/g, ' ').trim();

@@ -2,8 +2,13 @@
 import { useState, useEffect, useRef } from 'react';
 import { getSkinStyle } from '../utils/skinStyles';
 import { getAnimDuration, getRollClip } from '../utils/animationTiming';
+import { useSuitStyle } from '../utils/suitColor';
+import SuitNumber from '../components/SuitNumber';
+import { makeFx } from '../utils/contentAnim';
 
 export default function PitStopTimer({ isVisible, config, pitState, id = 'pitStop' }) {
+  // Color del número tomado del traje (foto del piloto), si está activado en PILOTOS
+  const sc = useSuitStyle([pitState?.driver?.number], config);
   const pos = config?.positions?.[id] || { x: 850, y: 900, scale: 1 };
 
   const themeBg = config?.themeBg || 'rgba(0, 0, 0, 0.85)';
@@ -68,6 +73,7 @@ export default function PitStopTimer({ isVisible, config, pitState, id = 'pitSto
   if (animStyle === 'rotate') transformHidden = `scale(${pos.scale * 0.85}) rotate(-15deg)`;
 
   if (!pitState?.driver) return null;
+  const fx = makeFx(config, id, isVisible);
 
   const wrapperStyle = {
     position: 'absolute', left: `${pos.x}px`, top: `${pos.y}px`, transformOrigin: 'top left',
@@ -78,14 +84,14 @@ export default function PitStopTimer({ isVisible, config, pitState, id = 'pitSto
   // FORMATO COMPACTO: una sola fila, sin barra de encabezado
   if (pitStopFormat === 'compact') {
     return (
-      <div style={{
+      <div className={fx.group} style={{
         ...wrapperStyle, display: 'flex', alignItems: 'center', gap: '10px', width: '320px', padding: '8px 12px',
         backgroundColor: customBg ? 'transparent' : themeBg,
         backgroundImage: customBg ? `url(${customBg})` : 'none', backgroundSize: '100% 100%',
         borderRadius: bRad, boxShadow: customBg ? 'none' : '0 10px 30px rgba(0,0,0,0.8)',
         borderLeft: customBg ? 'none' : `5px solid ${themeMain}`
       }}>
-        <span style={{ backgroundColor: themeSecondary, color: '#fff', padding: '2px 8px', borderRadius: '4px', fontWeight: '900', fontSize: '14px', flexShrink: 0 }}>
+        <span style={{ backgroundColor: themeSecondary, color: '#fff', padding: '2px 8px', borderRadius: '4px', fontWeight: '900', fontSize: '14px', flexShrink: 0, ...sc(pitState.driver.number) }}>
           {pitState.driver.number}
         </span>
         <span style={{ flex: 1, color: themeNormalText, fontWeight: 'bold', fontSize: '16px', textTransform: 'uppercase', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
@@ -101,7 +107,7 @@ export default function PitStopTimer({ isVisible, config, pitState, id = 'pitSto
   // FORMATO CRONÓMETRO: el tiempo como protagonista, piloto debajo
   if (pitStopFormat === 'stopwatch') {
     return (
-      <div style={{
+      <div className={fx.group} style={{
         ...wrapperStyle, display: 'flex', flexDirection: 'column', alignItems: 'center', width: '260px', textAlign: 'center', padding: '18px 15px',
         backgroundColor: customBg ? 'transparent' : themeBg,
         backgroundImage: customBg ? `url(${customBg})` : 'none', backgroundSize: '100% 100%',
@@ -113,7 +119,7 @@ export default function PitStopTimer({ isVisible, config, pitState, id = 'pitSto
           {formatTime(timeMs)}
         </span>
         <span style={{ color: themeNormalText, fontWeight: 'bold', fontSize: '16px', textTransform: 'uppercase' }}>
-          #{pitState.driver.number} {pitState.driver.name}
+          <SuitNumber number={pitState.driver.number} config={config} /> {pitState.driver.name}
         </span>
       </div>
     );
@@ -123,9 +129,9 @@ export default function PitStopTimer({ isVisible, config, pitState, id = 'pitSto
   if (pitStopFormat === 'minimal') {
     return (
       <div style={wrapperStyle}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+        <div className={fx.group} style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
           <span style={{ color: themeTitleText, fontWeight: '900', fontSize: '13px', letterSpacing: '2px', textShadow: '2px 2px 6px rgba(0,0,0,0.9)' }}>
-            PIT STOP — #{pitState.driver.number} {pitState.driver.name}
+            PIT STOP — <SuitNumber number={pitState.driver.number} config={config} /> {pitState.driver.name}
           </span>
           <span style={{ color: pitState.isRunning ? themeAccent : themeNormalText, fontWeight: '900', fontSize: '38px', fontVariantNumeric: 'tabular-nums', textShadow: '2px 2px 6px rgba(0,0,0,0.9)' }}>
             {formatTime(timeMs)}
@@ -149,15 +155,15 @@ export default function PitStopTimer({ isVisible, config, pitState, id = 'pitSto
     }}>
       {/* HEADER UNIFICADO AL TEMA */}
       <div style={{ backgroundColor: skin ? 'transparent' : (customBg ? 'transparent' : themeMain), padding: '6px', textAlign: 'center' }}>
-        <span style={{ color: themeTitleText, fontSize: '16px', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '2px' }}>
+        <span style={{ display: 'inline-block', color: themeTitleText, fontSize: '16px', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '2px', ...fx.text(0) }}>
           PIT STOP
         </span>
       </div>
 
       <div style={{ display: 'flex', alignItems: 'center', padding: customBg ? '15px' : '10px 15px' }}>
         {/* PILOTO INFO */}
-        <div style={{ display: 'flex', flex: 1, alignItems: 'center', overflow: 'hidden' }}>
-          <span style={{ backgroundColor: themeSecondary, color: '#fff', padding: '4px 10px', borderRadius: '4px', fontWeight: '900', fontSize: '20px', marginRight: '12px' }}>
+        <div className={fx.group} style={{ display: 'flex', flex: 1, alignItems: 'center', overflow: 'hidden' }}>
+          <span style={{ backgroundColor: themeSecondary, color: '#fff', padding: '4px 10px', borderRadius: '4px', fontWeight: '900', fontSize: '20px', marginRight: '12px', ...sc(pitState.driver.number) }}>
             {pitState.driver.number}
           </span>
           <span style={{ color: themeNormalText, fontWeight: 'bold', fontSize: '22px', textTransform: 'uppercase', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
@@ -169,7 +175,7 @@ export default function PitStopTimer({ isVisible, config, pitState, id = 'pitSto
         <div style={{
             backgroundColor: themeHeaderBg, padding: '5px 15px', borderRadius: '6px',
             border: `2px solid ${pitState.isRunning ? themeAccent : '#555'}`,
-            minWidth: '90px', textAlign: 'right', transition: 'border-color 0.3s'
+            minWidth: '90px', textAlign: 'right', transition: 'border-color 0.3s', ...fx.icon(3)
         }}>
           <span style={{ color: pitState.isRunning ? themeAccent : '#fff', fontWeight: '900', fontSize: '28px', fontVariantNumeric: 'tabular-nums' }}>
             {formatTime(timeMs)}

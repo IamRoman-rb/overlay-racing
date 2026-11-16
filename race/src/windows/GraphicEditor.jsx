@@ -1,17 +1,18 @@
-import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
+import { useState, useRef, useEffect, useLayoutEffect, useMemo, useCallback } from 'react';
 import GraphicPreview from './GraphicPreview';
 import Icon from '../components/Icon';
 import { getCanvasSize } from '../utils/canvasSize';
 import { LAYOUT_EDITS_PREFIX, detectObjects, resolvePath, describeObject } from '../utils/layoutEdit';
 import { GOOGLE_FONTS_URL } from '../utils/fonts';
 import { CATEGORY_GRAPHICS, CATEGORY_TOGGLE_PREFIX } from '../utils/raceVisuals';
+import { matchesSearch } from '../utils/search';
 
 const EDITABLE_GRAPHICS = [
   'relator', 'comentarista', 'notero1', 'notero2', 'circuito', 'clima', 'ticker', 'tower',
   'grid', 'finalResults', 'winner', 'flags', 'fastestLap', 'driverInfo', 'battle', 'customZocalo',
   'votingQR', 'votingResults', 'lapCounter', 'virtualChamp', 'pitStop', 'startingLights',
   'lapTimesHistory', 'trackAlert', 'penaltyAlert', 'branding', 'evento',
-    'sectors', 'gapChart', 'gainers', 'qualifying', 'trackMap', 'raceNotice', 'circuitIntro', 'circuitRecord', 'lapCompare', 'windVectors', 'sponsorLive'
+    'sectors', 'gapChart', 'gainers', 'qualifying', 'trackMap', 'raceNotice', 'circuitIntro', 'circuitRecord', 'lapCompare', 'windVectors', 'sponsorLive', 'formationLap'
 ];
 
 const SNAP_THRESHOLD = 8; // px del escenario (el lienzo del overlay)
@@ -39,6 +40,8 @@ const snapAxis = (start, size, targets) => {
 
 export default function GraphicEditor({ config, positions, drivers, sessionInfo, onConfigChange, colors, inputStyle, btnStyle, t }) {
   const [selected, setSelected] = useState('finalResults');
+  const [graphicQuery, setGraphicQuery] = useState(''); // buscador de gráficas por nombre
+  const shownGraphics = EDITABLE_GRAPHICS.filter(id => matchesSearch(graphicQuery, t(`graphics.${id}`), id));
   const [depth, setDepth] = useState(1);
   const [objects, setObjects] = useState([]);            // [{ key, label }] objetos detectados en la gráfica
   const [selectedKey, setSelectedKey] = useState(null);
@@ -58,7 +61,7 @@ export default function GraphicEditor({ config, positions, drivers, sessionInfo,
   const editsKey = `${LAYOUT_EDITS_PREFIX}${selected}`;
   const savedEdits = config[editsKey];
   const textSizesKey = `textSizes_${selected}`;
-  const textSizes = config[textSizesKey] || {};
+  const textSizes = useMemo(() => config[textSizesKey] || {}, [config, textSizesKey]);
   const edits = useMemo(() => draft || savedEdits || {}, [draft, savedEdits]);
   const previewConfig = useMemo(() => ({ ...config, [editsKey]: edits, [textSizesKey]: textSizes }), [config, editsKey, edits, textSizesKey, textSizes]);
   const accent = config.themeAccent || '#ffcc00';
@@ -94,6 +97,19 @@ export default function GraphicEditor({ config, positions, drivers, sessionInfo,
     const timer = setInterval(refresh, 700);
     return () => clearInterval(timer);
   }, [selected, depth, getWrapper, config, drivers]);
+
+  // ¿El objeto seleccionado tiene texto y de qué tamaño se ve? Se mide en el DOM de la vista previa después de
+  // render que pueda cambiarlo (antes de pintar), no durante el render. Sólo se actualiza el estado si cambió algo.
+  const [selectedMeasure, setSelectedMeasure] = useState({ key: null, hasText: false, fontSize: 24 });
+  useLayoutEffect(() => {
+    const wrapper = selectedKey && stageRef.current ? stageRef.current.querySelector('[data-le-wrap]') : null;
+    const el = wrapper ? resolvePath(wrapper, selectedKey) : null;
+    const hasText = !!(el && (el.textContent || '').trim());
+    const fontSize = hasText ? Math.round(parseFloat(getComputedStyle(el).fontSize) || 24) : 24;
+    setSelectedMeasure(prev => (prev.key === selectedKey && prev.hasText === hasText && prev.fontSize === fontSize
+      ? prev
+      : { key: selectedKey, hasText, fontSize }));
+  }, [selectedKey, objects, config, drivers, sessionInfo]);
 
   // Cambiar de gráfica o de nivel de detalle: se pierde la selección anterior
   const resetSelection = () => { setSelectedKey(null); setHoverKey(null); setDraft(null); };
@@ -276,10 +292,8 @@ export default function GraphicEditor({ config, positions, drivers, sessionInfo,
   const hasHistory = (history[selected] || []).length > 0;
   const borderW = Math.max(2, 2.5 / previewScale);
   const selectedObj = objects.find(o => o.key === selectedKey);
-  const selectedWrapper = selectedKey ? getWrapper() : null;
-  const selectedElement = selectedWrapper ? resolvePath(selectedWrapper, selectedKey) : null;
-  const selectedHasText = !!(selectedElement && (selectedElement.textContent || '').trim());
-  const selectedTextSize = selectedKey && textSizes[selectedKey] ? textSizes[selectedKey] : (selectedHasText ? Math.round(parseFloat(getComputedStyle(selectedElement).fontSize) || 24) : 24);
+  const selectedHasText = selectedMeasure.key === selectedKey && selectedMeasure.hasText;
+  const selectedTextSize = selectedKey && textSizes[selectedKey] ? textSizes[selectedKey] : (selectedHasText ? selectedMeasure.fontSize : 24);
   const selectedOffset = (selectedKey && edits[selectedKey]) || { x: 0, y: 0 };
   const labelOf = (o, i) => o.label === 'img' ? `${t('editor.objectImage')}` : (o.label || `${t('editor.objectBlock')} ${i + 1}`);
 
@@ -298,8 +312,18 @@ export default function GraphicEditor({ config, positions, drivers, sessionInfo,
         <p style={{ fontSize: '10px', color: colors.textMuted, lineHeight: '1.5', marginTop: 0, marginBottom: '16px' }}>{t('editor.description')}</p>
 
         <div style={{ ...smallLabel, marginBottom: '6px' }}>{t('editor.selectGraphic')}</div>
+        <div style={{ position: 'relative', marginBottom: '8px' }}>
+          <input value={graphicQuery} onChange={(e) => setGraphicQuery(e.target.value)} placeholder={t('common.searchGraphic')}
+            onKeyDown={(e) => {
+              if (e.key === 'Escape') setGraphicQuery('');
+              if (e.key === 'Enter') { const first = shownGraphics[0]; if (first) selectGraphic(first); }
+            }}
+            style={{ ...inputStyle, width: '100%', padding: '8px 28px 8px 10px', fontSize: '11px', textTransform: 'none', boxSizing: 'border-box' }} />
+          {graphicQuery && <button onClick={() => setGraphicQuery('')} title={t('common.clearSearch')} style={{ position: 'absolute', right: '6px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: colors.textMuted, cursor: 'pointer', padding: 0, display: 'flex' }}><Icon name="close" /></button>}
+        </div>
+        {graphicQuery && shownGraphics.length === 0 && <div style={{ fontSize: '11px', color: colors.textMuted, fontStyle: 'italic', marginBottom: '10px' }}>{t('common.noGraphicFound')}</div>}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '5px', marginBottom: '22px' }}>
-          {EDITABLE_GRAPHICS.map(id => {
+          {shownGraphics.map(id => {
             const edited = !!config[`${LAYOUT_EDITS_PREFIX}${id}`];
             return (
               <button key={id} onClick={() => selectGraphic(id)} style={{ ...btnStyle(selected === id), padding: '8px 5px', fontSize: '9px', position: 'relative' }}>

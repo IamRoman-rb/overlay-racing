@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { ROW_EFFECTS, rowEffect, rowStep, towerPageRows, towerPageSeconds, towerNarrowRows } from '../utils/rowEntrance';
 import { SKIN_FORMATS } from '../utils/skinStyles';
 import { getFinalResultsDefaultSize } from '../utils/finalResultsSize';
 import { getCanvasSize } from '../utils/canvasSize';
@@ -8,6 +9,8 @@ import { EXTRA_FONTS, fontCssValue, GOOGLE_FONTS_URL } from '../utils/fonts';
 import { resolvePath, pathOf, elementAtPoint, elementTree } from '../utils/layoutEdit';
 import ElementStylePanel from './ElementStylePanel';
 import { PanelSectionsEditor } from './PanelSectionsEditor';
+import { matchesSearch } from '../utils/search';
+import Icon from '../components/Icon';
 
 // Número que se confirma con Enter o al salir del campo (no en cada tecla: evita redimensionar a medio escribir).
 // Vacío = vuelve al valor original. `key` fuerza a mostrar el valor guardado cuando cambia desde afuera.
@@ -54,20 +57,26 @@ const RACE_GRAPHIC_FORMATS = {
   sectors: [['standard', 'Clásico (Sectores con Barras)'], ['compact', 'Compacto (Una Fila por Piloto)'], ['big', 'Sectores Grandes (Tiempos Protagonistas)'], ['minimal', 'Minimalista (Sin Caja)']],
   gapChart: [['standard', 'Clásico (Gráfico Vuelta a Vuelta)'], ['duel', 'Duelo (Pilotos Enfrentados + Mini Gráfico)'], ['compact', 'Compacto (Una Línea, Sin Gráfico)'], ['minimal', 'Minimalista (Sin Caja)']],
   gainers: [['standard', 'Clásico (Lista)'], ['compact', 'Compacto (Lista Angosta)'], ['cards', 'Tarjetas (En Fila, Número Grande)'], ['both', 'Ganadas y Perdidas (Dos Columnas)'], ['minimal', 'Minimalista (Filas Sueltas)']],
-  qualifying: [['standard', 'Clásico (Diferencias al P1)'], ['times', 'Tiempos Absolutos (Mejor Vuelta de Cada Uno)'], ['compact', 'Compacto (Filas Más Chicas)'], ['minimal', 'Minimalista (Filas Translúcidas)']],
+  qualifying: [['standard', 'Clásico (Diferencias al P1)'], ['pole', 'Con Foto del Puntero (Pole Provisional Destacada)'], ['times', 'Tiempos Absolutos (Mejor Vuelta de Cada Uno)'], ['compact', 'Compacto (Filas Más Chicas)'], ['minimal', 'Minimalista (Filas Translúcidas)']],
   trackMap: [['standard', 'Clásico (Con Encabezado)'], ['compact', 'Compacto (Más Chico)'], ['dots', 'Puntos (Autos Sin Número)'], ['minimal', 'Minimalista (Solo el Circuito)']],
   raceNotice: [['standard', 'Clásico (Tarjeta con Número)'], ['compact', 'Compacto (Una Línea)'], ['banner', 'Banner (Barra de Todo el Ancho)'], ['minimal', 'Minimalista (Sin Caja)']],
-  circuitIntro: [['elite', 'Elite 3D (Circuito en Perspectiva)'], ['flat', 'Elite Plano (Visto desde Arriba)']],
+  circuitIntro: [['elite', 'Elite 3D (Circuito en Perspectiva)'], ['flat', 'Elite Plano (Visto desde Arriba)'], ['cinematic', 'Cinemático (Pantalla Grande, Circuito Protagonista)'], ['band', 'Banda Inferior (Zócalo Ancho)'], ['vertical', 'Vertical (Columna Lateral)'], ['compact', 'Compacto (Tarjeta Chica)']],
   circuitRecord: [['elite', 'Elite']],
   lapCompare: [['standard', 'Clásico (Tiempos + Diferencias)'], ['compact', 'Compacto (Columnas Angostas)'], ['minimal', 'Minimalista (Sin Caja)']],
-  windVectors: [['standard', 'Clásico (Flechas)'], ['dense', 'Denso (Muchas Flechas Chicas)'], ['light', 'Liviano (Líneas Finas)']]
+  windVectors: [['standard', 'Clásico (Flechas)'], ['flow', 'Profesional (Corrientes con Estela)'], ['dense', 'Denso (Muchas Flechas Chicas)'], ['light', 'Liviano (Líneas Finas)']],
+  formationLap: [['standard', 'Clásico (Tarjeta con la Categoría)'], ['compact', 'Compacto (Una Línea)'], ['banner', 'Banner (Barra de Todo el Ancho)'], ['elite', 'Elite (Como la Torre Elite)'], ['minimal', 'Minimalista (Sin Caja)']]
 };
 // Gráficas que sólo existen en estilo Elite (no llevan los skins comunes)
 const ELITE_ONLY = ['circuitIntro', 'circuitRecord'];
 // Gráficas sin los skins comunes (no tienen caja)
 const NO_SKINS = [...ELITE_ONLY, 'windVectors'];
 // Gráficas que pueden mostrar las fotos de los pilotos (config.showPhotos_<id>)
-const PHOTO_GRAPHICS = ['sectors', 'gapChart', 'gainers', 'raceNotice', 'lapCompare'];
+const PHOTO_GRAPHICS = ['sectors', 'gapChart', 'gainers', 'raceNotice', 'lapCompare', 'qualifying', 'lapTimesHistory', 'ticker'];
+// Gráficas con pilotos que entran con la aparición de filas configurable (como la torre). La torre y los resultados
+// finales la tienen dentro de su propio bloque de formato.
+const ROW_ENTRANCE_GRAPHICS = ['ticker', 'grid', 'qualifying', 'gainers', 'virtualChamp', 'votingResults', 'lapTimesHistory', 'battle', 'lapCompare', 'sectors'];
+// Zócalos de voces: llevan micrófono
+const VOICE_GRAPHICS = ['relator', 'comentarista', 'notero1', 'notero2'];
 // Gráficas que muestran el logo de la marca del auto
 const BRAND_GRAPHICS = ['tower', 'ticker', 'finalResults', 'qualifying', 'gainers', 'lapCompare'];
 
@@ -75,6 +84,7 @@ const OVERLAY_PRESETS = [[1920, 1080, 'Full HD'], [1280, 720, 'HD'], [3840, 2160
 
 export default function CustomizePanel({ config, positions, defaultPositions, onUpdatePositions, onSelectLogo, onSelectCategoryLogo, onSelectPhotosFolder, onClearLogo, onClearCategoryLogo, onClearPhotosFolder, onConfigChange, onSelectElementImage, colors, inputStyle, btnStyle, t, drivers, sessionInfo }) {
   const [selectedGraphic, setSelectedGraphic] = useState('relator');
+  const [graphicQuery, setGraphicQuery] = useState(''); // buscador de gráficas por nombre
   const [coverReplay, setCoverReplay] = useState(0); // sube al pulsar "probar transición"
   // Gráficas acumuladas con Ctrl + clic para verlas juntas en la previsualización (vacío = se ve solo la seleccionada)
   const [groupIds, setGroupIds] = useState([]);
@@ -96,6 +106,7 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
   const { width: CW, height: CH } = getCanvasSize(config); // lienzo del overlay (por defecto 1920x1080)
   const SAFE_X = Math.round(CW * 0.05), SAFE_Y = Math.round(CH * 0.05); // zona segura: 5 % de cada borde
   const dragInfo = useRef({ isDragging: false, id: null, startX: 0, startY: 0, initialX: 0, initialY: 0, offX: 0, offY: 0, width: 0, height: 0 });
+  const [dragging, setDragging] = useState(false); // espejo de dragInfo.current.isDragging para el cursor (no se leen refs al dibujar)
   const previewRef = useRef(null);       // escenario del tamaño del overlay (escalado)
   const previewAreaRef = useRef(null);   // zona disponible, para ajustar la escala
   const graphicWrapRef = useRef(null);   // contenedor de la gráfica real
@@ -296,6 +307,7 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
       isDragging: true, id, startX: e.clientX, startY: e.clientY, initialX: pos.x, initialY: pos.y,
       offX: b ? b.x - pos.x : 0, offY: b ? b.y - pos.y : 0, width: b ? b.w : 0, height: b ? b.h : 0
     };
+    setDragging(true);
     if (previewRef.current && previewRef.current.parentElement) previewRef.current.parentElement.focus();
   };
 
@@ -341,6 +353,7 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
   const handlePreviewMouseUp = () => {
     if (dragInfo.current.isDragging) {
       dragInfo.current.isDragging = false;
+      setDragging(false);
       setSnapLines({ x: [], y: [] });
       onUpdatePositions(positions, true);
     }
@@ -397,7 +410,7 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
         onMouseDown={(e) => handlePreviewMouseDown(e, id)}
         style={{
           position: 'absolute', left: `${pos.x}px`, top: `${pos.y}px`, transform: `scale(${pos.scale})`, transformOrigin: 'top left',
-          cursor: dragInfo.current.isDragging && isSelected ? 'grabbing' : 'grab',
+          cursor: dragging && isSelected ? 'grabbing' : 'grab',
           backgroundColor: config.themeBg || 'rgba(0, 0, 0, 0.85)',
           padding: '10px 20px', minWidth: '250px',
           borderLeft: `4px solid ${config.themeMain || '#e74c3c'}`,
@@ -417,9 +430,26 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
     'grid', 'finalResults', 'winner', 'flags', 'fastestLap', 'driverInfo', 'battle', 'customZocalo',
     'votingQR', 'votingResults', 'lapCounter', 'virtualChamp', 'pitStop', 'startingLights',
     'lapTimesHistory', 'trackAlert', 'penaltyAlert', 'branding', 'evento',
-    'sectors', 'gapChart', 'gainers', 'qualifying', 'trackMap', 'raceNotice', 'circuitIntro', 'circuitRecord', 'lapCompare', 'windVectors', 'sponsorLive'
+    'sectors', 'gapChart', 'gainers', 'qualifying', 'trackMap', 'raceNotice', 'circuitIntro', 'circuitRecord', 'lapCompare', 'windVectors', 'sponsorLive', 'formationLap'
   ];
   const allGraphics = GRAPHIC_IDS.map(id => ({ id, label: t(`graphics.${id}`) }));
+  const shownGraphics = allGraphics.filter(g => matchesSearch(graphicQuery, g.label, g.id));
+
+  // Aparición de las filas (torre, resultados finales): efecto + tiempo entre filas
+  const renderRowEntrance = (gid) => (
+    <>
+      <label style={{ fontSize: '10px', color: colors.textMuted, fontWeight: 'bold', marginTop: '15px' }}>{t('personalizar.rowAnimLabel')}</label>
+      <select value={rowEffect(config, gid)} onChange={(e) => onConfigChange(`${gid}RowAnim`, e.target.value)}
+        style={{ ...inputStyle, padding: '10px', fontSize: '11px', cursor: 'pointer', border: `1px solid ${colors.border}` }}>
+        {ROW_EFFECTS.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+      </select>
+      <label style={{ display: rowEffect(config, gid) === 'none' ? 'none' : 'flex', alignItems: 'center', gap: '8px', fontSize: '10px', color: colors.textMuted, fontWeight: 'bold', marginTop: '6px' }}>
+        {t('personalizar.rowAnimStep')}
+        <input type="range" min="0" max="300" step="10" value={rowStep(config, gid)} onChange={(e) => onConfigChange(`${gid}RowStep`, parseInt(e.target.value, 10))} style={{ flex: 1 }} />
+        <span style={{ width: '48px', textAlign: 'right', color: colors.textMain }}>{rowStep(config, gid)} ms</span>
+      </label>
+    </>
+  );
 
   const colorSettings = [
     { id: 'themeMain', label: t('personalizar.colorBorder'), default: '#e74c3c' }, { id: 'themeSecondary', label: t('personalizar.colorSecondary'), default: '#3498db' },
@@ -436,8 +466,18 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
       <div style={{ width: '380px', minWidth: '380px', backgroundColor: colors.bgPanel, padding: '20px', overflowY: 'auto', borderRight: `1px solid ${colors.border}`, zIndex: 100 }}>
 
         <h3 style={{ color: colors.yellow, marginTop: 0, marginBottom: '15px' }}>{t('personalizar.selectGraphic')}</h3>
+        <div style={{ position: 'relative', marginBottom: '8px' }}>
+          <input value={graphicQuery} onChange={(e) => setGraphicQuery(e.target.value)} placeholder={t('common.searchGraphic')}
+            onKeyDown={(e) => {
+              if (e.key === 'Escape') setGraphicQuery('');
+              if (e.key === 'Enter') { const first = shownGraphics[0]; if (first) setSelectedGraphic(first.id); }
+            }}
+            style={{ ...inputStyle, width: '100%', padding: '8px 28px 8px 10px', fontSize: '11px', textTransform: 'none', boxSizing: 'border-box' }} />
+          {graphicQuery && <button onClick={() => setGraphicQuery('')} title={t('common.clearSearch')} style={{ position: 'absolute', right: '6px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: colors.textMuted, cursor: 'pointer', padding: 0, display: 'flex' }}><Icon name="close" /></button>}
+        </div>
+        {graphicQuery && shownGraphics.length === 0 && <div style={{ fontSize: '11px', color: colors.textMuted, fontStyle: 'italic', marginBottom: '10px' }}>{t('common.noGraphicFound')}</div>}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '5px', marginBottom: '30px' }}>
-          {allGraphics.map(graphic => (
+          {shownGraphics.map(graphic => (
             <button key={graphic.id} onClick={(e) => handleGraphicButtonClick(e, graphic.id)} style={{ ...btnStyle(selectedGraphic === graphic.id), padding: '8px 5px', fontSize: '9px', ...(groupIds.includes(graphic.id) && selectedGraphic !== graphic.id ? { outline: `2px solid ${colors.yellow}`, outlineOffset: '-2px' } : {}) }}> {graphic.label} </button>
           ))}
         </div>
@@ -584,8 +624,15 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
               <option value="boxed">Con Marco (Badge + Caja)</option>
               <option value="broadcast">Broadcast (Bloques Bicolor)</option>
               <option value="elite">Elite (Azul de Transmisión, con Ícono)</option>
+              {VOICE_GRAPHICS.includes(selectedGraphic) && <option value="mic">Micrófono (Diseño con Micrófono Grande)</option>}
               {renderSkinOptions()}
             </select>
+            {VOICE_GRAPHICS.includes(selectedGraphic) && (
+              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '11px', fontWeight: 'bold', color: colors.textMain, cursor: 'pointer', marginTop: '10px' }}>
+                <input type="checkbox" checked={config[`lowerThirdMic_${selectedGraphic}`] !== false} onChange={(e) => onConfigChange(`lowerThirdMic_${selectedGraphic}`, e.target.checked)} style={{ cursor: 'pointer' }} />
+                {t('personalizar.lowerThirdMic')}
+              </label>
+            )}
           </div>
         )}
 
@@ -704,6 +751,7 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
               <option value="large">Grande (Gráfico Ampliado)</option>
               <option value="minimal">Minimalista (Sin Caja)</option>
               <option value="table">Tabla (Últimas 4 Vueltas, Estilo F1)</option>
+              <option value="photoCards">Tarjetas con Foto (Últimas Vueltas de Cada Piloto)</option>
               {renderSkinOptions()}
             </select>
           </div>
@@ -810,6 +858,13 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
           </div>
         )}
 
+        {/* Aparición de los pilotos (mismos efectos que la torre de posiciones) */}
+        {ROW_ENTRANCE_GRAPHICS.includes(selectedGraphic) && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', marginBottom: '30px', backgroundColor: '#111', padding: '0 15px 15px', borderRadius: '8px', border: `1px solid ${colors.border}` }}>
+            {renderRowEntrance(selectedGraphic)}
+          </div>
+        )}
+
         {/* Fotos de los pilotos en la gráfica (carpeta de fotos de PERSONALIZAR) */}
         {PHOTO_GRAPHICS.includes(selectedGraphic) && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginBottom: '30px', backgroundColor: '#111', padding: '15px', borderRadius: '8px', border: `1px solid ${colors.border}` }}>
@@ -852,6 +907,7 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
               <option value="broadcast">Broadcast (Tabla + Foto del Ganador, Estilo F1)</option>
               {renderSkinOptions()}
             </select>
+            {renderRowEntrance('finalResults')}
           </div>
         )}
 
@@ -869,8 +925,16 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
               <option value="minimal">Minimalista (Sin Caja)</option>
               <option value="elite">Elite (Caja "El Clima en…")</option>
               <option value="eliteBar">Elite Barra (Horizontal)</option>
+              <option value="compass">Rosa de los Vientos (Viento Protagonista)</option>
+              <option value="forecast">Pronóstico (Próximas Horas)</option>
+              <option value="strip">Franja (Barra Fina con Todos los Datos)</option>
+              <option value="hero">Destacado (Temperatura Grande + Fondo Animado)</option>
               {renderSkinOptions()}
             </select>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '11px', fontWeight: 'bold', color: colors.textMain, cursor: 'pointer', marginTop: '10px' }}>
+              <input type="checkbox" checked={config.climaAnimatedIcons !== false} onChange={(e) => onConfigChange('climaAnimatedIcons', e.target.checked)} style={{ cursor: 'pointer' }} />
+              {t('personalizar.climaAnimatedIcons')}
+            </label>
           </div>
         )}
 
@@ -904,6 +968,7 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
               <option value="podium">Podio (Colores Oro/Plata/Bronce)</option>
               <option value="minimal">Minimalista (Filas Cebra, Sin Header)</option>
               <option value="elite">Elite (Torre Angosta, Código de 4 Letras)</option>
+              <option value="slim">Angosta con los Colores del Panel (Código de 4 Letras)</option>
               {renderSkinOptions()}
             </select>
             <label style={{ fontSize: '10px', color: colors.textMuted, fontWeight: 'bold', marginTop: '15px' }}>{t('personalizar.towerBlurLabel')}</label>
@@ -917,6 +982,24 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
               <option value={12}>{t('personalizar.blurMedium')}</option>
               <option value={20}>{t('personalizar.blurStrong')}</option>
             </select>
+            {renderRowEntrance('tower')}
+            <label style={{ fontSize: '10px', color: colors.textMuted, fontWeight: 'bold', marginTop: '15px' }}>{t('personalizar.towerPagingLabel')}</label>
+            <span style={{ fontSize: '10px', color: colors.textMuted }}>{t('personalizar.towerPagingHint')}</span>
+            <label style={{ display: ['elite', 'slim'].includes(config.towerFormat) ? 'flex' : 'none', alignItems: 'center', gap: '8px', fontSize: '10px', color: colors.textMuted, fontWeight: 'bold', marginTop: '6px' }}>
+              {t('personalizar.towerNarrowRows')}
+              <input type="range" min="5" max="40" step="1" value={towerNarrowRows(config)} onChange={(e) => onConfigChange('towerNarrowRows', parseInt(e.target.value, 10))} style={{ flex: 1 }} />
+              <span style={{ width: '48px', textAlign: 'right', color: colors.textMain }}>{towerNarrowRows(config)}</span>
+            </label>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '10px', color: colors.textMuted, fontWeight: 'bold', marginTop: '6px' }}>
+              {t('personalizar.towerPageRows')}
+              <input type="range" min="1" max="15" step="1" value={towerPageRows(config)} onChange={(e) => onConfigChange('towerPageRows', parseInt(e.target.value, 10))} style={{ flex: 1 }} />
+              <span style={{ width: '48px', textAlign: 'right', color: colors.textMain }}>{towerPageRows(config)}</span>
+            </label>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '10px', color: colors.textMuted, fontWeight: 'bold', marginTop: '6px' }}>
+              {t('personalizar.towerPageSeconds')}
+              <input type="range" min="3" max="30" step="1" value={towerPageSeconds(config)} onChange={(e) => onConfigChange('towerPageSeconds', parseInt(e.target.value, 10))} style={{ flex: 1 }} />
+              <span style={{ width: '48px', textAlign: 'right', color: colors.textMain }}>{towerPageSeconds(config)} s</span>
+            </label>
           </div>
         )}
 
@@ -933,8 +1016,33 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
               <option value="podium">Podio (Colores Oro/Plata/Bronce)</option>
               <option value="spotlight">Spotlight (Un Piloto a la Vez)</option>
               <option value="board">Tablero (3 Columnas x 4 Filas, Estilo TC)</option>
+              <option value="tab">Pestaña (Datos Arriba a la Izquierda, Tira Fina)</option>
+              <option value="capsules">Cápsulas (Pilotos en Píldoras Flotantes, Sin Barra)</option>
+              <option value="twoRows">Doble Línea (Datos en una Franja Arriba de los Pilotos)</option>
               {renderSkinOptions()}
             </select>
+            {config.tickerFormat !== 'board' && (
+              <>
+                <label style={{ fontSize: '10px', color: colors.textMuted, fontWeight: 'bold', marginTop: '15px' }}>{t('personalizar.tickerInfoPos')}</label>
+                <select value={config.tickerInfoPos || 'auto'} onChange={(e) => onConfigChange('tickerInfoPos', e.target.value)}
+                  style={{ ...inputStyle, padding: '10px', fontSize: '11px', cursor: 'pointer', border: `1px solid ${colors.border}` }}>
+                  {['auto', 'split', 'left', 'right', 'topLeft', 'topCenter', 'topRight', 'top', 'hidden'].map(v => <option key={v} value={v}>{t(`personalizar.tickerInfo_${v}`)}</option>)}
+                </select>
+                <div style={{ display: 'flex', gap: '14px', flexWrap: 'wrap', marginTop: '8px' }}>
+                  {[['tickerShowEvent', 'tickerShowEvent'], ['tickerShowLaps', 'tickerShowLaps'], ['tickerShowTime', 'tickerShowTime']].map(([key, label]) => (
+                    <label key={key} style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', fontWeight: 'bold', color: colors.textMain, cursor: 'pointer' }}>
+                      <input type="checkbox" checked={config[key] !== false} onChange={(e) => onConfigChange(key, e.target.checked)} style={{ cursor: 'pointer' }} />
+                      {t(`personalizar.${label}`)}
+                    </label>
+                  ))}
+                </div>
+                <label style={{ fontSize: '10px', color: colors.textMuted, fontWeight: 'bold', marginTop: '15px' }}>{t('personalizar.tickerTimeField')}</label>
+                <select value={config.tickerTimeField || 'lastLap'} onChange={(e) => onConfigChange('tickerTimeField', e.target.value)}
+                  style={{ ...inputStyle, padding: '10px', fontSize: '11px', cursor: 'pointer', border: `1px solid ${colors.border}` }}>
+                  {['lastLap', 'bestLap', 'diff', 'totalTime', 'none'].map(v => <option key={v} value={v}>{t(`personalizar.tickerTime_${v}`)}</option>)}
+                </select>
+              </>
+            )}
           </div>
         )}
 
@@ -1034,6 +1142,12 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
               <option value="roll">{t('personalizar.animRoll')}</option>
             </select>
           </div>
+
+          {/* Animación del contenido: textos, íconos, fotos y números entran escalonados después de la caja */}
+          <label style={{ gridColumn: '1 / -1', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '11px', fontWeight: 'bold', color: colors.textMain, cursor: 'pointer' }}>
+            <input type="checkbox" checked={config[`contentAnim_${selectedGraphic}`] !== false} onChange={(e) => onConfigChange(`contentAnim_${selectedGraphic}`, e.target.checked)} style={{ cursor: 'pointer' }} />
+            {t('personalizar.contentAnim')}
+          </label>
 
           {/* Ancho y alto propios de la gráfica (vacío = tamaño original; resultados finales tiene medidas por defecto) */}
           {[['sizeW_', 'graphicWidthLabel', 'width'], ['sizeH_', 'graphicHeightLabel', 'height']].map(([prefix, labelKey, dim]) => (

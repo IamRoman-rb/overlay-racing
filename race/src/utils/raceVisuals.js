@@ -28,6 +28,15 @@ export function getCategory(config, id) {
   return name;
 }
 
+export const FORMATION_TEXT = 'VUELTA DE FORMACIÓN';
+
+// Categoría que está en vuelta de formación: la escrita a mano para esa gráfica (PANEL) o, si está vacía, la categoría
+// actual (PANEL > CATEGORÍA, que se completa sola con la fuente), la detectada por la fuente o el nombre de la sesión.
+export function formationCategory(config, sessionInfo) {
+  const pick = (v) => String(v || '').trim();
+  return pick(config?.formationLapCategory) || pick(config?.categoryName) || pick(sessionInfo?.detectedCategory) || pick(sessionInfo?.name);
+}
+
 // Texto del evento con la categoría adelante, sin repetirla si ya está incluida ("GT Series - Carrera 1")
 export function withCategory(config, id, text) {
   const cat = getCategory(config, id);

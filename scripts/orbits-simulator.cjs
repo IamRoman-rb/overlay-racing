@@ -52,7 +52,7 @@ const clients = new Set();
 
 const send = (line, only) => {
   const data = line + '\r\n';
-  for (const c of only ? [only] : clients) { try { c.write(data); } catch (e) { /* cliente caído */ } }
+  for (const c of only ? [only] : clients) { try { c.write(data); } catch { /* cliente caído */ } }
 };
 
 function standings() {

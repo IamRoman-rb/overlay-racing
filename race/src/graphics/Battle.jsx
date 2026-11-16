@@ -3,7 +3,10 @@ import { getSkinStyle } from '../utils/skinStyles';
 import { getAnimDuration, getRollClip } from '../utils/animationTiming';
 import CategoryTag from '../components/CategoryTag';
 import DriverPhoto from '../components/DriverPhoto';
+import { makeFx } from '../utils/contentAnim';
+import { ChangeTick } from '../components/ChangeAnim';
 import { useSuitColors } from '../utils/suitColor';
+import SuitNumber from '../components/SuitNumber';
 
 // Componente que mide si el texto entra en su contenedor.
 // Si entra: texto quieto. Si no entra: desliza en loop (marquee) para mostrarlo completo.
@@ -81,6 +84,7 @@ export default function Battle({ drivers, config, isVisible, battleFocusPos = 1,
   const isMinimal = battleFormat === 'minimal';
   const isPhotoDuel = battleFormat === 'photoDuel';
   const skin = getSkinStyle(battleFormat, { themeMain, themeAccent });
+  const fx = makeFx(config, id, isVisible, 0.2);
 
   const containerWidth = isHorizontal ? '880px' : (isCompact ? '360px' : '460px');
 
@@ -110,12 +114,12 @@ export default function Battle({ drivers, config, isVisible, battleFocusPos = 1,
   if (isPhotoDuel) {
     const [a, b] = battleDrivers;
     const gapText = b ? (b.diff || b.gap || '-') : '-';
-    const side = (d, align) => d && (
+    const side = (d, align, i) => d && (
       <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
         <div style={{ height: '150px', display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
-          <DriverPhoto number={d.number} config={config} height={150} maxWidth={200} fade />
+          <DriverPhoto number={d.number} config={config} height={150} maxWidth={200} fade style={fx.photo(i + 1)} />
         </div>
-        <div style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: align === 'left' ? 'flex-start' : 'flex-end', flexDirection: align === 'left' ? 'row' : 'row-reverse', padding: '8px 12px', boxSizing: 'border-box', backgroundColor: themeBg }}>
+        <div style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: align === 'left' ? 'flex-start' : 'flex-end', flexDirection: align === 'left' ? 'row' : 'row-reverse', padding: '8px 12px', boxSizing: 'border-box', backgroundColor: themeBg, ...fx.row(i, 2, 0.3) }}>
           <span style={{ color: themeAccent, fontWeight: '900', fontSize: '24px', margin: '0 8px' }}>P{d.pos}</span>
           <span style={{ backgroundColor: themeSecondary, color: '#000', fontWeight: '900', fontSize: '15px', padding: '2px 8px', borderRadius: '3px', ...sc(d.number) }}>{d.number}</span>
           <span style={{ color: themeNormalText, fontWeight: '900', fontSize: '17px', textTransform: 'uppercase', margin: '0 10px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{d.name}</span>
@@ -125,13 +129,13 @@ export default function Battle({ drivers, config, isVisible, battleFocusPos = 1,
     return (
       <div style={{ ...wrapperStyle, width: '640px' }}>
         <div style={{ backgroundColor: themeMain, color: '#fff', textAlign: 'center', fontWeight: '900', fontStyle: 'italic', fontSize: '16px', letterSpacing: '1px', padding: '6px', borderRadius: `${bRad} ${bRad} 0 0` }}>
-          BATALLA POR LA POSICIÓN {a?.pos}<CategoryTag config={config} id={id} />
+          <span style={{ display: 'inline-block', ...fx.text(0) }}>BATALLA POR LA POSICIÓN {a?.pos}<CategoryTag config={config} id={id} /></span>
         </div>
         <div style={{ display: 'flex', alignItems: 'flex-end', position: 'relative', borderRadius: `0 0 ${bRad} ${bRad}`, overflow: 'hidden', background: `linear-gradient(180deg, transparent 0%, ${themeBg} 100%)` }}>
-          {side(a, 'left')}
-          {side(b, 'right')}
+          {side(a, 'left', 0)}
+          {side(b, 'right', 1)}
           <div style={{ position: 'absolute', left: '50%', bottom: '44px', transform: 'translateX(-50%)', backgroundColor: themeMain, color: '#fff', fontWeight: '900', fontSize: '20px', padding: '6px 14px', borderRadius: '6px', boxShadow: '0 6px 18px rgba(0,0,0,0.5)', whiteSpace: 'nowrap' }}>
-            {gapText}
+            <span style={{ display: 'inline-block', ...fx.icon(4) }}><ChangeTick value={gapText} enabled={fx.on} /></span>
           </div>
         </div>
       </div>
@@ -141,12 +145,12 @@ export default function Battle({ drivers, config, isVisible, battleFocusPos = 1,
   // FORMATO DUELO: 1 vs 1 cara a cara, con "VS" al centro
   if (isDuel) {
     const [a, b] = battleDrivers;
-    const renderSide = (d) => d && (
+    const renderSide = (d, i) => d && (
       <div style={{
         flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px', padding: '15px 10px',
-        backgroundColor: customBg ? 'transparent' : themeBg, minWidth: 0
+        backgroundColor: customBg ? 'transparent' : themeBg, minWidth: 0, ...fx.row(i, 2, 0.25)
       }}>
-        <span style={{ color: themeAccent, fontWeight: '900', fontSize: '32px', lineHeight: 1 }}>P{d.pos}</span>
+        <span style={{ display: 'inline-block', color: themeAccent, fontWeight: '900', fontSize: '32px', lineHeight: 1, ...fx.num(i + 2) }}>P{d.pos}</span>
         <span style={{ backgroundColor: themeSecondary, color: '#000', fontWeight: '900', fontSize: '16px', padding: '2px 10px', borderRadius: '4px', ...sc(d.number) }}>{d.number}</span>
         <ScrollingName
           text={d.name}
@@ -166,7 +170,7 @@ export default function Battle({ drivers, config, isVisible, battleFocusPos = 1,
           borderTopLeftRadius: bRad, borderTopRightRadius: bRad,
           textAlign: 'center', boxShadow: customBg ? 'none' : '0 5px 15px rgba(0,0,0,0.5)'
         }}>
-          <span style={{ color: '#fff', fontWeight: '900', fontStyle: 'italic', fontSize: '16px', letterSpacing: '1px', textTransform: 'uppercase' }}>
+          <span style={{ display: 'inline-block', color: '#fff', fontWeight: '900', fontStyle: 'italic', fontSize: '16px', letterSpacing: '1px', textTransform: 'uppercase', ...fx.text(0) }}>
             BATALLA POR LA POSICIÓN {a?.pos}<CategoryTag config={config} id={id} />
           </span>
         </div>
@@ -177,16 +181,16 @@ export default function Battle({ drivers, config, isVisible, battleFocusPos = 1,
           borderBottomLeftRadius: bRad, borderBottomRightRadius: bRad, overflow: 'hidden',
           boxShadow: customBg ? 'none' : '0 10px 20px rgba(0,0,0,0.5)'
         }}>
-          {renderSide(a)}
+          {renderSide(a, 0)}
           <div style={{
             position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
             backgroundColor: themeAccent, color: '#000', fontWeight: '900', fontSize: '15px',
             width: '38px', height: '38px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
             boxShadow: '0 0 0 4px rgba(0,0,0,0.5)', zIndex: 2
           }}>
-            VS
+            <span style={{ display: 'inline-block', ...fx.icon(4) }}>VS</span>
           </div>
-          {renderSide(b)}
+          {renderSide(b, 1)}
         </div>
       </div>
     );
@@ -196,13 +200,13 @@ export default function Battle({ drivers, config, isVisible, battleFocusPos = 1,
   if (isMinimal) {
     return (
       <div style={{ ...wrapperStyle, display: 'flex', flexDirection: 'column', gap: '6px', width: '420px' }}>
-        <span style={{ color: themeAccent, fontWeight: '900', fontStyle: 'italic', fontSize: '13px', letterSpacing: '1px', textTransform: 'uppercase', textShadow: '2px 2px 6px rgba(0,0,0,0.9)' }}>
+        <span style={{ color: themeAccent, fontWeight: '900', fontStyle: 'italic', fontSize: '13px', letterSpacing: '1px', textTransform: 'uppercase', textShadow: '2px 2px 6px rgba(0,0,0,0.9)', ...fx.text(0) }}>
           BATALLA POR LA POSICIÓN {battleDrivers[0]?.pos}<CategoryTag config={config} id={id} />
         </span>
         {battleDrivers.map((d, i) => (
-          <div key={d.pos} style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <div key={d.pos} style={{ display: 'flex', alignItems: 'center', gap: '10px', ...fx.row(i, battleDrivers.length, 0.25) }}>
             <span style={{ width: '28px', color: themeAccent, fontWeight: '900', fontSize: '18px', textShadow: '2px 2px 6px rgba(0,0,0,0.9)' }}>{d.pos}</span>
-            <span style={{ color: themeNumberText, fontWeight: 'bold', fontSize: '13px', textShadow: '2px 2px 6px rgba(0,0,0,0.9)' }}>#{d.number}</span>
+            <span style={{ color: themeNumberText, fontWeight: 'bold', fontSize: '13px', textShadow: '2px 2px 6px rgba(0,0,0,0.9)' }}><SuitNumber number={d.number} config={config} /></span>
             <ScrollingName
               text={d.name}
               containerStyle={{ flex: 1, minWidth: 0 }}
@@ -235,7 +239,7 @@ export default function Battle({ drivers, config, isVisible, battleFocusPos = 1,
         justifyContent: isHorizontal ? 'center' : 'flex-start',
         boxShadow: skin ? skin.boxShadow : (customBg ? 'none' : '0 5px 15px rgba(0,0,0,0.5)'), zIndex: 2
       }}>
-        <span style={{ color: (customBg || skin) ? themeNormalText : '#fff', fontWeight: '900', fontStyle: 'italic', fontSize: isCompact ? '13px' : '16px', letterSpacing: '1px', textTransform: 'uppercase', textShadow: skin?.textShadow }}>
+        <span style={{ display: 'inline-block', color: (customBg || skin) ? themeNormalText : '#fff', fontWeight: '900', fontStyle: 'italic', fontSize: isCompact ? '13px' : '16px', letterSpacing: '1px', textTransform: 'uppercase', textShadow: skin?.textShadow, ...fx.text(0) }}>
           BATALLA POR LA POSICIÓN {battleDrivers[0]?.pos}<CategoryTag config={config} id={id} />
         </span>
       </div>
@@ -256,10 +260,11 @@ export default function Battle({ drivers, config, isVisible, battleFocusPos = 1,
           <div key={d.pos} style={isHorizontal ? {
             display: 'flex', flexDirection: 'column', flex: 1, minWidth: 0,
             borderRight: (i < battleDrivers.length - 1 && !customBg) ? '2px solid rgba(0,0,0,0.6)' : 'none',
-            padding: '8px', gap: '4px'
+            padding: '8px', gap: '4px', ...fx.row(i, battleDrivers.length, 0.25)
           } : {
             display: 'flex', alignItems: 'center', padding: isCompact ? '6px 12px' : '10px 15px',
-            borderBottom: (i < battleDrivers.length - 1 && !customBg) ? '1px solid rgba(255,255,255,0.1)' : 'none'
+            borderBottom: (i < battleDrivers.length - 1 && !customBg) ? '1px solid rgba(255,255,255,0.1)' : 'none',
+            ...fx.row(i, battleDrivers.length, 0.25)
           }}>
 
             {isHorizontal ? (
@@ -295,7 +300,7 @@ export default function Battle({ drivers, config, isVisible, battleFocusPos = 1,
 
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'center', flexShrink: 0 }}>
                   <span style={{ color: themeNumberText, fontWeight: '900', fontSize: isCompact ? '13px' : '18px', lineHeight: '1.2' }}>
-                    {i === 0 ? 'INTERVALO' : (d.diff || d.gap || '+0.000')}
+                    {i === 0 ? 'INTERVALO' : <ChangeTick value={d.diff || d.gap || '+0.000'} enabled={fx.on} />}
                   </span>
                   {!isCompact && (
                     <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>

@@ -4,7 +4,7 @@ export const formatDriverName = (name, format) => {
   const strName = String(name);
   if (!format || format === 'original') return strName;
   if (format === 'uppercase') return strName.toUpperCase();
-  let first = '', last = '';
+  let first, last;
   if (strName.includes(',')) {
     const parts = strName.split(','); last = parts[0].trim(); first = parts[1].trim();
   } else {

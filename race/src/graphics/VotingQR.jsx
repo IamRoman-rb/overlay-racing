@@ -1,5 +1,6 @@
 import { getSkinStyle } from '../utils/skinStyles';
 import { getAnimDuration, getRollClip } from '../utils/animationTiming';
+import { makeFx } from '../utils/contentAnim';
 
 export default function VotingQR({ isVisible, config, localIp, id = 'votingQR' }) {
   const pos = config?.positions?.[id] || { x: 20, y: 700, scale: 1 };
@@ -13,6 +14,7 @@ export default function VotingQR({ isVisible, config, localIp, id = 'votingQR' }
   const hasCustomBg = !!customBg;
   const bRad = config?.[`borderRadius_${id}`] || '8px';
   const animStyle = config?.[`animationStyle_${id}`] || 'slide';
+  const fx = makeFx(config, id, isVisible);
   const animDur = getAnimDuration(config, id);
   const qrFormat = config?.votingQRFormat || 'standard';
   const skin = getSkinStyle(qrFormat, { themeMain, themeAccent });
@@ -54,7 +56,7 @@ export default function VotingQR({ isVisible, config, localIp, id = 'votingQR' }
   // FORMATO COMPACTO: QR chico + texto al lado, sin encabezado
   if (qrFormat === 'compact') {
     return (
-      <div style={{
+      <div className={fx.group} style={{
         ...wrapperStyle, display: 'flex', alignItems: 'center', gap: '12px', width: '260px', padding: '10px',
         backgroundColor: hasCustomBg ? 'transparent' : themeBg,
         backgroundImage: hasCustomBg ? `url(${customBg})` : 'none',
@@ -73,7 +75,7 @@ export default function VotingQR({ isVisible, config, localIp, id = 'votingQR' }
   // FORMATO BANNER: caja ancha horizontal con QR a la izquierda
   if (qrFormat === 'banner') {
     return (
-      <div style={{
+      <div className={fx.group} style={{
         ...wrapperStyle, display: 'flex', alignItems: 'stretch', width: '420px',
         backgroundColor: hasCustomBg ? 'transparent' : themeBg,
         backgroundImage: hasCustomBg ? `url(${customBg})` : 'none',
@@ -99,7 +101,7 @@ export default function VotingQR({ isVisible, config, localIp, id = 'votingQR' }
   // FORMATO MINIMALISTA: sin caja, solo el QR flotando con una etiqueta
   if (qrFormat === 'minimal') {
     return (
-      <div style={{ ...wrapperStyle, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+      <div className={fx.group} style={{ ...wrapperStyle, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
         {renderQrBox(110)}
         <span style={{ color: '#fff', fontSize: '11px', fontWeight: 'bold', textAlign: 'center', textShadow: '2px 2px 6px rgba(0,0,0,0.9)' }}>
           ESCANEÁ PARA VOTAR
@@ -128,7 +130,7 @@ export default function VotingQR({ isVisible, config, localIp, id = 'votingQR' }
           PILOTO DEL DÍA
         </span>
       </div>
-      <div style={{ padding: '15px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px' }}>
+      <div className={fx.group} style={{ padding: '15px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px' }}>
         {renderQrBox(150)}
         <span style={{ color: '#fff', fontSize: '11px', fontWeight: 'bold', textAlign: 'center', lineHeight: '1.4' }}>
           ESCANEÁ PARA VOTAR<br/>AL GANADOR

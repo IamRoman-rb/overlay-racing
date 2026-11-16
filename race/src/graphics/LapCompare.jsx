@@ -1,8 +1,10 @@
 import { getGraphicFrame, getFormatStyles } from '../utils/raceVisuals';
 import { useSuitColors } from '../utils/suitColor';
 import BrandLogo from '../components/BrandLogo';
-import DriverPhoto, { photosEnabled } from '../components/DriverPhoto';
+import DriverPhoto from '../components/DriverPhoto';
+import { photosEnabled } from '../utils/photos';
 import CategoryTag from '../components/CategoryTag';
+import { makeFx } from '../utils/contentAnim';
 
 const fmt = (sec) => {
   if (!Number.isFinite(sec)) return '-';
@@ -39,11 +41,12 @@ export default function LapCompare({ state, drivers, history, config, id = 'lapC
   const cols = Array.from({ length: count }, (_, i) => laps[i - (count - laps.length)]).map(v => (Number.isFinite(v) ? v : null));
 
   const COL = f.compact ? 72 : 88;
+  const fx = makeFx(config, id, isVisible, 0.2);
   const ROW = f.compact ? 32 : 38;
-  const label = (d) => (
+  const label = (d, i = 0) => (
     <div style={{ display: 'flex', alignItems: 'center', flex: 1, minWidth: 0, padding: '0 10px' }}>
       <span style={{ width: '18px', color: theme.number, fontSize: '12px', fontWeight: 900 }}>{d.pos}</span>
-      {showPh && <DriverPhoto number={d.number} config={config} height={ROW} maxWidth={40} style={{ marginRight: '6px' }} />}
+      {showPh && <DriverPhoto number={d.number} config={config} height={ROW} maxWidth={40} style={{ marginRight: '6px', ...fx.photo(i + 2) }} />}
       <span style={{ minWidth: '30px', textAlign: 'center', fontWeight: 900, fontSize: '13px', padding: '1px 5px', marginRight: '8px', borderRadius: '2px', backgroundColor: theme.secondary, color: '#000', ...(suit[String(d.number)] ? { backgroundColor: suit[String(d.number)].bg, color: suit[String(d.number)].text } : {}) }}>{d.number}</span>
       <span style={{ flex: 1, minWidth: 0, color: theme.text, fontWeight: 900, fontSize: f.compact ? '13px' : '15px', textTransform: 'uppercase', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{d.name}</span>
       <BrandLogo brand={d.brand} config={config} size={f.compact ? 16 : 20} style={{ marginLeft: '6px' }} />
@@ -54,12 +57,12 @@ export default function LapCompare({ state, drivers, history, config, id = 'lapC
     <div style={wrapperStyle}>
       <div style={{ ...f.box, borderTop: 'none', width: `${300 + COL * count}px` }}>
         <div style={{ display: 'flex', height: '26px', alignItems: 'center', backgroundColor: theme.main, color: '#fff', fontWeight: 900, fontSize: '13px', letterSpacing: '1px' }}>
-          <span style={{ flex: 1, textAlign: 'center' }}>ÚLTIMAS {count} VUELTAS<CategoryTag config={config} id={id} /></span>
-          {cols.map((lap, i) => <span key={i} style={{ width: `${COL}px`, textAlign: 'center', borderLeft: '1px solid rgba(255,255,255,0.25)' }}>{lap ? `V${lap}` : `VTA${i + 1}`}</span>)}
+          <span style={{ flex: 1, textAlign: 'center', ...fx.text(0) }}>ÚLTIMAS {count} VUELTAS<CategoryTag config={config} id={id} /></span>
+          {cols.map((lap, i) => <span key={i} style={{ width: `${COL}px`, textAlign: 'center', borderLeft: '1px solid rgba(255,255,255,0.25)', ...fx.text(i + 1) }}>{lap ? `V${lap}` : `VTA${i + 1}`}</span>)}
         </div>
         {a && (
-          <div style={{ display: 'flex', alignItems: 'center', height: `${ROW}px`, borderBottom: '1px solid rgba(255,255,255,0.12)' }}>
-            {label(a)}
+          <div style={{ display: 'flex', alignItems: 'center', height: `${ROW}px`, borderBottom: '1px solid rgba(255,255,255,0.12)', ...fx.row(0, 2, 0.3) }}>
+            {label(a, 0)}
             {cols.map((lap, i) => (
               <span key={i} style={{ width: `${COL}px`, height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: theme.text, fontWeight: 700, fontSize: f.compact ? '13px' : '15px', fontFamily: 'monospace', borderLeft: '1px solid rgba(255,255,255,0.1)' }}>
                 {lap ? fmt(la[lap]) : '-'}
@@ -68,8 +71,8 @@ export default function LapCompare({ state, drivers, history, config, id = 'lapC
           </div>
         )}
         {b && (
-          <div style={{ display: 'flex', alignItems: 'center', height: `${ROW}px` }}>
-            {label(b)}
+          <div style={{ display: 'flex', alignItems: 'center', height: `${ROW}px`, ...fx.row(1, 2, 0.3) }}>
+            {label(b, 1)}
             {cols.map((lap, i) => {
               const delta = lap && Number.isFinite(lb[lap]) ? lb[lap] - la[lap] : null;
               const bg = delta === null ? 'transparent' : (delta < 0 ? '#1e8e3e' : '#c62828');

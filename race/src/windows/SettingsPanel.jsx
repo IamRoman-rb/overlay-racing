@@ -16,15 +16,19 @@ export default function SettingsPanel({ config, handleDirectSave, handleScrape, 
   const [localCode, setLocalCode] = useState(config.speedhiveCode || '');
   const provider = config.timingProvider || 'speedhive';
 
-  useEffect(() => {
-    setLocalCode(config.speedhiveCode || '');
-  }, [config.speedhiveCode]);
-
   // Orbits: IP (o nombre) de la PC del cronometrador y puerto del Results Protocol (50000 por defecto)
   const [localHost, setLocalHost] = useState(config.orbitsHost || '');
   const [localPort, setLocalPort] = useState(String(config.orbitsPort || 50000));
-  useEffect(() => { setLocalHost(config.orbitsHost || ''); }, [config.orbitsHost]);
-  useEffect(() => { setLocalPort(String(config.orbitsPort || 50000)); }, [config.orbitsPort]);
+
+  // Los campos son borradores locales: cuando la configuración guardada cambia (desde este panel, al importar
+  // ajustes, etc.) se vuelven a copiar. Se compara con el último valor visto, durante el render.
+  const [seen, setSeen] = useState({ code: config.speedhiveCode, host: config.orbitsHost, port: config.orbitsPort });
+  if (seen.code !== config.speedhiveCode || seen.host !== config.orbitsHost || seen.port !== config.orbitsPort) {
+    if (seen.code !== config.speedhiveCode) setLocalCode(config.speedhiveCode || '');
+    if (seen.host !== config.orbitsHost) setLocalHost(config.orbitsHost || '');
+    if (seen.port !== config.orbitsPort) setLocalPort(String(config.orbitsPort || 50000));
+    setSeen({ code: config.speedhiveCode, host: config.orbitsHost, port: config.orbitsPort });
+  }
   const normalizedPort = () => {
     const n = parseInt(localPort, 10);
     return Number.isFinite(n) && n >= 1 && n <= 65535 ? n : 50000;

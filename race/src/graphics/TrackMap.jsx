@@ -2,6 +2,8 @@ import { useMemo } from 'react';
 import { getGraphicFrame, getFormatStyles, useLiveClock, secondsSinceCross, getClassColor, useImageAspect } from '../utils/raceVisuals';
 import { buildTrack, pointOnTrack, DEFAULT_ASPECT } from '../utils/trackPath';
 import CategoryTag from '../components/CategoryTag';
+import { useSuitStyle } from '../utils/suitColor';
+import { makeFx } from '../utils/contentAnim';
 
 
 // Número en negro sobre colores claros y en blanco sobre oscuros
@@ -18,6 +20,8 @@ function textOn(color) {
 // El trazado marcado en la pestaña CIRCUITO se suaviza y se encuadra para ocupar todo el recuadro.
 // Formatos (PERSONALIZAR): standard | compact (más chico) | dots (autos sin número) | minimal (sin caja ni encabezado) | skins.
 export default function TrackMap({ drivers, config, isVisible, sessionInfo, id = 'trackMap' }) {
+  // Color del número tomado del traje (foto del piloto), si está activado en PILOTOS
+  const sc = useSuitStyle((drivers || []).map(d => d.number), config);
   const { wrapperStyle, bRad, customBg, theme: baseTheme } = getGraphicFrame(config, id, isVisible, { x: 1460, y: 610, scale: 1 });
   const format = config?.trackMapFormat || 'standard';
   const f = getFormatStyles(format, { theme: baseTheme, customBg, bRad });
@@ -55,9 +59,10 @@ export default function TrackMap({ drivers, config, isVisible, sessionInfo, id =
   // Los de adelante se dibujan arriba (y el líder, último de todos)
   cars.sort((a, b) => (parseInt(b.d.pos, 10) || 99) - (parseInt(a.d.pos, 10) || 99));
 
+  const fx = makeFx(config, id, isVisible);
   return (
     <div style={wrapperStyle}>
-      <div style={{ ...f.box, width: `${W}px` }}>
+      <div className={fx.group} style={{ ...f.box, width: `${W}px` }}>
         <div style={{ display: f.minimal ? 'none' : 'flex', padding: f.compact ? '6px 10px' : '8px 14px', backgroundColor: f.headerBg, borderBottom: f.headerBorder, color: theme.title, fontWeight: 900, fontSize: f.compact ? '10px' : '12px', letterSpacing: '2px', justifyContent: 'space-between' }}>
           <span>EN PISTA<CategoryTag config={config} id={id} /></span>
           <span style={{ color: theme.number }}>{cars.length ? `${cars.length} AUTOS` : ''}</span>
@@ -86,10 +91,12 @@ export default function TrackMap({ drivers, config, isVisible, sessionInfo, id =
           )}
           {cars.map(({ d, p, color, leader }) => {
             const num = String(d.number);
+            const suitC = sc(num);
+            const dotColor = suitC.backgroundColor || color;
             return (
               <g key={num} transform={`translate(${p.x.toFixed(1)} ${p.y.toFixed(1)})`}>
-                <circle r={dots ? (leader ? 6 : 4.5) : (f.compact ? (leader ? 7.5 : 6.5) : (leader ? 9.5 : 8))} fill={color} stroke="#000" strokeWidth={dots ? 1.2 : 1.6} />
-                {!dots && <text y={f.compact ? 2.6 : 3.2} textAnchor="middle" fontSize={f.compact ? (num.length > 2 ? 5.5 : 7) : (num.length > 2 ? 7 : 9)} fontWeight="900" fill={textOn(color)}>{num}</text>}
+                <circle r={dots ? (leader ? 6 : 4.5) : (f.compact ? (leader ? 7.5 : 6.5) : (leader ? 9.5 : 8))} fill={dotColor} stroke="#000" strokeWidth={dots ? 1.2 : 1.6} />
+                {!dots && <text y={f.compact ? 2.6 : 3.2} textAnchor="middle" fontSize={f.compact ? (num.length > 2 ? 5.5 : 7) : (num.length > 2 ? 7 : 9)} fontWeight="900" fill={suitC.color || textOn(color)}>{num}</text>}
               </g>
             );
           })}

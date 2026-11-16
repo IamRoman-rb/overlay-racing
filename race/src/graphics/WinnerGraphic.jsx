@@ -1,10 +1,15 @@
-import { useState, useEffect } from 'react';
 import { withCategory } from '../utils/raceVisuals';
 import pilotoAnonimo from '../assets/piloto_anonimo.png';
+import { useDriverPhoto } from '../utils/useDriverPhoto';
 import { getSkinStyle } from '../utils/skinStyles';
 import { getAnimDuration, getRollClip } from '../utils/animationTiming';
+import { useSuitStyle } from '../utils/suitColor';
+import SuitNumber from '../components/SuitNumber';
+import { makeFx } from '../utils/contentAnim';
 
 export default function WinnerGraphic({ driver, isVisible, config, id = 'winner', sessionInfo }) {
+  // Color del número tomado del traje (foto del piloto), si está activado en PILOTOS
+  const sc = useSuitStyle([driver?.number], config);
   const pos = config?.positions?.[id] || { x: 440, y: 550, scale: 1 };
 
   const themeBg = config?.themeBg || '#1a1a1a';
@@ -32,19 +37,10 @@ export default function WinnerGraphic({ driver, isVisible, config, id = 'winner'
   if (animStyle === 'flip') transformHidden = `scale(${pos.scale}) scaleY(0.05)`;
   if (animStyle === 'rotate') transformHidden = `scale(${pos.scale * 0.85}) rotate(-15deg)`;
 
-  const [imgSrc, setImgSrc] = useState(pilotoAnonimo);
-
-  useEffect(() => {
-    if (!driver || !config?.photosPath) { setImgSrc(pilotoAnonimo); return; }
-    const host = window.location.hostname || 'localhost';
-    const photoUrl = `http://${host}:8080/photo/${driver.number}`;
-    const img = new Image();
-    img.onload = () => setImgSrc(photoUrl);
-    img.onerror = () => setImgSrc(pilotoAnonimo);
-    img.src = photoUrl;
-  }, [config?.photosPath, driver?.number]);
+  const imgSrc = useDriverPhoto(driver?.number, !!(driver && config?.photosPath), pilotoAnonimo);
 
   if (!driver) return null;
+  const fx = makeFx(config, id, isVisible, 0.25);
 
   const wrapperStyle = {
     position: 'absolute', left: `${pos.x}px`, top: `${pos.y}px`, transformOrigin: 'top left',
@@ -58,7 +54,7 @@ export default function WinnerGraphic({ driver, isVisible, config, id = 'winner'
   if (winnerFormat === 'photo') {
     return (
       <div style={{ ...wrapperStyle, width: '420px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-        <div style={{
+        <div className={fx.group} style={{
           width: '100%', height: '360px', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', overflow: 'hidden',
           backgroundColor: hasCustomBg ? 'transparent' : themeBg,
           backgroundImage: hasCustomBg ? `url(${customBg})` : 'none',
@@ -74,11 +70,11 @@ export default function WinnerGraphic({ driver, isVisible, config, id = 'winner'
           borderBottom: hasCustomBg ? 'none' : `4px solid ${themeAccent}`,
           borderRadius: `0 0 ${bRad} ${bRad}`
         }}>
-          <span style={{ fontSize: '13px', fontWeight: 'bold', color: themeAccent, letterSpacing: '2px' }}>
+          <span style={{ display: 'block', fontSize: '13px', fontWeight: 'bold', color: themeAccent, letterSpacing: '2px', ...fx.text(2) }}>
             GANADOR — {eventName}
-          </span><br />
-          <span style={{ fontSize: '26px', fontWeight: '900', color: themeNormalText, textTransform: 'uppercase' }}>
-            #{driver.number} {driver.name}
+          </span>
+          <span style={{ display: 'block', fontSize: '26px', fontWeight: '900', color: themeNormalText, textTransform: 'uppercase', ...fx.text(3) }}>
+            <SuitNumber number={driver.number} config={config} /> {driver.name}
           </span>
         </div>
       </div>
@@ -89,7 +85,7 @@ export default function WinnerGraphic({ driver, isVisible, config, id = 'winner'
   if (winnerFormat === 'podium') {
     return (
       <div style={wrapperStyle}>
-        <div style={{
+        <div className={fx.group} style={{
           display: 'flex', flexDirection: 'column', alignItems: 'center', width: '340px', textAlign: 'center', padding: '25px 20px',
           backgroundColor: hasCustomBg ? 'transparent' : themeBg,
           backgroundImage: hasCustomBg ? `url(${customBg})` : 'none',
@@ -105,7 +101,7 @@ export default function WinnerGraphic({ driver, isVisible, config, id = 'winner'
           </span>
           <div style={{ width: '60px', height: '3px', backgroundColor: themeAccent, margin: '10px 0' }} />
           <span style={{ fontSize: '22px', fontWeight: '900', color: themeAccent }}>
-            #{driver.number}
+            <SuitNumber number={driver.number} config={config} />
           </span>
         </div>
       </div>
@@ -116,12 +112,12 @@ export default function WinnerGraphic({ driver, isVisible, config, id = 'winner'
   if (winnerFormat === 'minimal') {
     return (
       <div style={wrapperStyle}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+        <div className={fx.group} style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
           <span style={{ fontSize: '13px', fontWeight: 'bold', color: themeAccent, letterSpacing: '2px', textShadow: '2px 2px 6px rgba(0,0,0,0.9)' }}>
             GANADOR — {eventName}
           </span>
           <span style={{ fontSize: '38px', fontWeight: '900', color: themeNormalText, textTransform: 'uppercase', textShadow: '2px 2px 6px rgba(0,0,0,0.9)' }}>
-            #{driver.number} {driver.name}
+            <SuitNumber number={driver.number} config={config} /> {driver.name}
           </span>
         </div>
       </div>
@@ -141,7 +137,7 @@ export default function WinnerGraphic({ driver, isVisible, config, id = 'winner'
       boxShadow: skin ? skin.boxShadow : (hasCustomBg ? 'none' : '0 10px 30px rgba(0,0,0,0.5)'),
       backdropFilter: skin?.backdropFilter,
     }}>
-       <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '20px 30px 20px 40px', minWidth: 0 }}>
+       <div className={fx.group} style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '20px 30px 20px 40px', minWidth: 0 }}>
           <span style={{ fontSize: '24px', fontWeight: '800', color: themeAccent, opacity: 0.9, maxWidth: '780px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', textTransform: 'uppercase' }}>
             GANADOR - {eventName}
           </span>
@@ -156,7 +152,7 @@ export default function WinnerGraphic({ driver, isVisible, config, id = 'winner'
          borderLeft: hasCustomBg ? '3px solid rgba(255,255,255,0.2)' : `3px solid ${themeAccent}`,
          padding: '0 40px 0 30px', opacity: 0.9
        }}>
-         #{driver.number}
+         <span style={{ display: 'inline-block', color: sc(driver?.number).backgroundColor || undefined, ...fx.num(3) }}>#{driver.number}</span>
        </div>
     </div>
   );

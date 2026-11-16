@@ -23,25 +23,28 @@ function hexToRgb(hex) {
 // Con `inset: 0` el tapado quedaba de 0x0 y la transición corría sin verse; por eso acá van top/right/bottom/left y márgenes
 // (el polyfill de gap no alcanza: el tapado se monta después y el polyfill reacciona con requestAnimationFrame).
 export default function LogoCover({ root, logos, time, visible, replay, config, id }) {
-  const [infos, setInfos] = useState([]);
-  const [logosReady, setLogosReady] = useState(false);
+  // Análisis de los logos junto con la lista a la que corresponde: están "listos" sólo si son de la lista actual.
+  // Mientras se analiza una lista nueva se sigue dibujando con el análisis anterior (como antes).
+  const [analysis, setAnalysis] = useState({ key: null, infos: [] });
   const [mode, setMode] = useState('idle'); // idle | on | onSoft | fade
   const [dims, setDims] = useState({ w: 0, h: 0 }); // medidas de la caja de la gráfica (sin escala ni animación)
   const wasVisible = useRef(false);
   const coverRef = useRef(null);
   const logosKey = logos.join('|');
+  const infos = analysis.infos;
+  const logosReady = analysis.key === logosKey;
   const animDur = getAnimDuration(config, id);
 
   useEffect(() => {
     let alive = true;
-    setLogosReady(false);
     Promise.all(logos.map(analyzeLogo)).then(res => {
       if (!alive) return;
-      setInfos(res);
-      setLogosReady(true);
+      setAnalysis({ key: logosKey, infos: res });
       res.forEach((info, i) => { if (info.failed) diagOnce(`cover-logo|${id}|${i}`, `Tapado de "${id}": no se pudo cargar el logo ${i + 1} (se tapa con el color del tema).`); });
     });
     return () => { alive = false; };
+    // Se re-analiza sólo cuando cambia el contenido de la lista (logosKey); `logos` es un array nuevo en cada
+    // render del padre e `id` sólo se usa para el diagnóstico.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [logosKey]);
 
@@ -80,7 +83,6 @@ export default function LogoCover({ root, logos, time, visible, replay, config, 
       later(() => setMode('idle'), Math.max(animDur, EXIT_COVER_SECONDS) + 0.1);
     }
     return () => timers.forEach(clearTimeout);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visible, replay, root, logosReady, logosKey, time, animDur]);
 
   // Red de seguridad: si el tapado está activo pero no ocupa lugar (CSS que el navegador no entiende), se avisa una vez

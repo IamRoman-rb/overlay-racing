@@ -1,11 +1,16 @@
 import { getGraphicFrame, getFormatStyles, SECTOR_COLORS } from '../utils/raceVisuals';
 import CategoryTag from '../components/CategoryTag';
-import DriverPhoto, { photosEnabled } from '../components/DriverPhoto';
+import DriverPhoto from '../components/DriverPhoto';
+import { photosEnabled } from '../utils/photos';
+import { useSuitStyle } from '../utils/suitColor';
+import { makeFx } from '../utils/contentAnim';
 
 // MINI-SECTORES: hasta 2 pilotos con sus 3 sectores coloreados (violeta = mejor de la sesión, verde = mejor personal,
 // amarillo = más lento), última vuelta, mejor vuelta y vuelta teórica (suma de sus mejores sectores).
 // Formatos (PERSONALIZAR): standard | compact (una fila por piloto) | big (sectores grandes) | minimal | skins.
 export default function Sectors({ drivers, config, state, sessionInfo, id = 'sectors' }) {
+  // Color del número tomado del traje (foto del piloto), si está activado en PILOTOS
+  const sc = useSuitStyle((drivers || []).map(d => d.number), config);
   const isVisible = !!state?.isVisible;
   const { wrapperStyle, bRad, customBg, theme: baseTheme } = getGraphicFrame(config, id, isVisible, { x: 1440, y: 360, scale: 1 });
   const format = config?.sectorsFormat || 'standard';
@@ -35,33 +40,34 @@ export default function Sectors({ drivers, config, state, sessionInfo, id = 'sec
 
   const width = f.compact ? 420 : (big ? 560 : 460);
 
+  const fx = makeFx(config, id, isVisible, 0.2);
   return (
     <div style={wrapperStyle}>
       <div style={{ ...f.box, width: `${width}px` }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: f.compact ? '6px 12px' : '8px 14px', backgroundColor: f.headerBg, borderBottom: f.headerBorder }}>
-          <span style={{ color: theme.title, fontWeight: 900, fontSize: f.compact ? '12px' : '14px', letterSpacing: '2px', textShadow: ts }}>SECTORES<CategoryTag config={config} id={id} /></span>
+          <span style={{ display: 'inline-block', color: theme.title, fontWeight: 900, fontSize: f.compact ? '12px' : '14px', letterSpacing: '2px', textShadow: ts, ...fx.text(0) }}>SECTORES<CategoryTag config={config} id={id} /></span>
           <span style={{ color: theme.number, fontSize: '11px', fontWeight: 'bold', display: sessionInfo?.idealLap ? 'inline' : 'none', textShadow: ts }}>
             {f.compact ? 'IDEAL' : 'VUELTA IDEAL'} <span style={{ color: SECTOR_COLORS.purple, fontFamily: 'monospace', fontSize: '13px' }}>{sessionInfo?.idealLap}</span>
           </span>
         </div>
 
-        {f.compact ? selected.map(d => (
-          <div key={d.number} style={{ display: 'flex', alignItems: 'center', padding: '7px 12px', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+        {f.compact ? selected.map((d, i) => (
+          <div key={d.number} style={{ display: 'flex', alignItems: 'center', padding: '7px 12px', borderBottom: '1px solid rgba(255,255,255,0.08)', ...fx.row(i, selected.length, 0.3) }}>
             <span style={{ color: theme.accent, fontWeight: 900, fontSize: '15px', width: '24px' }}>{d.pos}</span>
-            <span style={{ backgroundColor: theme.secondary, color: '#000', fontWeight: 900, fontSize: '12px', padding: '1px 6px', borderRadius: '3px', marginRight: '8px' }}>{d.number}</span>
+            <span style={{ backgroundColor: theme.secondary, color: '#000', fontWeight: 900, fontSize: '12px', padding: '1px 6px', borderRadius: '3px', marginRight: '8px', ...sc(d.number) }}>{d.number}</span>
             <span style={{ flex: 1, minWidth: 0, color: theme.text, fontWeight: 900, fontSize: '14px', textTransform: 'uppercase', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{d.name}</span>
             {hasSectors ? <>{chip(d.sector1, d.sectorColors?.[0])}{chip(d.sector2, d.sectorColors?.[1])}{chip(d.sector3, d.sectorColors?.[2])}</>
               : <span style={{ color: theme.text, fontFamily: 'monospace', fontWeight: 900, fontSize: '13px' }}>{d.lastLap || '-'}</span>}
           </div>
-        )) : selected.map(d => (
-          <div key={d.number} style={{ padding: big ? '12px 16px' : '10px 14px', borderBottom: f.minimal ? 'none' : '1px solid rgba(255,255,255,0.08)' }}>
+        )) : selected.map((d, i) => (
+          <div key={d.number} style={{ padding: big ? '12px 16px' : '10px 14px', borderBottom: f.minimal ? 'none' : '1px solid rgba(255,255,255,0.08)', ...fx.row(i, selected.length, 0.3) }}>
             <div style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
-              {showPh && <DriverPhoto number={d.number} config={config} height={big ? 70 : 54} maxWidth={70} style={{ marginRight: '10px' }} />}
+              {showPh && <DriverPhoto number={d.number} config={config} height={big ? 70 : 54} maxWidth={70} style={{ marginRight: '10px', ...fx.photo(i + 2) }} />}
               <span style={{ color: theme.accent, fontWeight: 900, fontSize: big ? '22px' : '18px', width: '34px', textShadow: ts }}>{d.pos}</span>
-              <span style={{ backgroundColor: theme.secondary, color: '#000', fontWeight: 900, fontSize: '13px', padding: '2px 7px', borderRadius: '3px', marginRight: '10px' }}>{d.number}</span>
+              <span style={{ backgroundColor: theme.secondary, color: '#000', fontWeight: 900, fontSize: '13px', padding: '2px 7px', borderRadius: '3px', marginRight: '10px', ...sc(d.number) }}>{d.number}</span>
               <span style={{ flex: 1, color: theme.text, fontWeight: 900, fontSize: big ? '21px' : '17px', textTransform: 'uppercase', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', textShadow: ts }}>{d.name}</span>
             </div>
-            <div style={{ display: hasSectors ? 'flex' : 'none', marginBottom: '8px' }}>
+            <div className={fx.group} style={{ display: hasSectors ? 'flex' : 'none', marginBottom: '8px' }}>
               {cell('S1', d.sector1, d.sectorColors?.[0])}
               <div style={{ width: '8px' }} />
               {cell('S2', d.sector2, d.sectorColors?.[1])}

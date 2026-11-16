@@ -2,6 +2,10 @@ import { getSkinStyle } from '../utils/skinStyles';
 import Icon from '../components/Icon';
 import { getAnimDuration, getRollClip } from '../utils/animationTiming';
 import CategoryTag from '../components/CategoryTag';
+import SuitNumber from '../components/SuitNumber';
+import DriverPhoto from '../components/DriverPhoto';
+import { photosEnabled } from '../utils/photos';
+import { makeFx } from '../utils/contentAnim';
 
 export default function LapTimeEvolution({ history, drivers, config, isVisible, focusDriver, id = 'lapTimesHistory' }) {
   const pos = config?.positions?.[id] || { x: 100, y: 500, scale: 1 };
@@ -21,7 +25,10 @@ export default function LapTimeEvolution({ history, drivers, config, isVisible, 
   const isLarge = chartFormat === 'large';
   const isMinimal = chartFormat === 'minimal';
   const isTable = chartFormat === 'table';
+  const isCards = chartFormat === 'photoCards';
   const skin = getSkinStyle(chartFormat, { themeMain, themeAccent });
+  const fx = makeFx(config, id, isVisible, 0.25);
+  const showPh = photosEnabled(config, id) || isCards;
   const transparent = !!customBg || isMinimal;
 
   // --- CAJA RECTANGULAR ANCHA Y BAJA (el tamaño varía según el formato) ---
@@ -91,7 +98,7 @@ export default function LapTimeEvolution({ history, drivers, config, isVisible, 
 
   // FORMATO TABLA: "últimas N vueltas" estilo transmisión TV — el líder muestra el tiempo
   // absoluto de cada vuelta y el resto la diferencia contra él, vuelta por vuelta.
-  if (isTable) {
+  if (isTable || isCards) {
     const formatDelta = (secs) => {
       if (secs === null || secs === undefined) return '-';
       const sign = secs > 0 ? '+' : (secs < 0 ? '-' : '');
@@ -111,7 +118,67 @@ export default function LapTimeEvolution({ history, drivers, config, isVisible, 
     const leaderPoints = rows[0]?.points || [];
     const getSecondsForLap = (points, lap) => points.find(p => p.lap === lap)?.seconds ?? null;
 
-    const TABLE_W = 130 + lapCols * 110;
+    const NAME_W = showPh ? 210 : 150;
+    const TABLE_W = NAME_W + lapCols * 110;
+
+    // FORMATO TARJETAS CON FOTO: una tarjeta por piloto (foto, posición, número y nombre) con sus últimas vueltas
+    // apiladas; la mejor de las mostradas en verde. Las tarjetas entran con la aparición de filas configurada.
+    if (isCards) {
+      const CARD_W = 190;
+      return (
+        <div style={{
+          position: 'absolute', left: `${pos.x}px`, top: `${pos.y}px`,
+          transformOrigin: 'top left', zIndex: 40, pointerEvents: 'none',
+          transition: `all ${animDur}s cubic-bezier(0.175, 0.885, 0.32, 1.275)`,
+          opacity: isVisible || animStyle === 'roll' ? 1 : 0,
+          transform: isVisible || animStyle === 'roll' ? `scale(${pos.scale}) translateY(0)` : transformHidden, ...getRollClip(animStyle, isVisible)
+        }}>
+          <div style={{
+            display: 'inline-flex', alignItems: 'center', gap: '10px', padding: '6px 14px', marginBottom: '8px',
+            backgroundColor: themeHeaderBg, borderLeft: `4px solid ${themeMain}`, borderRadius: bRad, ...fx.wipe(0)
+          }}>
+            {config?.logo && <img src={config.logo} alt="Logo" style={{ height: '20px', maxWidth: '90px', objectFit: 'contain', ...fx.icon(1) }} />}
+            <span style={{ display: 'inline-block', color: themeNormalText, fontSize: '14px', fontWeight: 900, letterSpacing: '0.5px', textTransform: 'uppercase', ...fx.text(1) }}>
+              ÚLTIMAS {lapCols} VUELTAS<CategoryTag config={config} id={id} />
+            </span>
+          </div>
+          <div style={{ display: 'flex', gap: '10px', alignItems: 'flex-end' }}>
+            {rows.map((row, i) => {
+              const shown = lapNumbers.map(lap => ({ lap, secs: getSecondsForLap(row.points, lap) }));
+              const valid = shown.filter(x => x.secs !== null).map(x => x.secs);
+              const best = valid.length ? Math.min(...valid) : null;
+              return (
+                <div key={row.num} style={{
+                  width: `${CARD_W}px`, borderRadius: bRad, overflow: 'hidden',
+                  backgroundColor: skin ? skin.background : (customBg ? 'transparent' : themeBg),
+                  backgroundImage: customBg ? `url(${customBg})` : (skin?.backgroundImage || 'none'), backgroundSize: '100% 100%',
+                  border: skin ? skin.border : 'none', borderTop: skin ? skin.border : `4px solid ${i === 0 ? themeAccent : themeMain}`,
+                  boxShadow: skin ? skin.boxShadow : '0 8px 20px rgba(0,0,0,0.55)', backdropFilter: skin?.backdropFilter,
+                  ...fx.row(i, rows.length, 0.35)
+                }}>
+                  <div style={{ position: 'relative', height: '120px', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', background: `linear-gradient(to top, ${themeHeaderBg}, transparent)` }}>
+                    <span style={{ position: 'absolute', top: '6px', left: '10px', color: themeTitleText, fontSize: '30px', fontWeight: 900, lineHeight: 1, textShadow: '2px 2px 6px rgba(0,0,0,0.8)', ...fx.num(i + 1) }}>{row.driver?.pos || '-'}</span>
+                    <span style={{ position: 'absolute', top: '8px', right: '10px', ...fx.icon(i + 1) }}><SuitNumber number={row.num} config={config} chip prefix="" style={{ display: 'inline-block', backgroundColor: config?.themeSecondary || '#3498db', color: '#000', padding: '2px 8px', borderRadius: '4px', fontWeight: 900, fontSize: '15px' }} /></span>
+                    <DriverPhoto number={row.num} config={config} height={116} maxWidth={CARD_W - 20} fade style={fx.photo(i + 2)} />
+                  </div>
+                  <div style={{ padding: '6px 10px', backgroundColor: themeHeaderBg, color: themeNormalText, fontSize: '14px', fontWeight: 900, textTransform: 'uppercase', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    <span style={{ display: 'inline-block', maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis', verticalAlign: 'bottom', ...fx.text(i + 2) }}>{row.driver?.name || `#${row.num}`}</span>
+                  </div>
+                  <div style={{ padding: '4px 0 6px' }}>
+                    {shown.map((x, li) => (
+                      <div key={x.lap} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '3px 10px', ...fx.slide(i + 3 + li) }}>
+                        <span style={{ color: themeAccent, fontSize: '11px', fontWeight: 900, letterSpacing: '0.5px' }}>V{x.lap}</span>
+                        <span style={{ color: x.secs !== null && x.secs === best ? '#2ecc71' : themeNormalText, fontSize: '15px', fontWeight: 'bold', fontFamily: 'monospace' }}>{formatSeconds(x.secs)}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      );
+    }
 
     return (
       <div style={{
@@ -136,19 +203,19 @@ export default function LapTimeEvolution({ history, drivers, config, isVisible, 
             display: 'flex', alignItems: 'center', gap: '10px', padding: '8px 14px',
             backgroundColor: skin ? 'transparent' : themeHeaderBg
           }}>
-            {config?.logo && <img src={config.logo} alt="Logo" style={{ height: '20px', maxWidth: '90px', objectFit: 'contain' }} />}
-            <span style={{ color: themeNormalText, fontSize: '13px', fontWeight: '900', letterSpacing: '0.5px', textTransform: 'uppercase' }}>
+            {config?.logo && <img src={config.logo} alt="Logo" style={{ height: '20px', maxWidth: '90px', objectFit: 'contain', ...fx.icon(0) }} />}
+            <span style={{ display: 'inline-block', color: themeNormalText, fontSize: '13px', fontWeight: '900', letterSpacing: '0.5px', textTransform: 'uppercase', ...fx.text(1) }}>
               ÚLTIMAS {lapCols} VUELTAS<CategoryTag config={config} id={id} />
             </span>
           </div>
 
           {/* ENCABEZADO DE VUELTAS */}
           <div style={{ display: 'flex', borderBottom: `2px solid ${themeMain}` }}>
-            <div style={{ width: '130px', flexShrink: 0 }} />
-            {lapNumbers.map(lap => (
+            <div style={{ width: `${NAME_W}px`, flexShrink: 0 }} />
+            {lapNumbers.map((lap, li) => (
               <div key={lap} style={{
-                width: '110px', flexShrink: 0, textAlign: 'center', padding: '6px 4px',
-                color: themeAccent, fontSize: '12px', fontWeight: '900', letterSpacing: '0.5px'
+                width: '110px', boxSizing: 'border-box', flexShrink: 0, textAlign: 'center', padding: '6px 4px',
+                color: themeAccent, fontSize: '12px', fontWeight: '900', letterSpacing: '0.5px', ...fx.text(2 + li)
               }}>
                 VUELTA {lap}
               </div>
@@ -170,11 +237,13 @@ export default function LapTimeEvolution({ history, drivers, config, isVisible, 
             return (
               <div key={row.num} style={{
                 display: 'flex', alignItems: 'center',
-                borderBottom: i === rows.length - 1 ? 'none' : '1px solid rgba(255,255,255,0.08)'
+                borderBottom: i === rows.length - 1 ? 'none' : '1px solid rgba(255,255,255,0.08)',
+                ...fx.row(i, rows.length, 0.45)
               }}>
-                <div style={{ width: '130px', flexShrink: 0, display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 10px' }}>
-                  <span style={{ color: themeTitleText, fontSize: '13px', fontWeight: '900', width: '16px' }}>{row.driver?.pos || '-'}</span>
-                  <span style={{ color: trendColor, fontSize: '13px', fontWeight: '900' }}>{trendArrow}</span>
+                <div style={{ width: `${NAME_W}px`, boxSizing: 'border-box', flexShrink: 0, display: 'flex', alignItems: 'center', gap: '6px', padding: showPh ? '2px 10px 0' : '8px 10px', minWidth: 0 }}>
+                  <span style={{ color: themeTitleText, fontSize: '13px', fontWeight: '900', width: '16px', flexShrink: 0 }}>{row.driver?.pos || '-'}</span>
+                  <span style={{ color: trendColor, fontSize: '13px', fontWeight: '900', flexShrink: 0 }}>{trendArrow}</span>
+                  {showPh && <DriverPhoto number={row.num} config={config} height={40} maxWidth={44} fade style={{ flexShrink: 0, alignSelf: 'flex-end', ...fx.photo(i + 1) }} />}
                   <span style={{
                     color: themeNormalText, fontSize: '13px', fontWeight: '900', textTransform: 'uppercase',
                     whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'
@@ -185,7 +254,7 @@ export default function LapTimeEvolution({ history, drivers, config, isVisible, 
                   const secs = getSecondsForLap(row.points, lap);
                   if (isLeaderRow) {
                     return (
-                      <div key={lap} style={{ width: '110px', flexShrink: 0, textAlign: 'center', padding: '8px 4px', color: themeNormalText, fontSize: '15px', fontWeight: 'bold', fontFamily: 'monospace' }}>
+                      <div key={lap} style={{ width: '110px', boxSizing: 'border-box', flexShrink: 0, textAlign: 'center', padding: '8px 4px', color: themeNormalText, fontSize: '15px', fontWeight: 'bold', fontFamily: 'monospace' }}>
                         {formatSeconds(secs)}
                       </div>
                     );
@@ -194,7 +263,7 @@ export default function LapTimeEvolution({ history, drivers, config, isVisible, 
                   const delta = (secs !== null && leaderSecs !== null) ? secs - leaderSecs : null;
                   const deltaColor = delta === null ? themeNormalText : (delta < 0 ? '#2ecc71' : (delta > 0 ? '#e74c3c' : themeNormalText));
                   return (
-                    <div key={lap} style={{ width: '110px', flexShrink: 0, textAlign: 'center', padding: '8px 4px', color: deltaColor, fontSize: '15px', fontWeight: 'bold', fontFamily: 'monospace' }}>
+                    <div key={lap} style={{ width: '110px', boxSizing: 'border-box', flexShrink: 0, textAlign: 'center', padding: '8px 4px', color: deltaColor, fontSize: '15px', fontWeight: 'bold', fontFamily: 'monospace' }}>
                       {formatDelta(delta)}
                     </div>
                   );
@@ -216,7 +285,7 @@ export default function LapTimeEvolution({ history, drivers, config, isVisible, 
       transform: isVisible || animStyle === 'roll' ? `scale(${pos.scale}) translateY(0)` : transformHidden, ...getRollClip(animStyle, isVisible)
     }}>
       {isMinimal && (
-        <span style={{ display: 'block', color: themeTitleText, fontSize: '11px', fontWeight: '900', letterSpacing: '0.5px', textTransform: 'uppercase', marginBottom: '4px', textShadow: '2px 2px 6px rgba(0,0,0,0.9)' }}>
+        <span style={{ display: 'block', color: themeTitleText, fontSize: '11px', fontWeight: '900', letterSpacing: '0.5px', textTransform: 'uppercase', marginBottom: '4px', textShadow: '2px 2px 6px rgba(0,0,0,0.9)' , ...fx.text(0) }}>
           {isFocusMode ? `RITMO — #${focusDriver} ${getDriverName(focusDriver)}` : 'EVOLUCIÓN DE TIEMPOS DE VUELTA'}<CategoryTag config={config} id={id} />
         </span>
       )}
@@ -240,7 +309,7 @@ export default function LapTimeEvolution({ history, drivers, config, isVisible, 
             padding: isCompact ? '4px 10px' : '6px 12px', borderBottom: customBg ? 'none' : `1px solid ${isFocusMode ? '#00e5ff' : themeMain}`,
             display: 'flex', justifyContent: 'space-between', alignItems: 'center'
           }}>
-            <span style={{ color: themeTitleText, fontSize: isLarge ? '13px' : '11px', fontWeight: '900', letterSpacing: '0.5px', textTransform: 'uppercase', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            <span style={{ color: themeTitleText, fontSize: isLarge ? '13px' : '11px', fontWeight: '900', letterSpacing: '0.5px', textTransform: 'uppercase', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' , ...fx.text(0) }}>
               {isFocusMode ? `RITMO — #${focusDriver} ${getDriverName(focusDriver)}` : (isCompact ? 'TIEMPOS' : 'EVOLUCIÓN DE TIEMPOS DE VUELTA')}<CategoryTag config={config} id={id} />
             </span>
 
@@ -278,6 +347,8 @@ export default function LapTimeEvolution({ history, drivers, config, isVisible, 
                     strokeWidth={strokeW}
                     strokeLinecap="round"
                     strokeLinejoin="round"
+                    pathLength="1"
+                    style={fx.draw(idx)}
                   />
                   {points.map((p, i) => (
                     <circle
@@ -298,10 +369,10 @@ export default function LapTimeEvolution({ history, drivers, config, isVisible, 
           {!isFocusMode && !isCompact && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', minWidth: 0 }}>
               {topDriverNumbers.map((num, idx) => (
-                <div key={num} style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <div key={num} style={{ display: 'flex', alignItems: 'center', gap: '4px', ...fx.row(idx, topDriverNumbers.length, 0.4) }}>
                   <div style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: palette[idx % palette.length], flexShrink: 0 }} />
                   <span style={{ fontSize: isLarge ? '11px' : '9px', color: themeNormalText, fontWeight: 'bold', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                    #{num} {getDriverName(num)}
+                    <SuitNumber number={num} config={config} /> {getDriverName(num)}
                   </span>
                 </div>
               ))}

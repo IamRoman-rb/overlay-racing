@@ -3,6 +3,8 @@ import banderaCuadrosImg from '../assets/bandera cuadros.jpg';
 import { getSkinStyle } from '../utils/skinStyles';
 import { getAnimDuration, getRollClip } from '../utils/animationTiming';
 import { getCanvasSize } from '../utils/canvasSize';
+import SuitNumber from '../components/SuitNumber';
+import { makeFx } from '../utils/contentAnim';
 
 const FLAG_GLOW_COLOR = { red: '#e74c3c', black: '#ffcc00', blue: '#3498db', tricolor: '#ffffff', checkered: '#ffffff', green: '#2ecc71' };
 
@@ -31,12 +33,13 @@ export default function Flags({ activeFlags, config, id = 'flags' }) {
   const customBg = config[`design_${id}`];
   const bRad = config[`borderRadius_${id}`] || '8px';
   const animStyle = config[`animationStyle_${id}`] || 'slide';
+  const fx = makeFx(config, id, isVisible);
   const animDur = getAnimDuration(config, id);
   const flagsFormat = config?.flagsFormat || 'standard';
 
   // Lógica para la Bandera Negra con color de acento
   const blackText = config?.blackFlagNumber
-    ? <>BANDERA NEGRA - AUTO <span style={{ color: themeAccent }}>#{config.blackFlagNumber}</span></>
+    ? <>BANDERA NEGRA - AUTO <span style={{ color: themeAccent }}><SuitNumber number={config.blackFlagNumber} config={config} /></span></>
     : 'BANDERA NEGRA - EXCLUSIÓN';
 
   // Fondos fijos por reglamento deportivo, pero textos dinámicos
@@ -61,6 +64,12 @@ export default function Flags({ activeFlags, config, id = 'flags' }) {
   const bgUrl = customBg || currentStyle.image || null;
   const useImageBg = !!bgUrl;
   const bgSize = customBg ? '100% 100%' : 'cover';
+
+  // Fondo de la bandera. Ojo: el tricolor es un degradado (background-image), así que no se puede
+  // pisar luego con backgroundImage: 'none' o desaparece el color.
+  const flagBg = useImageBg
+    ? { backgroundColor: 'transparent', backgroundImage: `url(${bgUrl})` }
+    : { background: currentStyle.bg };
 
   // Skins (broadcast pro/degradé/cristal): el acento usa el color propio de cada bandera para no perder su significado
   const flagGlowColor = FLAG_GLOW_COLOR[shownFlagType] || themeAccent;
@@ -89,9 +98,8 @@ export default function Flags({ activeFlags, config, id = 'flags' }) {
         transform: `scale(${pos.scale})`, transformOrigin: 'top left',
         zIndex: 60, pointerEvents: 'none', width: `${getCanvasSize(config).width}px`
       }}>
-        <div style={{
-          background: useImageBg ? 'transparent' : currentStyle.bg,
-          backgroundImage: useImageBg ? `url(${bgUrl})` : 'none',
+        <div className={fx.group} style={{
+          ...flagBg,
           backgroundSize: bgSize, backgroundRepeat: 'no-repeat', backgroundPosition: 'center',
           padding: '18px 0', textAlign: 'center', width: '100%',
           borderTop: useImageBg ? 'none' : '4px solid rgba(0,0,0,0.35)',
@@ -117,9 +125,8 @@ export default function Flags({ activeFlags, config, id = 'flags' }) {
         transform: `scale(${pos.scale})`, transformOrigin: 'top left',
         zIndex: 60, pointerEvents: 'none'
       }}>
-        <div style={{
-          background: useImageBg ? 'transparent' : currentStyle.bg,
-          backgroundImage: useImageBg ? `url(${bgUrl})` : 'none',
+        <div className={fx.group} style={{
+          ...flagBg,
           backgroundSize: bgSize, backgroundRepeat: 'no-repeat', backgroundPosition: 'center',
           padding: '14px 30px 14px 22px', maxWidth: '480px',
           borderRadius: `0 ${bRad} ${bRad} 0`,
@@ -145,15 +152,14 @@ export default function Flags({ activeFlags, config, id = 'flags' }) {
         transform: `scale(${pos.scale})`, transformOrigin: 'top left',
         zIndex: 60, pointerEvents: 'none'
       }}>
-        <div style={{
+        <div className={fx.group} style={{
           display: 'flex', borderRadius: bRad, overflow: 'hidden', boxShadow: '0 5px 15px rgba(0,0,0,0.5)',
           transform: isVisible || animStyle === 'roll' ? 'translateY(0) scale(1)' : transformHidden, ...getRollClip(animStyle, isVisible),
           opacity: isVisible || animStyle === 'roll' ? 1 : 0,
           transition: `transform ${animDur}s cubic-bezier(0.25, 1, 0.5, 1), opacity ${animDur}s ease-in-out, clip-path ${animDur}s ease-in-out`
         }}>
           <div style={{
-            width: '70px', background: useImageBg ? 'transparent' : currentStyle.bg,
-            backgroundImage: useImageBg ? `url(${bgUrl})` : 'none',
+            width: '70px', ...flagBg,
             backgroundSize: bgSize, backgroundRepeat: 'no-repeat', backgroundPosition: 'center'
           }} />
           <div style={{ backgroundColor: '#0a0a0a', padding: '14px 26px', display: 'flex', alignItems: 'center' }}>
@@ -173,9 +179,8 @@ export default function Flags({ activeFlags, config, id = 'flags' }) {
       transform: `scale(${pos.scale})`, transformOrigin: 'top left',
       zIndex: 60, pointerEvents: 'none', width: '640px', display: 'flex', justifyContent: 'center'
     }}>
-      <div style={{
-         background: skin ? skin.background : (useImageBg ? 'transparent' : currentStyle.bg),
-         backgroundImage: skin ? (skin.backgroundImage || 'none') : (useImageBg ? `url(${bgUrl})` : 'none'),
+      <div className={fx.group} style={{
+         ...(skin ? { background: skin.background, backgroundImage: skin.backgroundImage || 'none' } : flagBg),
          backgroundSize: bgSize, backgroundRepeat: 'no-repeat', backgroundPosition: 'center',
          padding: '10px 30px',
          border: skin ? skin.border : 'none',

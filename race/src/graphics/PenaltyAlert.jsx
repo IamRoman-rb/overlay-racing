@@ -1,4 +1,6 @@
 import { getSkinStyle, SKIN_FORMATS } from '../utils/skinStyles';
+import SuitNumber from '../components/SuitNumber';
+import { contentAnimOn } from '../utils/contentAnim';
 
 function CardFormat({ alert, config, pos, skinFormat }) {
   const isInvestigation = alert?.type === 'investigation';
@@ -10,6 +12,7 @@ function CardFormat({ alert, config, pos, skinFormat }) {
 
   return (
     <div
+      className={contentAnimOn(config, 'penaltyAlert') ? 'ca-group' : undefined}
       style={{
         position: 'absolute',
         left: `${pos?.x ?? 1500}px`,
@@ -50,7 +53,7 @@ function CardFormat({ alert, config, pos, skinFormat }) {
 
       <div style={{ padding: '12px 14px' }}>
         <div style={{ fontSize: '18px', fontWeight: 900, letterSpacing: '0.5px', marginBottom: alert?.reason ? '6px' : 0 }}>
-          {alert?.driverNumber ? `#${alert.driverNumber} ` : ''}{alert?.driverName || 'PILOTO'}
+          {alert?.driverNumber ? <><SuitNumber number={alert.driverNumber} config={config} />{' '}</> : ''}{alert?.driverName || 'PILOTO'}
         </div>
         {alert?.reason && (
           <div style={{ fontSize: '13px', color: '#e0e0e0', lineHeight: 1.4 }}>
@@ -71,6 +74,7 @@ function F1BarFormat({ alert, config, pos }) {
 
   return (
     <div
+      className={contentAnimOn(config, 'penaltyAlert') ? 'ca-group' : undefined}
       style={{
         position: 'absolute',
         left: `${pos?.x ?? 1500}px`,
@@ -112,7 +116,7 @@ function F1BarFormat({ alert, config, pos }) {
 
       <div style={{ display: 'flex', alignItems: 'center', padding: '0 16px', flexShrink: 0, borderLeft: '1px solid rgba(255,255,255,0.15)' }}>
         <span style={{ fontSize: '16px', fontWeight: 900, whiteSpace: 'nowrap' }}>
-          {alert?.driverNumber ? `#${alert.driverNumber} ` : ''}{(alert?.driverName || 'PILOTO').toUpperCase()}
+          {alert?.driverNumber ? <><SuitNumber number={alert.driverNumber} config={config} />{' '}</> : ''}{(alert?.driverName || 'PILOTO').toUpperCase()}
         </span>
       </div>
 
@@ -144,6 +148,7 @@ function MinimalFormat({ alert, config, pos }) {
 
   return (
     <div
+      className={contentAnimOn(config, 'penaltyAlert') ? 'ca-group' : undefined}
       style={{
         position: 'absolute',
         left: `${pos?.x ?? 1500}px`,
@@ -159,7 +164,7 @@ function MinimalFormat({ alert, config, pos }) {
           {badgeText}
         </span>
         <span style={{ color: '#fff', fontSize: '24px', fontWeight: '900', textShadow: '2px 2px 6px rgba(0,0,0,0.9)' }}>
-          {alert?.driverNumber ? `#${alert.driverNumber} ` : ''}{alert?.driverName || 'PILOTO'}
+          {alert?.driverNumber ? <><SuitNumber number={alert.driverNumber} config={config} />{' '}</> : ''}{alert?.driverName || 'PILOTO'}
         </span>
         {alert?.reason && (
           <span style={{ color: '#ddd', fontSize: '14px', textShadow: '2px 2px 6px rgba(0,0,0,0.9)' }}>
@@ -179,6 +184,7 @@ function CornerFormat({ alert, config, pos }) {
 
   return (
     <div
+      className={contentAnimOn(config, 'penaltyAlert') ? 'ca-group' : undefined}
       style={{
         position: 'absolute',
         left: `${pos?.x ?? 1500}px`,
@@ -202,7 +208,7 @@ function CornerFormat({ alert, config, pos }) {
           {badgeText}
         </span><br />
         <span style={{ fontSize: '18px', fontWeight: '900' }}>
-          {alert?.driverNumber ? `#${alert.driverNumber} ` : ''}{alert?.driverName || 'PILOTO'}
+          {alert?.driverNumber ? <><SuitNumber number={alert.driverNumber} config={config} />{' '}</> : ''}{alert?.driverName || 'PILOTO'}
         </span>
         {alert?.reason && (
           <div style={{ fontSize: '12px', color: '#ccc', marginTop: '3px' }}>

@@ -1,3 +1,6 @@
+// Las funciones que se pasan a page.evaluate()/frame.evaluate() se ejecutan dentro de la página
+// (navegador), no en Node: ahí sí existen document y location.
+/* global document, location */
 const puppeteer = require('puppeteer');
 const fs = require('fs');
 const path = require('path');
@@ -18,7 +21,7 @@ function findChromiumIn(dir, depth = 0) {
     ? ['chrome.exe']
     : ['chrome'];
   let entries;
-  try { entries = fs.readdirSync(dir, { withFileTypes: true }); } catch (e) { return null; }
+  try { entries = fs.readdirSync(dir, { withFileTypes: true }); } catch { return null; }
   for (const name of names) {
     const hit = entries.find(en => en.isFile() && en.name === name);
     if (hit) return path.join(dir, hit.name);
@@ -52,7 +55,7 @@ function findBrowserExecutable() {
   try {
     const bundled = puppeteer.executablePath();
     if (bundled && fs.existsSync(bundled)) return bundled;
-  } catch (e) { /* Puppeteer sin Chromium descargado */ }
+  } catch { /* Puppeteer sin Chromium descargado */ }
 
   const candidates = [];
   if (process.platform === 'win32') {
@@ -371,7 +374,7 @@ async function scrapeSpeedhive(inputCode) {
             return frame;
           }
 
-        } catch (e) {
+        } catch {
           // El frame puede estar navegando.
         }
       }
@@ -905,7 +908,7 @@ async function scrapeRaceMonitor(inputCode) {
         }
         // El frame cacheado ya no tiene datos (recargó / cambió sesión): invalidar y rebuscar abajo
         raceMonitorFrame = null;
-      } catch (e) {
+      } catch {
         // El frame se destruyó (navegación, iframe removido, etc.): invalidar y rebuscar abajo
         raceMonitorFrame = null;
       }
@@ -924,7 +927,7 @@ async function scrapeRaceMonitor(inputCode) {
             raceMonitorFrame = frame; // cachear para los próximos ticks
             break;
           }
-        } catch (e) {}
+        } catch { /* no crítico: se ignora */ }
       }
       if (finalResult.drivers.length === 0 && sec < maxSeconds - 1) await new Promise(r => setTimeout(r, 1000));
     }

@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from 'react';
 import Icon from '../components/Icon';
 import { BRANDS, brandName, brandSrc } from '../utils/brands';
 import { photoUrl } from '../utils/elite';
+import RosterLists from './RosterLists';
 
 let ipcRenderer = null;
 if (typeof window !== 'undefined' && typeof window.require === 'function') {
@@ -95,6 +96,8 @@ export default function DriversRoster({ drivers, config, colors, inputStyle, btn
         <div style={{ fontSize: '11px', color: config?.photosPath ? colors.textMuted : '#e67e22', marginTop: '6px' }}>{config?.photosPath ? t('pilotos.suitColorsHint') : t('pilotos.suitColorsNoFolder')}</div>
       </div>
 
+      <RosterLists roster={roster} config={config} colors={colors} inputStyle={inputStyle} btnStyle={btnStyle} t={t} onConfigChange={onConfigChange} />
+
       <datalist id="brandsList">{BRANDS.map(b => <option key={b.slug} value={b.name} />)}</datalist>
 
       <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginBottom: '14px', flexWrap: 'wrap' }}>
@@ -136,7 +139,7 @@ export default function DriversRoster({ drivers, config, colors, inputStyle, btn
                         <span style={{ width: '34px', height: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#2a2a2a', borderRadius: '3px', flexShrink: 0 }}>
                           {brand && <img src={brandSrc(brand)} alt="" style={{ maxHeight: '20px', maxWidth: '30px', objectFit: 'contain' }} />}
                         </span>
-                        <Cell value={manualBrand ? brandName(r.brand) : ''} placeholder={brand ? `${brandName(brand)} (${t('pilotos.detected')})` : t('pilotos.brandPlaceholder')} list="brandsList"
+                        <Cell value={manualBrand ? brandName(r.brand) : ''} placeholder={brand ? `${brandName(brand)} (${t(d && d.brandFrom === 'memory' ? 'pilotos.remembered' : 'pilotos.detected')})` : t('pilotos.brandPlaceholder')} list="brandsList"
                           onCommit={(v) => { const slug = toSlug(v); if (slug === null) { alert(t('pilotos.brandUnknown', { name: v })); return; } setEntry(src, { brand: slug }); }} inputStyle={inputStyle} />
                       </div>
                     </td>

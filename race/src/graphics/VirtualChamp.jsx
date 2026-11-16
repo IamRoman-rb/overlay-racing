@@ -3,6 +3,9 @@ import { io } from 'socket.io-client';
 import { getSkinStyle } from '../utils/skinStyles';
 import { getAnimDuration, getRollClip } from '../utils/animationTiming';
 import CategoryTag from '../components/CategoryTag';
+import SuitNumber from '../components/SuitNumber';
+import { makeFx } from '../utils/contentAnim';
+import { ChangeTick } from '../components/ChangeAnim';
 
 const PODIUM_COLORS = { 0: '#ffd700', 1: '#c0c0c0', 2: '#cd7f32' };
 
@@ -27,6 +30,7 @@ export default function VirtualChamp({ config, isVisible, id = 'virtualChamp' })
   const isMinimal = champFormat === 'minimal';
   const skin = getSkinStyle(champFormat, { themeMain, themeAccent });
   const transparent = !!customBg || isMinimal;
+  const fx = makeFx(config, id, isVisible, 0.2);
 
   let transformHidden = `scale(${pos.scale}) translateX(40px)`;
   if (animStyle === 'fade') transformHidden = `scale(${pos.scale})`;
@@ -61,7 +65,7 @@ export default function VirtualChamp({ config, isVisible, id = 'virtualChamp' })
     }}>
       {!isMinimal && (
         <div style={{ backgroundColor: skin ? 'transparent' : (customBg ? 'transparent' : themeHeaderBg), padding: isCompact ? '8px' : '12px', textAlign: 'center', borderBottom: skin ? `1px solid ${themeAccent}44` : (customBg ? 'none' : `4px solid ${themeMain}`) }}>
-          <span style={{ color: themeMain, fontSize: isCompact ? '14px' : '18px', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '1px' }}>
+          <span style={{ display: 'inline-block', color: themeMain, fontSize: isCompact ? '14px' : '18px', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '1px', ...fx.text(0) }}>
             CAMPEONATO EN VIVO<CategoryTag config={config} id={id} block />
           </span>
         </div>
@@ -75,14 +79,15 @@ export default function VirtualChamp({ config, isVisible, id = 'virtualChamp' })
             display: 'flex', alignItems: 'center', padding: isCompact ? '5px 12px' : '8px 15px',
             borderBottom: (i < topStandings.length - 1 && !transparent) ? '1px solid rgba(255,255,255,0.1)' : 'none',
             borderLeft: podiumColor ? `4px solid ${podiumColor}` : 'none',
-            backgroundColor: podiumColor ? `${podiumColor}22` : (i === 0 && !isPodium ? 'rgba(243, 156, 18, 0.15)' : 'transparent')
+            backgroundColor: podiumColor ? `${podiumColor}22` : (i === 0 && !isPodium ? 'rgba(243, 156, 18, 0.15)' : 'transparent'),
+            ...fx.row(i, topStandings.length, 0.3)
           }}>
             <span style={{ width: isCompact ? '20px' : '25px', color: podiumColor || (i === 0 ? '#f39c12' : '#bbb'), fontWeight: '900', fontSize: isCompact ? '14px' : '18px' }}>{d.livePos}</span>
-            <span style={{ backgroundColor: podiumColor || themeSecondary, color: '#fff', padding: isCompact ? '1px 5px' : '2px 6px', borderRadius: '4px', fontWeight: '900', fontSize: isCompact ? '11px' : '14px', marginRight: isCompact ? '7px' : '10px' }}>{d.number}</span>
+            <SuitNumber chip number={d.number} config={config} prefix="" style={{ backgroundColor: podiumColor || themeSecondary, color: '#fff', padding: isCompact ? '1px 5px' : '2px 6px', borderRadius: '4px', fontWeight: '900', fontSize: isCompact ? '11px' : '14px', marginRight: isCompact ? '7px' : '10px' }} />
             <span style={{ flex: 1, color: themeNormalText, fontWeight: 'bold', fontSize: isCompact ? '14px' : '18px', textTransform: 'uppercase', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{d.name}</span>
 
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
-              <span style={{ color: '#fff', fontWeight: '900', fontSize: isCompact ? '15px' : '20px' }}>{d.livePoints}</span>
+              <span style={{ color: '#fff', fontWeight: '900', fontSize: isCompact ? '15px' : '20px' }}><ChangeTick value={d.livePoints} enabled={fx.on} /></span>
               {!isCompact && (
                 <span style={{ color: '#2ecc71', fontSize: '12px', fontWeight: 'bold', marginTop: '-4px' }}>
                   {d.added > 0 ? `+${d.added} pts` : ' '}

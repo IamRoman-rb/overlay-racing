@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
+import { io } from 'socket.io-client';
 import TimingTower from '../graphics/TimingTower';
 import Ticker from '../graphics/Ticker';
 import LowerThird from '../graphics/LowerThird';
@@ -33,6 +34,7 @@ import CircuitIntro from '../graphics/CircuitIntro';
 import CircuitRecord from '../graphics/CircuitRecord';
 import LapCompare from '../graphics/LapCompare';
 import WindVectors from '../graphics/WindField';
+import FormationLap from '../graphics/FormationLap';
 import SponsorLive from '../graphics/SponsorLive';
 import LayoutEdits from '../components/LayoutEdits';
 import { getCanvasSize } from '../utils/canvasSize';
@@ -88,7 +90,7 @@ function buildEventHandlers(setters) {
     setVotes, setIsLapCounterVisible, setIsVirtualChampVisible, setPitStopState,
     setStartingLightsState, setIsLapTimesHistoryVisible, setLapTimesHistory,
     setLapTimesFocus, setTrackAlert, setPenaltyAlert, setFinalResultsNav,
-    setSectorsState, setGapChartData, setRaceNotice, setLapCompare, setSponsorLive
+    setSectorsState, setGapChartData, setRaceNotice, setLapCompare, setSponsorLive, setTowerOnboard
   } = setters;
 
   return {
@@ -137,6 +139,7 @@ function buildEventHandlers(setters) {
     'update-race-notice': (data) => data && setRaceNotice(data),
     'update-lap-compare': (data) => data && setLapCompare(data),
     'update-sponsor-live': (data) => data && setSponsorLive(data),
+    'update-tower-onboard': (data) => data && setTowerOnboard(data),
   };
 }
 
@@ -181,6 +184,7 @@ export default function Overlay() {
   const [raceNotice, setRaceNotice] = useState({ isVisible: false, kind: '', title: '', text: '', number: null });
   const [lapCompare, setLapCompare] = useState({ isVisible: false, a: null, b: null });
   const [sponsorLive, setSponsorLive] = useState({ isVisible: false, sponsorId: null, rotate: false });
+  const [towerOnboard, setTowerOnboard] = useState({ number: null });
 
   const inBrowserMode = !ipcRenderer;
 
@@ -194,7 +198,7 @@ export default function Overlay() {
       setVotes, setIsLapCounterVisible, setIsVirtualChampVisible, setPitStopState,
       setStartingLightsState, setIsLapTimesHistoryVisible, setLapTimesHistory,
       setLapTimesFocus, setTrackAlert, setPenaltyAlert, setFinalResultsNav,
-      setSectorsState, setGapChartData, setRaceNotice, setLapCompare, setSponsorLive
+      setSectorsState, setGapChartData, setRaceNotice, setLapCompare, setSponsorLive, setTowerOnboard
     });
 
     if (ipcRenderer) {
@@ -236,6 +240,7 @@ export default function Overlay() {
         if (bs.raceNotice) setRaceNotice(bs.raceNotice);
         if (bs.lapCompare) setLapCompare(bs.lapCompare);
         if (bs.sponsorLive) setSponsorLive(bs.sponsorLive);
+        if (bs.towerOnboard) setTowerOnboard(bs.towerOnboard);
         if (state.gapChart) setGapChartData(state.gapChart);
       }).catch(err => console.error("Error cargando estado inicial", err));
 
@@ -248,47 +253,47 @@ export default function Overlay() {
         Object.keys(handlers).forEach(event => ipcRenderer.removeAllListeners(event));
       };
     } else {
-      let socket;
-      import('socket.io-client').then(({ io }) => {
-        // FIX BUG 2: antes esto apuntaba siempre a 'http://127.0.0.1:8080'. Si esta pantalla
-        // se abre como Browser Source en OBS/vMix en OTRA PC de la red, 127.0.0.1 apunta a esa
-        // PC y nunca conecta al servidor real. Usamos el HOSTNAME real desde el que se cargó
-        // la página (LAN IP, localhost, etc.) pero forzando el puerto 8080, que es donde vive
-        // el backend de Express/Socket.IO SIEMPRE (main.cjs: server.listen(8080, ...)).
-        // OJO: no usar window.location.origin a secas — en modo dev (npm start) el frontend
-        // se sirve desde el puerto 5173 de Vite, que NO tiene servidor de sockets. Copiar el
-        // origin completo rompe la conexión en dev aunque funcione en el .exe empaquetado.
-        const socketUrl = (typeof window !== 'undefined' && window.location && window.location.hostname)
-          ? `${window.location.protocol}//${window.location.hostname}:8080`
-          : 'http://127.0.0.1:8080'; // fallback sólo por si el entorno no expone window.location
+      // socket.io-client se importa de forma estática: este modo (vMix / OBS por IP) lo necesita siempre al
+      // arrancar, y VirtualChamp lo usa también en Electron, así que un import() dinámico no lo separaba del
+      // bundle y sólo agregaba una descarga que podía fallar en una página que corre horas al aire.
+      // FIX BUG 2: antes esto apuntaba siempre a 'http://127.0.0.1:8080'. Si esta pantalla
+      // se abre como Browser Source en OBS/vMix en OTRA PC de la red, 127.0.0.1 apunta a esa
+      // PC y nunca conecta al servidor real. Usamos el HOSTNAME real desde el que se cargó
+      // la página (LAN IP, localhost, etc.) pero forzando el puerto 8080, que es donde vive
+      // el backend de Express/Socket.IO SIEMPRE (main.cjs: server.listen(8080, ...)).
+      // OJO: no usar window.location.origin a secas — en modo dev (npm start) el frontend
+      // se sirve desde el puerto 5173 de Vite, que NO tiene servidor de sockets. Copiar el
+      // origin completo rompe la conexión en dev aunque funcione en el .exe empaquetado.
+      const socketUrl = (typeof window !== 'undefined' && window.location && window.location.hostname)
+        ? `${window.location.protocol}//${window.location.hostname}:8080`
+        : 'http://127.0.0.1:8080'; // fallback sólo por si el entorno no expone window.location
 
-        socket = io(socketUrl, {
-          reconnectionDelay: 1000,
-          reconnection: true,
-          transports: ['websocket', 'polling'],
-        });
-        Object.entries(handlers).forEach(([event, handler]) => {
-          socket.on(event, handler);
-        });
-        // Diagnóstico al registro del programa (en vMix no hay consola). Al conectar queda qué navegador usa esta PC:
-        // vMix 23 = Chrome 77, vMix 29 = Chrome 103/115, etc.
-        enableDiagnostics((message) => socket.emit('overlay-diag', { message }));
-        socket.on('connect', () => socket.emit('overlay-diag', { message: `overlay conectado · ${navigator.userAgent}` }));
-        // Si el programa se actualizó mientras esta página estaba abierta (vMix / OBS no la recargan solos), el socket se
-        // reconecta pero el código sigue siendo el viejo y no entiende las opciones nuevas: se recarga la página.
-        socket.on('overlay-build', (serverBuild) => {
-          const own = currentBuildId();
-          if (!serverBuild || !own || serverBuild === own) return;
-          let last = 0;
-          try { last = Number(sessionStorage.getItem('overlayReloadAt')) || 0; } catch { /* sin sessionStorage */ }
-          if (Date.now() - last < 30000) return; // nunca en bucle
-          try { sessionStorage.setItem('overlayReloadAt', String(Date.now())); } catch { /* sin sessionStorage */ }
-          socket.emit('overlay-diag', { message: `overlay desactualizado (${own} -> ${serverBuild}): se recarga la página` });
-          setTimeout(() => window.location.reload(), 300);
-        });
+      const socket = io(socketUrl, {
+        reconnectionDelay: 1000,
+        reconnection: true,
+        transports: ['websocket', 'polling'],
+      });
+      Object.entries(handlers).forEach(([event, handler]) => {
+        socket.on(event, handler);
+      });
+      // Diagnóstico al registro del programa (en vMix no hay consola). Al conectar queda qué navegador usa esta PC:
+      // vMix 23 = Chrome 77, vMix 29 = Chrome 103/115, etc.
+      enableDiagnostics((message) => socket.emit('overlay-diag', { message }));
+      socket.on('connect', () => socket.emit('overlay-diag', { message: `overlay conectado · ${navigator.userAgent}` }));
+      // Si el programa se actualizó mientras esta página estaba abierta (vMix / OBS no la recargan solos), el socket se
+      // reconecta pero el código sigue siendo el viejo y no entiende las opciones nuevas: se recarga la página.
+      socket.on('overlay-build', (serverBuild) => {
+        const own = currentBuildId();
+        if (!serverBuild || !own || serverBuild === own) return;
+        let last = 0;
+        try { last = Number(sessionStorage.getItem('overlayReloadAt')) || 0; } catch { /* sin sessionStorage */ }
+        if (Date.now() - last < 30000) return; // nunca en bucle
+        try { sessionStorage.setItem('overlayReloadAt', String(Date.now())); } catch { /* sin sessionStorage */ }
+        socket.emit('overlay-diag', { message: `overlay desactualizado (${own} -> ${serverBuild}): se recarga la página` });
+        setTimeout(() => window.location.reload(), 300);
       });
 
-      return () => { if (socket) socket.disconnect(); };
+      return () => { socket.disconnect(); };
     }
   }, []);
 
@@ -352,7 +357,7 @@ export default function Overlay() {
         <Ticker drivers={formattedDrivers} config={combinedConfig} isVisible={isTickerVisible} sessionInfo={sessionInfo} />
       </LayoutEdits>
       <LayoutEdits id="tower" config={combinedConfig} visible={!!(isTowerVisible)}>
-        <TimingTower drivers={formattedDrivers} config={combinedConfig} isVisible={isTowerVisible} sessionInfo={sessionInfo} />
+        <TimingTower drivers={formattedDrivers} config={combinedConfig} isVisible={isTowerVisible} sessionInfo={sessionInfo} onboard={towerOnboard?.number || null} formationLap={!!graphics?.formationLap} />
       </LayoutEdits>
       <LayoutEdits id="battle" config={combinedConfig} visible={!!(battleData?.isVisible)}>
         <Battle drivers={formattedDrivers} config={combinedConfig} isVisible={battleData?.isVisible} battleFocusPos={battleData?.pos} />
@@ -451,6 +456,9 @@ export default function Overlay() {
       </LayoutEdits>
       <LayoutEdits id="windVectors" config={combinedConfig} visible={!!(graphics?.windVectors)}>
         <WindVectors config={combinedConfig} isVisible={!!graphics?.windVectors} />
+      </LayoutEdits>
+      <LayoutEdits id="formationLap" config={combinedConfig} visible={!!(graphics?.formationLap)}>
+        <FormationLap config={combinedConfig} isVisible={!!graphics?.formationLap} sessionInfo={sessionInfo} />
       </LayoutEdits>
       <LayoutEdits id="sponsorLive" config={combinedConfig} visible={!!(sponsorLive?.isVisible)}>
         <SponsorLive state={sponsorLive} config={combinedConfig} />

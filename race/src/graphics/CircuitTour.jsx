@@ -113,7 +113,10 @@ export default function CircuitTour({ track, sectors, curves, mode, running, wid
   const sectorColor = sectors[sectorIndex] ? sectors[sectorIndex].color : '#fff';
 
   return (
-    <div style={{ position: 'relative', width: `${width}px`, height: `${height}px`, perspective: '640px', overflow: 'hidden' }}>
+    // El escenario 3D (perspectiva + inclinación) va en su propia capa abajo de todo y los carteles en otra capa encima
+    // (z-index + translateZ): así el trazado inclinado nunca se dibuja por arriba del cartel de la curva.
+    <div style={{ position: 'relative', width: `${width}px`, height: `${height}px`, overflow: 'hidden', isolation: 'isolate' }}>
+      <div style={{ position: 'absolute', inset: 0, perspective: '640px', overflow: 'hidden', zIndex: 0 }}>
       <div style={{ width: '100%', height: '100%', transform: `rotateX(${tiltDeg.toFixed(2)}deg)`, transformOrigin: '50% 70%' }}>
         <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`} style={{ display: 'block', overflow: 'visible' }}>
           <defs><filter id="ctGlow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="4" /></filter></defs>
@@ -153,14 +156,16 @@ export default function CircuitTour({ track, sectors, curves, mode, running, wid
           </g>
         </svg>
       </div>
+      </div>
 
+      <div style={{ position: 'absolute', inset: 0, zIndex: 10, transform: 'translateZ(0)', pointerEvents: 'none' }}>
       {/* Cartel de la curva en la que se detuvo */}
       {curStop && (
-        <div style={{ position: 'absolute', left: '18px', top: '16px', display: 'flex', alignItems: 'stretch', opacity: clamp01(Math.min(cam.holdK * 6, (1 - cam.holdK) * 6)), transform: `translateX(${(1 - clamp01(cam.holdK * 6)) * -20}px)` }}>
-          <div style={{ backgroundColor: pal.accent, color: '#000', fontSize: '40px', fontWeight: 800, padding: '0 14px', display: 'flex', alignItems: 'center', lineHeight: 1 }}>{cam.stop + 1}</div>
-          <div style={{ backgroundColor: rgba(pal.deep, 0.92), padding: '6px 14px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+        <div style={{ position: 'absolute', left: '18px', top: '16px', display: 'flex', alignItems: 'stretch', maxWidth: `${width - 36}px`, boxShadow: '0 8px 22px rgba(0,0,0,0.6)', opacity: clamp01(Math.min(cam.holdK * 6, (1 - cam.holdK) * 6)), transform: `translateX(${(1 - clamp01(cam.holdK * 6)) * -20}px)` }}>
+          <div style={{ backgroundColor: pal.accent, color: '#000', fontSize: `${Math.max(26, Math.min(40, width / 15))}px`, fontWeight: 800, padding: '0 14px', display: 'flex', alignItems: 'center', lineHeight: 1 }}>{cam.stop + 1}</div>
+          <div style={{ backgroundColor: rgba(pal.deep, 0.92), padding: '6px 14px', display: 'flex', flexDirection: 'column', justifyContent: 'center', minWidth: 0 }}>
             <span style={{ fontSize: '12px', fontWeight: 700, color: pal.muted, letterSpacing: '1px' }}>CURVA {cam.stop + 1}{curStop.side ? ` · ${curStop.side === 'L' ? '◄ IZQUIERDA' : 'DERECHA ►'}` : ''}</span>
-            <span style={{ fontSize: '22px', fontWeight: 700, whiteSpace: 'nowrap' }}>{curStop.name || `CURVA ${cam.stop + 1}`}</span>
+            <span style={{ fontSize: `${Math.max(15, Math.min(22, width / 27))}px`, fontWeight: 700, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{curStop.name || `CURVA ${cam.stop + 1}`}</span>
           </div>
         </div>
       )}
@@ -172,6 +177,7 @@ export default function CircuitTour({ track, sectors, curves, mode, running, wid
           <div style={{ position: 'absolute', top: '-4px', left: `${(cam.f * 100).toFixed(2)}%`, width: '4px', height: '14px', backgroundColor: '#fff', boxShadow: '0 0 6px #fff' }} />
         </div>
       )}
+      </div>
     </div>
   );
 }

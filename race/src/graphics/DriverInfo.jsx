@@ -1,10 +1,15 @@
-import { useState, useEffect } from 'react';
 import pilotoAnonimo from '../assets/piloto_anonimo.png';
+import { useDriverPhoto } from '../utils/useDriverPhoto';
 import { getSkinStyle } from '../utils/skinStyles';
 import { getAnimDuration, getRollClip } from '../utils/animationTiming';
 import CategoryTag from '../components/CategoryTag';
+import { useSuitStyle } from '../utils/suitColor';
+import SuitNumber from '../components/SuitNumber';
+import { makeFx } from '../utils/contentAnim';
 
 export default function DriverInfo({ driver, config, isVisible, id = 'driverInfo' }) {
+  // Color del número tomado del traje (foto del piloto), si está activado en PILOTOS
+  const sc = useSuitStyle([driver?.number], config);
   const pos = config?.positions?.[id] || { x: 380, y: 335, scale: 1 };
 
   const themeBg = config?.themeBg || 'rgba(0,0,0,0.85)';
@@ -24,6 +29,8 @@ export default function DriverInfo({ driver, config, isVisible, id = 'driverInfo
   const animDur = getAnimDuration(config, id);
   const driverInfoFormat = config?.driverInfoFormat || 'standard';
   const skin = getSkinStyle(driverInfoFormat, { themeMain, themeAccent });
+  // Los datos entran escalonados (foto, posición, número, nombre, tiempo); si cambia el piloto al aire, se repite
+  const fx = makeFx(config, id, isVisible);
 
   // CÁLCULO DE LA ANIMACIÓN DE ENTRADA
   let transformHidden = `scale(${pos.scale}) translateX(-40px)`; // Slide
@@ -33,17 +40,7 @@ export default function DriverInfo({ driver, config, isVisible, id = 'driverInfo
   if (animStyle === 'flip') transformHidden = `scale(${pos.scale}) scaleY(0.05)`;
   if (animStyle === 'rotate') transformHidden = `scale(${pos.scale * 0.85}) rotate(-15deg)`;
 
-  const [imgSrc, setImgSrc] = useState(pilotoAnonimo);
-
-  useEffect(() => {
-    if (!driver || !config?.photosPath) { setImgSrc(pilotoAnonimo); return; }
-    const host = window.location.hostname || 'localhost';
-    const photoUrl = `http://${host}:8080/photo/${driver.number}`;
-    const img = new Image();
-    img.onload = () => setImgSrc(photoUrl);
-    img.onerror = () => setImgSrc(pilotoAnonimo);
-    img.src = photoUrl;
-  }, [config?.photosPath, driver?.number]);
+  const imgSrc = useDriverPhoto(driver?.number, !!(driver && config?.photosPath), pilotoAnonimo);
 
   const wrapperStyle = {
     position: 'absolute', left: `${pos.x}px`, top: `${pos.y}px`,
@@ -59,7 +56,7 @@ export default function DriverInfo({ driver, config, isVisible, id = 'driverInfo
   if (driverInfoFormat === 'photo') {
     return (
       <div style={wrapperStyle}>
-        <div style={{
+        <div key={driver.number} style={{
           display: 'flex', alignItems: 'stretch', width: '460px', height: '150px',
           backgroundColor: hasCustomBg ? 'transparent' : themeBg,
           backgroundImage: hasCustomBg ? `url(${customBg})` : 'none',
@@ -67,12 +64,12 @@ export default function DriverInfo({ driver, config, isVisible, id = 'driverInfo
           border: hasCustomBg ? 'none' : `4px solid ${themeMain}`,
           borderRadius: bRad, boxShadow: hasCustomBg ? 'none' : '0 10px 30px rgba(0,0,0,0.6)', overflow: 'hidden'
         }}>
-          <div style={{ width: '120px', flexShrink: 0, backgroundColor: hasCustomBg ? 'transparent' : themeHeaderBg, display: 'flex', alignItems: 'flex-end', justifyContent: 'center', overflow: 'hidden' }}>
+          <div className={fx.group} style={{ width: '120px', flexShrink: 0, backgroundColor: hasCustomBg ? 'transparent' : themeHeaderBg, display: 'flex', alignItems: 'flex-end', justifyContent: 'center', overflow: 'hidden' }}>
             <img src={imgSrc} style={{ height: '100%', objectFit: 'contain' }} />
           </div>
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '12px 18px', minWidth: 0 }}>
+          <div className={fx.group} style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '12px 18px', minWidth: 0 }}>
             <span style={{ fontSize: '12px', fontWeight: '900', color: themeAccent, letterSpacing: '1px' }}>
-              P{driver.pos} — Nº{driver.number}<CategoryTag config={config} id={id} size="1em" />
+              P{driver.pos} — Nº<SuitNumber number={driver.number} config={config} prefix="" /><CategoryTag config={config} id={id} size="1em" />
             </span>
             <span style={{ fontSize: '22px', fontWeight: '900', color: themeNormalText, textTransform: 'uppercase', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', lineHeight: '1.2' }}>
               {driver.name}
@@ -91,7 +88,7 @@ export default function DriverInfo({ driver, config, isVisible, id = 'driverInfo
   if (driverInfoFormat === 'compact') {
     return (
       <div style={wrapperStyle}>
-        <div style={{
+        <div key={driver.number} className={fx.group} style={{
           display: 'flex', alignItems: 'center', gap: '10px', width: '380px', padding: '8px 15px',
           backgroundColor: hasCustomBg ? 'transparent' : themeBg,
           backgroundImage: hasCustomBg ? `url(${customBg})` : 'none',
@@ -103,7 +100,7 @@ export default function DriverInfo({ driver, config, isVisible, id = 'driverInfo
             {driver.pos}
           </div>
           <span style={{ color: themeNumberText, fontWeight: 'bold', fontSize: '14px', flexShrink: 0 }}>
-            #{driver.number}
+            <SuitNumber number={driver.number} config={config} />
           </span>
           <span style={{ flex: 1, color: themeNormalText, fontWeight: '900', fontSize: '17px', textTransform: 'uppercase', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
             {driver.name}
@@ -120,9 +117,9 @@ export default function DriverInfo({ driver, config, isVisible, id = 'driverInfo
   if (driverInfoFormat === 'minimal') {
     return (
       <div style={wrapperStyle}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+        <div key={driver.number} className={fx.group} style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
           <span style={{ fontSize: '12px', fontWeight: '900', color: themeAccent, letterSpacing: '1px', textShadow: '2px 2px 6px rgba(0,0,0,0.9)' }}>
-            P{driver.pos} — Nº{driver.number}<CategoryTag config={config} id={id} size="1em" />
+            P{driver.pos} — Nº<SuitNumber number={driver.number} config={config} prefix="" /><CategoryTag config={config} id={id} size="1em" />
           </span>
           <span style={{ fontSize: '28px', fontWeight: '900', color: themeNormalText, textTransform: 'uppercase', textShadow: '2px 2px 6px rgba(0,0,0,0.9)' }}>
             {driver.name}
@@ -139,7 +136,7 @@ export default function DriverInfo({ driver, config, isVisible, id = 'driverInfo
   // FORMATO ESTÁNDAR (comportamiento original)
   return (
     <div style={wrapperStyle}>
-      <div style={{
+      <div key={driver.number} style={{
         display: 'flex', width: '480px',
         backgroundColor: skin ? skin.background : (hasCustomBg ? 'transparent' : themeBg),
         border: skin ? skin.border : 'none',
@@ -152,7 +149,7 @@ export default function DriverInfo({ driver, config, isVisible, id = 'driverInfo
         overflow: 'hidden'
       }}>
         {/* POS: bloque propio, chico, separado del número */}
-        <div style={{
+        <div className={fx.group} style={{
           backgroundColor: skin ? 'transparent' : (hasCustomBg ? 'transparent' : themeMain),
           display: 'flex', flexDirection: 'column',
           justifyContent: 'center', alignItems: 'center',
@@ -164,7 +161,7 @@ export default function DriverInfo({ driver, config, isVisible, id = 'driverInfo
         </div>
 
         {/* NÚMERO: bloque propio, con el color de acento del tema */}
-        <div style={{
+        <div className={fx.group} style={{
           backgroundColor: skin ? 'transparent' : (hasCustomBg ? 'transparent' : themeAccent),
           display: 'flex', flexDirection: 'column',
           justifyContent: 'center', alignItems: 'center',
@@ -172,10 +169,10 @@ export default function DriverInfo({ driver, config, isVisible, id = 'driverInfo
           borderRight: skin ? `2px solid ${themeAccent}` : (hasCustomBg ? 'none' : `3px solid ${themeMain}`)
         }}>
           <span style={{ fontSize: '10px', fontWeight: '900', color: skin ? themeAccent : '#000', letterSpacing: '1px', opacity: 0.75 }}>Nº</span>
-          <span style={{ fontSize: '38px', fontWeight: '900', color: skin ? themeNormalText : '#000', lineHeight: '1' }}>{driver.number}</span>
+          <span style={{ fontSize: '38px', fontWeight: '900', color: skin ? themeNormalText : '#000', lineHeight: '1', ...(sc(driver.number).backgroundColor ? { ...sc(driver.number), padding: '2px 8px', borderRadius: '4px' } : {}) }}>{driver.number}</span>
         </div>
 
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '15px 25px' }}>
+        <div className={fx.group} style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '15px 25px', minWidth: 0 }}>
           <span style={{ fontSize: '24px', fontWeight: '900', color: themeNormalText, textTransform: 'uppercase', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', lineHeight: '1.2' }}>
             {driver.name}<CategoryTag config={config} id={id} size="0.5em" color={themeTitleText} />
           </span>

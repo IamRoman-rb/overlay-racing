@@ -4,6 +4,7 @@ import { useMemo } from 'react';
 import { getCanvasSize } from '../utils/canvasSize';
 import { buildTrack, pointOnTrack, nearestOnTrack, DEFAULT_ASPECT } from '../utils/trackPath';
 import { useImageAspect } from '../utils/raceVisuals';
+import { makeFx } from '../utils/contentAnim';
 
 export default function TrackAlert({ alert, config, id = 'trackAlert' }) {
   const pos = config?.positions?.[id] || { x: 1500, y: 500, scale: 1 };
@@ -21,6 +22,7 @@ export default function TrackAlert({ alert, config, id = 'trackAlert' }) {
   if (animStyle === 'rotate') transformHidden = `scale(${pos.scale * 0.85}) rotate(-15deg)`;
 
   const isVisible = !!alert?.isVisible;
+  const fx = makeFx(config, id, isVisible);
   const isIncident = alert?.type === 'incident';
   const curve = (config?.trackCurves || []).find(c => c.id === alert?.curveId);
 
@@ -67,7 +69,7 @@ export default function TrackAlert({ alert, config, id = 'trackAlert' }) {
     return (
       <div style={wrapperStyle}>
         <style>{sharedStyles}</style>
-        <div style={{
+        <div className={fx.group} style={{
           display: 'flex', alignItems: 'center', gap: '10px', width: '340px', padding: '10px 15px',
           backgroundColor: 'rgba(0,0,0,0.9)', borderRadius: bRad, borderLeft: `5px solid ${accentColor}`,
           boxShadow: '0 10px 30px rgba(0,0,0,0.7)'
@@ -86,7 +88,7 @@ export default function TrackAlert({ alert, config, id = 'trackAlert' }) {
     return (
       <div style={{ ...wrapperStyle, width: `${getCanvasSize(config).width}px` }}>
         <style>{sharedStyles}</style>
-        <div style={{
+        <div className={fx.group} style={{
           backgroundColor: accentColor, padding: '12px 0', textAlign: 'center', width: '100%',
           boxShadow: '0 6px 20px rgba(0,0,0,0.6)'
         }}>
@@ -103,7 +105,7 @@ export default function TrackAlert({ alert, config, id = 'trackAlert' }) {
     return (
       <div style={wrapperStyle}>
         <style>{sharedStyles}</style>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <div className={fx.group} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <div style={{ display: 'flex', flexDirection: 'column', animation: 'trackAlertBlink 1s infinite' }}>
             <span style={{ color: accentColor, fontWeight: '900', fontSize: '12px', letterSpacing: '1px', textTransform: 'uppercase', textShadow: '2px 2px 6px rgba(0,0,0,0.9)' }}>{alertTitle}</span>
             <span style={{ color: '#fff', fontSize: '24px', fontWeight: '900', textTransform: 'uppercase', textShadow: '2px 2px 6px rgba(0,0,0,0.9)' }}>{curveLabel}</span>
@@ -136,7 +138,7 @@ export default function TrackAlert({ alert, config, id = 'trackAlert' }) {
           </span>
         </div>
 
-        <div style={{ padding: '12px 15px' }}>
+        <div className={fx.group} style={{ padding: '12px 15px' }}>
           <span style={{ color: '#fff', fontSize: '20px', fontWeight: '900', textTransform: 'uppercase' }}>
             {curveLabel}
           </span>

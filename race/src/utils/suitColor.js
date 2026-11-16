@@ -97,3 +97,10 @@ export function useSuitColors(drivers, config) {
 
 // Estilo de la ficha del número: el color del traje si hay, si no el de la gráfica
 export const numberChip = (suit, number, bg, color) => (suit && suit[String(number)] ? { backgroundColor: suit[String(number)].bg, color: suit[String(number)].text } : { backgroundColor: bg, color });
+
+// Atajo para las gráficas: devuelve sc(número) -> estilo { backgroundColor, color } del traje (o {} si no hay color)
+export function useSuitStyle(numbers, config) {
+  const list = (Array.isArray(numbers) ? numbers : [numbers]).filter(n => n !== undefined && n !== null && n !== '').map(n => ({ number: n }));
+  const suit = useSuitColors(list, config);
+  return (n) => (suit[String(n)] ? { backgroundColor: suit[String(n)].bg, color: suit[String(n)].text } : {});
+}

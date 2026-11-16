@@ -88,7 +88,7 @@ function parseCsvLine(line) {
 // Orbits 5 manda UTF-8; Orbits 4 manda texto ANSI (Windows-1252). Se prueba UTF-8 y si la línea
 // no es UTF-8 válido se decodifica como Latin-1, así los acentos (Pérez, Muñoz) salen bien en ambos.
 function decodeLine(buf) {
-  try { return utf8Decoder.decode(buf); } catch (e) { return buf.toString('latin1'); }
+  try { return utf8Decoder.decode(buf); } catch { return buf.toString('latin1'); }
 }
 
 // "00:01:23.456" -> segundos (83.456). Acepta también "1:23.456", "83.456" y "83".
@@ -264,7 +264,7 @@ function onData(chunk) {
     const b = lineBuffer[i];
     if (b === 0x0a || b === 0x0d) {
       if (i > start) {
-        try { handleMessage(decodeLine(lineBuffer.subarray(start, i)).trim()); } catch (e) { /* línea corrupta: se ignora */ }
+        try { handleMessage(decodeLine(lineBuffer.subarray(start, i)).trim()); } catch { /* línea corrupta: se ignora */ }
       }
       start = i + 1;
     }
@@ -354,7 +354,7 @@ function parseAddress(rawHost, rawPort) {
   let port = toInt(rawPort);
   const m = host.match(/^([^:]+):(\d+)$/);
   if (m) { host = m[1]; port = toInt(m[2]); }
-  if (!host || !/^[a-zA-Z0-9.\-]+$/.test(host) || host.length > 253) return null;
+  if (!host || !/^[a-zA-Z0-9.-]+$/.test(host) || host.length > 253) return null;
   if (!port) port = DEFAULT_PORT;
   if (port < 1 || port > 65535) return null;
   return { host, port };

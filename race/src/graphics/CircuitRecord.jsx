@@ -1,11 +1,15 @@
 import { useState } from 'react';
 import { getGraphicFrame } from '../utils/raceVisuals';
 import { getElitePalette, ELITE_FONT, photoUrl, rgba, numberColor, textOnColor } from '../utils/elite';
+import { useSuitStyle } from '../utils/suitColor';
+import { makeFx } from '../utils/contentAnim';
 
 const thousands = (n) => String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
 
 // RÉCORD DEL CIRCUITO (estilo Elite): el récord histórico cargado en la pestaña CIRCUITO > DATOS, con su piloto.
 export default function CircuitRecord({ config, isVisible, id = 'circuitRecord' }) {
+  // Color del número tomado del traje (foto del piloto), si está activado en PILOTOS
+  const sc = useSuitStyle([config?.recordNumber], config);
   const { wrapperStyle, bRad } = getGraphicFrame(config, id, isVisible, { x: 1500, y: 700, scale: 1 }, 45);
   const pal = getElitePalette(config);
   const [photoOk, setPhotoOk] = useState(true);
@@ -15,11 +19,12 @@ export default function CircuitRecord({ config, isVisible, id = 'circuitRecord' 
   const [first, ...rest] = name.split(/\s+/);
   const numBg = numberColor(config?.recordNumber);
 
+  const fx = makeFx(config, id, isVisible);
   return (
     <div style={wrapperStyle}>
       <div style={{ width: '360px', fontFamily: ELITE_FONT, color: pal.text, textTransform: 'uppercase', borderRadius: bRad, overflow: 'hidden', boxShadow: '0 14px 34px rgba(0,0,0,0.55)', background: pal.background }}>
         <div style={{ backgroundColor: pal.red, textAlign: 'center', fontSize: '16px', fontWeight: 700, letterSpacing: '1px', padding: '4px 0' }}>RÉCORD DEL CIRCUITO</div>
-        <div style={{ position: 'relative', padding: '10px 16px 0' }}>
+        <div className={fx.group} style={{ position: 'relative', padding: '10px 16px 0' }}>
           {/* Rayas diagonales de fondo */}
           <div style={{ position: 'absolute', right: 0, top: '70px', width: '120px', height: '80px', backgroundImage: `repeating-linear-gradient(115deg, ${rgba('#ffffff', 0.14)} 0 3px, transparent 3px 11px)` }} />
           <div style={{ fontSize: '19px', fontWeight: 700, textAlign: 'center', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{config?.circuitName || config?.circuito || 'CIRCUITO'}</div>
@@ -37,9 +42,9 @@ export default function CircuitRecord({ config, isVisible, id = 'circuitRecord' 
             <div style={{ width: '72px', height: '70px', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', flexShrink: 0 }}>
               {photo && photoOk && <img src={photo} alt="" onError={() => setPhotoOk(false)} style={{ maxHeight: '70px', maxWidth: '72px', objectFit: 'contain' }} />}
             </div>
-            <div style={{ display: name ? 'flex' : 'none', flexDirection: 'column', marginLeft: '10px', paddingBottom: '8px' }}>
+            <div className={fx.group} style={{ display: name ? 'flex' : 'none', flexDirection: 'column', marginLeft: '10px', paddingBottom: '8px' }}>
               <span style={{ display: 'flex', alignItems: 'center' }}>
-                <span style={{ display: config?.recordNumber ? 'inline-block' : 'none', backgroundColor: numBg, color: textOnColor(numBg), fontSize: '12px', fontWeight: 800, padding: '0 5px', marginRight: '6px' }}>{config?.recordNumber}</span>
+                <span style={{ display: config?.recordNumber ? 'inline-block' : 'none', backgroundColor: numBg, color: textOnColor(numBg), fontSize: '12px', fontWeight: 800, padding: '0 5px', marginRight: '6px', ...sc(config?.recordNumber) }}>{config?.recordNumber}</span>
                 <span style={{ fontSize: '17px', fontWeight: 700 }}>{first}</span>
               </span>
               <span style={{ fontSize: '14px', fontWeight: 600 }}>{rest.join(' ')}</span>

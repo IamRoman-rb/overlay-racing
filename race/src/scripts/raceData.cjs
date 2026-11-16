@@ -17,8 +17,24 @@ const MAX_ALERTS = 30;
 // ---------------------------------------------------------------------------
 // Marcas de autos (logos en race/public/brands/<slug>.png, índice en src/data/brands.json)
 // ---------------------------------------------------------------------------
-let BRANDS = [];
-try { BRANDS = require('../data/brands.json'); } catch (e) { BRANDS = []; }
+// El índice viaja en el paquete del módulo (src/data). Si faltara, se arma con los logos compilados (dist/brands/<slug>.png),
+// así elegir la marca en PILOTOS nunca se pierde en silencio.
+function loadBrands() {
+  try { return require('../data/brands.json'); } catch { /* sigue abajo */ }
+  try {
+    const fs = require('fs');
+    const path = require('path');
+    for (const dir of [path.join(__dirname, '..', '..', 'dist', 'brands'), path.join(__dirname, '..', '..', 'public', 'brands')]) {
+      if (!fs.existsSync(dir)) continue;
+      return fs.readdirSync(dir).filter(f => /\.png$/i.test(f)).map(f => {
+        const slug = f.replace(/\.png$/i, '');
+        return { slug, name: slug.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ') };
+      });
+    }
+  } catch { /* sin logos */ }
+  return [];
+}
+const BRANDS = loadBrands();
 const normalizeWords = (s) => ' ' + String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim() + ' ';
 const EXTRA_ALIASES = {
   volkswagen: ['vw'], 'mercedes-benz': ['mercedes', 'mb'], chevrolet: ['chevy', 'chev'], 'alfa-romeo': ['alfa'],
@@ -71,6 +87,38 @@ function normalizeRoster(raw) {
   });
   return out;
 }
+// --- Marcas recordadas por piloto ---
+// Clave del nombre sin acentos, mayúsculas ni signos: "Pérez, Juan" y "PEREZ JUAN" son el mismo piloto
+function driverKey(name) {
+  return String(name || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase().replace(/[^A-Z0-9]+/g, ' ').trim();
+}
+// { clave del nombre: marca }, sólo marcas que existen
+function normalizeBrandMemory(raw) {
+  const out = {};
+  if (!raw || typeof raw !== 'object') return out;
+  Object.keys(raw).forEach(k => {
+    const key = driverKey(k).slice(0, 80);
+    const slug = String(raw[k] || '').trim().slice(0, 40);
+    if (key.length >= 3 && slug && brandExists(slug)) out[key] = slug;
+  });
+  return out;
+}
+// Aprende de lo cargado a mano en PILOTOS: cada piloto con marca elegida queda recordado por su nombre (el de la fuente y el
+// escrito a mano). Devuelve la memoria nueva o null si no cambió nada.
+function learnBrands(drivers, roster, memory) {
+  const next = { ...(memory || {}) };
+  let changed = false;
+  (drivers || []).forEach(d => {
+    const r = (roster || {})[String(d.srcNumber || d.number)];
+    if (!r || !r.brand || !brandExists(r.brand)) return;
+    [d.srcName, r.name, d.name].forEach(n => {
+      const key = driverKey(n);
+      if (key.length >= 3 && next[key] !== r.brand) { next[key] = r.brand; changed = true; }
+    });
+  });
+  return changed ? next : null;
+}
+
 const LEADER_STABLE_TICKS = 2;      // el nuevo líder tiene que repetirse en 2 lecturas seguidas (evita falsas alarmas por un parpadeo)
 const STOP_FACTOR = 2;              // sin pasar por meta durante 2 vueltas típicas => posible abandono
 const STOP_MIN_EXTRA = 45;          // ... y como mínimo una vuelta típica + 45 s
@@ -541,12 +589,18 @@ class RaceAnalyzer {
 
     // --- Datos de la pestaña PILOTOS (lo que la fuente no informa o informa mal) ---
     // Se aplican después del análisis (que usa el número de la fuente) y antes de las alertas y la salida.
+    // Marca: la elegida a mano para ese número > la recordada para ese piloto (por nombre, en otra carrera) > la detectada
     const roster = normalizeRoster(opts.roster);
+    const memory = opts.brandMemory && typeof opts.brandMemory === 'object' ? opts.brandMemory : null;
     drivers.forEach(d => {
       const src = String(d.number);
       const r = roster[src] || {};
       d.srcNumber = src;
-      d.brand = r.brand && brandExists(r.brand) ? r.brand : detectBrand([d.make, ...(Array.isArray(d.extra) ? d.extra : [])]);
+      d.srcName = d.name;
+      const remembered = memory ? (memory[driverKey(r.name)] || memory[driverKey(d.name)] || '') : '';
+      if (r.brand && brandExists(r.brand)) { d.brand = r.brand; d.brandFrom = 'manual'; }
+      else if (remembered && brandExists(remembered)) { d.brand = remembered; d.brandFrom = 'memory'; }
+      else { d.brand = detectBrand([d.make, ...(Array.isArray(d.extra) ? d.extra : [])]); d.brandFrom = d.brand ? 'detected' : ''; }
       if (r.team) d.team = r.team;
       if (r.name && !d.renamed) d.name = r.name;
       if (r.number) d.number = r.number;
@@ -639,6 +693,9 @@ module.exports = {
   normalizeRoster,
   detectBrand,
   brandExists,
+  driverKey,
+  normalizeBrandMemory,
+  learnBrands,
   RaceAnalyzer,
   applyCorrections,
   normalizeCorrections,

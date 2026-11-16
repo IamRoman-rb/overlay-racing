@@ -3,8 +3,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Icon from '../components/Icon';
 import GraphicPreview from './GraphicPreview';
-import { SponsorMedia } from '../components/SponsorSlot';
-import { DEFAULT_PLACEMENT, placementRect, sponsorList } from '../utils/sponsors';
+import SponsorEditor from './SponsorEditor';
+import SponsorLibrary from './SponsorLibrary';
+import { DEFAULT_PLACEMENT, placementRect, snapBox, sponsorGroups, sponsorList } from '../utils/sponsors';
 import { getCanvasSize } from '../utils/canvasSize';
 import { GOOGLE_FONTS_URL } from '../utils/fonts';
 
@@ -16,24 +17,17 @@ if (typeof window !== 'undefined' && typeof window.require === 'function') {
 // Gráficas a las que no tiene sentido pegarles sponsors
 const SKIP = ['sponsorLive', 'windVectors'];
 
-function NameInput({ value, onCommit, inputStyle }) {
-  const [draft, setDraft] = useState(value || '');
-  const [prev, setPrev] = useState(value);
-  if (value !== prev) { setPrev(value); setDraft(value || ''); }
-  return (
-    <input value={draft} onChange={(e) => setDraft(e.target.value)} onBlur={() => { if (draft.trim() !== (value || '')) onCommit(draft.trim()); }}
-      onKeyDown={(e) => { if (e.key === 'Enter') e.currentTarget.blur(); }}
-      style={{ ...inputStyle, padding: '6px', fontSize: '11px', width: '100%' }} />
-  );
-}
-
 export default function SponsorsPanel({ config, positions, drivers, sessionInfo, graphicIds, onConfigChange, colors, inputStyle, btnStyle, t }) {
   const sponsors = sponsorList(config);
+  const groups = sponsorGroups(config);
   const placements = config.sponsorPlacements && typeof config.sponsorPlacements === 'object' ? config.sponsorPlacements : {};
   const [live, setLive] = useState({ isVisible: false, sponsorId: null, rotate: false });
   const ids = useMemo(() => (graphicIds || []).filter(id => !SKIP.includes(id)), [graphicIds]);
   const [selected, setSelected] = useState(() => ids.find(id => placements[id]) || 'tower');
   const [draft, setDraft] = useState(null);
+  const [editingId, setEditingId] = useState(null); // sponsor abierto en el editor (recorte / quitar fondo)
+  const [magnet, setMagnet] = useState(true);        // imán a los bordes y centro de la gráfica y de la pantalla
+  const [guides, setGuides] = useState({ x: [], y: [] });
   const [previewScale, setPreviewScale] = useState(0.4);
   const areaRef = useRef(null);
   const stageRef = useRef(null);
@@ -56,33 +50,23 @@ export default function SponsorsPanel({ config, positions, drivers, sessionInfo,
     return () => ro.disconnect();
   }, [CW]);
 
+  // --- Al aire ---
+  const sendLive = (state) => { if (ipcRenderer) ipcRenderer.send('sponsor-live', state); };
+
   // --- Biblioteca ---
-  const addSponsors = async () => {
-    if (!ipcRenderer) return;
-    const added = await ipcRenderer.invoke('add-sponsor-files');
-    if (Array.isArray(added) && added.length) onConfigChange('sponsors', [...sponsors, ...added]);
-  };
-  const renameSponsor = (id, name) => onConfigChange('sponsors', sponsors.map(s => (s.id === id ? { ...s, name } : s)));
   const removeSponsor = (s) => {
     if (!window.confirm(t('sponsors.confirmRemove', { name: s.name || s.file }))) return;
     const nextPlacements = {};
     Object.entries(placements).forEach(([gid, p]) => { nextPlacements[gid] = { ...p, ids: (p.ids || []).filter(x => x !== s.id) }; });
     onConfigChange({ sponsors: sponsors.filter(x => x.id !== s.id), sponsorPlacements: nextPlacements });
-    if (ipcRenderer) ipcRenderer.invoke('delete-sponsor-file', s.file).catch(() => {});
+    if (ipcRenderer) [s.file, s.originalFile].filter(Boolean).forEach(f => ipcRenderer.invoke('delete-sponsor-file', f).catch(() => {}));
     if (live.isVisible && !live.rotate && live.sponsorId === s.id) sendLive({ isVisible: false, sponsorId: null, rotate: false });
   };
 
-  // --- Al aire ---
-  const sendLive = (state) => { if (ipcRenderer) ipcRenderer.send('sponsor-live', state); };
-  const toggleOne = (id) => {
-    const on = live.isVisible && !live.rotate && live.sponsorId === id;
-    sendLive(on ? { isVisible: false, sponsorId: null, rotate: false } : { isVisible: true, sponsorId: id, rotate: false });
-  };
-  const toggleRotate = () => sendLive(live.isVisible && live.rotate ? { isVisible: false, sponsorId: null, rotate: false } : { isVisible: true, sponsorId: null, rotate: true });
 
   // --- Ubicación en la gráfica elegida ---
   const saved = placements[selected];
-  const current = draft || { ...DEFAULT_PLACEMENT, ...(saved || {}), ids: (saved && Array.isArray(saved.ids)) ? saved.ids : [] };
+  const current = draft || { ...DEFAULT_PLACEMENT, ...(saved || {}), ids: (saved && Array.isArray(saved.ids)) ? saved.ids : [], groups: (saved && Array.isArray(saved.groups)) ? saved.groups : [] };
   const savePlacement = (p) => { setDraft(null); onConfigChange('sponsorPlacements', { ...placements, [selected]: p }); };
   const setField = (field, value) => {
     const n = Number(value);
@@ -92,6 +76,10 @@ export default function SponsorsPanel({ config, positions, drivers, sessionInfo,
   const toggleSponsorIn = (id) => {
     const has = current.ids.includes(id);
     savePlacement({ ...current, ids: has ? current.ids.filter(x => x !== id) : [...current.ids, id] });
+  };
+  const toggleGroupIn = (gid) => {
+    const has = current.groups.includes(gid);
+    savePlacement({ ...current, groups: has ? current.groups.filter(x => x !== gid) : [...current.groups, gid] });
   };
   const clearGraphic = () => {
     const next = { ...placements };
@@ -133,23 +121,42 @@ export default function SponsorsPanel({ config, positions, drivers, sessionInfo,
     savePlacement(p);
   };
 
-  // Arrastrar (mover) o tirar de la esquina (tamaño)
+  // Guías del imán (en px de la gráfica sin escalar): bordes y centro de la gráfica, y bordes y centro de la pantalla
+  const magnetTargets = () => {
+    const g = graphicBox();
+    const toG = (v, o) => (v - o) / scale;
+    const xs = [toG(0, pos.x), toG(CW / 2, pos.x), toG(CW, pos.x)];
+    const ys = [toG(0, pos.y), toG(CH / 2, pos.y), toG(CH, pos.y)];
+    if (g) { xs.push(g.x, g.x + g.w / 2, g.x + g.w); ys.push(g.y, g.y + g.h / 2, g.y + g.h); }
+    return { xs, ys };
+  };
+
+  // Arrastrar (mover) o tirar de la esquina (tamaño). Con el imán activo se pega a las guías; Alt lo desactiva al vuelo.
   const onPointerDown = (e, mode) => {
     e.preventDefault(); e.stopPropagation();
     e.currentTarget.setPointerCapture(e.pointerId);
-    dragRef.current = { mode, x: e.clientX, y: e.clientY, start: { ...current } };
+    dragRef.current = { mode, x: e.clientX, y: e.clientY, start: { ...current }, targets: magnet ? magnetTargets() : null };
   };
   const onPointerMove = (e) => {
     const d = dragRef.current;
     if (!d) return;
     const k = previewScale * scale;
     const mx = (e.clientX - d.x) / k; const my = (e.clientY - d.y) / k;
-    if (d.mode === 'move') setDraft({ ...d.start, dx: Math.round(d.start.dx + mx), dy: Math.round(d.start.dy + my) });
-    else setDraft({ ...d.start, w: Math.max(20, Math.round(d.start.w + mx)), h: Math.max(12, Math.round(d.start.h + my)) });
+    let box = d.mode === 'move'
+      ? { x: d.start.dx + mx, y: d.start.dy + my, w: d.start.w, h: d.start.h }
+      : { x: d.start.dx, y: d.start.dy, w: Math.max(20, d.start.w + mx), h: Math.max(12, d.start.h + my) };
+    let lines = { x: [], y: [] };
+    if (d.targets && !e.altKey) {
+      const snapped = snapBox(box, d.targets.xs, d.targets.ys, 10 / k, d.mode);
+      box = snapped.box; lines = snapped.lines;
+    }
+    setGuides(lines);
+    setDraft({ ...d.start, dx: Math.round(box.x), dy: Math.round(box.y), w: Math.max(20, Math.round(box.w)), h: Math.max(12, Math.round(box.h)) });
   };
   const onPointerUp = () => {
     if (!dragRef.current) return;
     dragRef.current = null;
+    setGuides({ x: [], y: [] });
     if (draft) savePlacement(draft);
   };
 
@@ -172,36 +179,8 @@ export default function SponsorsPanel({ config, positions, drivers, sessionInfo,
 
       {/* BIBLIOTECA + AL AIRE */}
       <div style={{ ...box, marginBottom: '20px' }}>
-        <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap', marginBottom: '14px' }}>
-          <span style={{ ...small, fontSize: '12px', color: colors.textMain }}>{t('sponsors.library')}</span>
-          <button onClick={addSponsors} style={{ ...btnStyle(false), width: 'auto', padding: '8px 14px', fontSize: '10px' }}><Icon name="image" />{t('sponsors.addBtn')}</button>
-          <span style={{ flex: 1 }} />
-          <button onClick={toggleRotate} disabled={!sponsors.length} style={{ ...btnStyle(live.isVisible && live.rotate), width: 'auto', padding: '8px 14px', fontSize: '10px' }}>{live.isVisible && live.rotate ? t('sponsors.stopRotate') : t('sponsors.rotateAll')}</button>
-          {live.isVisible && <button onClick={() => sendLive({ isVisible: false, sponsorId: null, rotate: false })} style={{ ...btnStyle(false), width: 'auto', padding: '8px 14px', fontSize: '10px', backgroundColor: '#c0392b', color: '#fff', border: 'none' }}>{t('sponsors.offAir')}</button>}
-        </div>
-
-        {!sponsors.length ? (
-          <div style={{ textAlign: 'center', padding: '24px', color: colors.textMuted, fontStyle: 'italic' }}>{t('sponsors.empty')}</div>
-        ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(190px, 1fr))', gap: '12px' }}>
-            {sponsors.map(s => {
-              const on = live.isVisible && (live.rotate || live.sponsorId === s.id);
-              return (
-                <div key={s.id} style={{ border: `1px solid ${on ? colors.red : colors.border}`, borderRadius: '6px', padding: '8px', display: 'flex', flexDirection: 'column', gap: '6px', backgroundColor: colors.bgInput }}>
-                  <div style={{ height: '84px', backgroundColor: '#1b1b1b', borderRadius: '4px', overflow: 'hidden', position: 'relative' }}>
-                    <SponsorMedia sponsor={s} />
-                    {s.type === 'video' && <span style={{ position: 'absolute', top: '4px', left: '4px', fontSize: '9px', fontWeight: 'bold', backgroundColor: '#000a', color: '#fff', padding: '1px 5px', borderRadius: '3px' }}>VIDEO</span>}
-                  </div>
-                  <NameInput value={s.name} onCommit={(v) => renameSponsor(s.id, v)} inputStyle={inputStyle} />
-                  <div style={{ display: 'flex', gap: '4px' }}>
-                    <button onClick={() => toggleOne(s.id)} style={{ ...btnStyle(on && !live.rotate), flex: 1, padding: '6px', fontSize: '10px' }}>{on && !live.rotate ? t('sponsors.offAir') : t('sponsors.onAir')}</button>
-                    <button onClick={() => removeSponsor(s)} title={t('common.removeBtn')} style={{ backgroundColor: '#c0392b', color: '#fff', border: 'none', borderRadius: '4px', padding: '4px 8px', cursor: 'pointer' }}><Icon name="close" /></button>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
+        <SponsorLibrary config={config} sponsors={sponsors} groups={groups} live={live} sendLive={sendLive} onConfigChange={onConfigChange}
+          onEdit={setEditingId} onRemove={removeSponsor} colors={colors} inputStyle={inputStyle} btnStyle={btnStyle} t={t} />
 
         <div style={{ display: 'flex', gap: '14px', alignItems: 'flex-end', flexWrap: 'wrap', marginTop: '14px', paddingTop: '12px', borderTop: `1px solid ${colors.border}` }}>
           <label style={{ display: 'flex', flexDirection: 'column', gap: '3px', ...small }}>
@@ -230,16 +209,25 @@ export default function SponsorsPanel({ config, positions, drivers, sessionInfo,
         <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
           <div style={{ width: '260px', display: 'flex', flexDirection: 'column', gap: '10px', flexShrink: 0 }}>
             <select value={selected} onChange={(e) => { setDraft(null); setSelected(e.target.value); }} style={{ ...inputStyle, padding: '8px', cursor: 'pointer' }}>
-              {ids.map(id => <option key={id} value={id}>{t(`graphics.${id}`)}{placements[id]?.ids?.length ? ` (${placements[id].ids.length})` : ''}</option>)}
+              {ids.map(id => <option key={id} value={id}>{t(`graphics.${id}`)}{(placements[id]?.ids?.length || 0) + (placements[id]?.groups?.length || 0) ? ' •' : ''}</option>)}
             </select>
             <div style={small}>{t('sponsors.whichOnes')}</div>
             {!sponsors.length && <span style={{ fontSize: '11px', color: colors.textMuted }}>{t('sponsors.empty')}</span>}
-            {sponsors.map(s => (
-              <label key={s.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '11px', color: colors.textMain, cursor: 'pointer' }}>
-                <input type="checkbox" checked={current.ids.includes(s.id)} onChange={() => toggleSponsorIn(s.id)} style={{ cursor: 'pointer' }} />
-                {s.name || s.file}
+            {groups.map(g => (
+              <label key={g.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '11px', fontWeight: 'bold', color: colors.yellow, cursor: 'pointer' }}>
+                <input type="checkbox" checked={current.groups.includes(g.id)} onChange={() => toggleGroupIn(g.id)} style={{ cursor: 'pointer' }} />
+                <Icon name="folder" />{t('sponsors.wholeGroup', { name: g.name })}
               </label>
             ))}
+            {sponsors.map(s => {
+              const viaGroup = !!s.groupId && current.groups.includes(s.groupId);
+              return (
+                <label key={s.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '11px', color: s.active === false ? colors.textMuted : colors.textMain, cursor: 'pointer' }}>
+                  <input type="checkbox" checked={viaGroup || current.ids.includes(s.id)} disabled={viaGroup} onChange={() => toggleSponsorIn(s.id)} style={{ cursor: 'pointer' }} />
+                  {s.name || s.file}{s.active === false ? ` (${t('sponsors.paused').toLowerCase()})` : ''}
+                </label>
+              );
+            })}
             <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
               {numInput('dx', 'X')}{numInput('dy', 'Y')}{numInput('w', t('sponsors.width'))}{numInput('h', t('sponsors.height'))}
               {numInput('interval', t('sponsors.everySec'))}
@@ -249,6 +237,10 @@ export default function SponsorsPanel({ config, positions, drivers, sessionInfo,
               {['above', 'below', 'left', 'right'].map(w => <button key={w} onClick={() => snapTo(w)} style={{ ...btnStyle(false), padding: '6px', fontSize: '10px' }}>{t(`sponsors.place_${w}`)}</button>)}
             </div>
             {saved && <button onClick={clearGraphic} style={{ ...btnStyle(false), padding: '7px', fontSize: '10px', backgroundColor: '#c0392b', color: '#fff', border: 'none' }}>{t('sponsors.clearGraphic')}</button>}
+            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '11px', fontWeight: 'bold', color: colors.textMain, cursor: 'pointer' }}>
+              <input type="checkbox" checked={magnet} onChange={(e) => setMagnet(e.target.checked)} style={{ cursor: 'pointer' }} />
+              {t('sponsors.magnet')}
+            </label>
             <span style={{ fontSize: '10px', color: colors.textMuted }}>{t('sponsors.dragHint')}</span>
           </div>
 
@@ -259,9 +251,11 @@ export default function SponsorsPanel({ config, positions, drivers, sessionInfo,
                 <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}>
                   <GraphicPreview noCover id={selected} config={previewConfig} positions={positions} drivers={drivers} sessionInfo={sessionInfo} />
                 </div>
+                {guides.x.map(v => <div key={`gx${v}`} style={{ position: 'absolute', left: pos.x + v * scale - 2 / previewScale, top: 0, width: 4 / previewScale, height: CH, backgroundColor: '#ff2bd6', pointerEvents: 'none', zIndex: 600 }} />)}
+                {guides.y.map(v => <div key={`gy${v}`} style={{ position: 'absolute', top: pos.y + v * scale - 2 / previewScale, left: 0, height: 4 / previewScale, width: CW, backgroundColor: '#ff2bd6', pointerEvents: 'none', zIndex: 600 }} />)}
                 <div
                   onPointerDown={(e) => onPointerDown(e, 'move')} onPointerMove={onPointerMove} onPointerUp={onPointerUp} onPointerCancel={onPointerUp}
-                  style={{ position: 'absolute', left: rect.left, top: rect.top, width: rect.width, height: rect.height, boxSizing: 'border-box', border: `${Math.max(2, 2 / previewScale)}px dashed #ffcc00`, backgroundColor: current.ids.length ? 'transparent' : 'rgba(255,204,0,0.18)', cursor: 'grab', touchAction: 'none', zIndex: 500 }}
+                  style={{ position: 'absolute', left: rect.left, top: rect.top, width: rect.width, height: rect.height, boxSizing: 'border-box', border: `${Math.max(2, 2 / previewScale)}px dashed #ffcc00`, backgroundColor: current.ids.length || current.groups.length ? 'transparent' : 'rgba(255,204,0,0.18)', cursor: 'grab', touchAction: 'none', zIndex: 500 }}
                 >
                   <div
                     onPointerDown={(e) => onPointerDown(e, 'size')} onPointerMove={onPointerMove} onPointerUp={onPointerUp} onPointerCancel={onPointerUp}
@@ -273,6 +267,11 @@ export default function SponsorsPanel({ config, positions, drivers, sessionInfo,
           </div>
         </div>
       </div>
+
+      {editingId && sponsors.find(s => s.id === editingId) && (
+        <SponsorEditor key={editingId} sponsor={sponsors.find(s => s.id === editingId)} colors={colors} btnStyle={btnStyle} t={t}
+          onSave={(next) => onConfigChange('sponsors', sponsors.map(s => (s.id === next.id ? next : s)))} onClose={() => setEditingId(null)} />
+      )}
 
       {/* Diseños cargados con la pestaña anterior (DISEÑOS): se pueden quitar desde acá */}
       {designKeys.length > 0 && (

@@ -1,12 +1,15 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
+import { rowEntranceStyle, rowEffect, ROW_ANIM_CSS } from '../utils/rowEntrance';
 import { getSkinStyle } from '../utils/skinStyles';
 import pilotoAnonimo from '../assets/piloto_anonimo.png';
+import { useDriverPhoto } from '../utils/useDriverPhoto';
 import { getAnimDuration, getRollClip } from '../utils/animationTiming';
 import { getFinalResultsSize } from '../utils/finalResultsSize';
 import { getClassColor, withCategory } from '../utils/raceVisuals';
 import CategoryTag from '../components/CategoryTag';
 import BrandLogo from '../components/BrandLogo';
 import { useSuitColors } from '../utils/suitColor';
+import SuitNumber from '../components/SuitNumber';
 
 const PODIUM_COLORS = { 1: '#ffd700', 2: '#c0c0c0', 3: '#cd7f32' };
 
@@ -62,6 +65,8 @@ export default function FinalResults({ drivers: allDrivers, config, isVisible, i
 
   const isBroadcast = resultsFormat === 'broadcast';
   const [page, setPage] = useState(0);
+  // Filas que aparecen de a una (PERSONALIZAR); con efecto, el bloque de la página ya no hace su fundido propio
+  const rowsAnimated = rowEffect(config, id) !== 'none';
   // Color del número tomado del traje (foto del piloto), si está activado en PILOTOS
   const suit = useSuitColors(allDrivers, config);
   const sc = (n) => (suit[String(n)] ? { backgroundColor: suit[String(n)].bg, color: suit[String(n)].text } : {});
@@ -74,16 +79,7 @@ export default function FinalResults({ drivers: allDrivers, config, isVisible, i
 
   // FORMATO BROADCAST: foto del ganador servida por el mini-servidor local (misma fuente que WinnerGraphic)
   const winnerDriver = drivers.find(d => String(d.pos) === '1') || drivers[0];
-  const [winnerPhoto, setWinnerPhoto] = useState(pilotoAnonimo);
-  useEffect(() => {
-    if (!isBroadcast || !winnerDriver || !config?.photosPath) { setWinnerPhoto(pilotoAnonimo); return; }
-    const host = window.location.hostname || 'localhost';
-    const photoUrl = `http://${host}:8080/photo/${winnerDriver.number}`;
-    const img = new Image();
-    img.onload = () => setWinnerPhoto(photoUrl);
-    img.onerror = () => setWinnerPhoto(pilotoAnonimo);
-    img.src = photoUrl;
-  }, [isBroadcast, config?.photosPath, winnerDriver?.number]);
+  const winnerPhoto = useDriverPhoto(winnerDriver?.number, !!(isBroadcast && winnerDriver && config?.photosPath), pilotoAnonimo);
 
   // CORRECCIÓN 1: Incluimos pos.scale para que la animación no dé un salto de tamaño
   let transformHidden = `scale(${pos.scale}) translateY(-60px)`;
@@ -95,32 +91,36 @@ export default function FinalResults({ drivers: allDrivers, config, isVisible, i
 
   // Al usar ANT / SIG el pase de páginas pasa a manual: la rotación automática se detiene hasta que se oculte la gráfica
   const [manualPaging, setManualPaging] = useState(false);
-
-  useEffect(() => {
-    if (!isVisible || drivers.length <= itemsPerPage) {
-      setPage(0);
-      setManualPaging(false);
-      return;
-    }
-    if (manualPaging || !autoPaging) return;
-    const totalPages = Math.ceil(drivers.length / itemsPerPage);
-    const interval = setInterval(() => {
-      setPage(prev => (prev + 1) % totalPages);
-    }, 8000);
-    return () => clearInterval(interval);
-  }, [isVisible, drivers.length, itemsPerPage, manualPaging, autoPaging]);
-
   const totalPages = Math.ceil(drivers.length / itemsPerPage);
 
-  // Pedido manual de página (llega una vez por cada clic: se distingue por el contador n)
-  const lastNavRef = useRef(navSignal?.n || 0);
+  // Oculta o con una sola página: vuelve a la primera y a la rotación automática.
+  // Se ajusta durante el render (no en un efecto) para no pintar un cuadro con la página vieja.
+  const singlePageOrHidden = !isVisible || drivers.length <= itemsPerPage;
+  if (singlePageOrHidden && (page !== 0 || manualPaging)) {
+    setPage(0);
+    setManualPaging(false);
+  }
+
   useEffect(() => {
-    if (!navSignal || navSignal.n === lastNavRef.current) return;
-    lastNavRef.current = navSignal.n;
-    if (!isVisible || totalPages <= 1) return;
-    setManualPaging(true);
-    setPage(prev => (prev + navSignal.dir + totalPages) % totalPages);
-  }, [navSignal, isVisible, totalPages]);
+    if (singlePageOrHidden || manualPaging || !autoPaging) return undefined;
+    const pages = Math.ceil(drivers.length / itemsPerPage);
+    const interval = setInterval(() => {
+      setPage(prev => (prev + 1) % pages);
+    }, 8000);
+    return () => clearInterval(interval);
+  }, [singlePageOrHidden, drivers.length, itemsPerPage, manualPaging, autoPaging]);
+
+  // Pedido manual de página (llega una vez por cada clic: se distingue por el contador n).
+  // El contador ya atendido se guarda en estado y el pedido se aplica durante el render, con el
+  // valor de `page` de este render (idempotente aunque React repita el render).
+  const [lastNav, setLastNav] = useState(navSignal?.n || 0);
+  if (navSignal && navSignal.n !== lastNav) {
+    setLastNav(navSignal.n);
+    if (isVisible && totalPages > 1) {
+      setManualPaging(true);
+      setPage((page + navSignal.dir + totalPages) % totalPages);
+    }
+  }
 
   const currentDrivers = drivers.slice(page * itemsPerPage, (page + 1) * itemsPerPage);
 
@@ -145,7 +145,7 @@ export default function FinalResults({ drivers: allDrivers, config, isVisible, i
         transform: isVisible || animStyle === 'roll' ? `scale(${pos.scale}) translateY(0)` : transformHidden, ...getRollClip(animStyle, isVisible),
         pointerEvents: isVisible ? 'auto' : 'none'
       }}>
-        <style>{`@keyframes fadePageBroadcast { 0% { opacity: 0; transform: translateY(10px); } 100% { opacity: 1; transform: translateY(0); } }`}</style>
+        <style>{`@keyframes fadePageBroadcast { 0% { opacity: 0; transform: translateY(10px); } 100% { opacity: 1; transform: translateY(0); } } ${ROW_ANIM_CSS}`}</style>
         <div style={{
           width: `${size.width}px`, height: `${size.height}px`, boxSizing: 'border-box', display: 'flex', flexDirection: 'column',
           backgroundColor: themeHeaderBg, borderRadius: bRad, overflow: 'hidden',
@@ -179,14 +179,15 @@ export default function FinalResults({ drivers: allDrivers, config, isVisible, i
                 <span style={{ width: '160px', textAlign: 'right' }}>TIEMPO</span>
               </div>
 
-              <div key={page} style={{ animation: 'fadePageBroadcast 0.4s ease-out' }}>
+              <div key={page} style={{ animation: rowsAnimated ? 'none' : 'fadePageBroadcast 0.4s ease-out' }}>
                 {broadcastDrivers.map((d, i) => {
                   const isLeader = String(d.pos) === '1';
                   return (
                     <div key={i} style={{
                       display: 'flex', alignItems: 'center', padding: '8px 12px',
                       backgroundColor: isLeader ? 'rgba(255,255,255,0.92)' : 'transparent',
-                      borderBottom: '1px solid rgba(255,255,255,0.08)'
+                      borderBottom: '1px solid rgba(255,255,255,0.08)',
+                      ...rowEntranceStyle(config, id, i, broadcastDrivers.length, isVisible, 0.25)
                     }}>
                       <span style={{ width: '50px', fontWeight: 900, fontSize: '17px', color: isLeader ? '#111' : themeNormalText }}>{d.pos}</span>
                       <span style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '10px', overflow: 'hidden' }}>
@@ -223,7 +224,7 @@ export default function FinalResults({ drivers: allDrivers, config, isVisible, i
                 {classWinners.map(w => (
                   <span key={w.cls} style={{ marginRight: '18px', whiteSpace: 'nowrap' }}>
                     <span style={{ color: getClassColor(config, w.cls, classes) }}>{w.cls}:</span>{' '}
-                    <span style={{ color: themeNormalText, textTransform: 'uppercase' }}>#{w.number} {w.name}</span>
+                    <span style={{ color: themeNormalText, textTransform: 'uppercase' }}><SuitNumber number={w.number} config={config} /> {w.name}</span>
                   </span>
                 ))}
               </div>
@@ -286,6 +287,7 @@ export default function FinalResults({ drivers: allDrivers, config, isVisible, i
      }}>
          <style>{`
            @keyframes fadePage { 0% { opacity: 0; transform: translateY(10px); } 100% { opacity: 1; transform: translateY(0); } }
+           ${ROW_ANIM_CSS}
          `}</style>
 
          <div style={{
@@ -334,7 +336,7 @@ export default function FinalResults({ drivers: allDrivers, config, isVisible, i
                 </div>
 
                 {/* FILAS DE PILOTOS */}
-                <div key={page} style={{ animation: 'fadePage 0.5s ease-out' }}>
+                <div key={page} style={{ animation: rowsAnimated ? 'none' : 'fadePage 0.5s ease-out' }}>
                   {currentDrivers.map((d, i) => {
                     const podiumColor = isPodium ? PODIUM_COLORS[Number(d.pos)] : null;
                     return (
@@ -343,7 +345,8 @@ export default function FinalResults({ drivers: allDrivers, config, isVisible, i
                        borderBottom: (i === currentDrivers.length - 1 || transparent) ? 'none' : '1px solid rgba(255,255,255,0.05)',
                        borderLeft: podiumColor ? `4px solid ${podiumColor}` : 'none',
                        fontSize: isCompact ? '16px' : '20px',
-                       opacity: d.dsq ? 0.55 : 1
+                       opacity: d.dsq ? 0.55 : 1,
+                       ...rowEntranceStyle(config, id, i, currentDrivers.length, isVisible, 0.3)
                      }}>
                         <span style={{ width: '60px', color: podiumColor || themeAccent, fontWeight: '900', fontSize: isCompact ? '18px' : '24px' }}>{d.pos}</span>
                         <span style={{ width: '80px' }}>
@@ -377,7 +380,7 @@ export default function FinalResults({ drivers: allDrivers, config, isVisible, i
                {classWinners.map(w => (
                  <span key={w.cls} style={{ margin: '3px 10px', fontSize: isCompact ? '14px' : '16px', fontWeight: 'bold', color: themeNormalText, whiteSpace: 'nowrap' }}>
                    <span style={{ color: getClassColor(config, w.cls, classes), fontWeight: 900 }}>{w.cls}</span>{' '}
-                   <span style={{ color: themeTitleText }}>#{w.number}</span> {w.name.toUpperCase()}
+                   <SuitNumber number={w.number} config={config} style={{ color: themeTitleText }} /> {w.name.toUpperCase()}
                  </span>
                ))}
              </div>

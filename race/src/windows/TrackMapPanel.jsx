@@ -4,6 +4,7 @@
 // al aire se dibuja con los puntos y no depende de la imagen.
 import { useState, useRef, useMemo, useEffect } from 'react';
 import Icon from '../components/Icon';
+import { buildCircuitFile, circuitFileName, parseCircuitFile } from '../utils/circuitFile';
 import { smoothPathPercent, nearestOnTrack, sectorPathsPercent, sectorRanges, trackDirection, DEFAULT_ASPECT } from '../utils/trackPath';
 import { SECTOR_PALETTE } from '../utils/elite';
 import { useImageAspect } from '../utils/raceVisuals';
@@ -147,6 +148,31 @@ export default function TrackMapPanel({ config, onConfigChange, colors, inputSty
     onConfigChange?.('trackPath', [trackPath[0], ...trackPath.slice(1).reverse()]);
   };
 
+  // --- ARCHIVO DEL TRAZADO: guardar el circuito aparte y volver a cargarlo ---
+  const [fileMsg, setFileMsg] = useState(null);
+  const handleSaveCircuitFile = async () => {
+    if (!ipcRenderer || !hasPath) return;
+    const text = JSON.stringify(buildCircuitFile(config), null, 2);
+    const res = await ipcRenderer.invoke('save-circuit-file', { text, fileName: circuitFileName(config) });
+    if (res?.ok) setFileMsg({ ok: true, text: t('circuito.fileSaved', { path: res.path }) });
+    else if (!res?.canceled) setFileMsg({ ok: false, text: t('circuito.fileError', { error: res?.error || '' }) });
+  };
+  const handleLoadCircuitFile = async () => {
+    if (!ipcRenderer) return;
+    if (trackPath.length && typeof window !== 'undefined' && !window.confirm(t('circuito.fileConfirmLoad'))) return;
+    const res = await ipcRenderer.invoke('open-circuit-file');
+    if (!res?.ok) { if (!res?.canceled) setFileMsg({ ok: false, text: t('circuito.fileError', { error: res?.error || '' }) }); return; }
+    try {
+      const patch = parseCircuitFile(res.text);
+      onConfigChange?.(patch);
+      setSuggest(null);
+      setSelectedCurveId(null);
+      setFileMsg({ ok: true, text: t('circuito.fileLoaded', { n: patch.trackPath.length, curves: patch.trackCurves.length }) });
+    } catch (err) {
+      setFileMsg({ ok: false, text: err.message });
+    }
+  };
+
   // --- IMAGEN ---
   const handleSelectImage = async () => {
     if (!ipcRenderer) return;
@@ -285,6 +311,12 @@ export default function TrackMapPanel({ config, onConfigChange, colors, inputSty
               <button onClick={() => onConfigChange?.('trackPath', trackPath.slice(0, -1))} disabled={!trackPath.length} style={smallBtn}><Icon name="undo" />{t('circuito.pathUndo')}</button>
               <button onClick={handleClearPath} disabled={!trackPath.length} style={{ ...smallBtn, backgroundColor: '#c0392b', color: '#fff', border: 'none' }}>{t('circuito.pathClear')}</button>
             </div>
+            {/* Trazado en un archivo aparte: guardar y volver a cargar */}
+            <div style={{ display: 'flex', gap: '5px', marginBottom: '6px' }}>
+              <button onClick={handleSaveCircuitFile} disabled={!hasPath} title={t('circuito.fileSaveTitle')} style={smallBtn}><Icon name="save" />{t('circuito.fileSave')}</button>
+              <button onClick={handleLoadCircuitFile} title={t('circuito.fileLoadTitle')} style={smallBtn}><Icon name="folder_open" />{t('circuito.fileLoad')}</button>
+            </div>
+            {fileMsg && <div style={{ fontSize: '11px', lineHeight: 1.4, marginBottom: '10px', color: fileMsg.ok ? colors.green : '#e67e22', wordBreak: 'break-all' }}>{fileMsg.text}</div>}
             <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '11px', color: colors.textMuted, cursor: 'pointer' }}>
               <input type="checkbox" checked={config?.trackMapShowImage === true} onChange={(e) => onConfigChange?.('trackMapShowImage', e.target.checked)} />
               {t('circuito.mapShowImage')}

@@ -18,7 +18,7 @@ async function login({ username, password, machineId }) {
     const data = await response.json().catch(() => ({}));
     if (!response.ok) return { ok: false, error: data?.error || 'No se pudo iniciar sesión' };
     return data;
-  } catch (e) {
+  } catch {
     return { ok: false, error: 'No se pudo conectar al servidor. Revisá tu conexión a internet.' };
   }
 }
