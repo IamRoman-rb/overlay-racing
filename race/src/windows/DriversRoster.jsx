@@ -1,11 +1,13 @@
 // Pestaña PILOTOS: completar o corregir los datos de cada piloto que la fuente no informa (o informa mal):
-// número a mostrar, nombre, marca del auto y equipo. Se guarda por el número que informa la fuente y se aplica
+// número a mostrar, nombre, país (bandera), marca del auto y equipo. Se guarda por el número que informa la fuente y se aplica
 // a todas las gráficas. También se pueden cargar pilotos antes de que aparezcan en el cronometraje.
 import { useEffect, useMemo, useState } from 'react';
 import Icon from '../components/Icon';
 import { BRANDS, brandName, brandSrc } from '../utils/brands';
 import { photoUrl } from '../utils/elite';
 import RosterLists from './RosterLists';
+import { countryOptions, countryName, countryFromText } from '../utils/countries';
+import { FlagChip } from '../components/CountryFlag';
 
 let ipcRenderer = null;
 if (typeof window !== 'undefined' && typeof window.require === 'function') {
@@ -35,6 +37,9 @@ export default function DriversRoster({ drivers, config, colors, inputStyle, btn
   const [roster, setRoster] = useState({});
   const [newNumber, setNewNumber] = useState('');
   const [filter, setFilter] = useState('');
+  const [bulkCountry, setBulkCountry] = useState('');
+  const [bulkBrand, setBulkBrand] = useState('');
+  const countries = useMemo(() => countryOptions(), []);
 
   useEffect(() => {
     if (!ipcRenderer) return undefined;
@@ -80,6 +85,25 @@ export default function DriversRoster({ drivers, config, colors, inputStyle, btn
     return f ? all.filter(r => `${r.src} ${(r.d && r.d.name) || ''} ${(roster[r.src] && roster[r.src].name) || ''}`.toLowerCase().includes(f)) : all;
   }, [drivers, roster, filter]);
 
+  // Mismo país o misma marca para todos los pilotos de la lista (los que se ven, respetando la búsqueda)
+  const applyToAll = async (patch, label) => {
+    if (!ipcRenderer || !rows.length) return;
+    if (!window.confirm(t('pilotos.applyAllConfirm', { what: label, n: rows.length }))) return;
+    const next = await ipcRenderer.invoke('set-roster-all', { numbers: rows.map(r => r.src), patch });
+    if (next) setRoster(next);
+  };
+  const applyCountryAll = () => {
+    const code = countryFromText(bulkCountry);
+    if (code === null) { alert(t('pilotos.countryUnknown', { name: bulkCountry })); return; }
+    applyToAll({ country: code }, code ? countryName(code) : t('pilotos.noCountry'));
+  };
+  const applyBrandAll = () => {
+    const slug = toSlug(bulkBrand);
+    if (slug === null) { alert(t('pilotos.brandUnknown', { name: bulkBrand })); return; }
+    applyToAll({ brand: slug }, slug ? brandName(slug) : t('pilotos.noBrand'));
+  };
+
+
   const cell = { padding: '6px 8px', borderBottom: `1px solid ${colors.border}`, verticalAlign: 'middle' };
 
   return (
@@ -99,6 +123,24 @@ export default function DriversRoster({ drivers, config, colors, inputStyle, btn
       <RosterLists roster={roster} config={config} colors={colors} inputStyle={inputStyle} btnStyle={btnStyle} t={t} onConfigChange={onConfigChange} />
 
       <datalist id="brandsList">{BRANDS.map(b => <option key={b.slug} value={b.name} />)}</datalist>
+      <datalist id="countriesList">{countries.map(c => <option key={c.code} value={c.name} />)}</datalist>
+
+      {/* APLICAR A TODOS: el mismo país (bandera) o la misma marca para todos los pilotos de la lista */}
+      <div style={{ display: 'flex', gap: '18px', flexWrap: 'wrap', alignItems: 'center', backgroundColor: colors.bgPanel, border: `1px solid ${colors.border}`, borderRadius: '6px', padding: '10px 14px', marginBottom: '14px', maxWidth: '900px' }}>
+        <span style={{ fontSize: '11px', fontWeight: 'bold', color: colors.textMuted }}>{t('pilotos.applyAllTitle')}</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <FlagChip code={countryFromText(bulkCountry) || ''} height={16} />
+          <input value={bulkCountry} onChange={(e) => setBulkCountry(e.target.value)} list="countriesList" placeholder={t('pilotos.countryPlaceholder')} style={{ ...inputStyle, width: '170px', padding: '7px', fontSize: '11px', textTransform: 'none' }} />
+          <button onClick={applyCountryAll} style={{ ...btnStyle(false), width: 'auto', padding: '7px 10px', fontSize: '10px' }}><Icon name="flag" />{t('pilotos.applyCountryAll')}</button>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <span style={{ width: '30px', height: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#2a2a2a', borderRadius: '3px' }}>
+            {toSlug(bulkBrand) && <img src={brandSrc(toSlug(bulkBrand))} alt="" style={{ maxHeight: '18px', maxWidth: '28px', objectFit: 'contain' }} />}
+          </span>
+          <input value={bulkBrand} onChange={(e) => setBulkBrand(e.target.value)} list="brandsList" placeholder={t('pilotos.brandPlaceholder')} style={{ ...inputStyle, width: '170px', padding: '7px', fontSize: '11px', textTransform: 'none' }} />
+          <button onClick={applyBrandAll} style={{ ...btnStyle(false), width: 'auto', padding: '7px 10px', fontSize: '10px' }}><Icon name="directions_car" />{t('pilotos.applyBrandAll')}</button>
+        </div>
+      </div>
 
       <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginBottom: '14px', flexWrap: 'wrap' }}>
         <input value={newNumber} onChange={(e) => setNewNumber(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') addDriver(); }} placeholder={t('pilotos.newNumber')} style={{ ...inputStyle, width: '120px', padding: '9px' }} />
@@ -117,6 +159,7 @@ export default function DriversRoster({ drivers, config, colors, inputStyle, btn
                 <th style={cell}>{t('pilotos.colSource')}</th>
                 <th style={cell}>{t('pilotos.colNumber')}</th>
                 <th style={cell}>{t('pilotos.colName')}</th>
+                <th style={cell}>{t('pilotos.colCountry')}</th>
                 <th style={cell}>{t('pilotos.colBrand')}</th>
                 <th style={cell}>{t('pilotos.colTeam')}</th>
                 <th style={cell}></th>
@@ -128,12 +171,20 @@ export default function DriversRoster({ drivers, config, colors, inputStyle, btn
                 const sourceName = d ? ((d.src && d.src.name) || d.name) : '';
                 const brand = (d && d.brand) || r.brand || '';
                 const manualBrand = !!r.brand;
+                const country = r.country || (d && d.country) || '';
                 return (
                   <tr key={src} style={{ backgroundColor: roster[src] ? 'rgba(255,204,0,0.05)' : 'transparent' }}>
                     <td style={cell}><PhotoThumb number={(d && d.number) || r.number || src} config={config} /></td>
                     <td style={{ ...cell, fontWeight: 'bold', color: d ? colors.textMain : colors.textMuted }}>#{src}{!d && <div style={{ fontSize: '9px', fontWeight: 'normal' }}>{t('pilotos.notInData')}</div>}</td>
                     <td style={cell}><Cell value={r.number || ''} placeholder={src} onCommit={(v) => setEntry(src, { number: v })} inputStyle={inputStyle} width="70px" /></td>
                     <td style={cell}><Cell value={r.name || ''} placeholder={sourceName || t('pilotos.namePlaceholder')} onCommit={(v) => setEntry(src, { name: v })} inputStyle={inputStyle} /></td>
+                    <td style={cell}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <span style={{ width: '28px', display: 'flex', justifyContent: 'center', flexShrink: 0 }}>{country ? <FlagChip code={country} height={16} /> : null}</span>
+                        <Cell value={r.country ? countryName(r.country) : ''} placeholder={country ? `${countryName(country)} (${t('pilotos.detected')})` : t('pilotos.countryPlaceholder')} list="countriesList" width="150px"
+                          onCommit={(v) => { const code = countryFromText(v); if (code === null) { alert(t('pilotos.countryUnknown', { name: v })); return; } setEntry(src, { country: code }); }} inputStyle={inputStyle} />
+                      </div>
+                    </td>
                     <td style={cell}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                         <span style={{ width: '34px', height: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#2a2a2a', borderRadius: '3px', flexShrink: 0 }}>

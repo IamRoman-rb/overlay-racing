@@ -1,4 +1,5 @@
 import { Fragment } from 'react';
+import { DriverFlag } from '../components/CountryFlag';
 import { getGraphicFrame, getFormatStyles, useLiveClock, secondsSinceCross, SECTOR_COLORS, getCategory } from '../utils/raceVisuals';
 import BrandLogo from '../components/BrandLogo';
 import DriverPhoto from '../components/DriverPhoto';
@@ -77,7 +78,7 @@ export default function QualifyingBoard({ drivers, config, isVisible, sessionInf
                 <span style={{ backgroundColor: theme.secondary, color: '#000', fontWeight: 900, fontSize: '13px', padding: '1px 8px', borderRadius: '3px', ...sc(pole.number) }}>{pole.number}</span>
               </span>
               <span style={{ display: 'block', color: theme.text, fontWeight: 900, fontSize: '22px', textTransform: 'uppercase', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', ...fx.text(4) }}>
-                <BrandLogo brand={pole.brand} config={config} size={20} style={{ marginRight: '8px' }} />{pole.name}
+                <DriverFlag driver={pole} config={config} id={id} height={16} style={{ marginRight: '6px' }} /><BrandLogo brand={pole.brand} config={config} size={20} style={{ marginRight: '8px' }} />{pole.name}
               </span>
               <span style={{ display: 'inline-block', color: pole.isFastest ? SECTOR_COLORS.purple : theme.title, fontWeight: 900, fontSize: '24px', fontFamily: 'monospace', ...fx.num(5) }}>{pole.bestLap || '-:--.---'}</span>
             </div>
@@ -109,7 +110,7 @@ export default function QualifyingBoard({ drivers, config, isVisible, sessionInf
                 <span style={{ width: f.compact ? '22px' : '26px', flexShrink: 0, color: eliminated ? '#e74c3c' : theme.accent, fontWeight: 900, fontSize: f.compact ? '13px' : '15px' }}>{d.pos}</span>
                 {showPh && <DriverPhoto number={d.number} config={config} height={ROW - 2} maxWidth={ROW + 6} fade style={{ alignSelf: 'flex-end', marginRight: '6px', flexShrink: 0 }} />}
                 <span style={{ backgroundColor: theme.secondary, color: '#000', fontWeight: 900, fontSize: f.compact ? '11px' : '12px', width: '28px', flexShrink: 0, textAlign: 'center', borderRadius: '2px', marginRight: '8px', ...sc(d.number) }}>{d.number}</span>
-                <span style={{ flex: 1, color: theme.text, fontWeight: 'bold', fontSize: f.compact ? '12px' : '14px', textTransform: 'uppercase', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}><BrandLogo brand={d.brand} config={config} size={14} style={{ marginRight: '6px' }} />{d.name}</span>
+                <span style={{ flex: 1, color: theme.text, fontWeight: 'bold', fontSize: f.compact ? '12px' : '14px', textTransform: 'uppercase', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}><DriverFlag driver={d} config={config} id={id} height={11} style={{ marginRight: '6px' }} /><BrandLogo brand={d.brand} config={config} size={14} style={{ marginRight: '6px' }} />{d.name}</span>
                 <span style={{ width: f.compact ? '78px' : '104px', textAlign: 'right', fontSize: f.compact ? '9px' : '10px', fontWeight: 900, color: st.pill ? '#fff' : st.color, whiteSpace: 'nowrap' }}>
                   <span style={{ backgroundColor: st.pill ? st.color : 'transparent', padding: st.pill ? '2px 5px' : 0, borderRadius: '3px' }}>{st.text}</span>
                 </span>

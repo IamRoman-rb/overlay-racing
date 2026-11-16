@@ -1,4 +1,5 @@
 import { Fragment, useState, useEffect, useLayoutEffect, useRef } from 'react';
+import { DriverFlag } from '../components/CountryFlag';
 import { getSkinStyle } from '../utils/skinStyles';
 import Icon from '../components/Icon';
 import { getAnimDuration, getRollClip } from '../utils/animationTiming';
@@ -247,7 +248,7 @@ export default function TimingTower({ drivers, config, isVisible, id = 'tower', 
               <div style={{ display: 'flex', alignItems: 'center', height: `${ROW}px`, borderTop: cut ? `2px solid ${slim ? pal.cut : rgba('#ffffff', 0.5)}` : `1px solid ${rgba('#ffffff', 0.06)}`, boxShadow: clsColor ? `inset 3px 0 0 ${clsColor}` : 'none', opacity: paged && pager.leaving ? 0 : 1, transition: `opacity ${PAGE_FADE_MS}ms ease-in`, ...rowAnim(slot, paged, 0.15) }}>
                 <span style={{ width: '20px', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: slim ? pal.red : pal.accent, color: textOnColor(slim ? pal.red : pal.accent), fontSize: '12px', fontWeight: 800 }}>{classFilter ? (d.classPos || d.pos) : d.pos}</span>
                 <span style={{ width: '34px', margin: '0 6px', textAlign: 'center', backgroundColor: nb, color: textOnColor(nb), fontSize: '13px', fontWeight: 800, lineHeight: '18px', ...sc(d.number) }}>{d.number}</span>
-                <span style={{ flex: 1, fontSize: '15px', fontWeight: 700, letterSpacing: '0.5px' }}>{surnameCode(d.name)}</span>
+                <span style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '5px', fontSize: '15px', fontWeight: 700, letterSpacing: '0.5px' }}><DriverFlag driver={d} config={config} id={id} height={12} />{surnameCode(d.name)}</span>
                 <span style={{ width: '24px', display: 'flex', justifyContent: 'center' }}><BrandLogo brand={d.brand} config={config} size={14} /></span>
                 <span style={{ fontSize: '13px', fontWeight: 600, paddingRight: '7px', fontFamily: ELITE_FONT, color: slim ? (isLeader ? pal.cut : pal.muted) : undefined }}>{d.dsq ? 'DSQ' : gap}</span>
               </div>
@@ -369,7 +370,7 @@ export default function TimingTower({ drivers, config, isVisible, id = 'tower', 
             <span style={{ width: '25px', color: podiumColor || themeAccent, fontWeight: 'bold' }}>{classFilter ? (driver.classPos || driver.pos) : driver.pos}</span>
             {!isCompact && <span style={{ width: '15px', display: 'flex', justifyContent: 'center' }}>{renderTrend(trends[driver.name])}</span>}
             <div style={{ backgroundColor: podiumColor || themeSecondary, color: '#000', fontWeight: '900', fontSize: isCompact || isMinimal ? '11px' : '12px', width: isCompact || isMinimal ? '22px' : '26px', height: isCompact || isMinimal ? '16px' : '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '2px', marginRight: '8px', marginLeft: '6px', ...sc(driver.number) }}>{driver.number}</div>
-            <span style={{ flex: 1, color: themeNormalText, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}><BrandLogo brand={driver.brand} config={config} size={16} style={{ marginRight: '6px' }} />{driver.name}</span>
+            <span style={{ flex: 1, color: themeNormalText, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}><DriverFlag driver={driver} config={config} id={id} height={13} style={{ marginRight: '6px' }} /><BrandLogo brand={driver.brand} config={config} size={16} style={{ marginRight: '6px' }} />{driver.name}</span>
             {!isCompact && <span style={{ width: '65px', textAlign: 'right', color: themeNumberText, fontSize: '14px', fontWeight: 'bold' }}>{driver.lastLap}</span>}
             <span style={{ display: gain ? 'inline' : 'none', width: '34px', textAlign: 'right', fontSize: '12px', fontWeight: 900, color: gain > 0 ? ARROW_COLORS.up : ARROW_COLORS.down, whiteSpace: 'nowrap' }}>
               {gain > 0 ? `▲${gain}` : `▼${-gain}`}

@@ -1,4 +1,5 @@
 import pilotoAnonimo from '../assets/piloto_anonimo.png';
+import { DriverFlag } from '../components/CountryFlag';
 import { useDriverPhoto } from '../utils/useDriverPhoto';
 import { getSkinStyle } from '../utils/skinStyles';
 import { getAnimDuration, getRollClip } from '../utils/animationTiming';
@@ -72,7 +73,7 @@ export default function DriverInfo({ driver, config, isVisible, id = 'driverInfo
               P{driver.pos} — Nº<SuitNumber number={driver.number} config={config} prefix="" /><CategoryTag config={config} id={id} size="1em" />
             </span>
             <span style={{ fontSize: '22px', fontWeight: '900', color: themeNormalText, textTransform: 'uppercase', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', lineHeight: '1.2' }}>
-              {driver.name}
+              <DriverFlag driver={driver} config={config} id={id} height={17} style={{ marginRight: '8px', marginTop: '-3px' }} />{driver.name}
             </span>
             <div style={{ display: 'flex', alignItems: 'center', marginTop: '5px', gap: '8px' }}>
               <span style={{ fontSize: '10px', color: themeTitleText, fontWeight: 'bold', letterSpacing: '1px' }}>MEJOR VUELTA</span>
@@ -103,7 +104,7 @@ export default function DriverInfo({ driver, config, isVisible, id = 'driverInfo
             <SuitNumber number={driver.number} config={config} />
           </span>
           <span style={{ flex: 1, color: themeNormalText, fontWeight: '900', fontSize: '17px', textTransform: 'uppercase', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-            {driver.name}
+            <DriverFlag driver={driver} config={config} id={id} height={14} style={{ marginRight: '6px', marginTop: '-2px' }} />{driver.name}
           </span>
           <span style={{ color: themeTitleText, fontWeight: '900', fontSize: '15px', whiteSpace: 'nowrap' }}>
             {driver.bestLap}
@@ -122,7 +123,7 @@ export default function DriverInfo({ driver, config, isVisible, id = 'driverInfo
             P{driver.pos} — Nº<SuitNumber number={driver.number} config={config} prefix="" /><CategoryTag config={config} id={id} size="1em" />
           </span>
           <span style={{ fontSize: '28px', fontWeight: '900', color: themeNormalText, textTransform: 'uppercase', textShadow: '2px 2px 6px rgba(0,0,0,0.9)' }}>
-            {driver.name}
+            <DriverFlag driver={driver} config={config} id={id} height={21} style={{ marginRight: '10px', marginTop: '-4px' }} />{driver.name}
           </span>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <span style={{ fontSize: '11px', color: themeTitleText, fontWeight: 'bold', letterSpacing: '1px', textShadow: '2px 2px 6px rgba(0,0,0,0.9)' }}>MEJOR VUELTA</span>
@@ -174,7 +175,7 @@ export default function DriverInfo({ driver, config, isVisible, id = 'driverInfo
 
         <div className={fx.group} style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '15px 25px', minWidth: 0 }}>
           <span style={{ fontSize: '24px', fontWeight: '900', color: themeNormalText, textTransform: 'uppercase', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', lineHeight: '1.2' }}>
-            {driver.name}<CategoryTag config={config} id={id} size="0.5em" color={themeTitleText} />
+            <DriverFlag driver={driver} config={config} id={id} height={18} style={{ marginRight: '8px', marginTop: '-3px' }} />{driver.name}<CategoryTag config={config} id={id} size="0.5em" color={themeTitleText} />
           </span>
           <div style={{ display: 'flex', alignItems: 'center', marginTop: '5px', gap: '8px' }}>
             <span style={{ fontSize: '11px', color: themeTitleText, fontWeight: 'bold', letterSpacing: '1px' }}>MEJOR VUELTA</span>

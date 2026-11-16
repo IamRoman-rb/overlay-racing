@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { DriverFlag } from '../components/CountryFlag';
 import { io } from 'socket.io-client';
 import { withCategory } from '../utils/raceVisuals';
 import pilotoAnonimo from '../assets/piloto_anonimo.png';
@@ -242,7 +243,7 @@ function DriverCardStandard({ driver, config, customBg, bRad, themeBg, themeHead
           <SuitNumber number={driver.number} config={config} /> {driver.make ? `| ${driver.make}` : ''}
         </span>
         <span style={{ fontSize: '26px', fontWeight: '900', textTransform: 'uppercase', color: themeNormalText, whiteSpace: 'nowrap', overflow: 'hidden', textShadow: '2px 2px 4px rgba(0,0,0,0.8)', textOverflow: 'ellipsis', ...fx.text(index * 2 + 5) }}>
-          {driver.name}
+          <DriverFlag driver={driver} config={config} id="grid" height={19} style={{ marginRight: '8px', marginTop: '-3px' }} />{driver.name}
         </span>
       </div>
     </div>
@@ -291,7 +292,7 @@ function PhotoDriverCard({ driver, align, config, themeAccent, themeHeaderBg, fx
            boxShadow: '0 15px 30px rgba(0,0,0,0.9)', zIndex: 3, ...fx.wipe(index * 3 + 2)
        }}>
            <span style={{ display: 'inline-block', color: '#fff', fontSize: '38px', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '1px', ...fx.text(index * 3 + 3) }}>
-               {driver.name}
+               <DriverFlag driver={driver} config={config} id="grid" height={26} style={{ marginRight: '12px', marginTop: '-5px' }} />{driver.name}
            </span>
        </div>
     </div>

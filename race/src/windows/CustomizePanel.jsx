@@ -74,6 +74,8 @@ const ELITE_ONLY = ['circuitIntro', 'circuitRecord'];
 const DEFAULT_FORMAT = { sessionStatus: 'bar', lapProgress: 'bar' };
 // Gráficas sin los skins comunes (no tienen caja)
 const NO_SKINS = [...ELITE_ONLY, 'windVectors', 'sessionStatus', 'lapProgress'];
+// Gráficas que pueden mostrar la bandera del país de cada piloto junto al nombre (config.showFlags_<id>)
+const FLAG_GRAPHICS = ['tower', 'ticker', 'driverInfo', 'qualifying', 'finalResults', 'grid', 'battle'];
 // Gráficas que pueden mostrar las fotos de los pilotos (config.showPhotos_<id>)
 const PHOTO_GRAPHICS = ['sectors', 'gapChart', 'gainers', 'raceNotice', 'lapCompare', 'qualifying', 'lapTimesHistory', 'ticker'];
 // Gráficas con pilotos que entran con la aparición de filas configurable (como la torre). La torre y los resultados
@@ -877,6 +879,31 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
               {t('personalizar.showPhotos')}
             </label>
             {!config.photosPath && <span style={{ fontSize: '10px', color: '#e67e22' }}>{t('personalizar.showPhotosNoFolder')}</span>}
+          </div>
+        )}
+
+        {/* Banderas de los países de los pilotos (PILOTOS o el cronometraje) */}
+        {(FLAG_GRAPHICS.includes(selectedGraphic) || PHOTO_GRAPHICS.includes(selectedGraphic) || selectedGraphic === 'circuitIntro') && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '30px', backgroundColor: '#111', padding: '15px', borderRadius: '8px', border: `1px solid ${colors.border}` }}>
+            {FLAG_GRAPHICS.includes(selectedGraphic) && (
+              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '11px', fontWeight: 'bold', color: colors.textMain, cursor: 'pointer' }}>
+                <input type="checkbox" checked={config[`showFlags_${selectedGraphic}`] === true} onChange={(e) => onConfigChange(`showFlags_${selectedGraphic}`, e.target.checked)} style={{ cursor: 'pointer' }} />
+                {t('personalizar.showFlags')}
+              </label>
+            )}
+            {selectedGraphic !== 'circuitIntro' && (
+              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '11px', fontWeight: 'bold', color: colors.textMain, cursor: 'pointer' }}>
+                <input type="checkbox" checked={config.flagsBehindPhotos !== false} onChange={(e) => onConfigChange('flagsBehindPhotos', e.target.checked)} style={{ cursor: 'pointer' }} />
+                {t('personalizar.flagsBehindPhotos')}
+              </label>
+            )}
+            {selectedGraphic === 'circuitIntro' && (
+              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '11px', fontWeight: 'bold', color: colors.textMain, cursor: 'pointer' }}>
+                <input type="checkbox" checked={config.circuitShowFlag !== false} onChange={(e) => onConfigChange('circuitShowFlag', e.target.checked)} style={{ cursor: 'pointer' }} />
+                {t('personalizar.circuitShowFlag')}
+              </label>
+            )}
+            <span style={{ fontSize: '10px', color: colors.textMuted, lineHeight: 1.5 }}>{t('personalizar.flagsHint')}</span>
           </div>
         )}
 

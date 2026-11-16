@@ -1085,6 +1085,25 @@ ipc.handle('set-roster-entry', (e, data) => {
   reprocessLeaderboard();
   return raceRoster;
 });
+// Aplicar el mismo dato a varios pilotos de una vez (PILOTOS > "aplicar a todos": país o marca)
+ipc.handle('set-roster-all', (e, data) => {
+  const numbers = Array.isArray(data?.numbers) ? data.numbers.map(n => String(n ?? '').trim()).filter(Boolean) : [];
+  const patch = data?.patch && typeof data.patch === 'object' ? data.patch : null;
+  if (!numbers.length || !patch) return raceRoster;
+  const allowed = {};
+  if (Object.prototype.hasOwnProperty.call(patch, 'country')) allowed.country = patch.country;
+  if (Object.prototype.hasOwnProperty.call(patch, 'brand')) allowed.brand = patch.brand;
+  if (!Object.keys(allowed).length) return raceRoster;
+  const next = { ...raceRoster };
+  numbers.forEach(num => {
+    if (allowed.brand === '') forgetDriverBrand(num);
+    next[num] = { ...(next[num] || {}), ...allowed };
+  });
+  raceRoster = normalizeRoster(next);
+  saveRoster();
+  reprocessLeaderboard();
+  return raceRoster;
+});
 ipc.handle('delete-roster-entry', (e, number) => {
   forgetDriverBrand(String(number));
   const next = { ...raceRoster };

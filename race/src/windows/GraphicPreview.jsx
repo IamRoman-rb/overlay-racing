@@ -113,14 +113,17 @@ function GraphicPreviewContent({ id, config, positions, drivers, sessionInfo }) 
   const session = sessionInfo && sessionInfo.name ? sessionInfo : (realDrivers ? (sessionInfo || {}) : DEMO_SESSION);
   const eventName = session.name || config?.campeonato || '';
 
-  const fullConfig = useMemo(
-    () => ({ ...config, positions: positions || {}, eventName }),
-    [config, positions, eventName]
-  );
+  // Ejemplo sin pilotos reales: países variados para ver las banderas
   const list = useMemo(
-    () => (realDrivers ? drivers : DEMO_DRIVERS).map(d => ({ ...d, name: formatDriverName(d.name, config?.nameFormat) })),
+    () => (realDrivers ? drivers : DEMO_DRIVERS.map((d, i) => ({ ...d, country: ['AR', 'BR', 'UY', 'CL', 'IT', 'ES'][i % 6] })))
+      .map(d => ({ ...d, name: formatDriverName(d.name, config?.nameFormat) })),
     [drivers, realDrivers, config?.nameFormat]
   );
+  const fullConfig = useMemo(() => {
+    const driverCountries = {};
+    list.forEach(d => { if (d.country) driverCountries[String(d.number)] = d.country; });
+    return { ...config, positions: positions || {}, eventName, driverCountries };
+  }, [config, positions, eventName, list]);
 
   const demoName = config?.[id] || (id === 'circuito' ? 'AUTÓDROMO DE EJEMPLO' : 'NOMBRE DE EJEMPLO');
 

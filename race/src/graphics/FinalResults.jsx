@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { DriverFlag } from '../components/CountryFlag';
 import { rowEntranceStyle, rowEffect, ROW_ANIM_CSS } from '../utils/rowEntrance';
 import { getSkinStyle } from '../utils/skinStyles';
 import pilotoAnonimo from '../assets/piloto_anonimo.png';
@@ -198,7 +199,7 @@ export default function FinalResults({ drivers: allDrivers, config, isVisible, i
                         <span style={{
                           fontWeight: 900, fontSize: '16px', textTransform: 'uppercase',
                           color: isLeader ? '#111' : themeNormalText, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'
-                        }}><BrandLogo brand={d.brand} config={config} size={18} style={{ marginRight: '6px' }} />{d.name}</span>
+                        }}><DriverFlag driver={d} config={config} id={id} height={14} style={{ marginRight: '6px' }} /><BrandLogo brand={d.brand} config={config} size={18} style={{ marginRight: '6px' }} />{d.name}</span>
                       </span>
                       <span style={{
                         width: '260px', fontSize: '13px', fontWeight: 'bold', textTransform: 'uppercase',

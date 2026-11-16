@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { DriverFlag } from '../components/CountryFlag';
 import { getSkinStyle } from '../utils/skinStyles';
 import { getAnimDuration, getRollClip } from '../utils/animationTiming';
 import CategoryTag from '../components/CategoryTag';
@@ -122,7 +123,7 @@ export default function Battle({ drivers, config, isVisible, battleFocusPos = 1,
         <div style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: align === 'left' ? 'flex-start' : 'flex-end', flexDirection: align === 'left' ? 'row' : 'row-reverse', padding: '8px 12px', boxSizing: 'border-box', backgroundColor: themeBg, ...fx.row(i, 2, 0.3) }}>
           <span style={{ color: themeAccent, fontWeight: '900', fontSize: '24px', margin: '0 8px' }}>P{d.pos}</span>
           <span style={{ backgroundColor: themeSecondary, color: '#000', fontWeight: '900', fontSize: '15px', padding: '2px 8px', borderRadius: '3px', ...sc(d.number) }}>{d.number}</span>
-          <span style={{ color: themeNormalText, fontWeight: '900', fontSize: '17px', textTransform: 'uppercase', margin: '0 10px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{d.name}</span>
+          <span style={{ color: themeNormalText, fontWeight: '900', fontSize: '17px', textTransform: 'uppercase', margin: '0 10px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}><DriverFlag driver={d} config={config} id={id} height={14} style={{ marginRight: '6px', marginTop: '-2px' }} />{d.name}</span>
         </div>
       </div>
     );

@@ -9,6 +9,8 @@ import WeatherScene from './WeatherScene';
 import CircuitTour from './CircuitTour';
 import { useSuitStyle } from '../utils/suitColor';
 import { makeFx } from '../utils/contentAnim';
+import { circuitCountry } from '../utils/countries';
+import { FlagChip, FlagFade } from '../components/CountryFlag';
 
 const thousands = (n) => String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
 const polyLen = (pts) => pts.reduce((acc, p, i) => (i ? acc + Math.hypot(p.x - pts[i - 1].x, p.y - pts[i - 1].y) : 0), 0);
@@ -62,6 +64,8 @@ function useCircuitData(config) {
     weatherFx: !!weather && config?.circuitIntroWeatherFx !== false,
     tourMode: ['tour', 'curves'].includes(config?.circuitIntroMode) ? config.circuitIntroMode : 'static',
     circuitName: config?.circuitName || config?.circuito || 'CIRCUITO',
+    // País del circuito (bandera): el elegido en CIRCUITO, el de la lista de circuitos o el de la ubicación de la PC
+    country: config?.circuitShowFlag === false ? '' : circuitCountry(config),
     eventTitle: config?.eventTitle || config?.campeonato || '',
     city: config?.circuitCity || '',
     recordName, firstName, surname: rest.join(' ')
@@ -236,11 +240,16 @@ const boxStyle = (pal, bRad) => ({ background: pal.background, borderRadius: bRa
 // Encabezado: logo de la categoría + nombre del circuito
 function Header({ config, data, pal, fx, height = 58, fontSize = 30, logoW = 210, right = null }) {
   return (
-    <div className={fx.group} style={{ position: 'relative', display: 'flex', alignItems: 'center', height: `${height}px`, backgroundColor: rgba(pal.deep, 0.55), borderBottom: `2px solid ${pal.line}` }}>
+    <div className={fx.group} style={{ position: 'relative', isolation: 'isolate', display: 'flex', alignItems: 'center', height: `${height}px`, backgroundColor: rgba(pal.deep, 0.55), borderBottom: `2px solid ${pal.line}` }}>
+      {/* Bandera del país del circuito, desvaneciéndose desde la derecha (detrás del contenido) */}
+      <FlagFade code={data.country} fadeTo="left" opacity={0.6} dim={0.4} style={{ left: 'auto', width: '58%', zIndex: -1 }} />
       <div style={{ display: config?.categoryLogo ? 'flex' : 'none', alignItems: 'center', justifyContent: 'center', height: '100%', minWidth: `${logoW}px`, backgroundColor: '#0b0b0b', padding: '0 14px', boxSizing: 'border-box' }}>
         {config?.categoryLogo && <img src={config.categoryLogo} alt="" style={{ maxHeight: `${height - 16}px`, maxWidth: `${logoW - 20}px`, objectFit: 'contain' }} />}
       </div>
-      <span style={{ flex: 1, minWidth: 0, fontSize: `${fontSize}px`, fontWeight: 700, letterSpacing: '1px', padding: '6px 20px 0', lineHeight: 1.35, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{data.circuitName}</span>
+      <span style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: `${Math.round(fontSize * 0.4)}px`, fontSize: `${fontSize}px`, fontWeight: 700, letterSpacing: '1px', padding: '6px 20px 0', lineHeight: 1.35, whiteSpace: 'nowrap', overflow: 'hidden' }}>
+        <FlagChip code={data.country} height={Math.round(fontSize * 0.72)} style={{ marginTop: '-4px' }} />
+        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', minWidth: 0 }}>{data.circuitName}</span>
+      </span>
       {right}
     </div>
   );
@@ -276,7 +285,8 @@ function Elite({ data, pal, config, sc, bRad, fx, running, isVisible, flat }) {
           </div>
 
           {/* DATOS DEL CIRCUITO */}
-          <div className={fx.group} style={{ flex: 1, padding: '14px 22px 0 10px', minWidth: 0, display: 'flex', flexDirection: 'column', position: 'relative' }}>
+          <div className={fx.group} style={{ flex: 1, padding: '14px 22px 0 10px', minWidth: 0, display: 'flex', flexDirection: 'column', position: 'relative', isolation: 'isolate' }}>
+            <FlagFade code={data.country} fadeTo="radial" opacity={0.13} dim={0} animated={false} style={{ zIndex: -1 }} />
             <div style={{ display: data.city ? 'block' : 'none', fontSize: '14px', fontWeight: 600, color: pal.muted }}><IconPin /> {data.city}</div>
             <div style={{ ...row, justifyContent: 'space-between', borderBottom: `1px solid ${rgba('#ffffff', 0.12)}`, paddingBottom: '6px' }}>
               <div style={{ display: data.hasLength ? 'block' : 'none' }}>
@@ -443,10 +453,11 @@ function Band({ data, pal, config, bRad, fx, running, isVisible }) {
       <div style={{ ...boxStyle(pal, bRad), height: `${H}px`, display: 'flex', alignItems: 'stretch', borderTop: `3px solid ${pal.accent}` }}>
         {data.weatherFx && <WeatherScene category={data.weather.category} code={wd.weathercode} width={W} height={H} running={running} idPrefix="ciWx" />}
         {/* Nombre */}
-        <div className={fx.group} style={{ position: 'relative', width: '400px', flexShrink: 0, display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '0 26px', backgroundColor: rgba(pal.deep, 0.6) }}>
+        <div className={fx.group} style={{ position: 'relative', isolation: 'isolate', width: '400px', flexShrink: 0, display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '0 26px', backgroundColor: rgba(pal.deep, 0.6) }}>
+          <FlagFade code={data.country} fadeTo="right" opacity={0.6} dim={0.45} style={{ zIndex: -1 }} />
           {config?.categoryLogo && <img src={config.categoryLogo} alt="" style={{ maxHeight: '46px', maxWidth: '200px', objectFit: 'contain', alignSelf: 'flex-start', marginBottom: '10px' }} />}
           <span style={{ fontSize: '13px', fontWeight: 700, color: pal.accent, letterSpacing: '1px', display: data.eventTitle ? 'block' : 'none' }}>{data.eventTitle}</span>
-          <span style={{ fontSize: '36px', fontWeight: 700, lineHeight: 1.05, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>{data.circuitName}</span>
+          <span style={{ fontSize: '36px', fontWeight: 700, lineHeight: 1.05, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}><FlagChip code={data.country} height={24} style={{ marginRight: '10px', marginTop: '-6px' }} />{data.circuitName}</span>
           <span style={{ fontSize: '14px', fontWeight: 600, color: pal.muted, marginTop: '4px', display: data.city ? 'block' : 'none' }}><IconPin /> {data.city}</span>
         </div>
         {/* Circuito */}
@@ -491,10 +502,11 @@ function Vertical({ data, pal, config, sc, bRad, fx, running, isVisible }) {
     <div className={fx.group} style={{ width: `${W}px`, fontFamily: ELITE_FONT, color: pal.text, textTransform: 'uppercase' }}>
       <div style={boxStyle(pal, bRad)}>
         {data.weatherFx && <WeatherScene category={data.weather.category} code={wd.weathercode} width={W} height={900} running={running} idPrefix="ciWx" />}
-        <div className={fx.group} style={{ position: 'relative', padding: '14px 18px 10px', backgroundColor: rgba(pal.deep, 0.6), borderBottom: `2px solid ${pal.line}` }}>
+        <div className={fx.group} style={{ position: 'relative', isolation: 'isolate', padding: '14px 18px 10px', backgroundColor: rgba(pal.deep, 0.6), borderBottom: `2px solid ${pal.line}` }}>
+          <FlagFade code={data.country} fadeTo="left" opacity={0.6} dim={0.4} style={{ left: 'auto', width: '75%', zIndex: -1 }} />
           {config?.categoryLogo && <img src={config.categoryLogo} alt="" style={{ maxHeight: '40px', maxWidth: '180px', objectFit: 'contain', display: 'block', marginBottom: '8px' }} />}
           <span style={{ fontSize: '12px', fontWeight: 700, color: pal.accent, letterSpacing: '1px', display: data.eventTitle ? 'block' : 'none' }}>{data.eventTitle}</span>
-          <div style={{ fontSize: '30px', fontWeight: 700, lineHeight: 1.05 }}>{data.circuitName}</div>
+          <div style={{ fontSize: '30px', fontWeight: 700, lineHeight: 1.05 }}><FlagChip code={data.country} height={20} style={{ marginRight: '8px', marginTop: '-5px' }} />{data.circuitName}</div>
           <div style={{ fontSize: '13px', fontWeight: 600, color: pal.muted, marginTop: '3px', display: data.city ? 'block' : 'none' }}><IconPin /> {data.city}</div>
         </div>
         <div style={{ position: 'relative', height: `${TH + 10}px`, overflow: 'hidden' }}>

@@ -9,6 +9,8 @@ import { smoothPathPercent, nearestOnTrack, sectorPathsPercent, sectorRanges, tr
 import { SECTOR_PALETTE } from '../utils/elite';
 import { useImageAspect } from '../utils/raceVisuals';
 import { detectTrackFromImage } from '../utils/trackDetect';
+import { countryOptions, countryName, countryFromText, circuitCountry } from '../utils/countries';
+import { FlagChip } from '../components/CountryFlag';
 
 let ipcRenderer = null;
 if (typeof window !== 'undefined' && typeof window.require === 'function') {
@@ -474,7 +476,7 @@ export default function TrackMapPanel({ config, onConfigChange, colors, inputSty
 }
 
 // Campo de texto que guarda al salir o con Enter
-function DataField({ label, value, placeholder, onCommit, colors, inputStyle, type = 'text' }) {
+function DataField({ label, value, placeholder, onCommit, colors, inputStyle, type = 'text', list, prefix }) {
   const [draft, setDraft] = useState(value ?? '');
   const [prev, setPrev] = useState(value);
   if (value !== prev) { setPrev(value); setDraft(value ?? ''); }
@@ -482,9 +484,12 @@ function DataField({ label, value, placeholder, onCommit, colors, inputStyle, ty
   return (
     <label style={{ display: 'flex', flexDirection: 'column', gap: '3px', marginBottom: '7px' }}>
       <span style={{ fontSize: '9px', fontWeight: 'bold', color: colors.textMuted, letterSpacing: '0.5px' }}>{label}</span>
-      <input type={type} value={draft} placeholder={placeholder} onChange={(e) => setDraft(e.target.value)} onBlur={commit}
-        onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); commit(); e.currentTarget.blur(); } }}
-        style={{ ...inputStyle, padding: '7px', fontSize: '11px', textTransform: 'none' }} />
+      <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+        {prefix}
+        <input type={type} value={draft} placeholder={placeholder} list={list} onChange={(e) => setDraft(e.target.value)} onBlur={commit}
+          onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); commit(); e.currentTarget.blur(); } }}
+          style={{ ...inputStyle, padding: '7px', fontSize: '11px', textTransform: 'none', flex: 1, minWidth: 0 }} />
+      </span>
     </label>
   );
 }
@@ -502,6 +507,12 @@ function CircuitDataForm({ config, onConfigChange, detectedDirection, colors, in
       {field('eventTitle', 'circuito.dataEventTitle', config?.campeonato || 'CAMPEONATO - FECHA 1')}
       {field('circuitName', 'circuito.dataName', config?.circuito || '')}
       {field('circuitCity', 'circuito.dataCity', 'CIUDAD, PROVINCIA')}
+      {/* PAÍS (bandera de la presentación): vacío = el del circuito elegido en el PANEL o el de la ubicación de la PC */}
+      <datalist id="circuitCountries">{countryOptions().map(c => <option key={c.code} value={c.name} />)}</datalist>
+      <DataField label={t('circuito.dataCountry')} value={config?.circuitCountry ? countryName(config.circuitCountry) : ''} list="circuitCountries"
+        placeholder={(() => { const auto = circuitCountry({ ...config, circuitCountry: '' }); return auto ? `${countryName(auto)} (${t('circuito.countryAuto')})` : t('circuito.countryPlaceholder'); })()}
+        prefix={<FlagChip code={circuitCountry(config)} height={16} />} colors={colors} inputStyle={inputStyle}
+        onCommit={(v) => { const code = countryFromText(v); if (code === null) { alert(t('pilotos.countryUnknown', { name: v })); return; } onConfigChange?.('circuitCountry', code); }} />
       {field('circuitLength', 'circuito.dataLength', '3250', 'number')}
       <label style={{ display: 'flex', flexDirection: 'column', gap: '3px', marginBottom: '7px' }}>
         <span style={{ fontSize: '9px', fontWeight: 'bold', color: colors.textMuted, letterSpacing: '0.5px' }}>{t('circuito.dataDirection')}</span>

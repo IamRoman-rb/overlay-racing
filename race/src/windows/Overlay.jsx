@@ -304,7 +304,13 @@ export default function Overlay() {
   // Nombre del evento para los títulos de las gráficas: el de la sesión en vivo (por ejemplo
   // "125cc 4T Libre - 1era Manga"); si todavía no hay sesión cargada, el campeonato escrito a mano.
   const eventName = (sessionInfo && sessionInfo.name) || safeConfig.campeonato || '';
-  const combinedConfig = { ...safeConfig, positions: positions || {}, eventName };
+  // País de cada piloto por número (banderas en fotos y nombres, ver utils/countries)
+  const driverCountries = useMemo(() => {
+    const m = {};
+    (drivers || []).forEach(d => { if (d && d.country) m[String(d.number)] = d.country; });
+    return m;
+  }, [drivers]);
+  const combinedConfig = { ...safeConfig, positions: positions || {}, eventName, driverCountries };
   // Datos de la sesión + las banderas puestas a mano en el PANEL: así las gráficas (tira, torre, vueltas...) muestran la
   // bandera vigente (ver utils/flagState).
   // También el total de vueltas cargado a mano (PANEL > TOTAL VUELTAS), que manda sobre el del cronometraje.

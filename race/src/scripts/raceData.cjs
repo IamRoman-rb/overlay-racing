@@ -69,6 +69,23 @@ function detectBrand(texts) {
 const brandExists = (slug) => BRANDS.some(b => b.slug === slug);
 
 // Datos cargados a mano por piloto (pestaña PILOTOS), por número de la fuente
+// País que informa el cronometraje (Race Monitor / Speedhive: "ARG", "USA", "BRA"... o ya en 2 letras) -> código de 2 letras
+const ISO3_TO_2 = {
+  ARG: 'AR', BRA: 'BR', URU: 'UY', URY: 'UY', CHI: 'CL', CHL: 'CL', PAR: 'PY', PRY: 'PY', BOL: 'BO', PER: 'PE', COL: 'CO', VEN: 'VE',
+  ECU: 'EC', MEX: 'MX', USA: 'US', CAN: 'CA', ESP: 'ES', ITA: 'IT', FRA: 'FR', GER: 'DE', DEU: 'DE', GBR: 'GB', UK: 'GB', POR: 'PT',
+  PRT: 'PT', NED: 'NL', NLD: 'NL', BEL: 'BE', SUI: 'CH', CHE: 'CH', AUT: 'AT', SWE: 'SE', NOR: 'NO', DEN: 'DK', DNK: 'DK', FIN: 'FI',
+  POL: 'PL', CZE: 'CZ', HUN: 'HU', RUS: 'RU', JPN: 'JP', CHN: 'CN', KOR: 'KR', AUS: 'AU', NZL: 'NZ', RSA: 'ZA', ZAF: 'ZA', IRL: 'IE',
+  CRC: 'CR', CRI: 'CR', PAN: 'PA', GUA: 'GT', GTM: 'GT', DOM: 'DO', PUR: 'PR', PRI: 'PR', CUB: 'CU', MON: 'MC', MCO: 'MC', LUX: 'LU',
+  IND: 'IN', THA: 'TH', MAS: 'MY', MYS: 'MY', UAE: 'AE', ARE: 'AE', ISR: 'IL', TUR: 'TR', GRE: 'GR', GRC: 'GR', ROU: 'RO', UKR: 'UA',
+  EST: 'EE', LAT: 'LV', LVA: 'LV', LTU: 'LT', SLO: 'SI', SVN: 'SI', SVK: 'SK', CRO: 'HR', HRV: 'HR', SRB: 'RS', ESA: 'SV', SLV: 'SV',
+  HON: 'HN', HND: 'HN', NCA: 'NI', NIC: 'NI'
+};
+function countryCode(raw) {
+  const v = String(raw || '').trim().toUpperCase();
+  if (/^[A-Z]{2}$/.test(v)) return v === 'UK' ? 'GB' : v;
+  return ISO3_TO_2[v] || '';
+}
+
 function normalizeRoster(raw) {
   const out = {};
   if (!raw || typeof raw !== 'object') return out;
@@ -81,6 +98,8 @@ function normalizeRoster(raw) {
     if (clip(r.number, 6)) e.number = clip(r.number, 6);
     if (clip(r.team, 60)) e.team = clip(r.team, 60);
     if (clip(r.brand, 40) && brandExists(clip(r.brand, 40))) e.brand = clip(r.brand, 40);
+    const country = clip(r.country, 12).toUpperCase();
+    if (/^[A-Z]{2,5}(-[A-Z]{2,3})?$/.test(country)) e.country = country;
     if (r.manual === true) e.manual = true;
     const key = clip(num, 12);
     if (key && (Object.keys(e).length)) out[key] = e;
@@ -602,6 +621,11 @@ class RaceAnalyzer {
       else if (remembered && brandExists(remembered)) { d.brand = remembered; d.brandFrom = 'memory'; }
       else { d.brand = detectBrand([d.make, ...(Array.isArray(d.extra) ? d.extra : [])]); d.brandFrom = d.brand ? 'detected' : ''; }
       if (r.team) d.team = r.team;
+      // País: el elegido a mano en PILOTOS > el que informa el cronometraje
+      const srcCountry = countryCode(d.nationality);
+      if (r.country) { d.country = r.country; d.countryFrom = 'manual'; }
+      else if (srcCountry) { d.country = srcCountry; d.countryFrom = 'source'; }
+      else { d.country = ''; d.countryFrom = ''; }
       if (r.name && !d.renamed) d.name = r.name;
       if (r.number) d.number = r.number;
     });

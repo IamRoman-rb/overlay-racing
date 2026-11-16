@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { DriverFlag } from '../components/CountryFlag';
 import { getSkinStyle } from '../utils/skinStyles';
 import MarqueeText from './MarqueeText';
 import { getAnimDuration, getRollClip } from '../utils/animationTiming';
@@ -223,7 +224,7 @@ export default function Ticker({ drivers, isVisible, config, id = 'ticker', sess
                         flex: 1, color: themeNormalText, fontWeight: '900', fontSize: '15px', textTransform: 'uppercase',
                         whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'
                       }}>
-                        <BrandLogo brand={driver.brand} config={config} size={16} style={{ marginRight: '6px' }} />{driver.name}
+                        <DriverFlag driver={driver} config={config} id={id} height={13} style={{ marginRight: '6px' }} /><BrandLogo brand={driver.brand} config={config} size={16} style={{ marginRight: '6px' }} />{driver.name}
                       </span>
                       <span style={{
                         flexShrink: 0, minWidth: '68px', textAlign: 'center', padding: '4px 8px', borderRadius: '4px',
@@ -316,7 +317,7 @@ export default function Ticker({ drivers, isVisible, config, id = 'ticker', sess
                     }}>
                       <span style={{ width: '24px', height: '100%', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: posBg, color: textOnColor(posBg), fontSize: '13px', fontWeight: 800 }}>{driver.pos}</span>
                       <span style={{ width: '40px', flexShrink: 0, textAlign: 'center', backgroundColor: numBg, color: textOnColor(numBg), fontSize: '13px', fontWeight: 800, lineHeight: '18px', ...sc(driver.number) }}>{driver.number}</span>
-                      <span style={{ flex: 1, minWidth: 0, color: pal.text, fontSize: '15px', fontWeight: 700, letterSpacing: '0.3px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{driver.name}</span>
+                      <span style={{ flex: 1, minWidth: 0, color: pal.text, fontSize: '15px', fontWeight: 700, letterSpacing: '0.3px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}><DriverFlag driver={driver} config={config} id={id} height={13} style={{ marginRight: '6px', marginTop: '-2px' }} />{driver.name}</span>
                       <span style={{ width: '26px', flexShrink: 0, display: 'flex', justifyContent: 'center' }}><BrandLogo brand={driver.brand} config={config} size={16} /></span>
                       {renderArrow(driver, '11px')}
                       <span style={{ minWidth: '72px', flexShrink: 0, textAlign: 'right', fontSize: '14px', fontWeight: 600, color: isLeader ? pal.cut : pal.text }}>{driver.dsq ? 'DSQ' : time}</span>
@@ -456,7 +457,7 @@ export default function Ticker({ drivers, isVisible, config, id = 'ticker', sess
             {driver.number}
           </div>
           <span style={{ flex: 1, color: themeNormalText, fontSize: smallText ? '14px' : '17px', fontWeight: 'bold', textTransform: 'uppercase', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-            {driver.name}
+            <DriverFlag driver={driver} config={config} id={id} height={smallText ? 12 : 14} style={{ marginRight: '6px', marginTop: '-2px' }} />{driver.name}
           </span>
         </div>
       );
@@ -479,7 +480,7 @@ export default function Ticker({ drivers, isVisible, config, id = 'ticker', sess
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', flex: 1, overflow: 'hidden' }}>
           <span style={{ color: themeNormalText, fontSize: smallText ? '15px' : '18px', fontWeight: 'bold', textTransform: 'uppercase', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', lineHeight: '1.2' }}>
-            <BrandLogo brand={driver.brand} config={config} size={18} style={{ marginRight: '6px' }} />{driver.name}
+            <DriverFlag driver={driver} config={config} id={id} height={14} style={{ marginRight: '6px' }} /><BrandLogo brand={driver.brand} config={config} size={18} style={{ marginRight: '6px' }} />{driver.name}
           </span>
           {time && (
             <span style={{ color: hasCustomBg ? '#aaaaaa' : themeNumberText, fontSize: smallText ? '12px' : '14px', fontWeight: 'bold', lineHeight: '1', fontFamily: timeField === 'lastLap' || timeField === 'bestLap' ? undefined : 'monospace' }}>
