@@ -1,7 +1,7 @@
 {
   "id": "football",
   "name": "Overlay Fútbol",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "entry": "main.cjs",
   "launcherApi": 1
 }

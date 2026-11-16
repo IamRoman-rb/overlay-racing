@@ -138,9 +138,9 @@ ipcMain.handle('open-module', async (event, { id: moduleId, update = false, vers
           const st = await getModuleStatus(entry, session.sessionToken);
           const latestVersion = st.version || null;
           const updateAvailable = !!latestVersion && compareVersions(latestVersion, installed.version) > 0;
-          return { runningVersion: installed.version, latestVersion, updateAvailable, updateBlocked: updateAvailable && !!st.updateBlocked, notes: st.notes || null };
+          return { moduleId, runningVersion: installed.version, newestInstalled: st.installedVersion || null, latestVersion, updateAvailable, updateBlocked: updateAvailable && !!st.updateBlocked, notes: st.notes || null };
         } catch {
-          return { runningVersion: installed.version, latestVersion: null, updateAvailable: false, updateBlocked: false, notes: null };
+          return { moduleId, runningVersion: installed.version, newestInstalled: null, latestVersion: null, updateAvailable: false, updateBlocked: false, notes: null };
         }
       },
       returnToLauncher: () => {

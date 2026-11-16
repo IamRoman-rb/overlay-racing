@@ -1380,7 +1380,7 @@ ipc.handle('get-module-update', async () => {
   // Instalador nuevo: responde él. Instalador viejo: el panel usa 'get-launcher-state' (existe desde la primera versión
   // con módulos) y lo compara con la versión abierta, que se manda acá.
   if (typeof moduleCtx.checkForUpdate === 'function') {
-    try { return (await moduleCtx.checkForUpdate()) || null; } catch { return null; }
+    try { const r = await moduleCtx.checkForUpdate(); return r ? { moduleId: moduleCtx.moduleId, ...r } : null; } catch { return null; }
   }
   const version = moduleCtx.moduleVersion;
   if (!version || version === 'dev' || !moduleCtx.moduleId) return null;
