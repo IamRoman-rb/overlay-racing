@@ -9,6 +9,8 @@ import { useSuitColors } from '../utils/suitColor';
 import { rowEntranceStyle, ROW_ANIM_CSS, towerPageRows, towerPageSeconds, towerNarrowRows } from '../utils/rowEntrance';
 import { makeFx } from '../utils/contentAnim';
 import { ChangeTick } from '../components/ChangeAnim';
+import FlagSwatch from '../components/FlagSwatch';
+import { currentFlag, sessionProgress } from '../utils/flagState';
 
 const PODIUM_COLORS = { 1: '#ffd700', 2: '#c0c0c0', 3: '#cd7f32' };
 const TOWER_BOX_H = 650; // alto fijo de la caja de la torre (sin el espacio onboard)
@@ -201,8 +203,7 @@ export default function TimingTower({ drivers, config, isVisible, id = 'tower', 
   if (towerFormat === 'elite' || towerFormat === 'slim') {
     const slim = towerFormat === 'slim';
     const pal = slim ? getSlimPalette(config) : getElitePalette(config);
-    const flagRaw = String(sessionInfo?.flag || '').toLowerCase();
-    const flagColor = /red|roja/.test(flagRaw) ? '#e8183f' : /yellow|amarill/.test(flagRaw) ? '#ffd60a' : /checker|finish/.test(flagRaw) ? '#ffffff' : '#2fd17f';
+    const flag = currentFlag(sessionInfo, config);
     const sessionLabel = showFormation ? FORMATION_TEXT : (sessionInfo?.qualifying ? 'CLASIFICACIÓN' : (sessionInfo?.name ? String(sessionInfo.name).split(/\s+[-–—]\s+/).pop() : 'CARRERA'));
     const W = slim ? 200 : 186;
     const ROW = 25;
@@ -222,10 +223,17 @@ export default function TimingTower({ drivers, config, isVisible, id = 'tower', 
               : <span style={{ fontSize: '15px', fontWeight: 700, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', color: slim ? pal.title : undefined }}>{headerCategory || sessionInfo?.name || ''}</span>}
           </div>
           <div style={{ display: 'flex', alignItems: 'center', padding: '4px 6px', backgroundColor: slim ? pal.panel : rgba(pal.deep, 0.6) }}>
-            <span style={{ width: '14px', height: '30px', backgroundColor: showFormation ? '#2fd17f' : flagColor, borderRadius: '2px', marginRight: '7px', flexShrink: 0 }} />
+            {showFormation || !flag
+              ? <span style={{ width: '14px', height: '30px', backgroundColor: '#2fd17f', borderRadius: '2px', marginRight: '7px', flexShrink: 0 }} />
+              : <FlagSwatch flag={flag} width={14} height={30} style={{ marginRight: '7px' }} />}
             <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.1, minWidth: 0 }}>
-              <span style={{ fontSize: '13px', fontWeight: 700, lineHeight: '16px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', color: showFormation ? '#2fd17f' : undefined }}>{showFormation ? sessionLabel : (classFilter || sessionLabel)}</span>
-              <span style={{ fontSize: '13px', fontWeight: 600, color: pal.muted }}>{sessionInfo?.totalTime || '-'}</span>
+              <span style={{ fontSize: '13px', fontWeight: 700, lineHeight: '16px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', color: showFormation ? '#2fd17f' : undefined }}>{showFormation ? sessionLabel : (flag && flag.key !== 'green' ? flag.label : (classFilter || sessionLabel))}</span>
+              <span style={{ fontSize: '13px', fontWeight: 600, color: pal.muted, whiteSpace: 'nowrap' }}>
+                {(() => {
+                  const pr = sessionProgress(sessionInfo);
+                  return <>{pr.lap !== null ? <>V <span style={{ color: pal.text }}><ChangeTick value={pr.lap} enabled={fx.on} /></span>{pr.total !== null ? `/${pr.total}` : ''}{'  ·  '}</> : null}{pr.timeToGo ? `RESTA ${pr.timeToGo}` : (pr.elapsed || '-')}</>;
+                })()}
+              </span>
             </div>
           </div>
           {visibleRows.map(({ driver: d, index: idx, slot, paged }) => {
@@ -325,14 +333,15 @@ export default function TimingTower({ drivers, config, isVisible, id = 'tower', 
       )}
 
       {!isMinimal && (
-        <div style={{ backgroundColor: hasCustomBg ? 'transparent' : 'rgba(0,0,0,0.4)', padding: '8px 15px', display: 'flex', justifyContent: 'space-evenly', borderBottom: hasCustomBg ? 'none' : '1px solid rgba(255,255,255,0.1)' }}>
+        <div style={{ backgroundColor: hasCustomBg ? 'transparent' : 'rgba(0,0,0,0.4)', padding: '8px 15px', display: 'flex', justifyContent: 'space-evenly', alignItems: 'center', borderBottom: hasCustomBg ? 'none' : '1px solid rgba(255,255,255,0.1)' }}>
+          {(() => { const f = currentFlag(sessionInfo, config); return f ? <FlagSwatch flag={f} width="auto" height={26} label={f.short} fontSize={11} /> : null; })()}
            <span style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
             <span style={{ fontSize: '10px', color: themeTitleText, fontWeight: 'bold', letterSpacing: '1px' }}>VUELTAS</span>
-            <span style={{ color: themeNumberText, fontSize: '16px', fontWeight: 'bold' }}><ChangeTick value={sessionInfo?.laps || '-'} enabled={fx.on} /></span>
+            <span style={{ color: themeNumberText, fontSize: '16px', fontWeight: 'bold' }}><ChangeTick value={sessionInfo?.laps || '-'} enabled={fx.on} />{sessionProgress(sessionInfo).total !== null ? `/${sessionProgress(sessionInfo).total}` : ''}</span>
           </span>
           <span style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-            <span style={{ fontSize: '10px', color: themeTitleText, fontWeight: 'bold', letterSpacing: '1px' }}>TIEMPO</span>
-            <span style={{ color: themeNumberText, fontSize: '16px', fontWeight: 'bold' }}>{sessionInfo?.totalTime || '-'}</span>
+            <span style={{ fontSize: '10px', color: themeTitleText, fontWeight: 'bold', letterSpacing: '1px' }}>{sessionProgress(sessionInfo).timeToGo ? 'RESTA' : 'TIEMPO'}</span>
+            <span style={{ color: themeNumberText, fontSize: '16px', fontWeight: 'bold' }}>{sessionProgress(sessionInfo).timeToGo || sessionInfo?.totalTime || '-'}</span>
           </span>
         </div>
       )}

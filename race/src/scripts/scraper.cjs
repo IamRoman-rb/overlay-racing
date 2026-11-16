@@ -566,6 +566,32 @@ async function scrapeSpeedhive(inputCode) {
         const flagMatch = flagIcon && flagIcon.className.match(/ico-flag-([a-z]+)/i);
         sessionData.flag = flagMatch ? flagMatch[1].toLowerCase() : '';
 
+        // Bloques del encabezado (<div><div class="header">Etiqueta</div><div class="value">Valor</div></div>):
+        //   "Time to go" (div.race-clock) -> tiempo restante; "laps" -> vueltas que faltan; "Local Weather" -> clima.
+        // Sólo los bloques chicos (el contenedor grande también tiene .header y juntaría todos los textos).
+        document.querySelectorAll('.header').forEach(h => {
+          const label = (h.textContent || '').trim().toLowerCase();
+          const box = h.parentElement;
+          if (!box || label.length > 30) return;
+          const value = (box.querySelector('.value')?.textContent || '').trim();
+          if (!value) return;
+          if (box.classList.contains('race-clock') || /time to go|tiempo restante|remaining/.test(label)) {
+            if (/\d/.test(value)) sessionData.timeToGo = value;
+          } else if (/^laps?$|laps to go|vueltas/.test(label)) {
+            if (/^\d+$/.test(value)) sessionData.lapsToGo = value;
+          } else if (/weather|clima/.test(label)) {
+            const t = value.match(/-?\d+(?:[.,]\d+)?/);
+            if (t) sessionData.trackWeatherTemp = t[0].replace(',', '.');
+            const ic = box.querySelector('i[class*="ico-weather-"]');
+            const m = ic && ic.className.match(/ico-weather-([a-z-]+)/i);
+            if (m) sessionData.trackWeatherIcon = m[1].toLowerCase();
+          }
+        });
+        // Tipo de sesión según el ícono (ico-livesession-race / -qualifying / -practice)
+        const typeIcon = document.querySelector('i[class*="ico-livesession-"]');
+        const typeMatch = typeIcon && typeIcon.className.match(/ico-livesession-([a-z]+)/i);
+        if (typeMatch) sessionData.sessionType = typeMatch[1].toLowerCase();
+
         const rows =
           Array.from(
             document.querySelectorAll(
@@ -723,6 +749,16 @@ async function scrapeSpeedhive(inputCode) {
               sector3:
                 sector3 || '',
 
+              // Ícono de la fila: ico-flag-finish (ya recibió la bandera a cuadros), ico-flag-..., ico-status-...
+              status: (() => {
+                const ic = row.querySelector('i[class*="ico-flag-"], i[class*="ico-status-"], i[class*="ico-pit"]');
+                const m = ic && ic.className.match(/ico-(?:flag-|status-)?([a-z0-9]+)/i);
+                return m ? m[1].toLowerCase() : '';
+              })(),
+              finished: !!row.querySelector('i[class*="ico-flag-finish"], i[class*="ico-flag-checkered"]'),
+              // Speedhive pinta de violeta (.purple) la fila de la mejor vuelta de la sesión
+              sourceFastest: /\bpurple\b/.test(row.className),
+
               // Textos de las columnas de auto / equipo / marca / datos extra: de ahí sale la marca del auto
               extra: Array.from(row.querySelectorAll('[class*="datatable-cell-"]'))
                 .filter(c => /make|brand|car|vehicle|team|sponsor|additional|chassis|manufacturer|marca|equipo|class/i.test(c.className))
@@ -855,6 +891,25 @@ async function scrapeRaceMonitor(inputCode) {
         const flagEl = document.querySelector('.timingHeader div[style*="top: 7px"][style*="right: 40px"]');
         sessionData.flag = flagEl ? flagEl.textContent.trim().toLowerCase() : '';
 
+        // Encabezado leído por etiquetas (no depende de las posiciones): "Session:", "Timing:", "Time to go:",
+        // "Laps to go:" y la bandera ("Green", "Yellow", "Red", "Checkered"...). Un tiempo restante en 00:00:00 es una
+        // carrera por vueltas (no se informa).
+        const header = document.querySelector('.timingHeader');
+        if (header) {
+          const leaves = Array.from(header.querySelectorAll('div')).filter(d => !d.children.length).map(d => d.textContent.trim());
+          const after = (label) => { const i = leaves.findIndex(t => t.toLowerCase() === label); return i >= 0 ? (leaves[i + 1] || '') : ''; };
+          if (!sessionData.name) sessionData.name = after('session:');
+          if (sessionData.totalTime === '-' || !sessionData.totalTime) { const t = after('timing:'); if (t) sessionData.totalTime = t; }
+          const ttg = after('time to go:');
+          if (ttg && /[1-9]/.test(ttg)) sessionData.timeToGo = ttg;
+          const ltg = after('laps to go:');
+          if (/^\d+$/.test(ltg)) sessionData.lapsToGo = ltg;
+          if (!sessionData.flag) {
+            const f = leaves.find(t => /^(green|yellow|red|checkered|chequered|white|finish(ed)?|purple|safety ?car|full course yellow)$/i.test(t));
+            if (f) sessionData.flag = f.toLowerCase();
+          }
+        }
+
         const rows = document.querySelectorAll('.racerRowWide, .racerRow, .racerRowStacked');
         rows.forEach(row => {
           const pos = row.querySelector('.position')?.textContent.trim() || '';
@@ -875,6 +930,17 @@ async function scrapeRaceMonitor(inputCode) {
           const bestLap = row.querySelector('.bestTimeValue')?.textContent.trim() || '-';
           let diff = row.querySelector('.diffValue')?.textContent.trim() || '-';
           let gap = row.querySelector('.gapValue')?.textContent.trim() || '-';
+          // En qué vuelta hizo su mejor tiempo
+          const bestLapNum = row.querySelector('.bestLapValue')?.textContent.trim() || '';
+          // Datos adicionales: "CHASIS / PAÍS" (por ejemplo "KOSMIC / USA") o sólo el país
+          const additional = row.querySelector('.additionalData')?.textContent.trim() || '';
+          const addParts = additional.split('/').map(t => t.trim()).filter(Boolean);
+          const country = addParts.length && /^[A-Z]{2,3}$/.test(addParts[addParts.length - 1]) ? addParts[addParts.length - 1] : '';
+          const team = addParts.filter(t => t !== country).join(' / ');
+          // Race Monitor pinta en verde la última vuelta cuando es el mejor tiempo personal
+          const lastEl = row.querySelector('.lastTimeValue');
+          const lastColor = lastEl ? document.defaultView.getComputedStyle(lastEl).color.replace(/\s/g, '') : '';
+          const personalBest = /^rgb\(0,(2[0-9]{2}|1[5-9][0-9]),0\)$/.test(lastColor);
 
           if (pos && (name || number)) {
             // Textos de auto / equipo / marca / datos extra (si la transmisión los muestra): de ahí sale la marca del auto
@@ -886,6 +952,7 @@ async function scrapeRaceMonitor(inputCode) {
             data.push({
               pos, number, name, make: category, laps, lastLap, bestLap, totalTime: '-',
               diff: gap !== '-' && gap !== '' ? gap : diff,
+              bestLapNum, team, nationality: country, personalBest,
               extra
             });
           }

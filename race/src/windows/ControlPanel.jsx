@@ -323,7 +323,7 @@ const GRAPHIC_IDS = [
   'grid', 'finalResults', 'winner', 'flags', 'fastestLap', 'driverInfo', 'battle', 'customZocalo',
   'votingQR', 'votingResults', 'lapCounter', 'virtualChamp', 'startingLights',
   'lapTimesHistory', 'trackAlert', 'penaltyAlert', 'branding', 'evento',
-    'sectors', 'gapChart', 'gainers', 'qualifying', 'trackMap', 'raceNotice', 'circuitIntro', 'circuitRecord', 'lapCompare', 'windVectors', 'formationLap'
+    'sectors', 'gapChart', 'gainers', 'qualifying', 'trackMap', 'raceNotice', 'circuitIntro', 'circuitRecord', 'lapCompare', 'windVectors', 'formationLap', 'sessionStatus'
 ];
 
 const TAB_IDS = ['panel', 'campeonato', 'votaciones', 'sanciones', 'cloud', 'zocalos', 'pilotos', 'sponsors', 'circuito', 'ajustes', 'personalizar', 'editor', 'atajos', 'manual'];
@@ -1122,7 +1122,8 @@ export default function ControlPanel() {
       gainers: () => handleToggleGraphic('gainers'), trackMap: () => handleToggleGraphic('trackMap'),
       circuitIntro: () => handleToggleGraphic('circuitIntro'), circuitRecord: () => handleToggleGraphic('circuitRecord'),
       lapCompare: handleToggleLapCompare, windVectors: () => handleToggleGraphic('windVectors'),
-      formationLap: () => handleToggleGraphic('formationLap')
+      formationLap: () => handleToggleGraphic('formationLap'),
+      sessionStatus: () => handleToggleGraphic('sessionStatus')
     };
   });
 
@@ -1332,6 +1333,7 @@ export default function ControlPanel() {
               </div>
                           {/* VUELTA DE FORMACIÓN: la categoría que está girando (la de CATEGORÍA o la que informa la fuente) */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginBottom: '15px' }}>
+              <button onClick={() => handleToggleGraphic('sessionStatus')} title={t('panel.sessionStatusTitle')} style={btnStyle(!!graphics.sessionStatus)}><Icon name="timer" />{t('graphics.sessionStatus')}</button>
               <button onClick={() => handleToggleGraphic('formationLap')} title={t('panel.formationTitle')} style={btnStyle(!!graphics.formationLap)}><Icon name="flag" />{t('graphics.formationLap')}</button>
               <input
                 name="formationLapCategory" value={config.formationLapCategory || ''} onChange={handleChange} onBlur={handleSave}

@@ -10,6 +10,9 @@ import { photosEnabled } from '../utils/photos';
 import { useSuitColors } from '../utils/suitColor';
 import { makeFx } from '../utils/contentAnim';
 import { ChangeTick, ChangeSweep } from '../components/ChangeAnim';
+import FlagSwatch from '../components/FlagSwatch';
+import { currentFlag, sessionProgress } from '../utils/flagState';
+import { getSlimPalette, textOnColor, ELITE_FONT } from '../utils/elite';
 
 const PODIUM_COLORS = { 1: '#ffd700', 2: '#c0c0c0', 3: '#cd7f32' };
 
@@ -75,6 +78,7 @@ export default function Ticker({ drivers, isVisible, config, id = 'ticker', sess
   const isBoard = tickerFormat === 'board';
   const isTab = tickerFormat === 'tab';
   const isCapsules = tickerFormat === 'capsules';
+  const isSlimBoard = tickerFormat === 'slimBoard';
   const skin = getSkinStyle(tickerFormat, { themeMain, themeAccent });
   // Nombre del evento / sesión (si es largo, se desplaza dentro de su placa)
   const eventName = tickerTitle(config, id);
@@ -97,6 +101,13 @@ export default function Ticker({ drivers, isVisible, config, id = 'ticker', sess
   const laps = sessionInfo?.laps || '-';
   const totalTime = sessionInfo?.totalTime || '-';
   const showPhotos = photosEnabled(config, id);
+  // Bandera vigente (la del PANEL o la del cronometraje): se ve en el bloque de datos de todos los formatos
+  const flag = currentFlag(sessionInfo, config);
+  // Vuelta / total y tiempo restante, si la fuente los informa (Race Monitor, Speedhive)
+  const prog = sessionProgress(sessionInfo);
+  const lapsOf = prog.total !== null ? `/${prog.total}` : '';
+  const timeTitle = prog.timeToGo ? 'RESTA' : 'TIEMPO';
+  const timeShownValue = prog.timeToGo || totalTime;
 
   // Rotación automática para el formato "Spotlight" (un piloto a la vez, en grande)
   const [spotlightIndex, setSpotlightIndex] = useState(0);
@@ -113,7 +124,7 @@ export default function Ticker({ drivers, isVisible, config, id = 'ticker', sess
   const BOARD_PER_PAGE = 12;
   const [boardPage, setBoardPage] = useState(0);
   // Sin formato tabla o con una sola página, vuelve a la primera (ajuste durante el render, sin efecto en cascada)
-  const boardSinglePage = !isBoard || drivers.length <= BOARD_PER_PAGE;
+  const boardSinglePage = !(isBoard || isSlimBoard) || drivers.length <= BOARD_PER_PAGE;
   if (boardSinglePage && boardPage !== 0) setBoardPage(0);
   useEffect(() => {
     if (boardSinglePage) return undefined;
@@ -175,11 +186,13 @@ export default function Ticker({ drivers, isVisible, config, id = 'ticker', sess
               alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'hidden'
             }}>
               <span style={{ display: 'inline-block', color: themeNormalText, fontWeight: '900', fontSize: '30px', lineHeight: '1', ...fx.num(1) }}>
-                <ChangeTick value={laps} enabled={fx.on} />
+                <ChangeTick value={laps} enabled={fx.on} />{lapsOf && <span style={{ fontSize: '16px', color: themeTitleText }}>{lapsOf}</span>}
               </span>
               <span style={{ display: 'inline-block', color: themeTitleText, fontWeight: 'bold', fontSize: '11px', letterSpacing: '1px', marginTop: '2px', ...fx.text(2) }}>
                 VUELTAS
               </span>
+              <span style={{ display: timeShownValue !== '-' ? 'inline-block' : 'none', color: themeNormalText, fontWeight: 'bold', fontSize: '13px', fontFamily: 'monospace', marginTop: '4px', ...fx.text(3) }}>{prog.timeToGo ? `RESTA ${prog.timeToGo}` : totalTime}</span>
+              <FlagSwatch flag={flag} width={8} height="100%" radius={0} style={{ position: 'absolute', right: 0, top: 0, bottom: 0 }} />
               <ChangeSweep value={laps} enabled={fx.on} />
             </div>
           </div>
@@ -236,6 +249,94 @@ export default function Ticker({ drivers, isVisible, config, id = 'ticker', sess
     );
   }
 
+  // FORMATO TABLERO FINO: como el tablero 3x4 pero bajito (filas de 24 px), con los colores de PERSONALIZAR > COLORES.
+  // Placa izquierda: logo de la categoría (o nombre), bandera vigente, sesión, vuelta y tiempo. Si hay más de 12 pilotos
+  // pasa de página sola (cada 8 s).
+  if (isSlimBoard) {
+    const pal = getSlimPalette(config);
+    const COLS = 3, ROWS = 4, ROW_H = 24;
+    const perPage = COLS * ROWS;
+    const totalPages = Math.max(1, Math.ceil(drivers.length / perPage));
+    const pageDrivers = drivers.slice(boardPage * perPage, boardPage * perPage + perPage);
+    const columns = Array.from({ length: COLS }, (_, c) => pageDrivers.slice(c * ROWS, c * ROWS + ROWS));
+    const qualifying = !!sessionInfo?.qualifying;
+    const sessionLabel = qualifying ? 'CLASIFICACIÓN' : (sessionInfo?.name ? String(sessionInfo.name).split(/\s+[-–—]\s+/).pop() : 'CARRERA');
+    const H = ROWS * ROW_H;
+    const posBg = pal.red; const numBg = pal.accent;
+    return (
+      <div style={{
+        position: 'absolute', left: `${pos.x}px`, top: `${pos.y}px`,
+        transformOrigin: 'top left', zIndex: 20, width: `${getCanvasSize(config).width}px`,
+        transition: `all ${animDur}s cubic-bezier(0.175, 0.885, 0.32, 1.275)`,
+        opacity: isVisible || animStyle === 'roll' ? 1 : 0,
+        transform: isVisible || animStyle === 'roll' ? `scale(${pos.scale}) translateY(0)` : transformHidden, ...getRollClip(animStyle, isVisible),
+        pointerEvents: isVisible ? 'auto' : 'none', fontFamily: ELITE_FONT, textTransform: 'uppercase'
+      }}>
+        <div style={{
+          position: 'relative', display: 'flex', width: '100%', height: `${H}px`,
+          backgroundColor: hasCustomBg ? 'transparent' : pal.background,
+          backgroundImage: hasCustomBg ? `url(${customBg})` : 'none', backgroundSize: '100% 100%',
+          borderTop: hasCustomBg ? 'none' : `3px solid ${pal.red}`, borderRadius: bRad, overflow: 'hidden', boxSizing: 'content-box',
+          boxShadow: '0 -6px 20px rgba(0,0,0,0.35)'
+        }}>
+          {/* PLACA: categoría + bandera + sesión / vuelta / tiempo */}
+          <div style={{ width: '250px', flexShrink: 0, display: 'flex', flexDirection: 'column', backgroundColor: hasCustomBg ? 'rgba(0,0,0,0.4)' : pal.deep }}>
+            <div style={{ height: `${ROW_H * 2}px`, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 10px', ...fx.text(0) }}>
+              {config?.categoryLogo
+                ? <img src={config.categoryLogo} alt="" style={{ maxHeight: `${ROW_H * 2 - 8}px`, maxWidth: '220px', objectFit: 'contain' }} />
+                : <MarqueeText text={eventName || 'CATEGORÍA'} align="center" style={{ color: pal.title, fontWeight: 800, fontSize: '18px', lineHeight: '1.2' }} />}
+            </div>
+            <div style={{ height: `${ROW_H * 2}px`, display: 'flex', alignItems: 'center', gap: '8px', padding: '0 10px', backgroundColor: pal.panel, position: 'relative', overflow: 'hidden' }}>
+              {flag ? <FlagSwatch flag={flag} width={16} height={ROW_H * 2 - 12} /> : <span style={{ width: '16px', height: `${ROW_H * 2 - 12}px`, backgroundColor: 'rgba(255,255,255,0.15)', borderRadius: '2px', flexShrink: 0 }} />}
+              <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.1, minWidth: 0, flex: 1, ...fx.text(1) }}>
+                <span style={{ color: pal.text, fontSize: '13px', fontWeight: 700, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  {flag && flag.key !== 'green' ? flag.label : sessionLabel}
+                </span>
+                <span style={{ display: 'flex', gap: '10px', color: pal.muted, fontSize: '13px', fontWeight: 600, whiteSpace: 'nowrap' }}>
+                  {showLaps && laps !== '-' && <span>V <span style={{ color: pal.text }}><ChangeTick value={laps} enabled={fx.on} /></span>{lapsOf}</span>}
+                  {showTime && <span style={{ fontFamily: ELITE_FONT }}>{prog.timeToGo ? `RESTA ${prog.timeToGo}` : totalTime}</span>}
+                </span>
+              </div>
+              <ChangeSweep value={laps} enabled={fx.on} />
+            </div>
+          </div>
+
+          {/* GRILLA 3 x 4 */}
+          <div key={boardPage} style={{ flex: 1, display: 'flex', minWidth: 0 }}>
+            {columns.map((col, colIdx) => (
+              <div key={colIdx} style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', borderLeft: `1px solid ${'rgba(255,255,255,0.08)'}` }}>
+                {col.map((driver, rowIdx) => {
+                  const isLeader = String(driver.pos) === '1';
+                  const time = isLeader ? (qualifying ? (driver.bestLap || '-') : (driver.totalTime && driver.totalTime !== '-' ? driver.totalTime : 'LÍDER')) : (driver.diff && driver.diff !== '-' ? driver.diff : (driver.gap || '-'));
+                  return (
+                    <div key={driver.number || rowIdx} style={{
+                      height: `${ROW_H}px`, display: 'flex', alignItems: 'center', gap: '7px', paddingRight: '10px',
+                      borderBottom: rowIdx < ROWS - 1 ? '1px solid rgba(255,255,255,0.06)' : 'none',
+                      ...fx.row(colIdx * ROWS + rowIdx, pageDrivers.length, 0.25)
+                    }}>
+                      <span style={{ width: '24px', height: '100%', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: posBg, color: textOnColor(posBg), fontSize: '13px', fontWeight: 800 }}>{driver.pos}</span>
+                      <span style={{ width: '40px', flexShrink: 0, textAlign: 'center', backgroundColor: numBg, color: textOnColor(numBg), fontSize: '13px', fontWeight: 800, lineHeight: '18px', ...sc(driver.number) }}>{driver.number}</span>
+                      <span style={{ flex: 1, minWidth: 0, color: pal.text, fontSize: '15px', fontWeight: 700, letterSpacing: '0.3px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{driver.name}</span>
+                      <span style={{ width: '26px', flexShrink: 0, display: 'flex', justifyContent: 'center' }}><BrandLogo brand={driver.brand} config={config} size={16} /></span>
+                      {renderArrow(driver, '11px')}
+                      <span style={{ minWidth: '72px', flexShrink: 0, textAlign: 'right', fontSize: '14px', fontWeight: 600, color: isLeader ? pal.cut : pal.text }}>{driver.dsq ? 'DSQ' : time}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            ))}
+          </div>
+
+          {totalPages > 1 && (
+            <div style={{ position: 'absolute', bottom: '3px', left: '226px', fontSize: '9px', color: pal.muted, fontWeight: 'bold', letterSpacing: '1px' }}>
+              {boardPage + 1}/{totalPages}
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
   // ---------- BLOQUES DE DATOS (nombre de la categoría / carrera, vueltas, tiempo) ----------
   const plateRadius = isCapsules ? '999px' : 0;
   const eventPlate = (key, i) => showEvent && !hasCustomBg && (
@@ -250,24 +351,26 @@ export default function Ticker({ drivers, isVisible, config, id = 'ticker', sess
       />
     </div>
   );
-  const statsPlate = (key, i, side) => (showLaps || showTime) && (
+  const statsPlate = (key, i, side) => (showLaps || showTime || flag) && (
     <div key={key} style={{
       height: '100%', padding: '0 20px', position: 'relative', overflow: 'hidden', borderRadius: plateRadius,
       backgroundColor: hasCustomBg ? 'transparent' : themeHeaderBg,
       borderLeft: hasCustomBg || isCapsules || side === 'left' ? 'none' : `3px solid ${themeMain}`,
       borderRight: side === 'left' && !hasCustomBg && !isCapsules ? `3px solid ${themeMain}` : 'none',
-      display: 'flex', flexDirection: 'column', justifyContent: 'center', minWidth: '130px', zIndex: 10, flexShrink: 0, boxSizing: 'border-box', ...fx.text(i)
+      display: 'flex', flexDirection: 'column', justifyContent: 'center', minWidth: '130px', zIndex: 10, flexShrink: 0, boxSizing: 'border-box',
+      paddingLeft: flag ? '30px' : '20px', ...fx.text(i)
     }}>
+      <FlagSwatch flag={flag} width={10} height="70%" style={{ position: 'absolute', left: '10px', top: '15%' }} />
       {showLaps && (
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '12px', marginBottom: showTime ? '4px' : 0, gap: '15px' }}>
           <span style={{ color: themeTitleText, fontWeight: 'bold' }}>VUELTAS</span>
-          <span style={{ color: themeNormalText, fontWeight: 'bold', fontSize: showTime ? '12px' : '20px' }}><ChangeTick value={laps} enabled={fx.on} /></span>
+          <span style={{ color: themeNormalText, fontWeight: 'bold', fontSize: showTime ? '12px' : '20px' }}><ChangeTick value={laps} enabled={fx.on} />{lapsOf}</span>
         </div>
       )}
       {showTime && (
         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', gap: '15px' }}>
-          <span style={{ color: themeTitleText, fontWeight: 'bold' }}>TIEMPO</span>
-          <span style={{ color: themeNormalText, fontWeight: 'bold' }}>{totalTime}</span>
+          <span style={{ color: themeTitleText, fontWeight: 'bold' }}>{timeTitle}</span>
+          <span style={{ color: themeNormalText, fontWeight: 'bold' }}>{timeShownValue}</span>
         </div>
       )}
       <ChangeSweep value={laps} enabled={fx.on} />
@@ -293,6 +396,7 @@ export default function Ticker({ drivers, isVisible, config, id = 'ticker', sess
           <span style={{ display: 'inline-block', overflow: 'hidden', textOverflow: 'ellipsis', ...fx.text(1) }}>{eventName}</span>
         </span>
       )}
+      {flag && <FlagSwatch flag={flag} width="auto" height="100%" radius={0} label={flag.short} fontSize={12} style={{ padding: '0 4px' }} />}
       {(showLaps || showTime) && (
         <span style={{
           position: 'relative', overflow: 'hidden', display: 'flex', alignItems: 'center', gap: '16px', padding: '0 16px',
@@ -301,13 +405,13 @@ export default function Ticker({ drivers, isVisible, config, id = 'ticker', sess
           {showLaps && (
             <span style={{ display: 'inline-flex', alignItems: 'baseline', gap: '6px', ...fx.text(2) }}>
               <span style={{ color: themeTitleText, fontWeight: 'bold', fontSize: '11px', letterSpacing: '1px' }}>VUELTA</span>
-              <span style={{ color: themeNormalText, fontWeight: 900, fontSize: '17px' }}><ChangeTick value={laps} enabled={fx.on} /></span>
+              <span style={{ color: themeNormalText, fontWeight: 900, fontSize: '17px' }}><ChangeTick value={laps} enabled={fx.on} />{lapsOf}</span>
             </span>
           )}
           {showTime && (
             <span style={{ display: 'inline-flex', alignItems: 'baseline', gap: '6px', ...fx.text(3) }}>
-              <span style={{ color: themeTitleText, fontWeight: 'bold', fontSize: '11px', letterSpacing: '1px' }}>TIEMPO</span>
-              <span style={{ color: themeNormalText, fontWeight: 900, fontSize: '15px', fontFamily: 'monospace' }}>{totalTime}</span>
+              <span style={{ color: themeTitleText, fontWeight: 'bold', fontSize: '11px', letterSpacing: '1px' }}>{timeTitle}</span>
+              <span style={{ color: themeNormalText, fontWeight: 900, fontSize: '15px', fontFamily: 'monospace' }}>{timeShownValue}</span>
             </span>
           )}
           <ChangeSweep value={laps} enabled={fx.on} />

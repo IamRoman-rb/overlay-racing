@@ -1,4 +1,6 @@
 // src/graphics/LapCounter.jsx
+import FlagSwatch from '../components/FlagSwatch';
+import { currentFlag, sessionProgress } from '../utils/flagState';
 import { getSkinStyle } from '../utils/skinStyles';
 import { getAnimDuration, getRollClip } from '../utils/animationTiming';
 import CategoryTag from '../components/CategoryTag';
@@ -26,8 +28,15 @@ export default function LapCounter({ isVisible, config, sessionInfo, id = 'lapCo
   // Al cambiar de vuelta el número viejo cae y entra el nuevo con un golpe, y un brillo cruza la caja
   const fx = makeFx(config, id, isVisible);
   const laps = sessionInfo?.laps || '0';
-  const lapNum = <ChangeTick value={laps} enabled={fx.on} />;
+  // Vuelta / total (si la fuente informa las que faltan): "6/10"
+  const prog = sessionProgress(sessionInfo);
+  const lapNum = <><ChangeTick value={laps} enabled={fx.on} />{prog.total !== null && <span style={{ fontSize: '0.45em', opacity: 0.75 }}>/{prog.total}</span>}</>;
   const sweep = <ChangeSweep value={laps} enabled={fx.on} />;
+  // Bandera vigente (PANEL o cronometraje) en una franja abajo, y el tiempo de la sesión debajo del número
+  const flag = currentFlag(sessionInfo, config);
+  const flagBar = flag ? <FlagSwatch flag={flag} width="100%" height={7} radius={0} /> : null;
+  const totalTime = prog.timeToGo ? `RESTA ${prog.timeToGo}` : (sessionInfo?.totalTime && sessionInfo.totalTime !== '-' ? sessionInfo.totalTime : '');
+  const timeLine = (color, size = '12px') => (totalTime ? <span style={{ display: 'block', color, fontSize: size, fontWeight: 'bold', fontFamily: 'monospace', marginTop: '2px' }}>{totalTime}</span> : null);
 
   // Animación que viene desde arriba por estar en la parte superior
   let transformHidden = `scale(${pos.scale}) translateY(-30px)`;
@@ -62,7 +71,9 @@ export default function LapCounter({ isVisible, config, sessionInfo, id = 'lapCo
           <span style={{ display: 'inline-block', color: themeNumberText, fontSize: '34px', fontWeight: '900', textShadow: '2px 2px 4px rgba(0,0,0,0.5)', ...fx.num(1) }}>
             {lapNum}
           </span>
+          {timeLine(themeTitleText)}
         </div>
+        {flagBar}
         {sweep}
       </div>
     );
@@ -78,7 +89,7 @@ export default function LapCounter({ isVisible, config, sessionInfo, id = 'lapCo
           backgroundColor: hasCustomBg ? 'transparent' : themeBg,
           backgroundImage: hasCustomBg ? `url(${customBg})` : 'none',
           backgroundSize: '100% 100%', backgroundRepeat: 'no-repeat', backgroundPosition: 'center',
-          border: hasCustomBg ? 'none' : `4px solid ${themeMain}`,
+          border: hasCustomBg ? 'none' : `4px solid ${flag && !flag.checker && !flag.stripes ? flag.color : themeMain}`,
           boxShadow: hasCustomBg ? 'none' : '0 10px 30px rgba(0,0,0,0.8)',
           position: 'relative', overflow: 'hidden'
         }}>
@@ -101,6 +112,7 @@ export default function LapCounter({ isVisible, config, sessionInfo, id = 'lapCo
           <span style={{ display: 'inline-block', color: themeNumberText, fontSize: '40px', fontWeight: '900', lineHeight: 1, textShadow: '2px 2px 6px rgba(0,0,0,0.9)', ...fx.num(1) }}>
             {lapNum}
           </span>
+          {flag && <FlagSwatch flag={flag} width="auto" height={18} label={flag.short} fontSize={10} style={{ marginTop: '4px' }} />}
         </div>
       </div>
     );
@@ -120,11 +132,13 @@ export default function LapCounter({ isVisible, config, sessionInfo, id = 'lapCo
       backdropFilter: skin?.backdropFilter,
       overflow: 'hidden', borderTop: skin ? skin.border : (hasCustomBg ? 'none' : `5px solid ${themeMain}`),
     }}>
-      <div style={{ padding: '8px 20px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+      <div style={{ padding: '8px 20px', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
         <span style={{ display: 'inline-block', color: themeNumberText, fontSize: '38px', fontWeight: '900', textShadow: '2px 2px 4px rgba(0,0,0,0.5)', ...fx.num(0) }}>
           {lapNum}
         </span>
+        {timeLine(themeTitleText)}
       </div>
+      {flagBar}
       {sweep}
     </div>
   );

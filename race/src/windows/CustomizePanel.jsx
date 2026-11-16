@@ -64,12 +64,15 @@ const RACE_GRAPHIC_FORMATS = {
   circuitRecord: [['elite', 'Elite']],
   lapCompare: [['standard', 'Clásico (Tiempos + Diferencias)'], ['compact', 'Compacto (Columnas Angostas)'], ['minimal', 'Minimalista (Sin Caja)']],
   windVectors: [['standard', 'Clásico (Flechas)'], ['flow', 'Profesional (Corrientes con Estela)'], ['dense', 'Denso (Muchas Flechas Chicas)'], ['light', 'Liviano (Líneas Finas)']],
+  sessionStatus: [['bar', 'Barra (Todos los Datos en una Franja)'], ['card', 'Tarjeta (Compacta, Dos Columnas)'], ['minimal', 'Minimalista (Sin Caja)']],
   formationLap: [['standard', 'Clásico (Tarjeta con la Categoría)'], ['compact', 'Compacto (Una Línea)'], ['banner', 'Banner (Barra de Todo el Ancho)'], ['elite', 'Elite (Como la Torre Elite)'], ['minimal', 'Minimalista (Sin Caja)']]
 };
 // Gráficas que sólo existen en estilo Elite (no llevan los skins comunes)
 const ELITE_ONLY = ['circuitIntro', 'circuitRecord'];
+// Formato por defecto distinto de 'standard'
+const DEFAULT_FORMAT = { sessionStatus: 'bar' };
 // Gráficas sin los skins comunes (no tienen caja)
-const NO_SKINS = [...ELITE_ONLY, 'windVectors'];
+const NO_SKINS = [...ELITE_ONLY, 'windVectors', 'sessionStatus'];
 // Gráficas que pueden mostrar las fotos de los pilotos (config.showPhotos_<id>)
 const PHOTO_GRAPHICS = ['sectors', 'gapChart', 'gainers', 'raceNotice', 'lapCompare', 'qualifying', 'lapTimesHistory', 'ticker'];
 // Gráficas con pilotos que entran con la aparición de filas configurable (como la torre). La torre y los resultados
@@ -430,7 +433,7 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
     'grid', 'finalResults', 'winner', 'flags', 'fastestLap', 'driverInfo', 'battle', 'customZocalo',
     'votingQR', 'votingResults', 'lapCounter', 'virtualChamp', 'pitStop', 'startingLights',
     'lapTimesHistory', 'trackAlert', 'penaltyAlert', 'branding', 'evento',
-    'sectors', 'gapChart', 'gainers', 'qualifying', 'trackMap', 'raceNotice', 'circuitIntro', 'circuitRecord', 'lapCompare', 'windVectors', 'sponsorLive', 'formationLap'
+    'sectors', 'gapChart', 'gainers', 'qualifying', 'trackMap', 'raceNotice', 'circuitIntro', 'circuitRecord', 'lapCompare', 'windVectors', 'sponsorLive', 'formationLap', 'sessionStatus'
   ];
   const allGraphics = GRAPHIC_IDS.map(id => ({ id, label: t(`graphics.${id}`) }));
   const shownGraphics = allGraphics.filter(g => matchesSearch(graphicQuery, g.label, g.id));
@@ -848,7 +851,7 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
           <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', marginBottom: '30px', backgroundColor: '#111', padding: '15px', borderRadius: '8px', border: `1px solid ${colors.border}` }}>
             <label style={{ fontSize: '10px', color: colors.textMuted, fontWeight: 'bold' }}>{t('personalizar.formatOf', { name: t(`graphics.${selectedGraphic}`) })}</label>
             <select
-              value={config[`${selectedGraphic}Format`] || (ELITE_ONLY.includes(selectedGraphic) ? 'elite' : 'standard')}
+              value={config[`${selectedGraphic}Format`] || DEFAULT_FORMAT[selectedGraphic] || (ELITE_ONLY.includes(selectedGraphic) ? 'elite' : 'standard')}
               onChange={(e) => onConfigChange(`${selectedGraphic}Format`, e.target.value)}
               style={{ ...inputStyle, padding: '10px', fontSize: '11px', cursor: 'pointer', border: `1px solid ${colors.border}` }}
             >
@@ -1040,12 +1043,23 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
               <option value="podium">Podio (Colores Oro/Plata/Bronce)</option>
               <option value="spotlight">Spotlight (Un Piloto a la Vez)</option>
               <option value="board">Tablero (3 Columnas x 4 Filas, Estilo TC)</option>
+              <option value="slimBoard">Tablero Fino (3 x 4 Bajito, Colores de PERSONALIZAR)</option>
               <option value="tab">Pestaña (Datos Arriba a la Izquierda, Tira Fina)</option>
               <option value="capsules">Cápsulas (Pilotos en Píldoras Flotantes, Sin Barra)</option>
               <option value="twoRows">Doble Línea (Datos en una Franja Arriba de los Pilotos)</option>
               {renderSkinOptions()}
             </select>
-            {config.tickerFormat !== 'board' && (
+            {config.tickerFormat === 'slimBoard' && (
+              <div style={{ display: 'flex', gap: '14px', flexWrap: 'wrap', marginTop: '12px' }}>
+                {[['tickerShowLaps', 'tickerShowLaps'], ['tickerShowTime', 'tickerShowTime']].map(([key, label]) => (
+                  <label key={key} style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', fontWeight: 'bold', color: colors.textMain, cursor: 'pointer' }}>
+                    <input type="checkbox" checked={config[key] !== false} onChange={(e) => onConfigChange(key, e.target.checked)} style={{ cursor: 'pointer' }} />
+                    {t(`personalizar.${label}`)}
+                  </label>
+                ))}
+              </div>
+            )}
+            {config.tickerFormat !== 'board' && config.tickerFormat !== 'slimBoard' && (
               <>
                 <label style={{ fontSize: '10px', color: colors.textMuted, fontWeight: 'bold', marginTop: '15px' }}>{t('personalizar.tickerInfoPos')}</label>
                 <select value={config.tickerInfoPos || 'auto'} onChange={(e) => onConfigChange('tickerInfoPos', e.target.value)}

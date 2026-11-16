@@ -20,5 +20,5 @@ export const defaultPositions = {
   trackMap: { x: 1460, y: 610, scale: 1 }, raceNotice: { x: 760, y: 820, scale: 1 },
   circuitIntro: { x: 470, y: 230, scale: 1 }, circuitRecord: { x: 1500, y: 700, scale: 1 },
   lapCompare: { x: 640, y: 880, scale: 1 }, windVectors: { x: 0, y: 0, scale: 1 }, sponsorLive: { x: 1560, y: 40, scale: 1 },
-  formationLap: { x: 660, y: 60, scale: 1 }
+  formationLap: { x: 660, y: 60, scale: 1 }, sessionStatus: { x: 560, y: 20, scale: 1 }
 };

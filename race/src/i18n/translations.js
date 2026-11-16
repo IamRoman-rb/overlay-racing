@@ -27,7 +27,7 @@ export const translations = {
       ajustes: 'AJUSTES', personalizar: 'PERSONALIZAR', editor: 'EDITOR', manual: 'MANUAL', atajos: 'ATAJOS'
     },
     graphics: {
-      lapCompare: 'ÚLTIMAS VUELTAS', windVectors: 'VECTORES DE VIENTO', sponsorLive: 'SPONSOR AL AIRE', formationLap: 'VUELTA DE FORMACIÓN',
+      lapCompare: 'ÚLTIMAS VUELTAS', windVectors: 'VECTORES DE VIENTO', sponsorLive: 'SPONSOR AL AIRE', formationLap: 'VUELTA DE FORMACIÓN', sessionStatus: 'ESTADO DE SESIÓN',
       relator: 'RELATOR', comentarista: 'COMENTARISTA', notero1: 'NOTERO 1', notero2: 'NOTERO 2',
       circuito: 'CIRCUITO', clima: 'CLIMA', ticker: 'TIRA INFERIOR', tower: 'TORRE POSICIONES',
       grid: 'GRILLA PARTIDA', finalResults: 'RESULTADOS FINALES', winner: 'GANADOR',
@@ -74,6 +74,7 @@ export const translations = {
       rights: 'Todos los derechos reservados.', registered: 'Obra registrada en la Dirección Nacional del Derecho de Autor · Registro {registry}'
     },
     panel: {
+      sessionStatusTitle: 'Bandera vigente, vuelta (y faltantes), tiempo restante o transcurrido, mejor vuelta y temperatura en una sola gráfica',
       formationTitle: 'Saca al aire la categoría que está en vuelta de formación con el texto VUELTA DE FORMACIÓN', formationCategoryPlaceholder: 'Categoría (se toma sola)', formationCategoryHint: 'Vacío = la categoría actual (PANEL > CATEGORÍA o la que informa la fuente). Escribí otra sólo si la que gira es distinta.', formationInTower: 'Mostrarlo también en la torre',
       windVectorsTitle: 'Flechas de viento en toda la pantalla, con la dirección y la fuerza del clima cargado', introModeTitle: 'Cómo se muestra el circuito en la presentación', introWeatherFx: 'CLIMA ANIMADO', introWeatherFxTitle: 'Lluvia, nubes, nieve, niebla o tormenta de fondo según el clima cargado', introModeStatic: 'Circuito completo', introModeTour: 'Vuelta en primera persona', introModeCurves: 'Curva por curva', introTourSec: 'SEG. POR VUELTA',
       battleRecommended: 'Batalla más cercana:', battleRecommendedInfo: '{front} vs {back} · intervalo {gap} s',
@@ -458,7 +459,7 @@ export const translations = {
       ajustes: 'SETTINGS', personalizar: 'CUSTOMIZE', editor: 'EDITOR', manual: 'MANUAL', atajos: 'SHORTCUTS'
     },
     graphics: {
-      lapCompare: 'LAST LAPS', windVectors: 'WIND VECTORS', sponsorLive: 'SPONSOR ON AIR', formationLap: 'FORMATION LAP',
+      lapCompare: 'LAST LAPS', windVectors: 'WIND VECTORS', sponsorLive: 'SPONSOR ON AIR', formationLap: 'FORMATION LAP', sessionStatus: 'SESSION STATUS',
       relator: 'COMMENTATOR', comentarista: 'CO-COMMENTATOR', notero1: 'REPORTER 1', notero2: 'REPORTER 2',
       circuito: 'TRACK', clima: 'WEATHER', ticker: 'BOTTOM TICKER', tower: 'POSITION TOWER',
       grid: 'STARTING GRID', finalResults: 'FINAL RESULTS', winner: 'WINNER',
@@ -505,6 +506,7 @@ export const translations = {
       rights: 'All rights reserved.', registered: 'Work registered with Argentina’s National Copyright Office (DNDA) · Registration {registry}'
     },
     panel: {
+      sessionStatusTitle: 'Current flag, lap (and laps to go), time to go or elapsed, fastest lap and temperature in a single graphic',
       formationTitle: 'Puts on air the category on its formation lap with the text FORMATION LAP', formationCategoryPlaceholder: 'Category (automatic)', formationCategoryHint: 'Empty = the current category (PANEL > CATEGORY or the one reported by the source). Type another only if a different one is running.', formationInTower: 'Also show it in the tower',
       windVectorsTitle: 'Full-screen wind arrows using the direction and strength of the loaded weather', introModeTitle: 'How the track is shown in the intro', introWeatherFx: 'ANIMATED WEATHER', introWeatherFxTitle: 'Rain, clouds, snow, fog or storm in the background according to the loaded weather', introModeStatic: 'Whole track', introModeTour: 'First-person lap', introModeCurves: 'Corner by corner', introTourSec: 'SEC. PER LAP',
       battleRecommended: 'Closest battle:', battleRecommendedInfo: '{front} vs {back} · gap {gap} s',

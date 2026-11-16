@@ -120,7 +120,8 @@ const defaultPositions = {
   lapCompare: { x: 640, y: 880, scale: 1 },
   windVectors: { x: 0, y: 0, scale: 1 },
   sponsorLive: { x: 1560, y: 40, scale: 1 },
-  formationLap: { x: 660, y: 60, scale: 1 }
+  formationLap: { x: 660, y: 60, scale: 1 },
+  sessionStatus: { x: 560, y: 20, scale: 1 }
 };
 
 if (!fs.existsSync(posPath)) fs.writeFileSync(posPath, JSON.stringify(defaultPositions, null, 2));

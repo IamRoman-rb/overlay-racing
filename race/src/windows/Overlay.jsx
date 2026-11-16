@@ -35,6 +35,7 @@ import CircuitRecord from '../graphics/CircuitRecord';
 import LapCompare from '../graphics/LapCompare';
 import WindVectors from '../graphics/WindField';
 import FormationLap from '../graphics/FormationLap';
+import SessionStatus from '../graphics/SessionStatus';
 import SponsorLive from '../graphics/SponsorLive';
 import LayoutEdits from '../components/LayoutEdits';
 import { getCanvasSize } from '../utils/canvasSize';
@@ -302,6 +303,9 @@ export default function Overlay() {
   // "125cc 4T Libre - 1era Manga"); si todavía no hay sesión cargada, el campeonato escrito a mano.
   const eventName = (sessionInfo && sessionInfo.name) || safeConfig.campeonato || '';
   const combinedConfig = { ...safeConfig, positions: positions || {}, eventName };
+  // Datos de la sesión + las banderas puestas a mano en el PANEL: así las gráficas (tira, torre, vueltas...) muestran la
+  // bandera vigente (ver utils/flagState).
+  const liveSession = useMemo(() => ({ ...(sessionInfo || {}), manualFlags: activeFlags }), [sessionInfo, activeFlags]);
   const canvas = getCanvasSize(safeConfig); // tamaño del overlay (por defecto 1920x1080)
   const summary = editSummary(config);
   const hasConfig = !!(config && Object.keys(config).length);
@@ -354,10 +358,10 @@ export default function Overlay() {
         <CustomZocalo isVisible={customZocaloData?.isVisible} title={customZocaloData?.title} text={customZocaloData?.text} config={combinedConfig} />
       </LayoutEdits>
       <LayoutEdits id="ticker" config={combinedConfig} visible={!!(isTickerVisible)}>
-        <Ticker drivers={formattedDrivers} config={combinedConfig} isVisible={isTickerVisible} sessionInfo={sessionInfo} />
+        <Ticker drivers={formattedDrivers} config={combinedConfig} isVisible={isTickerVisible} sessionInfo={liveSession} />
       </LayoutEdits>
       <LayoutEdits id="tower" config={combinedConfig} visible={!!(isTowerVisible)}>
-        <TimingTower drivers={formattedDrivers} config={combinedConfig} isVisible={isTowerVisible} sessionInfo={sessionInfo} onboard={towerOnboard?.number || null} formationLap={!!graphics?.formationLap} />
+        <TimingTower drivers={formattedDrivers} config={combinedConfig} isVisible={isTowerVisible} sessionInfo={liveSession} onboard={towerOnboard?.number || null} formationLap={!!graphics?.formationLap} />
       </LayoutEdits>
       <LayoutEdits id="battle" config={combinedConfig} visible={!!(battleData?.isVisible)}>
         <Battle drivers={formattedDrivers} config={combinedConfig} isVisible={battleData?.isVisible} battleFocusPos={battleData?.pos} />
@@ -366,10 +370,10 @@ export default function Overlay() {
         <StartingGrid drivers={formattedDrivers} config={combinedConfig} isVisible={isGridVisible} />
       </LayoutEdits>
       <LayoutEdits id="finalResults" config={combinedConfig} visible={!!(isFinalResultsVisible)}>
-        <FinalResults drivers={formattedDrivers} config={combinedConfig} isVisible={isFinalResultsVisible} navSignal={finalResultsNav} sessionInfo={sessionInfo} />
+        <FinalResults drivers={formattedDrivers} config={combinedConfig} isVisible={isFinalResultsVisible} navSignal={finalResultsNav} sessionInfo={liveSession} />
       </LayoutEdits>
       <LayoutEdits id="winner" config={combinedConfig} visible={!!(isWinnerVisible)}>
-        <WinnerGraphic driver={formattedWinnerData} config={combinedConfig} isVisible={isWinnerVisible} sessionInfo={sessionInfo} />
+        <WinnerGraphic driver={formattedWinnerData} config={combinedConfig} isVisible={isWinnerVisible} sessionInfo={liveSession} />
       </LayoutEdits>
       <LayoutEdits id="flags" config={combinedConfig} visible={!!(Object.values(activeFlags).some(Boolean))}>
         <Flags activeFlags={activeFlags} config={combinedConfig} />
@@ -407,7 +411,7 @@ export default function Overlay() {
         <VotingResults isVisible={isVotingResultsVisible} drivers={formattedDrivers} votes={votes} config={combinedConfig} />
       </LayoutEdits>
       <LayoutEdits id="lapCounter" config={combinedConfig} visible={!!(isLapCounterVisible)}>
-        <LapCounter isVisible={isLapCounterVisible} config={combinedConfig} sessionInfo={sessionInfo} />
+        <LapCounter isVisible={isLapCounterVisible} config={combinedConfig} sessionInfo={liveSession} />
       </LayoutEdits>
       <LayoutEdits id="virtualChamp" config={combinedConfig} visible={!!(isVirtualChampVisible)}>
         <VirtualChamp isVisible={isVirtualChampVisible} config={combinedConfig} />
@@ -431,10 +435,10 @@ export default function Overlay() {
         <Branding isVisible={graphics?.branding} config={combinedConfig} />
       </LayoutEdits>
       <LayoutEdits id="qualifying" config={combinedConfig} visible={!!(graphics?.qualifying)}>
-        <QualifyingBoard drivers={formattedDrivers} config={combinedConfig} isVisible={!!graphics?.qualifying} sessionInfo={sessionInfo} />
+        <QualifyingBoard drivers={formattedDrivers} config={combinedConfig} isVisible={!!graphics?.qualifying} sessionInfo={liveSession} />
       </LayoutEdits>
       <LayoutEdits id="sectors" config={combinedConfig} visible={!!(sectorsState?.isVisible)}>
-        <Sectors drivers={formattedDrivers} config={combinedConfig} state={sectorsState} sessionInfo={sessionInfo} />
+        <Sectors drivers={formattedDrivers} config={combinedConfig} state={sectorsState} sessionInfo={liveSession} />
       </LayoutEdits>
       <LayoutEdits id="gapChart" config={combinedConfig} visible={!!(gapChartData?.isVisible)}>
         <GapChart data={gapChartData} config={combinedConfig} formatName={(n) => formatDriverName(n, safeConfig.nameFormat)} />
@@ -443,7 +447,7 @@ export default function Overlay() {
         <Gainers drivers={formattedDrivers} config={combinedConfig} isVisible={!!graphics?.gainers} />
       </LayoutEdits>
       <LayoutEdits id="trackMap" config={combinedConfig} visible={!!(graphics?.trackMap)}>
-        <TrackMap drivers={formattedDrivers} config={combinedConfig} isVisible={!!graphics?.trackMap} sessionInfo={sessionInfo} />
+        <TrackMap drivers={formattedDrivers} config={combinedConfig} isVisible={!!graphics?.trackMap} sessionInfo={liveSession} />
       </LayoutEdits>
       <LayoutEdits id="circuitIntro" config={combinedConfig} visible={!!(graphics?.circuitIntro)}>
         <CircuitIntro config={combinedConfig} isVisible={!!graphics?.circuitIntro} />
@@ -457,8 +461,11 @@ export default function Overlay() {
       <LayoutEdits id="windVectors" config={combinedConfig} visible={!!(graphics?.windVectors)}>
         <WindVectors config={combinedConfig} isVisible={!!graphics?.windVectors} />
       </LayoutEdits>
+      <LayoutEdits id="sessionStatus" config={combinedConfig} visible={!!(graphics?.sessionStatus)}>
+        <SessionStatus drivers={formattedDrivers} config={combinedConfig} isVisible={!!graphics?.sessionStatus} sessionInfo={liveSession} />
+      </LayoutEdits>
       <LayoutEdits id="formationLap" config={combinedConfig} visible={!!(graphics?.formationLap)}>
-        <FormationLap config={combinedConfig} isVisible={!!graphics?.formationLap} sessionInfo={sessionInfo} />
+        <FormationLap config={combinedConfig} isVisible={!!graphics?.formationLap} sessionInfo={liveSession} />
       </LayoutEdits>
       <LayoutEdits id="sponsorLive" config={combinedConfig} visible={!!(sponsorLive?.isVisible)}>
         <SponsorLive state={sponsorLive} config={combinedConfig} />

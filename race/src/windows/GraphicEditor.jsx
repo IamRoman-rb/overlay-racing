@@ -12,7 +12,7 @@ const EDITABLE_GRAPHICS = [
   'grid', 'finalResults', 'winner', 'flags', 'fastestLap', 'driverInfo', 'battle', 'customZocalo',
   'votingQR', 'votingResults', 'lapCounter', 'virtualChamp', 'pitStop', 'startingLights',
   'lapTimesHistory', 'trackAlert', 'penaltyAlert', 'branding', 'evento',
-    'sectors', 'gapChart', 'gainers', 'qualifying', 'trackMap', 'raceNotice', 'circuitIntro', 'circuitRecord', 'lapCompare', 'windVectors', 'sponsorLive', 'formationLap'
+    'sectors', 'gapChart', 'gainers', 'qualifying', 'trackMap', 'raceNotice', 'circuitIntro', 'circuitRecord', 'lapCompare', 'windVectors', 'sponsorLive', 'formationLap', 'sessionStatus'
 ];
 
 const SNAP_THRESHOLD = 8; // px del escenario (el lienzo del overlay)
