@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { DriverFlag } from '../components/CountryFlag';
+import { DriverFlag, PhotoFlag } from '../components/CountryFlag';
 import { rowEntranceStyle, rowEffect, ROW_ANIM_CSS } from '../utils/rowEntrance';
 import { getSkinStyle } from '../utils/skinStyles';
 import pilotoAnonimo from '../assets/piloto_anonimo.png';
@@ -243,6 +243,7 @@ export default function FinalResults({ drivers: allDrivers, config, isVisible, i
                 color: themeAccent, opacity: 0.15, lineHeight: 1, userSelect: 'none'
               }}>1</div>
 
+              {winnerDriver && <PhotoFlag driver={winnerDriver} config={config} style={{ inset: '6% -10% 0 -10%' }} />}
               {winnerDriver && (
                 <img
                   src={winnerPhoto}

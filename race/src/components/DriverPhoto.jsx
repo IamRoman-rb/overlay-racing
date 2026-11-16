@@ -26,7 +26,7 @@ export default function DriverPhoto({ number, config, height = 80, maxWidth, sty
   // Con bandera: el estilo de ubicación (márgenes, flex, animación de entrada) va en el envoltorio
   return (
     <span style={{ position: 'relative', display: 'block', ...style }}>
-      <FlagFade code={code} fadeTo="radial" opacity={0.8} dim={0.1} animated={height >= 90} style={{ inset: '12% -14% 0 -14%' }} />
+      <FlagFade code={code} fadeTo="photo" opacity={0.85} dim={0.1} animated={height >= 90} style={{ inset: '12% -14% 0 -14%' }} />
       {img({ position: 'relative' })}
     </span>
   );

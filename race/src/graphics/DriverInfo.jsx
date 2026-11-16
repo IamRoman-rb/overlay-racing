@@ -1,5 +1,5 @@
 import pilotoAnonimo from '../assets/piloto_anonimo.png';
-import { DriverFlag } from '../components/CountryFlag';
+import { DriverFlag, PhotoFlag } from '../components/CountryFlag';
 import { useDriverPhoto } from '../utils/useDriverPhoto';
 import { getSkinStyle } from '../utils/skinStyles';
 import { getAnimDuration, getRollClip } from '../utils/animationTiming';
@@ -65,8 +65,9 @@ export default function DriverInfo({ driver, config, isVisible, id = 'driverInfo
           border: hasCustomBg ? 'none' : `4px solid ${themeMain}`,
           borderRadius: bRad, boxShadow: hasCustomBg ? 'none' : '0 10px 30px rgba(0,0,0,0.6)', overflow: 'hidden'
         }}>
-          <div className={fx.group} style={{ width: '120px', flexShrink: 0, backgroundColor: hasCustomBg ? 'transparent' : themeHeaderBg, display: 'flex', alignItems: 'flex-end', justifyContent: 'center', overflow: 'hidden' }}>
-            <img src={imgSrc} style={{ height: '100%', objectFit: 'contain' }} />
+          <div className={fx.group} style={{ position: 'relative', width: '120px', flexShrink: 0, backgroundColor: hasCustomBg ? 'transparent' : themeHeaderBg, display: 'flex', alignItems: 'flex-end', justifyContent: 'center', overflow: 'hidden' }}>
+            <PhotoFlag driver={driver} config={config} style={{ inset: '0 -30% 0 -30%' }} />
+            <img src={imgSrc} style={{ position: 'relative', height: '100%', objectFit: 'contain' }} />
           </div>
           <div className={fx.group} style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '12px 18px', minWidth: 0 }}>
             <span style={{ fontSize: '12px', fontWeight: '900', color: themeAccent, letterSpacing: '1px' }}>

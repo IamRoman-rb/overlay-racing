@@ -1,4 +1,5 @@
 import { withCategory } from '../utils/raceVisuals';
+import { PhotoFlag } from '../components/CountryFlag';
 import pilotoAnonimo from '../assets/piloto_anonimo.png';
 import { useDriverPhoto } from '../utils/useDriverPhoto';
 import { getSkinStyle } from '../utils/skinStyles';
@@ -55,14 +56,15 @@ export default function WinnerGraphic({ driver, isVisible, config, id = 'winner'
     return (
       <div style={{ ...wrapperStyle, width: '420px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
         <div className={fx.group} style={{
-          width: '100%', height: '360px', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', overflow: 'hidden',
+          position: 'relative', width: '100%', height: '360px', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', overflow: 'hidden',
           backgroundColor: hasCustomBg ? 'transparent' : themeBg,
           backgroundImage: hasCustomBg ? `url(${customBg})` : 'none',
           backgroundSize: '100% 100%', backgroundRepeat: 'no-repeat', backgroundPosition: 'center',
           border: hasCustomBg ? 'none' : `4px solid ${themeMain}`,
           borderRadius: bRad, boxShadow: hasCustomBg ? 'none' : '0 10px 30px rgba(0,0,0,0.5)'
         }}>
-          <img src={imgSrc} style={{ height: '100%', objectFit: 'contain', filter: 'drop-shadow(0px 10px 20px rgba(0,0,0,0.8))' }} />
+          <PhotoFlag driver={driver} config={config} style={{ inset: '6% 0 0 0' }} />
+          <img src={imgSrc} style={{ position: 'relative', height: '100%', objectFit: 'contain', filter: 'drop-shadow(0px 10px 20px rgba(0,0,0,0.8))' }} />
         </div>
         <div style={{
           marginTop: '-4px', width: '100%', textAlign: 'center', padding: '10px 15px',

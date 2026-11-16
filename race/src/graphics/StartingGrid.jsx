@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { DriverFlag } from '../components/CountryFlag';
+import { DriverFlag, PhotoFlag } from '../components/CountryFlag';
 import { io } from 'socket.io-client';
 import { withCategory } from '../utils/raceVisuals';
 import pilotoAnonimo from '../assets/piloto_anonimo.png';
@@ -281,7 +281,8 @@ function PhotoDriverCard({ driver, align, config, themeAccent, themeHeaderBg, fx
        </div>
 
        {/* FOTO DEL PILOTO GIGANTE (o genérica si no se encuentra) */}
-       <img src={imgSrc} style={{ height: '100%', objectFit: 'contain', filter: 'drop-shadow(0px 15px 25px rgba(0,0,0,0.9))', zIndex: 2, ...fx.photo(index * 3 + 1) }} />
+       <PhotoFlag driver={driver} config={config} opacity={1} style={{ inset: '4% -25% 0 -25%' }} />
+       <img src={imgSrc} style={{ position: 'relative', height: '100%', objectFit: 'contain', filter: 'drop-shadow(0px 15px 25px rgba(0,0,0,0.9))', zIndex: 2, ...fx.photo(index * 3 + 1) }} />
 
        {/* CAJA DE NOMBRE (TIPO REFERENCIA) */}
        <div style={{
@@ -410,9 +411,10 @@ function CinematicGridView({ allDrivers, currentDriver, page, config, bRad, them
         flex: 1, height: '100%', display: 'flex', alignItems: 'flex-end', justifyContent: 'center',
         position: 'relative', animation: fx.on ? 'none' : 'cinematicFade 0.5s ease forwards'
       }}>
+        <PhotoFlag driver={currentDriver} config={config} opacity={1} style={{ inset: '6% 0 0 0' }} />
         <img
           src={imgSrc}
-          style={{ height: '95%', objectFit: 'contain', filter: 'drop-shadow(0px 15px 30px rgba(0,0,0,0.85))', ...fx.photo(0) }}
+          style={{ position: 'relative', height: '95%', objectFit: 'contain', filter: 'drop-shadow(0px 15px 30px rgba(0,0,0,0.85))', ...fx.photo(0) }}
         />
       </div>
 

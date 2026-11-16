@@ -25,14 +25,17 @@ export function DriverFlag({ driver, number, config, id, height = 14, style }) {
 }
 
 // BANDERA DESVANECIDA de fondo (presentación del circuito, detrás de las fotos de los pilotos): la bandera ocupa la caja
-// y se va desvaneciendo hacia `fadeTo` (left | right | top | bottom | radial), con un leve ondeo de luz para que no
+// y se va desvaneciendo hacia `fadeTo` (left | right | top | bottom | radial | photo), con un leve ondeo de luz para que no
 // quede plana. Va detrás del contenido (position absolute, sin eventos). dim: oscurecido para que el texto encima se lea.
 export function FlagFade({ code, fadeTo = 'left', opacity = 0.55, animated = true, dim = 0.3, style }) {
   const src = flagSrc(code);
   if (!src) return null;
-  const mask = fadeTo === 'radial'
-    ? 'radial-gradient(ellipse at 50% 45%, #000 0%, rgba(0,0,0,0.55) 38%, transparent 66%)'
-    : `linear-gradient(to ${fadeTo}, #000 0%, rgba(0,0,0,0.65) 35%, transparent 90%)`;
+  // 'photo': centro sólido (lo tapa la foto) y borde que se desvanece; así sobre el chroma no queda lavada
+  const mask = fadeTo === 'photo'
+    ? 'radial-gradient(ellipse 50% 50% at 50% 50%, #000 0%, #000 55%, rgba(0,0,0,0.6) 75%, transparent 100%)'
+    : fadeTo === 'radial'
+      ? 'radial-gradient(ellipse at 50% 45%, #000 0%, rgba(0,0,0,0.55) 38%, transparent 66%)'
+      : `linear-gradient(to ${fadeTo}, #000 0%, rgba(0,0,0,0.65) 35%, transparent 90%)`;
   return (
     <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', overflow: 'hidden', opacity, WebkitMaskImage: mask, maskImage: mask, ...style }}>
       <style>{'@keyframes flagFadeSheen { 0% { transform: translateX(-60%); } 100% { transform: translateX(160%); } }'}</style>
@@ -43,4 +46,13 @@ export function FlagFade({ code, fadeTo = 'left', opacity = 0.55, animated = tru
       {animated && <div style={{ position: 'absolute', top: 0, bottom: 0, width: '40%', background: 'linear-gradient(100deg, transparent, rgba(255,255,255,0.18), transparent)', animation: 'flagFadeSheen 6s ease-in-out infinite' }} />}
     </div>
   );
+}
+
+// Bandera del piloto desvaneciéndose DETRÁS de una foto grande (ganador, grilla, zócalo...). Va como hermana anterior de
+// la <img> dentro de un contenedor con position relative; la foto tiene que ir con position relative/absolute para quedar
+// encima. Se apaga en PERSONALIZAR (config.flagsBehindPhotos === false).
+export function PhotoFlag({ driver, number, config, opacity = 0.85, style }) {
+  if (config?.flagsBehindPhotos === false) return null;
+  const code = driverCountry(driver, config, number);
+  return code ? <FlagFade code={code} fadeTo="photo" opacity={opacity} dim={0.1} style={style} /> : null;
 }
