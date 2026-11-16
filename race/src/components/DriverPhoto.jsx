@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { photoUrl } from '../utils/elite';
 import { driverCountry } from '../utils/countries';
-import { FlagFade } from './CountryFlag';
+import { PhotoFlag } from './CountryFlag';
 
 // Foto de un piloto (carpeta de fotos de PERSONALIZAR, archivo con su número). Si no hay foto no ocupa lugar.
 // Si el piloto tiene país (PILOTOS o el cronometraje) y está activado PERSONALIZAR > "Bandera detrás de las fotos"
@@ -26,7 +26,7 @@ export default function DriverPhoto({ number, config, height = 80, maxWidth, sty
   // Con bandera: el estilo de ubicación (márgenes, flex, animación de entrada) va en el envoltorio
   return (
     <span style={{ position: 'relative', display: 'block', ...style }}>
-      <FlagFade code={code} fadeTo="photo" opacity={0.85} dim={0.1} animated={height >= 90} style={{ inset: '12% -14% 0 -14%' }} />
+      <PhotoFlag number={number} config={config} opacity={0.85} animated={height >= 90} style={{ inset: '12% -14% 0 -14%' }} />
       {img({ position: 'relative' })}
     </span>
   );

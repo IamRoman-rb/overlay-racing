@@ -1,4 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
+import { FlagFade } from '../components/CountryFlag';
+import { PHOTO_FLAG_STYLES, photoFlagStyle } from '../utils/countries';
 import { ROW_EFFECTS, rowEffect, rowStep, towerPageRows, towerPageSeconds, towerNarrowRows } from '../utils/rowEntrance';
 import { SKIN_FORMATS } from '../utils/skinStyles';
 import { getFinalResultsDefaultSize } from '../utils/finalResultsSize';
@@ -896,6 +898,34 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
                 <input type="checkbox" checked={config.flagsBehindPhotos !== false} onChange={(e) => onConfigChange('flagsBehindPhotos', e.target.checked)} style={{ cursor: 'pointer' }} />
                 {t('personalizar.flagsBehindPhotos')}
               </label>
+            )}
+            {/* Estilo de la bandera detrás de las fotos: miniaturas para elegir + intensidad (vale para todas las gráficas) */}
+            {selectedGraphic !== 'circuitIntro' && config.flagsBehindPhotos !== false && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '4px' }}>
+                <span style={{ fontSize: '10px', color: colors.textMuted, fontWeight: 'bold' }}>{t('personalizar.photoFlagStyle')}</span>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '6px' }}>
+                  {PHOTO_FLAG_STYLES.map(st => {
+                    const active = photoFlagStyle(config).id === st.id;
+                    return (
+                      <button key={st.id} type="button" title={st.label} onClick={() => onConfigChange('photoFlagStyle', st.id)} style={{
+                        position: 'relative', height: '62px', padding: 0, cursor: 'pointer', overflow: 'hidden', borderRadius: '4px', backgroundColor: '#1b1b1b',
+                        border: `2px solid ${active ? colors.yellow : colors.border}`, boxShadow: active ? `0 0 8px ${colors.yellow}55` : 'none'
+                      }}>
+                        <FlagFade code="AR" mask={st.mask} wave={st.wave} slant={st.slant} opacity={0.9} dim={0.1} animated={false} />
+                        {/* Silueta del piloto */}
+                        <span style={{ position: 'absolute', left: '50%', bottom: 0, width: '26px', height: '40px', marginLeft: '-13px', borderRadius: '13px 13px 3px 3px', background: 'linear-gradient(#5a5a5a, #2a2a2a)' }} />
+                        <span style={{ position: 'absolute', left: 0, right: 0, bottom: 0, padding: '1px 2px', fontSize: '8px', fontWeight: 'bold', color: '#fff', backgroundColor: 'rgba(0,0,0,0.65)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{st.label.split(' (')[0]}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '10px', color: colors.textMuted, fontWeight: 'bold' }}>
+                  {t('personalizar.photoFlagOpacity')}
+                  <input type="range" min="10" max="100" step="5" value={Math.round((Number(config.photoFlagOpacity) || 0.85) * 100)}
+                    onChange={(e) => onConfigChange('photoFlagOpacity', Number(e.target.value) / 100)} style={{ flex: 1, cursor: 'pointer' }} />
+                  <span style={{ width: '34px', textAlign: 'right', color: colors.textMain }}>{Math.round((Number(config.photoFlagOpacity) || 0.85) * 100)}%</span>
+                </label>
+              </div>
             )}
             {selectedGraphic === 'circuitIntro' && (
               <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '11px', fontWeight: 'bold', color: colors.textMain, cursor: 'pointer' }}>
