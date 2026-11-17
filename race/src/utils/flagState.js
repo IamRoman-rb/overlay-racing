@@ -1,6 +1,6 @@
 // BANDERA VIGENTE para mostrar dentro de las gráficas (tira, torre, contador de vueltas...).
 // Manda la bandera puesta a mano en el PANEL (BANDERAS DE CARRERA, llega en sessionInfo.manualFlags); si no hay ninguna,
-// la que informa el cronometraje (sessionInfo.flag: Speedhive / Race Monitor). Sin datos -> null (no se muestra nada).
+// la que informa el cronometraje (sessionInfo.flag: Speedhive / Race Monitor). Sin datos -> verde (pista libre).
 
 // Prioridad cuando hay varias banderas manuales activas (igual que la gráfica BANDERAS)
 const MANUAL_ORDER = ['red', 'tricolor', 'black', 'blue', 'checkered', 'green'];
@@ -41,7 +41,10 @@ export function currentFlag(sessionInfo, config) {
     return info;
   }
   const key = timingFlagKey(sessionInfo?.flag);
-  return key ? { ...FLAG_INFO[key], manual: false } : null;
+  if (key) return { ...FLAG_INFO[key], manual: false };
+  // Sin bandera manual ni del cronometraje: pista libre (verde) por defecto, así no hace falta dejar
+  // presionado el botón VERDE (que además saca al aire la gráfica BANDERAS).
+  return { ...FLAG_INFO.green, manual: false, fallback: true };
 }
 
 // PROGRESO DE LA SESIÓN a partir de lo que informa el cronometraje:
