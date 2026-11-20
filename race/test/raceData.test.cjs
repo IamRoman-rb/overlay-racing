@@ -179,7 +179,8 @@ test('RaceAnalyzer: sectores y vuelta teórica', () => {
 test('marcas recordadas por nombre: se aprenden de PILOTOS y se aplican aunque cambie el número', () => {
   const { learnBrands, normalizeBrandMemory, driverKey } = require('../src/scripts/raceData.cjs');
   assert.equal(driverKey('Pérez, Juan  '), 'PEREZ JUAN');
-  assert.deepEqual(normalizeBrandMemory({ 'pérez juan': 'citroen', X: 'citroen', 'ANA GOMEZ': 'marca-que-no-existe' }), { 'PEREZ JUAN': 'citroen' });
+  assert.deepEqual(normalizeBrandMemory({ 'pérez juan': 'citroen', X: 'citroen', 'ANA GOMEZ': 'marca-que-no-existe' }), { 'PEREZ JUAN': { brand: 'citroen' } }, 'formato viejo (sólo marca)');
+  assert.deepEqual(normalizeBrandMemory({ 'ana gomez': { brand: 'nada', country: 'ar' }, 'LUIS SOSA': { country: '??' } }), { 'ANA GOMEZ': { country: 'AR' } });
 
   // Carrera 1: el #7 tiene la marca elegida a mano
   const a1 = new RaceAnalyzer();
@@ -187,7 +188,7 @@ test('marcas recordadas por nombre: se aprenden de PILOTOS y se aplican aunque c
   const r1 = a1.update({ session: {}, drivers: [drv(1, 7, 'Juan Pérez'), drv(2, 22, 'Ana Gómez')] }, { roster: roster1, now: 1000 });
   assert.equal(r1.leaderboard.drivers[0].brandFrom, 'manual');
   const memory = learnBrands(r1.leaderboard.drivers, roster1, {});
-  assert.deepEqual(memory, { 'JUAN PEREZ': 'citroen' });
+  assert.deepEqual(memory, { 'JUAN PEREZ': { brand: 'citroen' } });
   assert.equal(learnBrands(r1.leaderboard.drivers, roster1, memory), null, 'sin cambios no se vuelve a guardar');
 
   // Carrera 2: otra categoría, mismo piloto con el #31 y sin nada cargado en PILOTOS
@@ -200,4 +201,26 @@ test('marcas recordadas por nombre: se aprenden de PILOTOS y se aplican aunque c
   // La elegida a mano gana sobre la recordada
   const r3 = new RaceAnalyzer().update({ session: {}, drivers: [drv(1, 31, 'JUAN PEREZ')] }, { roster: { 31: { brand: 'abarth' } }, brandMemory: memory, now: 1000 });
   assert.equal(r3.leaderboard.drivers[0].brand, 'abarth');
+});
+
+test('bandera recordada por nombre: manual > recordada > cronometraje, y se puede olvidar', () => {
+  const { learnBrands, forgetRemembered } = require('../src/scripts/raceData.cjs');
+  const roster1 = { 7: { country: 'UY', brand: 'citroen' } };
+  const r1 = new RaceAnalyzer().update({ session: {}, drivers: [drv(1, 7, 'Juan Pérez')] }, { roster: roster1, now: 1000 });
+  const memory = learnBrands(r1.leaderboard.drivers, roster1, {});
+  assert.deepEqual(memory, { 'JUAN PEREZ': { brand: 'citroen', country: 'UY' } });
+
+  // Otra fecha, otro número, el cronometraje dice Argentina: gana lo recordado
+  const r2 = new RaceAnalyzer().update({ session: {}, drivers: [drv(1, 31, 'JUAN PEREZ', { nationality: 'ARG' })] }, { roster: {}, brandMemory: memory, now: 1000 });
+  assert.equal(r2.leaderboard.drivers[0].country, 'UY');
+  assert.equal(r2.leaderboard.drivers[0].countryFrom, 'memory');
+  // La elegida a mano gana sobre la recordada
+  const r3 = new RaceAnalyzer().update({ session: {}, drivers: [drv(1, 31, 'JUAN PEREZ')] }, { roster: { 31: { country: 'CL' } }, brandMemory: memory, now: 1000 });
+  assert.equal(r3.leaderboard.drivers[0].country, 'CL');
+
+  // Olvidar sólo la bandera conserva la marca; olvidar todo borra al piloto
+  const noFlag = forgetRemembered(memory, ['Juan Pérez'], 'country');
+  assert.deepEqual(noFlag, { 'JUAN PEREZ': { brand: 'citroen' } });
+  assert.deepEqual(forgetRemembered(noFlag, ['JUAN PEREZ'], 'brand'), {});
+  assert.equal(forgetRemembered(noFlag, ['Otro Piloto'], 'brand'), null);
 });

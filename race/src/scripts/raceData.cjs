@@ -111,29 +111,63 @@ function normalizeRoster(raw) {
 function driverKey(name) {
   return String(name || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase().replace(/[^A-Z0-9]+/g, ' ').trim();
 }
-// { clave del nombre: marca }, sólo marcas que existen
+const MEMORY_COUNTRY_RE = /^[A-Z]{2,5}(-[A-Z]{2,3})?$/;
+// { clave del nombre: { brand, country } }: sólo marcas que existen y códigos de país válidos.
+// Compatible con el formato viejo { clave: marca } (sólo marca).
 function normalizeBrandMemory(raw) {
   const out = {};
   if (!raw || typeof raw !== 'object') return out;
   Object.keys(raw).forEach(k => {
     const key = driverKey(k).slice(0, 80);
-    const slug = String(raw[k] || '').trim().slice(0, 40);
-    if (key.length >= 3 && slug && brandExists(slug)) out[key] = slug;
+    if (key.length < 3) return;
+    const v = raw[k] && typeof raw[k] === 'object' ? raw[k] : { brand: raw[k] };
+    const e = {};
+    const slug = String(v.brand || '').trim().slice(0, 40);
+    if (slug && brandExists(slug)) e.brand = slug;
+    const country = String(v.country || '').trim().toUpperCase().slice(0, 12);
+    if (MEMORY_COUNTRY_RE.test(country)) e.country = country;
+    if (e.brand || e.country) out[key] = e;
   });
   return out;
 }
-// Aprende de lo cargado a mano en PILOTOS: cada piloto con marca elegida queda recordado por su nombre (el de la fuente y el
-// escrito a mano). Devuelve la memoria nueva o null si no cambió nada.
+// Lo recordado para un piloto: lo del nombre escrito a mano completa/pisa lo del nombre de la fuente
+function rememberedFor(memory, ...names) {
+  if (!memory) return {};
+  return names.reverse().reduce((acc, n) => ({ ...acc, ...(memory[driverKey(n)] || {}) }), {});
+}
+// Aprende de lo cargado a mano en PILOTOS: la marca y el país (bandera) elegidos quedan recordados por el nombre del piloto
+// (el de la fuente y el escrito a mano). Devuelve la memoria nueva o null si no cambió nada.
 function learnBrands(drivers, roster, memory) {
   const next = { ...(memory || {}) };
   let changed = false;
   (drivers || []).forEach(d => {
     const r = (roster || {})[String(d.srcNumber || d.number)];
-    if (!r || !r.brand || !brandExists(r.brand)) return;
+    if (!r) return;
+    const patch = {};
+    if (r.brand && brandExists(r.brand)) patch.brand = r.brand;
+    if (r.country && MEMORY_COUNTRY_RE.test(r.country)) patch.country = r.country;
+    if (!patch.brand && !patch.country) return;
     [d.srcName, r.name, d.name].forEach(n => {
       const key = driverKey(n);
-      if (key.length >= 3 && next[key] !== r.brand) { next[key] = r.brand; changed = true; }
+      if (key.length < 3) return;
+      const cur = next[key] || {};
+      if (Object.keys(patch).every(f => cur[f] === patch[f])) return;
+      next[key] = { ...cur, ...patch };
+      changed = true;
     });
+  });
+  return changed ? next : null;
+}
+// Olvida un dato recordado ('brand' o 'country') de esos nombres. Devuelve la memoria nueva o null si no cambió nada.
+function forgetRemembered(memory, names, field) {
+  const next = { ...(memory || {}) };
+  let changed = false;
+  names.map(driverKey).forEach(k => {
+    if (!k || !next[k] || !next[k][field]) return;
+    const rest = { ...next[k] };
+    delete rest[field];
+    if (Object.keys(rest).length) next[k] = rest; else delete next[k];
+    changed = true;
   });
   return changed ? next : null;
 }
@@ -616,14 +650,15 @@ class RaceAnalyzer {
       const r = roster[src] || {};
       d.srcNumber = src;
       d.srcName = d.name;
-      const remembered = memory ? (memory[driverKey(r.name)] || memory[driverKey(d.name)] || '') : '';
+      const remembered = rememberedFor(memory, r.name, d.name);
       if (r.brand && brandExists(r.brand)) { d.brand = r.brand; d.brandFrom = 'manual'; }
-      else if (remembered && brandExists(remembered)) { d.brand = remembered; d.brandFrom = 'memory'; }
+      else if (remembered.brand && brandExists(remembered.brand)) { d.brand = remembered.brand; d.brandFrom = 'memory'; }
       else { d.brand = detectBrand([d.make, ...(Array.isArray(d.extra) ? d.extra : [])]); d.brandFrom = d.brand ? 'detected' : ''; }
       if (r.team) d.team = r.team;
-      // País: el elegido a mano en PILOTOS > el que informa el cronometraje
+      // País: el elegido a mano en PILOTOS > el recordado para ese piloto > el que informa el cronometraje
       const srcCountry = countryCode(d.nationality);
       if (r.country) { d.country = r.country; d.countryFrom = 'manual'; }
+      else if (remembered.country) { d.country = remembered.country; d.countryFrom = 'memory'; }
       else if (srcCountry) { d.country = srcCountry; d.countryFrom = 'source'; }
       else { d.country = ''; d.countryFrom = ''; }
       if (r.name && !d.renamed) d.name = r.name;
@@ -720,6 +755,7 @@ module.exports = {
   driverKey,
   normalizeBrandMemory,
   learnBrands,
+  forgetRemembered,
   RaceAnalyzer,
   applyCorrections,
   normalizeCorrections,

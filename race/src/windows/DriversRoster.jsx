@@ -181,7 +181,7 @@ export default function DriversRoster({ drivers, config, colors, inputStyle, btn
                     <td style={cell}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                         <span style={{ width: '28px', display: 'flex', justifyContent: 'center', flexShrink: 0 }}>{country ? <FlagChip code={country} height={16} /> : null}</span>
-                        <Cell value={r.country ? countryName(r.country) : ''} placeholder={country ? `${countryName(country)} (${t('pilotos.detected')})` : t('pilotos.countryPlaceholder')} list="countriesList" width="150px"
+                        <Cell value={r.country ? countryName(r.country) : ''} placeholder={country ? `${countryName(country)} (${t(d && d.countryFrom === 'memory' ? 'pilotos.remembered' : 'pilotos.detected')})` : t('pilotos.countryPlaceholder')} list="countriesList" width="150px"
                           onCommit={(v) => { const code = countryFromText(v); if (code === null) { alert(t('pilotos.countryUnknown', { name: v })); return; } setEntry(src, { country: code }); }} inputStyle={inputStyle} />
                       </div>
                     </td>

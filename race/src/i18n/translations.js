@@ -216,12 +216,12 @@ export const translations = {
       footer: 'Los cambios se aplican en vivo. Si dejás un campo vacío se usa lo que informa el cronometraje.',
       suitColors: 'Color del número según el traje de la foto', suitColorsHint: 'Toma el color dominante del traje en la foto de cada piloto y lo usa de fondo del número en todas las gráficas.', suitColorsNoFolder: 'Elegí la carpeta de fotos de los pilotos en PERSONALIZAR para usar esta opción.',
       remembered: 'recordada',
-      listsTitle: 'LISTADOS GUARDADOS', listsHint: 'Guardá lo cargado en esta tabla (marcas, números, nombres y equipos) con el nombre de la categoría. Cuando esa categoría vuelva a correr, cargá su listado y no tenés que completar todo de nuevo.',
+      listsTitle: 'LISTADOS GUARDADOS', listsHint: 'Guardá lo cargado en esta tabla (banderas, marcas, números, nombres y equipos) con el nombre de la categoría. Cuando esa categoría vuelva a correr, cargá su listado y no tenés que completar todo de nuevo: cada piloto se reconoce por su nombre aunque cambie de número.',
       listsNamePlaceholder: 'Nombre del listado', listsSave: 'GUARDAR LISTADO ({n})', listsNothing: 'Todavía no cargaste datos en la tabla para guardar.',
       listsConfirmReplace: 'Ya hay un listado "{name}". ¿Reemplazarlo por lo cargado ahora?', listsConfirmLoad: '¿Cargar "{name}"? Reemplaza lo que está cargado ahora en la tabla.', listsConfirmDelete: '¿Borrar el listado "{name}"?',
       listsCurrent: 'CATEGORÍA ACTUAL', listsInfo: '{n} pilotos · guardado el {date}', listsLoad: 'CARGAR', listsLoadTitle: 'Reemplaza lo de la tabla por este listado', listsMerge: 'SUMAR', listsMergeTitle: 'Agrega este listado a lo que ya está cargado (pisa sólo los mismos números)', listsDelete: 'Borrar listado',
-      memoryLabel: 'Recordar la marca de cada piloto por su nombre', memoryCount: '({n} recordados)', memoryForget: 'OLVIDAR TODAS',
-      memoryHint: 'Cuando elegís la marca de un piloto queda guardada con su nombre. Si vuelve a correr (aunque cambie de número o de categoría), su marca aparece sola.', memoryConfirmForget: '¿Olvidar las marcas recordadas de {n} pilotos? Lo cargado en la tabla no se borra.'
+      memoryLabel: 'Recordar la bandera y la marca de cada piloto por su nombre', memoryCount: '({n} recordados)', memoryForget: 'OLVIDAR TODAS',
+      memoryHint: 'Cuando elegís la bandera o la marca de un piloto quedan guardadas con su nombre. Si vuelve a correr (aunque cambie de número o de categoría), aparecen solas.', memoryConfirmForget: '¿Olvidar las banderas y marcas recordadas de {n} pilotos? Lo cargado en la tabla no se borra.'
     },
     sponsors: {
       magnet: 'Imán a la gráfica y a la pantalla (Alt para soltarlo)',
@@ -653,12 +653,12 @@ export const translations = {
       footer: 'Changes apply live. An empty field uses what the timing sends.',
       suitColors: 'Number color from the suit in the photo', suitColorsHint: 'Takes the dominant suit color from each driver photo and uses it as the number background in every graphic.', suitColorsNoFolder: 'Choose the driver photos folder in CUSTOMIZE to use this option.',
       remembered: 'remembered',
-      listsTitle: 'SAVED LISTS', listsHint: 'Save what is loaded in this table (brands, numbers, names and teams) under the category name. When that category races again, load its list instead of filling everything again.',
+      listsTitle: 'SAVED LISTS', listsHint: 'Save what is loaded in this table (flags, brands, numbers, names and teams) under the category name. When that category races again, load its list instead of filling everything again: each driver is matched by name even if their number changed.',
       listsNamePlaceholder: 'List name', listsSave: 'SAVE LIST ({n})', listsNothing: 'There is no data in the table to save yet.',
       listsConfirmReplace: 'A list "{name}" already exists. Replace it with the current data?', listsConfirmLoad: 'Load "{name}"? It replaces what is loaded in the table now.', listsConfirmDelete: 'Delete the list "{name}"?',
       listsCurrent: 'CURRENT CATEGORY', listsInfo: '{n} drivers · saved {date}', listsLoad: 'LOAD', listsLoadTitle: 'Replaces the table with this list', listsMerge: 'ADD', listsMergeTitle: 'Adds this list to what is already loaded (only overwrites the same numbers)', listsDelete: 'Delete list',
-      memoryLabel: 'Remember each driver brand by name', memoryCount: '({n} remembered)', memoryForget: 'FORGET ALL',
-      memoryHint: 'When you choose a driver brand it is saved with the driver name. If they race again (even with another number or category), the brand appears automatically.', memoryConfirmForget: 'Forget the remembered brands of {n} drivers? The table data is not deleted.'
+      memoryLabel: 'Remember each driver flag and brand by name', memoryCount: '({n} remembered)', memoryForget: 'FORGET ALL',
+      memoryHint: 'When you choose a driver flag or brand it is saved with the driver name. If they race again (even with another number or category), they appear automatically.', memoryConfirmForget: 'Forget the remembered flags and brands of {n} drivers? The table data is not deleted.'
     },
     sponsors: {
       magnet: 'Snap to the graphic and the screen (hold Alt to release)',

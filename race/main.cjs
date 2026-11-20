@@ -5,7 +5,7 @@ const fs = require('fs');
 const path = require('path');
 const { scrapeSpeedhive, scrapeRaceMonitor, getBrowserInfo } = require('./src/scripts/scraper.cjs');
 const { fetchOrbits, disconnectOrbits, getOrbitsStatus } = require('./src/scripts/orbits.cjs');
-const { RaceAnalyzer, normalizeCorrections, normalizeRoster, normalizeBrandMemory, learnBrands, driverKey } = require('./src/scripts/raceData.cjs');
+const { RaceAnalyzer, normalizeCorrections, normalizeRoster, normalizeBrandMemory, learnBrands, forgetRemembered, driverKey } = require('./src/scripts/raceData.cjs');
 const { buildResultsHtml } = require('./src/scripts/resultsPdf.cjs');
 const { networkInterfaces } = require('os');
 const express = require('express');
@@ -1101,14 +1101,15 @@ ipc.handle('clear-corrections', (e, mode) => {
 });
 
 // --- PILOTOS (datos que la fuente no informa o informa mal) ---
-// Olvida la marca recordada del piloto que hoy corre con ese número de la fuente
-function forgetDriverBrand(num) {
+// Olvida la marca o la bandera ('brand' / 'country') recordada del piloto que hoy corre con ese número de la fuente
+function forgetDriverMemory(num, field) {
   const d = (lastLeaderboard.drivers || []).find(x => String(x.srcNumber || x.number) === String(num));
-  const keys = [d && d.srcName, d && d.name, raceRoster[num] && raceRoster[num].name].map(driverKey).filter(k => k && brandMemory[k]);
-  if (!keys.length) return;
-  brandMemory = { ...brandMemory };
-  keys.forEach(k => { delete brandMemory[k]; });
-  saveBrandMemory();
+  const next = forgetRemembered(brandMemory, [d && d.srcName, d && d.name, raceRoster[num] && raceRoster[num].name], field);
+  if (next) { brandMemory = next; saveBrandMemory(); }
+}
+// Dato borrado a mano: también se olvida el recordado para ese piloto (si no, volvería a aparecer solo)
+function forgetClearedFields(num, patch) {
+  ['brand', 'country'].forEach(field => { if (patch && patch[field] === '') forgetDriverMemory(num, field); });
 }
 ipc.handle('get-brand-memory', () => Object.keys(brandMemory).length);
 ipc.handle('forget-brand-memory', () => {
@@ -1122,19 +1123,53 @@ ipc.handle('get-roster-lists', () => rosterLists);
 ipc.handle('save-roster-list', (e, data) => {
   const name = String(data?.name || '').replace(/\s+/g, ' ').trim().slice(0, 80);
   if (!name) return rosterLists;
+  // Lo cargado a mano + la marca y la bandera recordadas de los que corren hoy: el listado queda completo por sí solo
+  const roster = { ...raceRoster };
   const names = {};
-  (lastLeaderboard.drivers || []).forEach(d => { const src = String(d.srcNumber || d.number); if (raceRoster[src]) names[src] = d.srcName || d.name || ''; });
+  (lastLeaderboard.drivers || []).forEach(d => {
+    const src = String(d.srcNumber || d.number);
+    const fromMemory = {};
+    if (d.brandFrom === 'memory' && d.brand) fromMemory.brand = d.brand;
+    if (d.countryFrom === 'memory' && d.country) fromMemory.country = d.country;
+    if (Object.keys(fromMemory).length) roster[src] = { ...fromMemory, ...(roster[src] || {}) };
+    if (roster[src]) names[src] = d.srcName || d.name || '';
+  });
   const same = rosterLists.find(l => l.name.toLowerCase() === name.toLowerCase());
-  const entry = { id: same ? same.id : `l${Date.now().toString(36)}`, name, savedAt: Date.now(), roster: { ...raceRoster }, names };
+  const entry = { id: same ? same.id : `l${Date.now().toString(36)}`, name, savedAt: Date.now(), roster, names };
   rosterLists = normalizeRosterLists([entry, ...rosterLists.filter(l => l !== same)]);
   saveRosterLists();
   return rosterLists;
 });
+// Los listados se guardan por el número de la fuente, que puede cambiar de una fecha a otra: cada piloto del listado se
+// busca por su nombre entre los que corren hoy y, si aparece con otro número, sus datos pasan a ese número.
+function matchListToLive(list, drivers) {
+  const liveByName = {};
+  (drivers || []).forEach(d => {
+    const src = String(d.srcNumber || d.number);
+    [d.srcName, d.name].forEach(n => { const k = driverKey(n); if (k.length >= 3 && !liveByName[k]) liveByName[k] = src; });
+  });
+  const out = {};
+  const pending = [];
+  Object.entries(list.roster || {}).forEach(([src, entry]) => {
+    const hit = [list.names && list.names[src], entry.name].map(driverKey).find(k => k.length >= 3 && liveByName[k]);
+    const target = hit ? liveByName[hit] : null;
+    if (target && !out[target]) out[target] = entry; else pending.push([src, entry]);
+  });
+  // Los que no aparecen por nombre quedan con su número, si nadie lo ocupó y no lo usa hoy otro piloto
+  const liveSrc = new Set((drivers || []).map(d => String(d.srcNumber || d.number)));
+  pending.forEach(([src, entry]) => {
+    const named = driverKey((list.names && list.names[src]) || entry.name).length >= 3;
+    if (out[src] || (named && liveSrc.has(src))) return;
+    out[src] = entry;
+  });
+  return out;
+}
 // Carga un listado: reemplaza lo de PILOTOS (mode 'replace') o lo suma pisando sólo los mismos números (mode 'merge')
 ipc.handle('load-roster-list', (e, data) => {
   const list = rosterLists.find(l => l.id === String(data?.id || ''));
   if (!list) return raceRoster;
-  raceRoster = normalizeRoster(data?.mode === 'merge' ? { ...raceRoster, ...list.roster } : list.roster);
+  const loaded = matchListToLive(list, lastLeaderboard.drivers);
+  raceRoster = normalizeRoster(data?.mode === 'merge' ? { ...raceRoster, ...loaded } : loaded);
   saveRoster();
   reprocessLeaderboard();
   return raceRoster;
@@ -1148,8 +1183,7 @@ ipc.handle('get-roster', () => raceRoster);
 ipc.handle('set-roster-entry', (e, data) => {
   const num = String(data?.number ?? '').trim();
   if (!num) return raceRoster;
-  // Marca borrada a mano: también se olvida la recordada para ese piloto (si no, volvería a aparecer sola)
-  if (data?.patch && data.patch.brand === '') forgetDriverBrand(num);
+  forgetClearedFields(num, data?.patch);
   const next = { ...raceRoster };
   next[num] = { ...(next[num] || {}), ...(data?.patch || {}) };
   raceRoster = normalizeRoster(next);
@@ -1168,7 +1202,7 @@ ipc.handle('set-roster-all', (e, data) => {
   if (!Object.keys(allowed).length) return raceRoster;
   const next = { ...raceRoster };
   numbers.forEach(num => {
-    if (allowed.brand === '') forgetDriverBrand(num);
+    forgetClearedFields(num, allowed);
     next[num] = { ...(next[num] || {}), ...allowed };
   });
   raceRoster = normalizeRoster(next);
@@ -1177,7 +1211,8 @@ ipc.handle('set-roster-all', (e, data) => {
   return raceRoster;
 });
 ipc.handle('delete-roster-entry', (e, number) => {
-  forgetDriverBrand(String(number));
+  forgetDriverMemory(String(number), 'brand');
+  forgetDriverMemory(String(number), 'country');
   const next = { ...raceRoster };
   delete next[String(number)];
   raceRoster = next;
