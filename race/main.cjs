@@ -5,7 +5,7 @@ const fs = require('fs');
 const path = require('path');
 const { scrapeSpeedhive, scrapeRaceMonitor, getBrowserInfo } = require('./src/scripts/scraper.cjs');
 const { fetchOrbits, disconnectOrbits, getOrbitsStatus } = require('./src/scripts/orbits.cjs');
-const { RaceAnalyzer, normalizeCorrections, normalizeRoster, normalizeBrandMemory, learnBrands, forgetRemembered, driverKey } = require('./src/scripts/raceData.cjs');
+const { RaceAnalyzer, normalizeCorrections, normalizeRoster, normalizeBrandMemory, learnBrands, forgetRemembered, normalizeNumberMemory, learnNumbers, driverKey } = require('./src/scripts/raceData.cjs');
 const { buildResultsHtml } = require('./src/scripts/resultsPdf.cjs');
 const { networkInterfaces } = require('os');
 const express = require('express');
@@ -80,6 +80,7 @@ const correctionsPath = path.join(userDataPath, 'race_corrections.json');
 const rosterPath = path.join(userDataPath, 'race_drivers.json');
 // Marcas recordadas por nombre de piloto y listados de PILOTOS guardados (por categoría)
 const brandMemoryPath = path.join(userDataPath, 'race_brand_memory.json');
+const numberMemoryPath = path.join(userDataPath, 'race_number_memory.json');
 const rosterListsPath = path.join(userDataPath, 'race_roster_lists.json');
 // Archivos de los sponsors (imágenes y videos) que se cargan en la pestaña SPONSORS
 const sponsorsDir = path.join(userDataPath, 'sponsors');
@@ -263,9 +264,17 @@ function saveRoster() {
 }
 
 let brandMemory = normalizeBrandMemory(readJsonFile(brandMemoryPath, {}));
+// Marca y bandera recordadas por número de la fuente: en la carrera siguiente el que corre con ese número las trae solas
+let numberMemory = normalizeNumberMemory(readJsonFile(numberMemoryPath, {}));
+// Cantidad que se muestra en PILOTOS: números recordados (o, si todavía no hay, pilotos recordados por nombre)
+const memoryCount = () => Object.keys(numberMemory).length || Object.keys(brandMemory).length;
 function saveBrandMemory() {
   try { fs.writeFileSync(brandMemoryPath, JSON.stringify(brandMemory, null, 2)); } catch { /* no crítico: se ignora */ }
-  broadcast('update-brand-memory', Object.keys(brandMemory).length);
+  broadcast('update-brand-memory', memoryCount());
+}
+function saveNumberMemory() {
+  try { fs.writeFileSync(numberMemoryPath, JSON.stringify(numberMemory, null, 2)); } catch { /* no crítico: se ignora */ }
+  broadcast('update-brand-memory', memoryCount());
 }
 const rememberBrandsOn = () => currentConfig.rememberBrands !== false;
 
@@ -298,6 +307,7 @@ function processLeaderboard(raw, opts = {}) {
     corrections: raceCorrections,
     roster: raceRoster,
     brandMemory: rememberBrandsOn() ? brandMemory : null,
+    numberMemory: rememberBrandsOn() ? numberMemory : null,
     multiclassMode: currentConfig.multiclassMode || 'auto',
     now: Date.now(),
     reprocess: !!opts.reprocess
@@ -307,6 +317,8 @@ function processLeaderboard(raw, opts = {}) {
   if (rememberBrandsOn()) {
     const learned = learnBrands(leaderboard.drivers, raceRoster, brandMemory);
     if (learned) { brandMemory = learned; saveBrandMemory(); }
+    const byNumber = learnNumbers(raceRoster, numberMemory);
+    if (byNumber) { numberMemory = byNumber; saveNumberMemory(); }
   }
   if (leaderboard.drivers.length > 0) {
     currentDriversForVote = leaderboard.drivers;
@@ -1106,15 +1118,19 @@ function forgetDriverMemory(num, field) {
   const d = (lastLeaderboard.drivers || []).find(x => String(x.srcNumber || x.number) === String(num));
   const next = forgetRemembered(brandMemory, [d && d.srcName, d && d.name, raceRoster[num] && raceRoster[num].name], field);
   if (next) { brandMemory = next; saveBrandMemory(); }
+  const nextNum = forgetRemembered(numberMemory, [num], field);
+  if (nextNum) { numberMemory = nextNum; saveNumberMemory(); }
 }
 // Dato borrado a mano: también se olvida el recordado para ese piloto (si no, volvería a aparecer solo)
 function forgetClearedFields(num, patch) {
   ['brand', 'country'].forEach(field => { if (patch && patch[field] === '') forgetDriverMemory(num, field); });
 }
-ipc.handle('get-brand-memory', () => Object.keys(brandMemory).length);
+ipc.handle('get-brand-memory', () => memoryCount());
 ipc.handle('forget-brand-memory', () => {
   brandMemory = {};
+  numberMemory = {};
   saveBrandMemory();
+  saveNumberMemory();
   reprocessLeaderboard();
   return 0;
 });
@@ -1210,12 +1226,24 @@ ipc.handle('set-roster-all', (e, data) => {
   reprocessLeaderboard();
   return raceRoster;
 });
+// Quitar un piloto de la tabla no olvida su marca ni su bandera recordadas (para eso se borra el dato o "OLVIDAR TODAS")
 ipc.handle('delete-roster-entry', (e, number) => {
-  forgetDriverMemory(String(number), 'brand');
-  forgetDriverMemory(String(number), 'country');
   const next = { ...raceRoster };
   delete next[String(number)];
   raceRoster = next;
+  saveRoster();
+  reprocessLeaderboard();
+  return raceRoster;
+});
+// Vaciar la tabla de PILOTOS: mode 'absent' quita sólo los que no corren en la sesión actual; 'all', todo lo cargado.
+// La marca y la bandera recordadas por número se conservan: en la carrera nueva vuelven a aparecer solas.
+ipc.handle('clear-roster', (e, mode) => {
+  if (mode === 'absent') {
+    const live = new Set((lastLeaderboard.drivers || []).map(d => String(d.srcNumber || d.number)));
+    raceRoster = Object.fromEntries(Object.entries(raceRoster).filter(([num]) => live.has(num)));
+  } else {
+    raceRoster = {};
+  }
   saveRoster();
   reprocessLeaderboard();
   return raceRoster;

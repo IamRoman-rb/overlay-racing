@@ -224,3 +224,21 @@ test('bandera recordada por nombre: manual > recordada > cronometraje, y se pued
   assert.deepEqual(forgetRemembered(noFlag, ['JUAN PEREZ'], 'brand'), {});
   assert.equal(forgetRemembered(noFlag, ['Otro Piloto'], 'brand'), null);
 });
+
+test('marca y bandera recordadas por número: la carrera siguiente las trae sin cargar nada', () => {
+  const { learnNumbers, normalizeNumberMemory, forgetRemembered } = require('../src/scripts/raceData.cjs');
+  assert.deepEqual(normalizeNumberMemory({ ' 7 ': { brand: 'citroen', country: 'uy' }, 8: { brand: 'no-existe' }, 9: 'citroen' }), { 7: { brand: 'citroen', country: 'UY' } });
+  const memory = learnNumbers({ 7: { brand: 'citroen', country: 'UY' }, 9: { name: 'Sin datos' } }, {});
+  assert.deepEqual(memory, { 7: { brand: 'citroen', country: 'UY' } });
+  assert.equal(learnNumbers({ 7: { brand: 'citroen' } }, memory), null, 'sin cambios no se vuelve a guardar');
+
+  // Carrera nueva, tabla vacía, otro piloto con el #7: trae marca y bandera; manual gana; por número gana sobre por nombre
+  const r = new RaceAnalyzer().update({ session: {}, drivers: [drv(1, 7, 'Otro Piloto', { nationality: 'ARG' }), drv(2, 22, 'Ana')] },
+    { roster: { 22: {} }, numberMemory: memory, brandMemory: { 'OTRO PILOTO': { brand: 'abarth' } }, now: 1000 });
+  const d7 = r.leaderboard.drivers[0];
+  assert.equal(d7.brand, 'citroen'); assert.equal(d7.brandFrom, 'memory');
+  assert.equal(d7.country, 'UY'); assert.equal(d7.countryFrom, 'memory');
+  const r2 = new RaceAnalyzer().update({ session: {}, drivers: [drv(1, 7, 'X')] }, { roster: { 7: { country: 'CL' } }, numberMemory: memory, now: 1000 });
+  assert.equal(r2.leaderboard.drivers[0].country, 'CL');
+  assert.deepEqual(forgetRemembered(memory, ['7'], 'country'), { 7: { brand: 'citroen' } });
+});

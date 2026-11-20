@@ -60,6 +60,17 @@ export default function DriversRoster({ drivers, config, colors, inputStyle, btn
     const next = await ipcRenderer.invoke('delete-roster-entry', number);
     if (next) setRoster(next);
   };
+  // Vaciar la tabla: los que no corren hoy, o todo. Lo recordado por número (marca y bandera) se conserva.
+  const liveNumbers = useMemo(() => new Set((drivers || []).map(d => String(d.srcNumber || d.number))), [drivers]);
+  const loadedCount = Object.keys(roster).length;
+  const absentCount = Object.keys(roster).filter(n => !liveNumbers.has(n)).length;
+  const clearRoster = async (mode) => {
+    if (!ipcRenderer) return;
+    const n = mode === 'absent' ? absentCount : loadedCount;
+    if (!n || !window.confirm(t(mode === 'absent' ? 'pilotos.clearAbsentConfirm' : 'pilotos.clearAllConfirm', { n }))) return;
+    const next = await ipcRenderer.invoke('clear-roster', mode);
+    if (next) setRoster(next);
+  };
   const addDriver = () => {
     const num = newNumber.trim();
     if (!num) return;
@@ -145,6 +156,10 @@ export default function DriversRoster({ drivers, config, colors, inputStyle, btn
       <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginBottom: '14px', flexWrap: 'wrap' }}>
         <input value={newNumber} onChange={(e) => setNewNumber(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') addDriver(); }} placeholder={t('pilotos.newNumber')} style={{ ...inputStyle, width: '120px', padding: '9px' }} />
         <button onClick={addDriver} style={{ ...btnStyle(false), width: 'auto', padding: '9px 14px', fontSize: '10px' }}><Icon name="check" />{t('pilotos.addBtn')}</button>
+        <button onClick={() => clearRoster('absent')} disabled={!absentCount} title={t('pilotos.clearAbsentTitle')}
+          style={{ ...btnStyle(false), width: 'auto', padding: '9px 12px', fontSize: '10px', opacity: absentCount ? 1 : 0.5 }}><Icon name="close" />{t('pilotos.clearAbsent', { n: absentCount })}</button>
+        <button onClick={() => clearRoster('all')} disabled={!loadedCount} title={t('pilotos.clearAllTitle')}
+          style={{ ...btnStyle(false), width: 'auto', padding: '9px 12px', fontSize: '10px', backgroundColor: loadedCount ? '#c0392b' : undefined, color: loadedCount ? '#fff' : undefined, opacity: loadedCount ? 1 : 0.5 }}><Icon name="delete" />{t('pilotos.clearAll', { n: loadedCount })}</button>
         <input value={filter} onChange={(e) => setFilter(e.target.value)} placeholder={t('common.searchPlaceholder')} style={{ ...inputStyle, width: '220px', padding: '9px', marginLeft: 'auto', textTransform: 'none' }} />
       </div>
 

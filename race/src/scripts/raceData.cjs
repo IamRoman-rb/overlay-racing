@@ -158,7 +158,45 @@ function learnBrands(drivers, roster, memory) {
   });
   return changed ? next : null;
 }
-// Olvida un dato recordado ('brand' o 'country') de esos nombres. Devuelve la memoria nueva o null si no cambió nada.
+// --- Marca y bandera recordadas por número ---
+// { número de la fuente: { brand, country } }. Lo elegido para un número en PILOTOS vale para las próximas carreras:
+// el que corra con ese número lo trae solo, sin volver a cargarlo.
+const numberKey = (n) => driverKey(n).slice(0, 12);
+function normalizeNumberMemory(raw) {
+  const out = {};
+  if (!raw || typeof raw !== 'object') return out;
+  Object.keys(raw).forEach(k => {
+    const key = numberKey(k);
+    const v = raw[k];
+    if (!key || !v || typeof v !== 'object') return;
+    const e = {};
+    const slug = String(v.brand || '').trim().slice(0, 40);
+    if (slug && brandExists(slug)) e.brand = slug;
+    const country = String(v.country || '').trim().toUpperCase().slice(0, 12);
+    if (MEMORY_COUNTRY_RE.test(country)) e.country = country;
+    if (e.brand || e.country) out[key] = e;
+  });
+  return out;
+}
+// Aprende la marca y la bandera elegidas a mano en PILOTOS para cada número. Devuelve la memoria nueva o null si no cambió.
+function learnNumbers(roster, memory) {
+  const next = { ...(memory || {}) };
+  let changed = false;
+  Object.keys(roster || {}).forEach(num => {
+    const r = roster[num] || {};
+    const key = numberKey(num);
+    if (!key) return;
+    const patch = {};
+    if (r.brand && brandExists(r.brand)) patch.brand = r.brand;
+    if (r.country && MEMORY_COUNTRY_RE.test(r.country)) patch.country = r.country;
+    const cur = next[key] || {};
+    if (!Object.keys(patch).length || Object.keys(patch).every(f => cur[f] === patch[f])) return;
+    next[key] = { ...cur, ...patch };
+    changed = true;
+  });
+  return changed ? next : null;
+}
+// Olvida un dato recordado ('brand' o 'country') de esos nombres (o números). Devuelve la memoria nueva o null si no cambió nada.
 function forgetRemembered(memory, names, field) {
   const next = { ...(memory || {}) };
   let changed = false;
@@ -642,15 +680,16 @@ class RaceAnalyzer {
 
     // --- Datos de la pestaña PILOTOS (lo que la fuente no informa o informa mal) ---
     // Se aplican después del análisis (que usa el número de la fuente) y antes de las alertas y la salida.
-    // Marca: la elegida a mano para ese número > la recordada para ese piloto (por nombre, en otra carrera) > la detectada
+    // Marca y bandera: la elegida a mano > la recordada para ese número (otra carrera) > la recordada por el nombre > la de la fuente
     const roster = normalizeRoster(opts.roster);
     const memory = opts.brandMemory && typeof opts.brandMemory === 'object' ? opts.brandMemory : null;
+    const byNumber = opts.numberMemory && typeof opts.numberMemory === 'object' ? opts.numberMemory : null;
     drivers.forEach(d => {
       const src = String(d.number);
       const r = roster[src] || {};
       d.srcNumber = src;
       d.srcName = d.name;
-      const remembered = rememberedFor(memory, r.name, d.name);
+      const remembered = { ...rememberedFor(memory, r.name, d.name), ...((byNumber && byNumber[numberKey(src)]) || {}) };
       if (r.brand && brandExists(r.brand)) { d.brand = r.brand; d.brandFrom = 'manual'; }
       else if (remembered.brand && brandExists(remembered.brand)) { d.brand = remembered.brand; d.brandFrom = 'memory'; }
       else { d.brand = detectBrand([d.make, ...(Array.isArray(d.extra) ? d.extra : [])]); d.brandFrom = d.brand ? 'detected' : ''; }
@@ -756,6 +795,8 @@ module.exports = {
   normalizeBrandMemory,
   learnBrands,
   forgetRemembered,
+  normalizeNumberMemory,
+  learnNumbers,
   RaceAnalyzer,
   applyCorrections,
   normalizeCorrections,
