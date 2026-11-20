@@ -27,7 +27,7 @@ export const translations = {
       ajustes: 'AJUSTES', personalizar: 'PERSONALIZAR', editor: 'EDITOR', manual: 'MANUAL', atajos: 'ATAJOS'
     },
     graphics: {
-      lapCompare: 'ÚLTIMAS VUELTAS', windVectors: 'VECTORES DE VIENTO', sponsorLive: 'SPONSOR AL AIRE', formationLap: 'VUELTA DE FORMACIÓN', sessionStatus: 'ESTADO DE SESIÓN', lapProgress: 'VUELTA X DE Y',
+      lapCompare: 'ÚLTIMAS VUELTAS', windVectors: 'VECTORES DE VIENTO', sponsorLive: 'SPONSOR AL AIRE', formationLap: 'VUELTA DE FORMACIÓN', sessionStatus: 'ESTADO DE SESIÓN', lapProgress: 'VUELTA X DE Y', trackConditions: 'CONDICIONES DE PISTA', weatherRadar: 'RADAR DEL CLIMA',
       relator: 'RELATOR', comentarista: 'COMENTARISTA', notero1: 'NOTERO 1', notero2: 'NOTERO 2',
       circuito: 'CIRCUITO', clima: 'CLIMA', ticker: 'TIRA INFERIOR', tower: 'TORRE POSICIONES',
       grid: 'GRILLA PARTIDA', finalResults: 'RESULTADOS FINALES', winner: 'GANADOR',
@@ -77,6 +77,7 @@ export const translations = {
       lapProgressTitle: 'Muestra cuántas vueltas van de las que tiene la carrera (6/10), avisa la última vuelta', raceTotalLaps: 'TOTAL VUELTAS', raceTotalLapsAuto: 'auto', raceTotalLapsHint: 'Vueltas que tiene la carrera. Vacío = las que informa el cronometraje. Cargalo si no las informa o se equivoca: se usa en todas las gráficas (vuelta 6/10, faltan 4).',
       sessionStatusTitle: 'Bandera vigente, vuelta (y faltantes), tiempo restante o transcurrido, mejor vuelta y temperatura en una sola gráfica',
       formationTitle: 'Saca al aire la categoría que está en vuelta de formación con el texto VUELTA DE FORMACIÓN', formationCategoryPlaceholder: 'Categoría (se toma sola)', formationCategoryHint: 'Vacío = la categoría actual (PANEL > CATEGORÍA o la que informa la fuente). Escribí otra sólo si la que gira es distinta.', formationInTower: 'Mostrarlo también en la torre',
+      trackConditionsTitle: 'Mapa de calor sobre el trazado: viento de frente / de cola / cruzado en cada tramo y temperatura del asfalto (estimada o medida)', weatherRadarTitle: 'Mapa de la zona alrededor del circuito: lluvia, temperatura y viento, con las próximas horas animadas', weatherRadarFetchTitle: 'Pedir (o actualizar) los datos del radar de la zona del circuito', weatherRadarError: 'No se pudieron obtener los datos del radar. Revisá la conexión e intentá de nuevo.', weatherRadarNeedSource: 'Primero cargá el clima (botón de la nube o de ubicación) para saber de qué zona pedir el radar.',
       windVectorsTitle: 'Flechas de viento en toda la pantalla, con la dirección y la fuerza del clima cargado', introModeTitle: 'Cómo se muestra el circuito en la presentación', introWeatherFx: 'CLIMA ANIMADO', introWeatherFxTitle: 'Lluvia, nubes, nieve, niebla o tormenta de fondo según el clima cargado', introModeStatic: 'Circuito completo', introModeTour: 'Vuelta en primera persona', introModeCurves: 'Curva por curva', introTourSec: 'SEG. POR VUELTA',
       battleRecommended: 'Batalla más cercana:', battleRecommendedInfo: '{front} vs {back} · intervalo {gap} s',
       battleNone: 'Sin batallas cercanas por ahora.', battleAuto: 'Elegir la posición automáticamente (mientras no está al aire)', battleUse: 'USAR BATALLA RECOMENDADA (POS {pos})',
@@ -388,7 +389,8 @@ export const translations = {
     },
     circuito: {
       modeCurves: 'CURVAS', modePath: 'TRAZADO (MAPA EN VIVO)',
-      modeSectors: 'SECTORES', modeData: 'DATOS',
+      modeSectors: 'SECTORES', modeData: 'DATOS', modeConditions: 'CLIMA EN PISTA',
+      condInstructions: 'Para el mapa de CONDICIONES DE PISTA. Girá la brújula hasta que la N apunte al norte real del circuito (en Google Maps el norte está arriba: 0°). Así el viento de cada tramo sale bien.', condNorth: 'NORTE DEL MAPA', condToolShade: 'MARCAR SOMBRA', condToolTemp: 'TEMP. MEDIDA', condShadeHint: 'Hacé clic sobre la pista donde hay sombra (tribunas, árboles, boxes). Ahí el asfalto se estima más fresco.', condTempHint: 'Hacé clic sobre la pista donde mediste la temperatura del asfalto y escribila. Con mediciones, el mapa usa esos valores en lugar de la estimación.', condShadeZones: 'ZONAS DE SOMBRA ({n})', condTempPoints: 'MEDICIONES ({n})', condWidth: 'ANCHO', condClear: 'BORRAR', condPreview: 'Vista previa con el clima cargado: azul = viento de cola, gris = cruzado, rojo = de frente.', condNoWeather: 'Cargá el clima en el PANEL para ver el viento sobre la pista.', condEstimate: 'Asfalto estimado: {t}° (aire {a}°)',
       sectorsInstructions: 'Hacé clic sobre la pista donde termina cada sector (el S1 arranca en la largada). Cada sector se pinta con el color que usa la presentación del circuito.',
       sectorRemove: 'Quitar este corte', sectorsNeedLength: 'Cargá la extensión del circuito en DATOS para ver el largo de cada sector en metros.', sectorsClear: 'BORRAR SECTORES',
       dataInstructions: 'Datos para la presentación y el récord del circuito. El sentido de giro y las curvas a izquierda / derecha salen solos del trazado.',
@@ -461,7 +463,7 @@ export const translations = {
       ajustes: 'SETTINGS', personalizar: 'CUSTOMIZE', editor: 'EDITOR', manual: 'MANUAL', atajos: 'SHORTCUTS'
     },
     graphics: {
-      lapCompare: 'LAST LAPS', windVectors: 'WIND VECTORS', sponsorLive: 'SPONSOR ON AIR', formationLap: 'FORMATION LAP', sessionStatus: 'SESSION STATUS', lapProgress: 'LAP X OF Y',
+      lapCompare: 'LAST LAPS', windVectors: 'WIND VECTORS', sponsorLive: 'SPONSOR ON AIR', formationLap: 'FORMATION LAP', sessionStatus: 'SESSION STATUS', lapProgress: 'LAP X OF Y', trackConditions: 'TRACK CONDITIONS', weatherRadar: 'WEATHER RADAR',
       relator: 'COMMENTATOR', comentarista: 'CO-COMMENTATOR', notero1: 'REPORTER 1', notero2: 'REPORTER 2',
       circuito: 'TRACK', clima: 'WEATHER', ticker: 'BOTTOM TICKER', tower: 'POSITION TOWER',
       grid: 'STARTING GRID', finalResults: 'FINAL RESULTS', winner: 'WINNER',
@@ -511,6 +513,7 @@ export const translations = {
       lapProgressTitle: 'Shows how many laps have been completed out of the race total (6/10) and warns the last lap', raceTotalLaps: 'TOTAL LAPS', raceTotalLapsAuto: 'auto', raceTotalLapsHint: 'Race length in laps. Empty = the one reported by the timing. Fill it in if it is missing or wrong: it is used in every graphic (lap 6/10, 4 to go).',
       sessionStatusTitle: 'Current flag, lap (and laps to go), time to go or elapsed, fastest lap and temperature in a single graphic',
       formationTitle: 'Puts on air the category on its formation lap with the text FORMATION LAP', formationCategoryPlaceholder: 'Category (automatic)', formationCategoryHint: 'Empty = the current category (PANEL > CATEGORY or the one reported by the source). Type another only if a different one is running.', formationInTower: 'Also show it in the tower',
+      trackConditionsTitle: 'Heat map over the track line: head / tail / cross wind on each part of the lap and asphalt temperature (estimated or measured)', weatherRadarTitle: 'Map of the area around the circuit: rain, temperature and wind, with the next hours animated', weatherRadarFetchTitle: 'Fetch (or refresh) the radar data for the circuit area', weatherRadarError: 'Could not get the radar data. Check the connection and try again.', weatherRadarNeedSource: 'Load the weather first (cloud or location button) so the radar knows which area to fetch.',
       windVectorsTitle: 'Full-screen wind arrows using the direction and strength of the loaded weather', introModeTitle: 'How the track is shown in the intro', introWeatherFx: 'ANIMATED WEATHER', introWeatherFxTitle: 'Rain, clouds, snow, fog or storm in the background according to the loaded weather', introModeStatic: 'Whole track', introModeTour: 'First-person lap', introModeCurves: 'Corner by corner', introTourSec: 'SEC. PER LAP',
       battleRecommended: 'Closest battle:', battleRecommendedInfo: '{front} vs {back} · gap {gap} s',
       battleNone: 'No close battles right now.', battleAuto: 'Pick the position automatically (while it is off air)', battleUse: 'USE RECOMMENDED BATTLE (POS {pos})',
@@ -822,7 +825,8 @@ export const translations = {
     },
     circuito: {
       modeCurves: 'CORNERS', modePath: 'TRACK LINE (LIVE MAP)',
-      modeSectors: 'SECTORS', modeData: 'DATA',
+      modeSectors: 'SECTORS', modeData: 'DATA', modeConditions: 'TRACK WEATHER',
+      condInstructions: 'For the TRACK CONDITIONS map. Rotate the compass until N points to the real north of the circuit (in Google Maps north is up: 0°), so the wind on each part of the lap is right.', condNorth: 'MAP NORTH', condToolShade: 'MARK SHADE', condToolTemp: 'MEASURED TEMP.', condShadeHint: 'Click on the track where there is shade (grandstands, trees, pits). The asphalt there is estimated cooler.', condTempHint: 'Click on the track where you measured the asphalt temperature and type it. With measurements, the map uses them instead of the estimate.', condShadeZones: 'SHADE ZONES ({n})', condTempPoints: 'MEASUREMENTS ({n})', condWidth: 'WIDTH', condClear: 'CLEAR', condPreview: 'Preview with the loaded weather: blue = tailwind, gray = crosswind, red = headwind.', condNoWeather: 'Load the weather in the PANEL to see the wind over the track.', condEstimate: 'Estimated asphalt: {t}° (air {a}°)',
       sectorsInstructions: 'Click on the track where each sector ends (S1 starts at the start/finish line). Each sector is painted with the color used by the circuit intro.',
       sectorRemove: 'Remove this split', sectorsNeedLength: 'Enter the circuit length in DATA to see each sector length in meters.', sectorsClear: 'CLEAR SECTORS',
       dataInstructions: 'Data for the circuit intro and record. The direction and left / right corners come from the track line automatically.',

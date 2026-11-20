@@ -32,6 +32,9 @@ import CircuitIntro from '../graphics/CircuitIntro';
 import CircuitRecord from '../graphics/CircuitRecord';
 import LapCompare from '../graphics/LapCompare';
 import WindVectors from '../graphics/WindField';
+import TrackConditions from '../graphics/TrackConditions';
+import WeatherRadar from '../graphics/WeatherRadar';
+import { demoRadarGrid } from '../utils/trackConditions';
 import SessionStatus from '../graphics/SessionStatus';
 import LapProgress from '../graphics/LapProgress';
 import FormationLap from '../graphics/FormationLap';
@@ -198,6 +201,14 @@ function GraphicPreviewContent({ id, config, positions, drivers, sessionInfo }) 
       return <LapCompare state={{ isVisible: true, a: list[0]?.number, b: list[1]?.number }} drivers={enrichDemo(list, realDrivers)} history={demoLapCompare(list)} config={fullConfig} />;
     case 'windVectors':
       return <WindVectors isVisible config={{ ...fullConfig, weatherData: config?.weatherData || { temp: 22, weathercode: 2, windSpeed: 18, windDir: 240, precipProb: 10, feelsLike: 21 } }} />;
+    case 'trackConditions': {
+      const wd = config?.weatherData || { temp: 24, weathercode: 1, windSpeed: 18, windDir: 240, gusts: 31, radiation: 780, humidity: 45 };
+      // Sin sombras ni mediciones cargadas se muestra una sombra de ejemplo para ver el mapa de calor
+      const hasOwn = (config?.trackShade && config.trackShade.length) || (config?.trackTempPoints && config.trackTempPoints.length);
+      return <TrackConditions isVisible config={{ ...fullConfig, trackPath: demoCircuit(config).trackPath, weatherData: wd, trackShade: hasOwn ? config.trackShade : [{ t: 0.62, w: 0.06 }] }} />;
+    }
+    case 'weatherRadar':
+      return <WeatherRadar isVisible config={{ ...fullConfig, weatherGrid: config?.weatherGrid || demoRadarGrid(), trackPath: demoCircuit(config).trackPath }} />;
     case 'lapProgress':
       return <LapProgress isVisible config={fullConfig} sessionInfo={{ ...session, manualTotalLaps: config?.raceTotalLaps || '', lapsToGo: session.lapsToGo ?? '14' }} />;
     case 'sessionStatus':

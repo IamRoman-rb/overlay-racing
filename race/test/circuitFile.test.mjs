@@ -37,3 +37,14 @@ test('archivo de circuito: rechaza archivos que no sirven y limpia valores raros
   assert.deepEqual(p.trackSectors, [0.5]);
   assert.equal(p.circuitDirection, '');
 });
+
+test('archivo de circuito: guarda el norte del mapa y las sombras (no las mediciones)', () => {
+  const file = buildCircuitFile({ ...config, trackNorth: 75, trackShade: [{ t: 0.4, w: 0.05 }], trackTempPoints: [{ t: 0.1, temp: 40 }] });
+  assert.equal(file.data.trackTempPoints, undefined);
+  const patch = parseCircuitFile(file);
+  assert.equal(patch.trackNorth, 75);
+  assert.deepEqual(patch.trackShade, [{ t: 0.4, w: 0.05 }]);
+  const odd = parseCircuitFile({ trackPath: config.trackPath, trackNorth: -90, trackShade: [{ t: 3 }, { t: 0.2, w: 9 }, null] });
+  assert.equal(odd.trackNorth, 270);
+  assert.deepEqual(odd.trackShade, [{ t: 0.2, w: 0.03 }]);
+});

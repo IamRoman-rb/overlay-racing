@@ -17,6 +17,7 @@ import { comboFromEvent, shouldIgnoreHotkey, findHotkeyAction } from '../utils/h
 import { defaultPositions } from '../data/defaultPositions';
 import { sessionProgress } from '../utils/flagState';
 import UpdateBadge from '../components/UpdateBadge';
+import { radarGridPoints, radarUrl, parseRadarResponse } from '../utils/trackConditions';
 
 // Pestañas pesadas que sólo se muestran al abrirlas: se descargan recién entonces (archivos .js aparte).
 const SettingsPanel = lazy(() => import('../windows/SettingsPanel'));
@@ -202,7 +203,7 @@ const WEATHER_REFRESH_MS = 10 * 60 * 1000;   // actualización automática cada 
 
 async function fetchWeatherData(lat, lon, place = null) {
   const res = await fetch(
-    `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true&hourly=temperature_2m,weathercode,relative_humidity_2m,apparent_temperature,precipitation_probability&windspeed_unit=kmh&timezone=auto&forecast_days=2`
+    `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true&hourly=temperature_2m,weathercode,relative_humidity_2m,apparent_temperature,precipitation_probability,wind_gusts_10m,shortwave_radiation,cloud_cover&windspeed_unit=kmh&timezone=auto&forecast_days=2`
   );
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   const data = await res.json();
@@ -224,11 +225,24 @@ async function fetchWeatherData(lat, lon, place = null) {
     feelsLike: h.apparent_temperature?.[idx] ?? null,
     humidity: h.relative_humidity_2m?.[idx] ?? null,
     precipProb: h.precipitation_probability?.[idx] ?? null,
+    gusts: h.wind_gusts_10m?.[idx] ?? null,
+    radiation: h.shortwave_radiation?.[idx] ?? null,
+    cloudCover: h.cloud_cover?.[idx] ?? null,
     forecast,
     place,
     updatedAt: Date.now()
   };
 }
+
+// RADAR DEL CLIMA: grilla de 9 x 9 puntos alrededor del origen del clima. Open-Meteo cuenta cada punto como una
+// llamada, por eso la actualización automática del radar es cada 30 min (y no cada 10 como el clima).
+const RADAR_REFRESH_MS = 30 * 60 * 1000;
+async function fetchRadarGrid(lat, lon, place, km = 40) {
+  const res = await fetch(radarUrl(radarGridPoints(lat, lon, km)));
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return parseRadarResponse(await res.json(), { lat, lon, km, place });
+}
+const radarKm = (cfg) => { const v = Number(cfg?.weatherRadarKm); return Number.isFinite(v) && v >= 10 && v <= 150 ? v : 40; };
 
 // Coordenadas del origen guardado del clima: el circuito (si sigue elegido, toma el actual) o la ubicación de la PC
 function weatherSourceCoords(cfg) {
@@ -319,12 +333,40 @@ const WeatherControl = ({ id, label, config, isActive, onToggle, onSave, t }) =>
   );
 };
 
+// RADAR DEL CLIMA: botón para mostrarlo + botón para pedir / actualizar la grilla de la zona
+const RadarControl = ({ config, isActive, onToggle, onSave, t }) => {
+  const [loading, setLoading] = useState(false);
+  const grid = config.weatherGrid;
+  const fetchRadar = async () => {
+    const at = weatherSourceCoords(config);
+    if (!at) { alert(t('panel.weatherRadarNeedSource')); return; }
+    setLoading(true);
+    try {
+      const weatherGrid = await fetchRadarGrid(at.lat, at.lon, at.place, radarKm(config));
+      await onSave({ weatherGrid });
+    } catch (e) {
+      console.error(e);
+      alert(t('panel.weatherRadarError'));
+    }
+    setLoading(false);
+  };
+  const updated = grid?.updatedAt ? new Date(grid.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : null;
+  return (
+    <div style={{ display: 'flex', gap: '2px' }}>
+      <button onClick={onToggle} title={t('panel.weatherRadarTitle')} style={{ ...btnStyle(isActive), flex: 1 }}>{t('graphics.weatherRadar')}</button>
+      <button onClick={fetchRadar} disabled={loading} title={`${t('panel.weatherRadarFetchTitle')}${updated ? ` (${updated})` : ''}`} style={{ backgroundColor: colors.bgInput, color: grid ? colors.yellow : colors.textMuted, border: `1px solid ${colors.border}`, cursor: 'pointer', padding: '0 10px', boxShadow: '0 2px 0 rgba(0,0,0,0.55)' }}>
+        <Icon name={loading ? 'hourglass_top' : 'sensors'} size="1.5em" />
+      </button>
+    </div>
+  );
+};
+
 const GRAPHIC_IDS = [
   'relator', 'comentarista', 'notero1', 'notero2', 'circuito', 'clima', 'ticker', 'tower',
   'grid', 'finalResults', 'winner', 'flags', 'fastestLap', 'driverInfo', 'battle', 'customZocalo',
   'votingQR', 'votingResults', 'lapCounter', 'virtualChamp', 'startingLights',
   'lapTimesHistory', 'trackAlert', 'penaltyAlert', 'branding', 'evento',
-    'sectors', 'gapChart', 'gainers', 'qualifying', 'trackMap', 'raceNotice', 'circuitIntro', 'circuitRecord', 'lapCompare', 'windVectors', 'formationLap', 'sessionStatus', 'lapProgress'
+    'sectors', 'gapChart', 'gainers', 'qualifying', 'trackMap', 'raceNotice', 'circuitIntro', 'circuitRecord', 'lapCompare', 'windVectors', 'formationLap', 'sessionStatus', 'lapProgress', 'trackConditions', 'weatherRadar'
 ];
 
 const TAB_IDS = ['panel', 'campeonato', 'votaciones', 'sanciones', 'cloud', 'zocalos', 'pilotos', 'sponsors', 'circuito', 'ajustes', 'personalizar', 'editor', 'atajos', 'manual'];
@@ -456,6 +498,17 @@ export default function ControlPanel() {
         setConfig(latest);
         if (ipcRenderer) await ipcRenderer.invoke('save-config', latest);
       } catch (e) { console.error('[clima auto]', e); }
+      // Radar: sólo si ya se pidió alguna vez, cada 30 min
+      const grid = configRef.current.weatherGrid;
+      if (grid && Date.now() - (grid.updatedAt || 0) >= RADAR_REFRESH_MS) {
+        try {
+          const weatherGrid = await fetchRadarGrid(at.lat, at.lon, at.place, radarKm(configRef.current));
+          const latest = { ...configRef.current, weatherGrid };
+          configRef.current = latest;
+          setConfig(latest);
+          if (ipcRenderer) await ipcRenderer.invoke('save-config', latest);
+        } catch (e) { console.error('[radar auto]', e); }
+      }
       weatherBusyRef.current = false;
     };
     check();
@@ -1125,7 +1178,9 @@ export default function ControlPanel() {
       lapCompare: handleToggleLapCompare, windVectors: () => handleToggleGraphic('windVectors'),
       formationLap: () => handleToggleGraphic('formationLap'),
       sessionStatus: () => handleToggleGraphic('sessionStatus'),
-      lapProgress: () => handleToggleGraphic('lapProgress')
+      lapProgress: () => handleToggleGraphic('lapProgress'),
+      trackConditions: () => handleToggleGraphic('trackConditions'),
+      weatherRadar: () => handleToggleGraphic('weatherRadar')
     };
   });
 
@@ -1332,6 +1387,8 @@ export default function ControlPanel() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
                 <WeatherControl id="clima" label={t('graphics.clima')} config={config} onSave={handleDirectSave} isActive={graphics.clima} onToggle={handleToggleGraphic} t={t} />
                 <button onClick={() => handleToggleGraphic('windVectors')} title={t('panel.windVectorsTitle')} style={btnStyle(!!graphics.windVectors)}>{t('graphics.windVectors')}</button>
+                <button onClick={() => handleToggleGraphic('trackConditions')} title={t('panel.trackConditionsTitle')} style={btnStyle(!!graphics.trackConditions)}>{t('graphics.trackConditions')}</button>
+                <RadarControl config={config} isActive={!!graphics.weatherRadar} onToggle={() => handleToggleGraphic('weatherRadar')} onSave={handleDirectSave} t={t} />
               </div>
                           {/* VUELTA DE FORMACIÓN: la categoría que está girando (la de CATEGORÍA o la que informa la fuente) */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginBottom: '15px' }}>

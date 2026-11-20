@@ -11,6 +11,8 @@ import { useImageAspect } from '../utils/raceVisuals';
 import { detectTrackFromImage } from '../utils/trackDetect';
 import { countryOptions, countryName, countryFromText, circuitCountry } from '../utils/countries';
 import { FlagChip } from '../components/CountryFlag';
+import { CondControls, CondOverlay } from './TrackConditionsEditor';
+import { condClickPatch } from '../utils/trackConditions';
 
 let ipcRenderer = null;
 if (typeof window !== 'undefined' && typeof window.require === 'function') {
@@ -28,6 +30,8 @@ export default function TrackMapPanel({ config, onConfigChange, colors, inputSty
   const isCurves = mode === 'curves';
   const isSectors = mode === 'sectors';
   const isData = mode === 'data';
+  const isCond = mode === 'conditions';
+  const [condTool, setCondTool] = useState('shade'); // 'shade' | 'temp'
 
   const curves = config?.trackCurves || [];
   const trackPath = Array.isArray(config?.trackPath) ? config.trackPath : [];
@@ -50,6 +54,11 @@ export default function TrackMapPanel({ config, onConfigChange, colors, inputSty
     const snap = nearestOnTrack(trackPath, pathAspect, getPercentFromEvent(e));
     if (!snap || snap.t < 0.01 || snap.t > 0.99 || splits.some(v => Math.abs(v - snap.t) < 0.01)) return;
     onConfigChange?.('trackSectors', [...splits, snap.t].sort((a, b) => a - b));
+  };
+  const handleCondClick = (e) => {
+    if (!hasPath) return;
+    const patch = condClickPatch(config, condTool, nearestOnTrack(trackPath, pathAspect, getPercentFromEvent(e)));
+    if (patch) onConfigChange?.(patch[0], patch[1]);
   };
   const removeSplit = (index) => onConfigChange?.('trackSectors', [...splits].sort((a, b) => a - b).filter((_, i) => i !== index));
   const detectedDirection = pathAspect && hasPath ? trackDirection(trackPath, pathAspect) : null;
@@ -258,6 +267,7 @@ export default function TrackMapPanel({ config, onConfigChange, colors, inputSty
           <button onClick={() => setMode('path')} style={{ ...btnStyle(isPath), padding: '8px' }}>{t('circuito.modePath')}</button>
           <button onClick={() => { setMode('sectors'); setPickStart(false); }} style={{ ...btnStyle(isSectors), padding: '8px' }}>{t('circuito.modeSectors')}</button>
           <button onClick={() => { setMode('data'); setPickStart(false); }} style={{ ...btnStyle(isData), padding: '8px' }}>{t('circuito.modeData')}</button>
+          <button onClick={() => { setMode('conditions'); setPickStart(false); }} style={{ ...btnStyle(isCond), padding: '8px', gridColumn: '1 / -1' }}>{t('circuito.modeConditions')}</button>
         </div>
 
         {isSectors && (
@@ -279,6 +289,10 @@ export default function TrackMapPanel({ config, onConfigChange, colors, inputSty
             {!(Number.isFinite(lengthM) && lengthM > 0) && <p style={{ fontSize: '10px', color: colors.textMuted, lineHeight: 1.4 }}>{t('circuito.sectorsNeedLength')}</p>}
             {splits.length > 0 && <button onClick={() => onConfigChange?.('trackSectors', [])} style={{ ...smallBtn, width: '100%', marginTop: '8px', backgroundColor: '#c0392b', color: '#fff', border: 'none' }}>{t('circuito.sectorsClear')}</button>}
           </div>
+        )}
+
+        {isCond && (
+          <CondControls config={config} onConfigChange={onConfigChange} tool={condTool} setTool={setCondTool} hasPath={hasPath} colors={colors} inputStyle={inputStyle} btnStyle={btnStyle} t={t} />
         )}
 
         {isData && (
@@ -378,7 +392,7 @@ export default function TrackMapPanel({ config, onConfigChange, colors, inputSty
         {(config?.trackImage || useTrackCanvas) && (!useTrackCanvas || pathBox) ? (
           <div
             ref={imgRef}
-            onClick={isPath ? handlePathClick : (isSectors ? handleSectorClick : (isCurves ? handleImageClick : undefined))}
+            onClick={isPath ? handlePathClick : (isSectors ? handleSectorClick : (isCond ? handleCondClick : (isCurves ? handleImageClick : undefined)))}
             onMouseMove={isPath ? handlePathMove : (isCurves ? handleImageMouseMove : undefined)}
             onMouseUp={isPath ? handlePathUp : handleImageMouseUp}
             onMouseLeave={isPath ? handlePathUp : handleImageMouseUp}
@@ -414,6 +428,7 @@ export default function TrackMapPanel({ config, onConfigChange, colors, inputSty
                 ))}
               </svg>
             )}
+            {isCond && hasPath && <CondOverlay config={config} aspect={pathAspect} />}
             {isPath && trackPath.map((p, i) => (
               <div
                 key={i}

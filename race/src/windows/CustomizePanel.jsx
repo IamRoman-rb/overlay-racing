@@ -68,6 +68,8 @@ const RACE_GRAPHIC_FORMATS = {
   windVectors: [['standard', 'Clásico (Flechas)'], ['flow', 'Profesional (Corrientes con Estela)'], ['dense', 'Denso (Muchas Flechas Chicas)'], ['light', 'Liviano (Líneas Finas)']],
   lapProgress: [['bar', 'Barra (Vuelta X/Y + Progreso)'], ['fraction', 'Fracción (6/10 Grande)'], ['text', 'Texto (Van 6 Vueltas de 10)']],
   sessionStatus: [['bar', 'Barra (Todos los Datos en una Franja)'], ['card', 'Tarjeta (Compacta, Dos Columnas)'], ['minimal', 'Minimalista (Sin Caja)']],
+  trackConditions: [['standard', 'Clásico (Recuadro con Encabezado)'], ['compact', 'Compacto (Más Chico)'], ['full', 'Grande (Mapa + Columna de Datos)'], ['minimal', 'Minimalista (Solo el Circuito)']],
+  weatherRadar: [['standard', 'Clásico (Recuadro con Encabezado)'], ['compact', 'Compacto (Más Chico)'], ['large', 'Grande (Para la Previa)'], ['minimal', 'Minimalista (Sin Encabezado)']],
   formationLap: [['standard', 'Clásico (Tarjeta con la Categoría)'], ['compact', 'Compacto (Una Línea)'], ['banner', 'Banner (Barra de Todo el Ancho)'], ['elite', 'Elite (Como la Torre Elite)'], ['minimal', 'Minimalista (Sin Caja)']]
 };
 // Gráficas que sólo existen en estilo Elite (no llevan los skins comunes)
@@ -438,7 +440,7 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
     'grid', 'finalResults', 'winner', 'flags', 'fastestLap', 'driverInfo', 'battle', 'customZocalo',
     'votingQR', 'votingResults', 'lapCounter', 'virtualChamp', 'pitStop', 'startingLights',
     'lapTimesHistory', 'trackAlert', 'penaltyAlert', 'branding', 'evento',
-    'sectors', 'gapChart', 'gainers', 'qualifying', 'trackMap', 'raceNotice', 'circuitIntro', 'circuitRecord', 'lapCompare', 'windVectors', 'sponsorLive', 'formationLap', 'sessionStatus', 'lapProgress'
+    'sectors', 'gapChart', 'gainers', 'qualifying', 'trackMap', 'raceNotice', 'circuitIntro', 'circuitRecord', 'lapCompare', 'windVectors', 'sponsorLive', 'formationLap', 'sessionStatus', 'lapProgress', 'trackConditions', 'weatherRadar'
   ];
   const allGraphics = GRAPHIC_IDS.map(id => ({ id, label: t(`graphics.${id}`) }));
   const shownGraphics = allGraphics.filter(g => matchesSearch(graphicQuery, g.label, g.id));
@@ -863,6 +865,50 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
               {RACE_GRAPHIC_FORMATS[selectedGraphic].map(([value, label]) => <option key={value} value={value}>{label}</option>)}
               {!NO_SKINS.includes(selectedGraphic) && renderSkinOptions()}
             </select>
+          </div>
+        )}
+
+        {/* CONDICIONES DE PISTA / RADAR DEL CLIMA: qué capa se muestra */}
+        {(selectedGraphic === 'trackConditions' || selectedGraphic === 'weatherRadar') && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '30px', backgroundColor: '#111', padding: '15px', borderRadius: '8px', border: `1px solid ${colors.border}` }}>
+            <label style={{ fontSize: '10px', color: colors.textMuted, fontWeight: 'bold' }}>CAPA</label>
+            {selectedGraphic === 'trackConditions' ? (
+              <select value={config.trackConditionsLayer || 'both'} onChange={(e) => onConfigChange('trackConditionsLayer', e.target.value)} style={{ ...inputStyle, padding: '10px', fontSize: '11px', cursor: 'pointer', border: `1px solid ${colors.border}` }}>
+                <option value="both">Temperatura del asfalto + flechas de viento</option>
+                <option value="wind">Viento por tramo (de cola / cruzado / de frente)</option>
+                <option value="temp">Sólo temperatura del asfalto</option>
+              </select>
+            ) : (
+              <select value={config.weatherRadarLayer || 'rain'} onChange={(e) => onConfigChange('weatherRadarLayer', e.target.value)} style={{ ...inputStyle, padding: '10px', fontSize: '11px', cursor: 'pointer', border: `1px solid ${colors.border}` }}>
+                <option value="rain">Lluvia (como un radar)</option>
+                <option value="temp">Temperatura del aire</option>
+                <option value="wind">Viento (flechas por zona)</option>
+              </select>
+            )}
+            {selectedGraphic === 'trackConditions' && (
+              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '11px', fontWeight: 'bold', color: colors.textMain, cursor: 'pointer' }}>
+                <input type="checkbox" checked={config.trackConditionsFlow !== false} onChange={(e) => onConfigChange('trackConditionsFlow', e.target.checked)} style={{ cursor: 'pointer' }} />
+                Corrientes de viento animadas de fondo
+              </label>
+            )}
+            {selectedGraphic === 'weatherRadar' && (
+              <>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '11px', fontWeight: 'bold', color: colors.textMain, cursor: 'pointer' }}>
+                  <input type="checkbox" checked={config.weatherRadarAnimate !== false} onChange={(e) => onConfigChange('weatherRadarAnimate', e.target.checked)} style={{ cursor: 'pointer' }} />
+                  Animar las próximas horas
+                </label>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '10px', color: colors.textMuted, fontWeight: 'bold' }}>
+                  RADIO DE LA ZONA
+                  <select value={String(config.weatherRadarKm || 40)} onChange={(e) => onConfigChange('weatherRadarKm', Number(e.target.value))} style={{ ...inputStyle, padding: '6px', fontSize: '11px', cursor: 'pointer', flex: 1 }}>
+                    {[20, 40, 60, 100].map(v => <option key={v} value={v}>{v} km</option>)}
+                  </select>
+                </label>
+                <span style={{ fontSize: '10px', color: colors.textMuted, lineHeight: 1.4 }}>Al cambiar el radio, volvé a pedir el radar desde el PANEL (botón junto a RADAR DEL CLIMA).</span>
+              </>
+            )}
+            {selectedGraphic === 'trackConditions' && (
+              <span style={{ fontSize: '10px', color: colors.textMuted, lineHeight: 1.4 }}>El norte del mapa, las sombras y las mediciones se cargan en CIRCUITO &gt; CLIMA EN PISTA. La temperatura del asfalto es estimada salvo que cargues mediciones.</span>
+            )}
           </div>
         )}
 

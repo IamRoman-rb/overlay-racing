@@ -20,7 +20,10 @@ export function buildCircuitFile(config, now = new Date()) {
     trackImage: typeof c.trackImage === 'string' ? c.trackImage : null,
     circuitDirection: c.circuitDirection || '',
     trackMapLineColor: c.trackMapLineColor || '',
-    trackMapShowImage: c.trackMapShowImage === true
+    trackMapShowImage: c.trackMapShowImage === true,
+    // CLIMA EN PISTA: norte del mapa y zonas de sombra (las mediciones son de cada carrera: no se guardan)
+    trackNorth: Number.isFinite(Number(c.trackNorth)) ? Number(c.trackNorth) : 0,
+    trackShade: Array.isArray(c.trackShade) ? c.trackShade : []
   };
   TEXT_KEYS.forEach(k => { data[k] = c[k] === undefined || c[k] === null ? '' : String(c[k]); });
   return { kind: CIRCUIT_FILE_KIND, version: CIRCUIT_FILE_VERSION, savedAt: now.toISOString(), name: clipText(c.circuitName || c.circuito, 80), data };
@@ -68,6 +71,12 @@ export function parseCircuitFile(input) {
     trackMapShowImage: d.trackMapShowImage === true
   };
   if (/^#[0-9a-f]{6}$/i.test(d.trackMapLineColor || '')) patch.trackMapLineColor = d.trackMapLineColor;
+  const north = num(d.trackNorth);
+  patch.trackNorth = north === null ? 0 : Math.round(((north % 360) + 360) % 360);
+  patch.trackShade = (Array.isArray(d.trackShade) ? d.trackShade : []).slice(0, 50).map(z => {
+    const t = num(z && z.t); const w = num(z && z.w);
+    return t !== null && t >= 0 && t <= 1 ? { t, w: w !== null && w > 0 && w <= 0.2 ? w : 0.03 } : null;
+  }).filter(Boolean);
   TEXT_KEYS.forEach(k => { if (d[k] !== undefined) patch[k] = clipText(d[k], 80); });
   return patch;
 }

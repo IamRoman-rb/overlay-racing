@@ -46,7 +46,8 @@ export const HOTKEY_GROUPS = [
       { id: 'circuitIntro', label: 'graphics.circuitIntro' }, { id: 'circuitRecord', label: 'graphics.circuitRecord' },
       { id: 'lapCompare', label: 'graphics.lapCompare' }, { id: 'windVectors', label: 'graphics.windVectors' },
       { id: 'formationLap', label: 'graphics.formationLap' }, { id: 'sessionStatus', label: 'graphics.sessionStatus' },
-      { id: 'lapProgress', label: 'graphics.lapProgress' }
+      { id: 'lapProgress', label: 'graphics.lapProgress' },
+      { id: 'trackConditions', label: 'graphics.trackConditions' }, { id: 'weatherRadar', label: 'graphics.weatherRadar' }
     ]
   },
   {
