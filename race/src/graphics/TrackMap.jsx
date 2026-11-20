@@ -67,7 +67,8 @@ export default function TrackMap({ drivers, config, isVisible, sessionInfo, id =
           <span>EN PISTA<CategoryTag config={config} id={id} /></span>
           <span style={{ color: theme.number }}>{cars.length ? `${cars.length} AUTOS` : ''}</span>
         </div>
-        <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} style={{ display: 'block' }}>
+        {/* key + tamaño por CSS: el Chrome 77 de vMix no reacomoda el layout si sólo cambia el atributo height (200 -> alto real) */}
+        <svg key={`${W}x${H}`} width={W} height={H} viewBox={`0 0 ${W} ${H}`} style={{ display: 'block', width: `${W}px`, height: `${H}px` }}>
           {track && showImage && (
             <image href={config.trackImage} x={track.image.x} y={track.image.y} width={track.image.w} height={track.image.h} preserveAspectRatio="none" opacity="0.95" />
           )}

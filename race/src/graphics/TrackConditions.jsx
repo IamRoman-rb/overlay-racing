@@ -151,8 +151,12 @@ export default function TrackConditions({ config, isVisible, id = 'trackConditio
     </div>
   );
 
+  // El primer dibujo sale con H = 200 mientras carga la imagen del circuito. El Chrome 77 de vMix no reacomoda el layout
+  // cuando cambia el atributo height de un <svg>: la leyenda quedaba a 200 px, encimada al trazado. Con la key se crea un
+  // <svg> nuevo para cada tamaño y el tamaño va también por CSS.
+  const sizeKey = `${W}x${H}`;
   const map = (
-    <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} style={{ display: 'block', overflow: 'visible' }}>
+    <svg key={sizeKey} width={W} height={H} viewBox={`0 0 ${W} ${H}`} style={{ display: 'block', overflow: 'visible', width: `${W}px`, height: `${H}px` }}>
       <defs>
         <filter id={`${gid}Glow`} x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation={5 * k} /></filter>
       </defs>
@@ -192,7 +196,7 @@ export default function TrackConditions({ config, isVisible, id = 'trackConditio
   );
 
   const windBg = flow && hasWind && showWind ? (
-    <WindLayer width={W} height={H} count={full ? 34 : 18} variant="arrows" grid={false} opacity={0.32} running={!!isVisible}
+    <WindLayer key={sizeKey} width={W} height={H} count={full ? 34 : 18} variant="arrows" grid={false} opacity={0.32} running={!!isVisible}
       idPrefix={`${gid}W`} weatherData={{ ...wd, windDir: analysis.windDir + north }} />
   ) : null;
 
@@ -210,7 +214,7 @@ export default function TrackConditions({ config, isVisible, id = 'trackConditio
         <div className={fx.group} style={{ ...f.box, display: 'flex', width: `${W + 300}px` }}>
           <div style={{ position: 'relative', width: `${W}px` }}>
             {windBg}
-            <div style={{ position: 'relative' }}>{map}</div>
+            <div style={{ position: 'relative', height: `${H}px` }}>{map}</div>
             <div style={{ padding: '0 26px 20px' }}>{legend}</div>
           </div>
           <div style={{ width: '300px', boxSizing: 'border-box', padding: '26px 24px', display: 'flex', flexDirection: 'column', gap: '20px', borderLeft: '1px solid rgba(255,255,255,0.12)', backgroundColor: f.headerBg, textShadow }}>
@@ -242,7 +246,7 @@ export default function TrackConditions({ config, isVisible, id = 'trackConditio
         </div>
         <div style={{ position: 'relative' }}>
           {windBg}
-          <div style={{ position: 'relative' }}>{map}</div>
+          <div style={{ position: 'relative', height: `${H}px` }}>{map}</div>
         </div>
         {legend}
       </div>
