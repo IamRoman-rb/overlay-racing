@@ -250,3 +250,13 @@ test('la marca no se adivina por los datos del cronometraje: sólo elegida o rec
   assert.equal(r.leaderboard.drivers[0].brandFrom, '');
   assert.equal(r.leaderboard.drivers[1].brand, 'citroen');
 });
+
+test('lo recordado por número guarda el nombre del piloto para comparar', () => {
+  const { learnNumbers, normalizeNumberMemory, forgetRemembered } = require('../src/scripts/raceData.cjs');
+  const drivers = [{ number: '7', srcNumber: '7', name: 'Juan  Pérez' }];
+  const m = learnNumbers({ 7: { brand: 'citroen' } }, {}, drivers);
+  assert.deepEqual(m, { 7: { brand: 'citroen', name: 'Juan Pérez' } });
+  assert.deepEqual(learnNumbers({ 7: { brand: 'citroen', name: 'J. Pérez' } }, m, drivers), { 7: { brand: 'citroen', name: 'J. Pérez' } }, 'el nombre escrito a mano gana');
+  assert.deepEqual(normalizeNumberMemory({ 7: { name: 'Sólo nombre' } }), {}, 'sin marca ni bandera no se guarda');
+  assert.deepEqual(forgetRemembered(m, ['7'], 'brand'), {}, 'si sólo queda el nombre, se olvida el número');
+});

@@ -174,12 +174,17 @@ function normalizeNumberMemory(raw) {
     if (slug && brandExists(slug)) e.brand = slug;
     const country = String(v.country || '').trim().toUpperCase().slice(0, 12);
     if (MEMORY_COUNTRY_RE.test(country)) e.country = country;
+    const name = String(v.name || '').replace(/\s+/g, ' ').trim().slice(0, 80);
+    if (name && (e.brand || e.country)) e.name = name;
     if (e.brand || e.country) out[key] = e;
   });
   return out;
 }
-// Aprende la marca y la bandera elegidas a mano en PILOTOS para cada número. Devuelve la memoria nueva o null si no cambió.
-function learnNumbers(roster, memory) {
+// Aprende la marca y la bandera elegidas a mano en PILOTOS para cada número, con el nombre del piloto que la tenía (para
+// comparar en la carrera siguiente). Devuelve la memoria nueva o null si no cambió.
+function learnNumbers(roster, memory, drivers) {
+  const liveName = {};
+  (drivers || []).forEach(d => { liveName[String(d.srcNumber || d.number)] = d.name || ''; });
   const next = { ...(memory || {}) };
   let changed = false;
   Object.keys(roster || {}).forEach(num => {
@@ -189,8 +194,11 @@ function learnNumbers(roster, memory) {
     const patch = {};
     if (r.brand && brandExists(r.brand)) patch.brand = r.brand;
     if (r.country && MEMORY_COUNTRY_RE.test(r.country)) patch.country = r.country;
+    if (!Object.keys(patch).length) return;
+    const name = String(r.name || liveName[num] || '').replace(/\s+/g, ' ').trim().slice(0, 80);
+    if (name) patch.name = name;
     const cur = next[key] || {};
-    if (!Object.keys(patch).length || Object.keys(patch).every(f => cur[f] === patch[f])) return;
+    if (Object.keys(patch).every(f => cur[f] === patch[f])) return;
     next[key] = { ...cur, ...patch };
     changed = true;
   });
@@ -204,7 +212,7 @@ function forgetRemembered(memory, names, field) {
     if (!k || !next[k] || !next[k][field]) return;
     const rest = { ...next[k] };
     delete rest[field];
-    if (Object.keys(rest).length) next[k] = rest; else delete next[k];
+    if (rest.brand || rest.country) next[k] = rest; else delete next[k];
     changed = true;
   });
   return changed ? next : null;

@@ -131,7 +131,7 @@ export default function DriversRoster({ drivers, config, colors, inputStyle, btn
         <div style={{ fontSize: '11px', color: config?.photosPath ? colors.textMuted : '#e67e22', marginTop: '6px' }}>{config?.photosPath ? t('pilotos.suitColorsHint') : t('pilotos.suitColorsNoFolder')}</div>
       </div>
 
-      <RosterLists roster={roster} config={config} colors={colors} inputStyle={inputStyle} btnStyle={btnStyle} t={t} onConfigChange={onConfigChange} />
+      <RosterLists roster={roster} drivers={drivers} config={config} colors={colors} inputStyle={inputStyle} btnStyle={btnStyle} t={t} onConfigChange={onConfigChange} />
 
       <datalist id="brandsList">{BRANDS.map(b => <option key={b.slug} value={b.name} />)}</datalist>
       <datalist id="countriesList">{countries.map(c => <option key={c.code} value={c.name} />)}</datalist>

@@ -275,6 +275,7 @@ function saveBrandMemory() {
 function saveNumberMemory() {
   try { fs.writeFileSync(numberMemoryPath, JSON.stringify(numberMemory, null, 2)); } catch { /* no crítico: se ignora */ }
   broadcast('update-brand-memory', memoryCount());
+  broadcast('update-number-memory', numberMemory);
 }
 const rememberBrandsOn = () => currentConfig.rememberBrands !== false;
 
@@ -317,7 +318,7 @@ function processLeaderboard(raw, opts = {}) {
   if (rememberBrandsOn()) {
     const learned = learnBrands(leaderboard.drivers, raceRoster, brandMemory);
     if (learned) { brandMemory = learned; saveBrandMemory(); }
-    const byNumber = learnNumbers(raceRoster, numberMemory);
+    const byNumber = learnNumbers(raceRoster, numberMemory, leaderboard.drivers);
     if (byNumber) { numberMemory = byNumber; saveNumberMemory(); }
   }
   if (leaderboard.drivers.length > 0) {
@@ -1133,6 +1134,17 @@ ipc.handle('forget-brand-memory', () => {
   saveNumberMemory();
   reprocessLeaderboard();
   return 0;
+});
+// Lo recordado por número (para compararlo en PILOTOS con lo que corre hoy) y olvidar un número puntual
+ipc.handle('get-number-memory', () => numberMemory);
+ipc.handle('forget-number-memory', (e, num) => {
+  const key = String(num ?? '').trim();
+  if (!numberMemory[key]) return numberMemory;
+  numberMemory = { ...numberMemory };
+  delete numberMemory[key];
+  saveNumberMemory();
+  reprocessLeaderboard();
+  return numberMemory;
 });
 ipc.handle('get-roster-lists', () => rosterLists);
 // Guarda lo cargado hoy en PILOTOS con un nombre (por defecto el de la categoría). Con el mismo nombre se reemplaza.
