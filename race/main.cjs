@@ -9,6 +9,7 @@ const { RaceAnalyzer, normalizeCorrections, normalizeRoster, normalizeBrandMemor
 const { buildResultsHtml } = require('./src/scripts/resultsPdf.cjs');
 const { networkInterfaces } = require('os');
 const express = require('express');
+const crypto = require('crypto');
 const http = require('http');
 const https = require('https');
 const { Server } = require('socket.io');
@@ -659,17 +660,33 @@ const OVERLAY_BUILD_ID = (() => {
   } catch { return null; }
 })();
 
-// Reemplaza únicamente los logos Base64 por URLs locales. Electron sigue recibiendo
-// la configuración original por IPC; los navegadores remotos descargan los logos por HTTP.
+// Versión de cada imagen = huella de su contenido: la URL sólo cambia cuando cambia la imagen. Antes era la fecha de
+// database.json, que cambia con cualquier guardado (clima, equipos, posiciones...): vMix volvía a bajar todos los logos,
+// que parpadeaban o desaparecían un instante en cada cambio de configuración.
+const assetVersionCache = new Map();
+function assetVersion(value) {
+  const key = `${value.length}:${value.slice(-96)}`;
+  let v = assetVersionCache.get(key);
+  if (!v) {
+    v = crypto.createHash('sha1').update(value).digest('hex').slice(0, 12);
+    if (assetVersionCache.size > 200) assetVersionCache.clear();
+    assetVersionCache.set(key, v);
+  }
+  return v;
+}
+
+const NETWORK_IMAGE_KEYS = ['logo', 'categoryLogo', 'trackImage'];
+
+// Reemplaza las imágenes Base64 (logos, imagen del circuito, imágenes de PERSONALIZAR) por URLs locales. Electron sigue
+// recibiendo la configuración original por IPC; los navegadores remotos (vMix / OBS por IP) las descargan por HTTP.
 function getNetworkConfig(config) {
   if (!config || typeof config !== 'object') return config;
   const networkConfig = { ...config };
-  let version = Date.now();
-  try { if (fs.existsSync(dbPath)) version = fs.statSync(dbPath).mtimeMs; } catch { /* no crítico: se ignora */ }
-  ['logo', 'categoryLogo'].forEach((key) => {
+  // La imagen del circuito también va por HTTP: eran cientos de KB que viajaban por el socket en cada cambio de configuración
+  NETWORK_IMAGE_KEYS.forEach((key) => {
     const value = networkConfig[key];
     if (typeof value === 'string' && /^data:image\/[a-zA-Z0-9.+-]+;base64,/.test(value)) {
-      networkConfig[key] = `/overlay-assets/${key}?v=${version}`;
+      networkConfig[key] = `/overlay-assets/${key}?v=${assetVersion(value)}`;
     }
   });
   // Imágenes elegidas por elemento en PERSONALIZAR (config.elementStyles_<gráfica>[camino].bgImage / imgSrc)
@@ -683,7 +700,7 @@ function getNetworkConfig(config) {
       ELEMENT_IMAGE_FIELDS.forEach((field) => {
         if (typeof style[field] !== 'string' || !/^data:image\/[a-zA-Z0-9.+-]+;base64,/.test(style[field])) return;
         if (!copy) copy = { ...styles };
-        copy[elementPath] = { ...copy[elementPath], [field]: `/overlay-assets/element/${encodeURIComponent(key)}/${encodeURIComponent(elementPath)}/${field}?v=${version}` };
+        copy[elementPath] = { ...copy[elementPath], [field]: `/overlay-assets/element/${encodeURIComponent(key)}/${encodeURIComponent(elementPath)}/${field}?v=${assetVersion(style[field])}` };
       });
     });
     if (copy) networkConfig[key] = copy;
@@ -693,12 +710,14 @@ function getNetworkConfig(config) {
 
 const ELEMENT_IMAGE_FIELDS = ['bgImage', 'imgSrc'];
 
-function sendDataImage(res, value) {
+function sendDataImage(res, value, versioned = false) {
   const match = typeof value === 'string' && value.match(/^data:(image\/[a-zA-Z0-9.+-]+);base64,([\s\S]+)$/);
   if (!match) return res.sendStatus(404);
   const mime = match[1] === 'image/jpg' ? 'image/jpeg' : match[1];
-  if (!['image/png', 'image/jpeg', 'image/svg+xml'].includes(mime)) return res.sendStatus(404);
-  res.set('Cache-Control', 'no-store');
+  if (!['image/png', 'image/jpeg', 'image/svg+xml', 'image/webp', 'image/gif'].includes(mime)) return res.sendStatus(404);
+  res.set('Access-Control-Allow-Origin', '*');
+  // Con ?v=<huella> la URL cambia junto con la imagen: vMix la puede guardar y no la vuelve a pedir en cada cambio
+  res.set('Cache-Control', versioned ? 'public, max-age=86400' : 'no-store');
   // Un SVG podría traer scripts: se sirve sin permiso para ejecutarlos
   if (mime === 'image/svg+xml') res.set('Content-Security-Policy', "default-src 'none'; style-src 'unsafe-inline'");
   return res.type(mime).send(Buffer.from(match[2], 'base64'));
@@ -712,25 +731,19 @@ expressApp.get('/overlay-assets/element/:configKey/:elementPath/:field', (req, r
     const config = JSON.parse(fs.readFileSync(dbPath, 'utf-8'));
     const styles = config[configKey];
     const style = styles && typeof styles === 'object' && Object.prototype.hasOwnProperty.call(styles, elementPath) ? styles[elementPath] : null;
-    return sendDataImage(res, style && style[field]);
+    return sendDataImage(res, style && style[field], !!req.query.v);
   } catch {
     return res.sendStatus(404);
   }
 });
 
-// Endpoint seguro: sólo permite servir los dos logos configurados, nunca rutas arbitrarias.
+// Endpoint seguro: sólo sirve las imágenes fijas de la configuración (logos e imagen del circuito), nunca rutas arbitrarias.
 expressApp.get('/overlay-assets/:asset', (req, res) => {
-  const keys = { logo: 'logo', categoryLogo: 'categoryLogo' };
-  const key = keys[req.params.asset];
+  const key = NETWORK_IMAGE_KEYS.includes(req.params.asset) ? req.params.asset : null;
   if (!key) return res.sendStatus(404);
   try {
     const config = JSON.parse(fs.readFileSync(dbPath, 'utf-8'));
-    const value = config[key];
-    const match = typeof value === 'string' && value.match(/^data:(image\/[a-zA-Z0-9.+-]+);base64,([\s\S]+)$/);
-    if (!match) return res.sendStatus(404);
-    const mime = match[1] === 'image/jpg' ? 'image/jpeg' : match[1];
-    res.set('Cache-Control', 'no-store');
-    res.type(mime).send(Buffer.from(match[2], 'base64'));
+    return sendDataImage(res, config[key], !!req.query.v);
   } catch {
     res.sendStatus(404);
   }

@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { getGraphicFrame, useImageAspect } from '../utils/raceVisuals';
-import { buildTrack, pointOnTrack, nearestOnTrack, trackDirection, turnAt, sectorRanges, trackSegment, projectTilt, DEFAULT_ASPECT } from '../utils/trackPath';
+import { buildTrack, pointOnTrack, nearestOnTrack, trackDirection, turnAt, sectorRanges, trackSegment, projectTilt, detectCurves, DEFAULT_ASPECT } from '../utils/trackPath';
 import { getElitePalette, ELITE_FONT, SECTOR_PALETTE, photoUrl, rgba } from '../utils/elite';
 import { WeatherIcon } from './Weather';
 import { getWeatherVisual, getWindDirLabel } from '../utils/weather';
@@ -50,6 +50,13 @@ function useCircuitData(config) {
       return Number.isFinite(t) ? { id: c.id, name: c.name, t, side: turnAt(trackPath, aspect, t) } : null;
     }).filter(Boolean);
   }, [curves, trackPath, aspect, hasPath]);
+  // Curva por curva sin curvas marcadas en CIRCUITO > CURVAS: se usan las que se detectan solas en el trazado
+  // (antes el recorrido pasaba a ser una vuelta común y parecía que la cinemática había desaparecido)
+  const wantsCurves = config?.circuitIntroMode === 'curves';
+  const tourStops = useMemo(() => {
+    if (!wantsCurves || curveStops.length || !hasPath) return curveStops;
+    return detectCurves(trackPath, aspect);
+  }, [wantsCurves, curveStops, hasPath, trackPath, aspect]);
   const turns = { L: 0, R: 0 };
   curveStops.forEach(c => { if (c.side) turns[c.side] += 1; });
   const curveCount = Array.isArray(curves) ? curves.length : 0;
@@ -61,7 +68,7 @@ function useCircuitData(config) {
   const recordName = String(config?.recordDriver || '').trim();
   const [firstName, ...rest] = recordName.split(/\s+/);
   return {
-    aspect, trackPath, splits, direction, curveStops, turns, curveCount, lengthM, hasLength, sectorLens, wd, weather,
+    aspect, trackPath, splits, direction, curveStops, tourStops, turns, curveCount, lengthM, hasLength, sectorLens, wd, weather,
     weatherFx: !!weather && config?.circuitIntroWeatherFx !== false,
     tourMode: ['tour', 'curves'].includes(config?.circuitIntroMode) ? config.circuitIntroMode : 'static',
     circuitName: config?.circuitName || config?.circuito || 'CIRCUITO',
@@ -102,7 +109,7 @@ function TrackView({ data, width, height, tilt, pal, running, isVisible, config,
   const glow = `${idPrefix}Glow`;
   if (touring) {
     return (
-      <CircuitTour track={geo.track} sectors={geo.sectors} curves={data.curveStops} mode={data.tourMode} running={running} width={width} height={height} pal={pal}
+      <CircuitTour track={geo.track} sectors={geo.sectors} curves={data.tourStops} mode={data.tourMode} running={running} width={width} height={height} pal={pal}
         tourSec={parseFloat(config?.circuitIntroTourSec) || 16} tilt={tilt ? 56 : 40} />
     );
   }

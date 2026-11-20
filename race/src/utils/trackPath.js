@@ -180,6 +180,43 @@ export function turnAt(rawPoints, aspect, t) {
   return cross > 0 ? 'R' : 'L';
 }
 
+// CURVAS DETECTADAS SOLAS (presentación del circuito "curva por curva" cuando no se marcó ninguna en CIRCUITO > CURVAS):
+// se recorre la pista midiendo cuánto gira el rumbo en una ventana corta; cada tramo que gira más de minTurn grados es
+// una curva y su parada va en el punto de mayor giro. Devuelve [{ id, name: '', t, side: 'L' | 'R', auto: true }].
+export function detectCurves(rawPoints, aspect = DEFAULT_ASPECT, { minTurn = 28, window = 0.02, max = 16 } = {}) {
+  const ar = Number.isFinite(aspect) && aspect > 0.2 && aspect < 5 ? aspect : DEFAULT_ASPECT;
+  const track = buildTrack(rawPoints, { width: 100 * ar, fit: false, aspect: ar });
+  if (!track) return [];
+  const N = 400;
+  const heading = (t) => {
+    const a = pointOnTrack(track, t - 0.004); const b = pointOnTrack(track, t + 0.004);
+    return Math.atan2(b.y - a.y, b.x - a.x) * 180 / Math.PI;
+  };
+  const diff = (a, b) => ((b - a + 540) % 360) - 180;
+  // Giro (con signo: + derecha con y hacia abajo) entre t - window y t + window
+  const turn = Array.from({ length: N }, (_, i) => { const t = i / N; return diff(heading(t - window), heading(t + window)); });
+  // Tramos seguidos que giran para el mismo lado (una curva larga es UNA curva, no varias paradas)
+  const on = (i) => (Math.abs(turn[i]) >= minTurn * 0.55 ? Math.sign(turn[i]) : 0);
+  const startAt = turn.findIndex((v, i) => on(i) === 0);
+  if (startAt < 0) return [];                                  // todo gira (un óvalo perfecto): sin paradas
+  const regions = [];
+  let cur = null;
+  for (let k = 1; k <= N; k++) {
+    const i = (startAt + k) % N;
+    const s = on(i);
+    if (cur && s === cur.sign) { if (Math.abs(turn[i]) > Math.abs(turn[cur.peak])) cur.peak = i; continue; }
+    if (cur) { regions.push(cur); cur = null; }
+    if (s !== 0) cur = { sign: s, peak: i };
+  }
+  if (cur) regions.push(cur);
+  const found = regions
+    .filter(r => Math.abs(turn[r.peak]) >= minTurn)
+    .sort((a, b) => Math.abs(turn[b.peak]) - Math.abs(turn[a.peak]))
+    .slice(0, max)
+    .map(r => ({ t: r.peak / N, side: r.sign > 0 ? 'R' : 'L' }));
+  return found.sort((a, b) => a.t - b.t).map((c, i) => ({ id: `auto_${i + 1}`, name: '', t: Math.round(c.t * 10000) / 10000, side: c.side, auto: true }));
+}
+
 // Tramos [desde, hasta] (fracciones de vuelta) a partir de los cortes de sector. Sin cortes: un solo tramo.
 export function sectorRanges(splits) {
   const cuts = (Array.isArray(splits) ? splits : [])

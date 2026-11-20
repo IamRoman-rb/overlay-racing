@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { FILL } from '../utils/insetBox';
 import '../utils/contentAnim'; // inyecta los keyframes (caTick, caSweep)
 
 // Valores que se animan cuando cambian (vuelta, brecha, puntos). Los keyframes están en utils/contentAnim.js.
@@ -31,7 +32,7 @@ export function ChangeSweep({ value, color = 'rgba(255,255,255,0.35)', enabled =
   if (!enabled || n === 0) return null;
   return (
     <span key={n} aria-hidden="true" style={{
-      position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 2,
+      position: 'absolute', ...FILL, pointerEvents: 'none', zIndex: 2,
       background: `linear-gradient(105deg, transparent 35%, ${color} 50%, transparent 65%)`, backgroundSize: '260% 100%',
       animation: 'caSweep 0.9s ease-out forwards', opacity: 0
     }} />

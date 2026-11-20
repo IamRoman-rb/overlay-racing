@@ -1,4 +1,5 @@
 import { flagSrc, driverCountry, flagsEnabled, photoFlagStyle, photoFlagOpacity } from '../utils/countries';
+import { FILL, expandInset } from '../utils/insetBox';
 
 // Bandera chica (junto al nombre de un piloto o de un circuito): rectángulo 4:3 con borde fino y una luz suave arriba,
 // como en las transmisiones. Sin código válido no ocupa lugar.
@@ -12,7 +13,7 @@ export function FlagChip({ code, height = 14, radius = 2, style }) {
       boxShadow: '0 0 0 1px rgba(255,255,255,0.18), 0 1px 3px rgba(0,0,0,0.5)', verticalAlign: 'middle', ...style
     }}>
       <img src={src} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-      <span style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(255,255,255,0.22) 0%, rgba(255,255,255,0) 45%, rgba(0,0,0,0.18) 100%)' }} />
+      <span style={{ position: 'absolute', ...FILL, background: 'linear-gradient(180deg, rgba(255,255,255,0.22) 0%, rgba(255,255,255,0) 45%, rgba(0,0,0,0.18) 100%)' }} />
     </span>
   );
 }
@@ -38,19 +39,19 @@ export function FlagFade({ code, fadeTo = 'left', opacity = 0.55, animated = tru
       ? 'radial-gradient(ellipse at 50% 45%, #000 0%, rgba(0,0,0,0.55) 38%, transparent 66%)'
       : `linear-gradient(to ${fadeTo}, #000 0%, rgba(0,0,0,0.65) 35%, transparent 90%)`);
   return (
-    <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', overflow: 'hidden', opacity, WebkitMaskImage: mask, maskImage: mask, ...style }}>
+    <div style={{ position: 'absolute', ...FILL, pointerEvents: 'none', overflow: 'hidden', opacity, WebkitMaskImage: mask, maskImage: mask, ...expandInset(style) }}>
       <style>{'@keyframes flagFadeSheen { 0% { transform: translateX(-60%); } 100% { transform: translateX(160%); } } @keyframes flagFadeWave { 0% { transform: perspective(600px) rotateY(-7deg) skewY(-2deg) scale(1.08); } 100% { transform: perspective(600px) rotateY(7deg) skewY(2deg) scale(1.08); } } @keyframes flagFadeRipple { 0% { background-position: 0 0; } 100% { background-position: 240px 0; } }'}</style>
       <img src={src} alt="" style={{
-        position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', filter: 'saturate(1.1)',
+        position: 'absolute', ...FILL, width: '100%', height: '100%', objectFit: 'cover', filter: 'saturate(1.1)',
         transform: slant ? 'skewX(-12deg) scale(1.25)' : undefined,
         animation: wave ? 'flagFadeWave 2.8s ease-in-out infinite alternate' : undefined
       }} />
       {/* Sombreado de tela + brillo que cruza despacio */}
-      <div style={{ position: 'absolute', inset: 0, background: wave
+      <div style={{ position: 'absolute', ...FILL, background: wave
         ? 'repeating-linear-gradient(100deg, rgba(0,0,0,0.22) 0px, rgba(255,255,255,0.12) 60px, rgba(0,0,0,0.22) 120px, rgba(255,255,255,0.08) 180px, rgba(0,0,0,0.22) 240px)'
         : 'repeating-linear-gradient(100deg, rgba(0,0,0,0.10) 0px, rgba(255,255,255,0.06) 60px, rgba(0,0,0,0.10) 120px)',
         animation: wave ? 'flagFadeRipple 2.4s linear infinite' : undefined }} />
-      {dim > 0 && <div style={{ position: 'absolute', inset: 0, backgroundColor: `rgba(0,0,0,${dim})` }} />}
+      {dim > 0 && <div style={{ position: 'absolute', ...FILL, backgroundColor: `rgba(0,0,0,${dim})` }} />}
       {animated && <div style={{ position: 'absolute', top: 0, bottom: 0, width: '40%', background: 'linear-gradient(100deg, transparent, rgba(255,255,255,0.18), transparent)', animation: 'flagFadeSheen 6s ease-in-out infinite' }} />}
     </div>
   );

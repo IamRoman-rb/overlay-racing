@@ -1,4 +1,5 @@
 import banderaCuadrosImg from '../assets/bandera cuadros.jpg';
+import { FILL } from '../utils/insetBox';
 
 // Muestra de la bandera vigente (ver utils/flagState): un rectángulo con el color de la bandera (tricolor en franjas,
 // a cuadros con la foto de la bandera). Con `label`, el texto va adentro del rectángulo.
@@ -21,7 +22,7 @@ export default function FlagSwatch({ flag, width = 14, height = 30, label = null
       border: flag.border ? `1px solid ${flag.border}` : 'none', overflow: 'hidden', ...style
     }}>
       <style>{'@keyframes flagSwatchPulse { 0%, 100% { opacity: 0; } 50% { opacity: 1; } }'}</style>
-      {attention && <span style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(255,255,255,0.32)', animation: 'flagSwatchPulse 1.2s ease-in-out infinite' }} />}
+      {attention && <span style={{ position: 'absolute', ...FILL, backgroundColor: 'rgba(255,255,255,0.32)', animation: 'flagSwatchPulse 1.2s ease-in-out infinite' }} />}
       {label && (
         <span style={{
           position: 'relative', color: flag.text, fontSize: `${fontSize}px`, fontWeight: 900, letterSpacing: '0.5px', whiteSpace: 'nowrap',

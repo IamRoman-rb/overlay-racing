@@ -113,6 +113,9 @@ export default function TrackConditions({ config, isVisible, id = 'trackConditio
 
   const pill = (key, x, y, text, bg, fg = '#fff') => {
     const w = text.length * 6.1 * k + 12 * k;
+    // Siempre adentro del recuadro (antes un cartel cerca del borde quedaba cortado y corrido respecto de su tramo)
+    x = Math.max(w / 2 + 4, Math.min(W - w / 2 - 4, x));
+    y = Math.max(11 * k, Math.min(H - 11 * k, y));
     return (
       <g key={key} transform={`translate(${x.toFixed(1)} ${y.toFixed(1)})`}>
         <rect x={-w / 2} y={-9 * k} width={w} height={18 * k} rx={9 * k} fill={bg} stroke="#000" strokeOpacity="0.7" strokeWidth="1" />
@@ -230,8 +233,8 @@ export default function TrackConditions({ config, isVisible, id = 'trackConditio
     <div style={wrapperStyle}>
       <div className={fx.group} style={{ ...f.box, width: `${W}px` }}>
         <div style={{ display: f.minimal ? 'none' : 'flex', padding: compact ? '6px 10px' : '8px 14px', backgroundColor: f.headerBg, borderBottom: f.headerBorder, color: theme.title, fontWeight: 900, fontSize: compact ? '10px' : '12px', letterSpacing: '2px', justifyContent: 'space-between', alignItems: 'center', textShadow }}>
-          <span style={{ whiteSpace: 'nowrap' }}>{compact ? 'CONDICIONES' : 'CONDICIONES DE PISTA'}<CategoryTag config={config} id={id} /></span>
-          <span style={{ display: 'flex', gap: compact ? '8px' : '12px', color: theme.text, letterSpacing: compact ? '0' : '1px', whiteSpace: 'nowrap' }}>
+          <span style={{ whiteSpace: 'nowrap', flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis' }}>{compact ? 'CONDICIONES' : 'CONDICIONES DE PISTA'}<CategoryTag config={config} id={id} /></span>
+          <span style={{ display: 'flex', flexShrink: 0, marginLeft: '10px', gap: compact ? '8px' : '12px', color: theme.text, letterSpacing: compact ? '0' : '1px', whiteSpace: 'nowrap' }}>
             <span><span style={{ color: theme.number }}>AIRE </span>{fmt(analysis?.air)}</span>
             {showTemp && <span><span style={{ color: theme.number }}>PISTA </span>{fmt(trackTemp)}</span>}
             {showWind && hasWind && <span><span style={{ color: theme.number }}>VIENTO </span>{Math.round(analysis.windSpeed)} {getWindDirLabel(analysis.windDir)}</span>}

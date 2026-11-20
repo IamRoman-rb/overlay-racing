@@ -1,4 +1,5 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { FILL } from '../utils/insetBox';
 import { pointOnTrack, trackSegment } from '../utils/trackPath';
 import { rgba } from '../utils/elite';
 
@@ -171,7 +172,7 @@ export default function CircuitTour({ track, sectors, curves, mode, running, wid
     // El escenario 3D (perspectiva + inclinación) va en su propia capa abajo de todo y los carteles en otra capa encima
     // (z-index + translateZ): así el trazado inclinado nunca se dibuja por arriba del cartel de la curva.
     <div style={{ position: 'relative', width: `${width}px`, height: `${height}px`, overflow: 'hidden', isolation: 'isolate' }}>
-      <div style={{ position: 'absolute', inset: 0, perspective: '640px', overflow: 'hidden', zIndex: 0 }}>
+      <div style={{ position: 'absolute', ...FILL, perspective: '640px', overflow: 'hidden', zIndex: 0 }}>
       <div style={{ width: '100%', height: '100%', transform: `rotateX(${tiltDeg.toFixed(2)}deg)`, transformOrigin: '50% 70%' }}>
         <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`} style={{ display: 'block', overflow: 'visible' }}>
           <defs><filter id="ctGlow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="4" /></filter></defs>
@@ -201,7 +202,7 @@ export default function CircuitTour({ track, sectors, curves, mode, running, wid
       </div>
       </div>
 
-      <div style={{ position: 'absolute', inset: 0, zIndex: 10, transform: 'translateZ(0)', pointerEvents: 'none' }}>
+      <div style={{ position: 'absolute', ...FILL, zIndex: 10, transform: 'translateZ(0)', pointerEvents: 'none' }}>
       {/* Números de las curvas (planos y nítidos) + línea del cartel a la curva marcada */}
       {markers.length > 0 && (
         <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`} style={{ position: 'absolute', left: 0, top: 0, overflow: 'visible' }}>

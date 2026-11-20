@@ -1,4 +1,5 @@
 import { getSkinStyle } from '../utils/skinStyles';
+import { insetBox } from '../utils/insetBox';
 import { getAnimDuration, getRollClip } from '../utils/animationTiming';
 import { getElitePalette, ELITE_FONT } from '../utils/elite';
 import { makeFx } from '../utils/contentAnim';
@@ -60,7 +61,7 @@ export default function LowerThird({ role, name, isVisible, config, id }) {
             border: `4px solid ${themeAccent}`, display: 'flex', alignItems: 'center', justifyContent: 'center', ...fx.icon(0)
           }}>
             <MicIcon size={36} color="#fff" />
-            {fx.on && isVisible && <span style={{ position: 'absolute', inset: '-4px', borderRadius: '50%', '--ca-glow': `${themeAccent}aa`, animation: 'caGlow 1.6s ease-out 0.6s infinite' }} />}
+            {fx.on && isVisible && <span style={{ position: 'absolute', ...insetBox('-4px'), borderRadius: '50%', '--ca-glow': `${themeAccent}aa`, animation: 'caGlow 1.6s ease-out 0.6s infinite' }} />}
           </div>
           <div style={{
             marginLeft: '-26px', padding: '10px 26px 10px 40px', minWidth: '240px', display: 'flex', flexDirection: 'column', alignItems, textAlign,
