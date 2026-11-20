@@ -12,7 +12,8 @@ import banderaCuadrosImg from '../assets/bandera cuadros.jpg';
 import { createTranslator } from '../i18n/translations';
 import { COPYRIGHT } from '../data/copyright';
 import { findMostRelevantBattle } from '../utils/battle';
-import { formationCategory } from '../utils/raceVisuals';
+import { formationCategory, useImageAspect } from '../utils/raceVisuals';
+import { buildTeamConditions } from '../utils/teamFeed';
 import { comboFromEvent, shouldIgnoreHotkey, findHotkeyAction } from '../utils/hotkeys';
 import { defaultPositions } from '../data/defaultPositions';
 import { sessionProgress } from '../utils/flagState';
@@ -461,6 +462,25 @@ export default function ControlPanel() {
   const [cloudConnected, setCloudConnected] = useState(false);
   const [cloudSaving, setCloudSaving] = useState(false);
   const [cloudSavedFlash, setCloudSavedFlash] = useState(false);
+  // PANEL DE EQUIPOS: clave secreta del evento (la da overlayracing.site) y estado del registro (link público)
+  const [cloudEquiposKey, setCloudEquiposKey] = useState('');
+  const [equiposStatus, setEquiposStatus] = useState(null);
+  const [equiposCopied, setEquiposCopied] = useState(false);
+
+  // PANEL DE EQUIPOS: las condiciones (trazado, viento por tramo, temperatura de pista, clima, radar) se arman acá y
+  // se mandan a main cuando cambia algo. main las reenvía al servidor sólo si cambiaron y si hay clave de equipos.
+  const teamTrackAspect = useImageAspect(config.trackImage || null);
+  const teamAspect = config.trackImage ? teamTrackAspect : 1.5;
+  const equiposRegistered = !!equiposStatus?.registered;
+  useEffect(() => {
+    if (!ipcRenderer || !equiposRegistered || !teamAspect) return undefined;
+    const timer = setTimeout(() => {
+      try { ipcRenderer.invoke('push-equipos-conditions', buildTeamConditions(configRef.current, teamAspect)).catch(() => { }); } catch (e) { console.error('[equipos]', e); }
+    }, 1500);
+    return () => clearTimeout(timer);
+  }, [equiposRegistered, teamAspect, config.trackPath, config.trackSectors, config.trackCurves, config.trackNorth, config.trackShade, config.trackTempPoints,
+    config.circuitDirection, config.weatherData, config.weatherGrid, config.circuitName, config.circuito, config.circuitCity, config.circuitCountry,
+    config.circuitLength, config.categoryName, config.eventTitle, config.campeonato]);
 
   // --- NUEVO: ESTADO DEL TÚNEL DE VOTACIÓN (para avisar cuando el QR ya es escaneable) ---
   const isTunnelReady = typeof localIp === 'string' && localIp.trim() !== '';
@@ -549,6 +569,8 @@ export default function ControlPanel() {
       ipcRenderer.invoke('get-cloud-config').then(cloudData => {
         setCloudQrToken(cloudData?.qrToken || '');
         setCloudComisarioToken(cloudData?.comisarioToken || '');
+        setCloudEquiposKey(cloudData?.equiposKey || '');
+        setEquiposStatus(cloudData?.equipos || null);
         setCloudConnected(!!cloudData?.connected);
       }).catch(() => { });
 
@@ -560,6 +582,7 @@ export default function ControlPanel() {
       const handleUpdatePenalty = (event, data) => { if (data) setPenaltyAlertState(data); };
       const handleUpdateTrackAlert = (event, data) => { if (data) setTrackAlertVisible(!!data.isVisible); };
       const handleCloudStatus = (event, data) => { if (data) setCloudConnected(!!data.connected); };
+      const handleEquiposStatus = (event, data) => setEquiposStatus(data || null);
       const handleUpdateChampionship = (event, data) => { if (data) setChampionship(data); };
       // El proceso principal vuelve a mandar la tabla cuando cambian correcciones / grilla / multiclase (aunque el cronometraje esté en pausa)
       const handleUpdateLeaderboard = (event, data) => { if (data && Array.isArray(data.drivers)) { setDrivers(data.drivers); setSessionInfo(data.session || {}); } };
@@ -575,6 +598,7 @@ export default function ControlPanel() {
       ipcRenderer.on('update-penalty', handleUpdatePenalty);
       ipcRenderer.on('update-track-alert', handleUpdateTrackAlert);
       ipcRenderer.on('cloud-status', handleCloudStatus);
+      ipcRenderer.on('equipos-status', handleEquiposStatus);
       ipcRenderer.on('update-championship', handleUpdateChampionship);
       ipcRenderer.on('update-leaderboard', handleUpdateLeaderboard);
       ipcRenderer.on('update-race-alerts', handleRaceAlerts);
@@ -590,6 +614,7 @@ export default function ControlPanel() {
         ipcRenderer.removeListener('update-penalty', handleUpdatePenalty);
         ipcRenderer.removeListener('update-track-alert', handleUpdateTrackAlert);
         ipcRenderer.removeListener('cloud-status', handleCloudStatus);
+        ipcRenderer.removeListener('equipos-status', handleEquiposStatus);
         ipcRenderer.removeListener('update-championship', handleUpdateChampionship);
         ipcRenderer.removeListener('update-leaderboard', handleUpdateLeaderboard);
         ipcRenderer.removeListener('update-race-alerts', handleRaceAlerts);
@@ -1236,7 +1261,8 @@ export default function ControlPanel() {
       if (ipcRenderer) {
         const ok = await ipcRenderer.invoke('save-cloud-config', {
           qrToken: cloudQrToken?.trim() || '',
-          comisarioToken: cloudComisarioToken?.trim() || ''
+          comisarioToken: cloudComisarioToken?.trim() || '',
+          equiposKey: cloudEquiposKey?.trim() || ''
         });
         if (ok) {
           setCloudSavedFlash(true);
@@ -2059,6 +2085,50 @@ export default function ControlPanel() {
                 style={{ ...inputStyle, padding: '10px', fontSize: '13px', textTransform: 'none' }}
                 placeholder={t('cloud.stewardTokenPlaceholder')}
               />
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+              <label style={{ fontSize: '10px', color: colors.textMuted, fontWeight: 'bold' }}>
+                {t('cloud.equiposKeyLabel')}
+              </label>
+              <input
+                type="password"
+                autoComplete="off"
+                value={cloudEquiposKey}
+                onChange={(e) => setCloudEquiposKey(e.target.value)}
+                style={{ ...inputStyle, padding: '10px', fontSize: '13px', textTransform: 'none' }}
+                placeholder={t('cloud.equiposKeyPlaceholder')}
+              />
+              <span style={{ fontSize: '10px', color: colors.textMuted, lineHeight: 1.4 }}>{t('cloud.equiposKeyHint')}</span>
+              {cloudEquiposKey.trim() && equiposStatus && (
+                <div style={{
+                  marginTop: '6px', padding: '10px 12px', borderRadius: '6px', fontSize: '11px', lineHeight: 1.5,
+                  backgroundColor: equiposStatus.registered ? 'rgba(46, 204, 113, 0.1)' : 'rgba(231, 76, 60, 0.1)',
+                  border: `1px solid ${equiposStatus.registered ? colors.green : colors.red}`
+                }}>
+                  {equiposStatus.registered ? (
+                    <>
+                      <div style={{ color: colors.green, fontWeight: 'bold', marginBottom: '6px' }}>
+                        {t('cloud.equiposOn', { name: equiposStatus.eventName ? ` — ${equiposStatus.eventName}` : '' })}
+                      </div>
+                      {equiposStatus.url && (
+                        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                          <input readOnly value={equiposStatus.url} onFocus={(e) => e.target.select()} style={{ ...inputStyle, flex: 1, padding: '7px', fontSize: '12px', textTransform: 'none' }} />
+                          <button
+                            onClick={() => { navigator.clipboard?.writeText(equiposStatus.url).then(() => { setEquiposCopied(true); setTimeout(() => setEquiposCopied(false), 1500); }).catch(() => { }); }}
+                            style={{ ...btnStyle(false), padding: '7px 12px', fontSize: '11px' }}
+                          >{equiposCopied ? t('cloud.equiposCopied') : t('cloud.equiposCopy')}</button>
+                        </div>
+                      )}
+                      <div style={{ color: colors.textMuted, marginTop: '6px' }}>{t('cloud.equiposQrHint')}</div>
+                    </>
+                  ) : (
+                    <span style={{ color: colors.red, fontWeight: 'bold' }}>
+                      {!cloudConnected ? t('cloud.equiposWaiting') : equiposStatus.error === 'timeout' ? t('cloud.equiposTimeout') : t('cloud.equiposInvalid')}
+                    </span>
+                  )}
+                </div>
+              )}
             </div>
 
             <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>

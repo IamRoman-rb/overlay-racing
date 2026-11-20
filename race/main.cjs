@@ -17,6 +17,7 @@ const xlsx = require('xlsx');
 const os = require('os');
 const { getSystemStats, stopHardwarePoller } = require('./src/scripts/systemStats.cjs');
 const { createMetClient } = require('./src/scripts/metWeather.cjs');
+const { buildTeamLive, createThrottle } = require('./src/scripts/teamFeed.cjs');
 
 // MÓDULO OVERLAY RACING (Overlay Graphics).
 // Este archivo ya no es el programa completo: lo abre el instalador (launcher/main.cjs) después del login, tras
@@ -311,6 +312,7 @@ function processLeaderboard(raw, opts = {}) {
   }
   broadcast('update-leaderboard', leaderboard);
   pushLeaderboardToCloud(leaderboard);
+  pushEquiposLive();
   calculateLiveChampionship();
   updateLapTimesHistory(leaderboard);
   if (newAlerts.length) broadcast('update-race-alerts', raceAnalyzer.alerts);
@@ -446,7 +448,7 @@ function startTunnelHealthCheck() {
 // bajo la clave "cloud", y se configuran desde el panel (IPC get/save-cloud-config).
 const CLOUD_URL = 'https://overlayracing.site';
 let cloudSocket = null;
-let cloudConfig = { qrToken: '', comisarioToken: '' };
+let cloudConfig = { qrToken: '', comisarioToken: '', equiposKey: '' };
 
 function loadCloudConfig() {
   try {
@@ -455,7 +457,8 @@ function loadCloudConfig() {
       if (configData?.cloud) {
         cloudConfig = {
           qrToken: configData.cloud.qrToken || '',
-          comisarioToken: configData.cloud.comisarioToken || ''
+          comisarioToken: configData.cloud.comisarioToken || '',
+          equiposKey: configData.cloud.equiposKey || ''
         };
       }
     }
@@ -482,9 +485,11 @@ function connectToCloud() {
       });
       pushDriversToCloud();
       pushLeaderboardToCloud(lastLeaderboard);
+      registerEquipos();
     });
     cloudSocket.on('disconnect', () => {
       broadcast('cloud-status', { connected: false });
+      setEquiposStatus({ registered: false });
     });
     cloudSocket.on('connect_error', () => {
       broadcast('cloud-status', { connected: false });
@@ -533,6 +538,56 @@ function pushLeaderboardToCloud(leaderboard) {
       leaderboard: { session: leaderboard.session || {}, drivers: leaderboard.drivers || [] }
     });
   } catch { /* no crítico: se ignora */ }
+}
+
+// --- PANEL DE EQUIPOS (overlayracing.site/equipos/:token) ---
+// La app se registra con la CLAVE DE EQUIPOS (secreta, pestaña CLOUD). El servidor contesta con el link público que
+// escanean los equipos. Después se mandan las condiciones (cuando cambian) y los pilotos en vivo (1 vez por segundo).
+let equiposStatus = { registered: false, url: '', eventName: '', error: '' };
+let equiposConditions = null;        // último paquete de condiciones que armó el panel
+let equiposConditionsSent = '';      // JSON del último enviado (para no repetir)
+
+function setEquiposStatus(patch) {
+  equiposStatus = { ...equiposStatus, ...patch };
+  broadcast('equipos-status', equiposStatus);
+}
+
+function registerEquipos() {
+  try {
+    equiposConditionsSent = '';
+    if (!cloudSocket?.connected || !cloudConfig?.equiposKey) { setEquiposStatus({ registered: false, url: '', eventName: '', error: '' }); return; }
+    cloudSocket.timeout(10000).emit('register-equipos', { equipos_key: cloudConfig.equiposKey }, (err, res) => {
+      if (err || !res?.ok) {
+        setEquiposStatus({ registered: false, url: '', eventName: '', error: err ? 'timeout' : (res?.error || 'invalid') });
+        return;
+      }
+      setEquiposStatus({ registered: true, url: res.url || '', eventName: res.event_name || '', error: '' });
+      pushEquiposConditions();
+      pushEquiposLiveNow();
+    });
+  } catch { /* no crítico: se ignora */ }
+}
+
+function pushEquiposConditions() {
+  try {
+    if (!equiposStatus.registered || !cloudSocket?.connected || !equiposConditions) return;
+    const json = JSON.stringify(equiposConditions);
+    if (json === equiposConditionsSent) return;
+    equiposConditionsSent = json;
+    cloudSocket.emit('push-equipos-conditions', { equipos_key: cloudConfig.equiposKey, conditions: equiposConditions });
+  } catch { /* no crítico: se ignora */ }
+}
+
+function pushEquiposLiveNow() {
+  try {
+    if (!equiposStatus.registered || !cloudSocket?.connected) return;
+    cloudSocket.emit('push-equipos-live', { equipos_key: cloudConfig.equiposKey, live: buildTeamLive(lastLeaderboard, { now: Date.now(), flags: broadcastState.flags }) });
+  } catch { /* no crítico: se ignora */ }
+}
+// Declarada como función (no const) porque processLeaderboard está más arriba en el archivo
+function pushEquiposLive() {
+  if (!pushEquiposLive.throttled) pushEquiposLive.throttled = createThrottle(pushEquiposLiveNow, 1000);
+  pushEquiposLive.throttled();
 }
 
 function pushPenaltyToCloud(penalty) {
@@ -874,7 +929,7 @@ ipc.on('toggle-final-results', (e, data) => { broadcastState.finalResults = data
 ipc.on('final-results-next', () => broadcast('final-results-next'));
 ipc.on('final-results-prev', () => broadcast('final-results-prev'));
 ipc.on('toggle-winner', (e, data) => { broadcastState.winner = data; broadcast('set-winner-visibility', data); });
-ipc.on('toggle-flag', (e, data) => { broadcastState.flags = data; broadcast('set-flag-visibility', data); });
+ipc.on('toggle-flag', (e, data) => { broadcastState.flags = data; broadcast('set-flag-visibility', data); pushEquiposLive(); });
 ipc.on('toggle-fastest-lap', (e, data) => { broadcastState.fastestLap = data; broadcast('set-fastest-lap-visibility', data); });
 ipc.on('toggle-driver-info', (e, data) => { broadcastState.driverInfo = data; broadcast('set-driver-info-visibility', data); });
 ipc.on('toggle-battle', (e, data) => { broadcastState.battle = data; broadcast('set-battle-visibility', data); });
@@ -1607,7 +1662,14 @@ ipc.handle('orbits-disconnect', () => { disconnectOrbits(); return getOrbitsStat
 // --- CONFIG DEL SERVIDOR CLOUD (tokens de QR / Comisario del evento activo) ---
 ipc.handle('get-cloud-config', () => {
   loadCloudConfig();
-  return { ...cloudConfig, connected: !!cloudSocket?.connected, url: CLOUD_URL };
+  return { ...cloudConfig, connected: !!cloudSocket?.connected, url: CLOUD_URL, equipos: equiposStatus };
+});
+// El panel arma las condiciones para los equipos (trazado, viento por tramo, temperatura, clima, radar) y las manda acá
+ipc.handle('push-equipos-conditions', (_e, conditions) => {
+  if (!conditions || typeof conditions !== 'object') return false;
+  equiposConditions = conditions;
+  pushEquiposConditions();
+  return true;
 });
 ipc.handle('save-cloud-config', (event, data) => {
   try {
@@ -1615,7 +1677,8 @@ ipc.handle('save-cloud-config', (event, data) => {
     if (fs.existsSync(dbPath)) configData = JSON.parse(fs.readFileSync(dbPath, 'utf-8'));
     configData.cloud = {
       qrToken: data?.qrToken || '',
-      comisarioToken: data?.comisarioToken || ''
+      comisarioToken: data?.comisarioToken || '',
+      equiposKey: data?.equiposKey || ''
     };
     fs.writeFileSync(dbPath, JSON.stringify(configData, null, 2));
     cloudConfig = configData.cloud;
