@@ -33,6 +33,7 @@ import CircuitRecord from '../graphics/CircuitRecord';
 import LapCompare from '../graphics/LapCompare';
 import WindVectors from '../graphics/WindField';
 import TrackConditions from '../graphics/TrackConditions';
+import EquiposQR from '../graphics/EquiposQR';
 import WeatherRadar from '../graphics/WeatherRadar';
 import { demoGrid } from '../utils/weatherMap';
 // Grilla de ejemplo del radar: una por escala (si se rearmara en cada render, las partículas arrancarían de cero)
@@ -210,6 +211,8 @@ function GraphicPreviewContent({ id, config, positions, drivers, sessionInfo }) 
       const hasOwn = (config?.trackShade && config.trackShade.length) || (config?.trackTempPoints && config.trackTempPoints.length);
       return <TrackConditions isVisible config={{ ...fullConfig, trackPath: demoCircuit(config).trackPath, weatherData: wd, trackShade: hasOwn ? config.trackShade : [{ t: 0.62, w: 0.06 }] }} />;
     }
+    case 'equiposQR':
+      return <EquiposQR isVisible config={{ ...fullConfig, equiposUrl: config?.equiposUrl || 'https://overlayracing.site/equipos/demo' }} />;
     case 'weatherRadar':
       return <WeatherRadar isVisible config={{ ...fullConfig, weatherGrid: config?.weatherGrid || demoGridFor(config?.weatherRadarScale), trackPath: demoCircuit(config).trackPath }} />;
     case 'lapProgress':

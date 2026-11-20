@@ -126,7 +126,8 @@ const defaultPositions = {
   sessionStatus: { x: 560, y: 20, scale: 1 },
   lapProgress: { x: 1600, y: 20, scale: 1 },
   trackConditions: { x: 1400, y: 560, scale: 1 },
-  weatherRadar: { x: 1100, y: 60, scale: 1 }
+  weatherRadar: { x: 1100, y: 60, scale: 1 },
+  equiposQR: { x: 1650, y: 700, scale: 1 }
 };
 
 if (!fs.existsSync(posPath)) fs.writeFileSync(posPath, JSON.stringify(defaultPositions, null, 2));

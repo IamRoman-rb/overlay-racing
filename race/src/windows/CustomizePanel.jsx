@@ -440,7 +440,7 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
     'grid', 'finalResults', 'winner', 'flags', 'fastestLap', 'driverInfo', 'battle', 'customZocalo',
     'votingQR', 'votingResults', 'lapCounter', 'virtualChamp', 'pitStop', 'startingLights',
     'lapTimesHistory', 'trackAlert', 'penaltyAlert', 'branding', 'evento',
-    'sectors', 'gapChart', 'gainers', 'qualifying', 'trackMap', 'raceNotice', 'circuitIntro', 'circuitRecord', 'lapCompare', 'windVectors', 'sponsorLive', 'formationLap', 'sessionStatus', 'lapProgress', 'trackConditions', 'weatherRadar'
+    'sectors', 'gapChart', 'gainers', 'qualifying', 'trackMap', 'raceNotice', 'circuitIntro', 'circuitRecord', 'lapCompare', 'windVectors', 'sponsorLive', 'formationLap', 'sessionStatus', 'lapProgress', 'trackConditions', 'weatherRadar', 'equiposQR'
   ];
   const allGraphics = GRAPHIC_IDS.map(id => ({ id, label: t(`graphics.${id}`) }));
   const shownGraphics = allGraphics.filter(g => matchesSearch(graphicQuery, g.label, g.id));
@@ -714,12 +714,12 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
           </div>
         )}
 
-        {selectedGraphic === 'votingQR' && (
+        {(selectedGraphic === 'votingQR' || selectedGraphic === 'equiposQR') && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', marginBottom: '30px', backgroundColor: '#111', padding: '15px', borderRadius: '8px', border: `1px solid ${colors.border}` }}>
-            <label style={{ fontSize: '10px', color: colors.textMuted, fontWeight: 'bold' }}>{t('personalizar.formatOf', { name: t('graphics.votingQR') })}</label>
+            <label style={{ fontSize: '10px', color: colors.textMuted, fontWeight: 'bold' }}>{t('personalizar.formatOf', { name: t(`graphics.${selectedGraphic}`) })}</label>
             <select
-              value={config.votingQRFormat || 'standard'}
-              onChange={(e) => onConfigChange('votingQRFormat', e.target.value)}
+              value={config[`${selectedGraphic}Format`] || 'standard'}
+              onChange={(e) => onConfigChange(`${selectedGraphic}Format`, e.target.value)}
               style={{ ...inputStyle, padding: '10px', fontSize: '11px', cursor: 'pointer', border: `1px solid ${colors.border}` }}
             >
               <option value="standard">Clásico (Header + QR + Texto)</option>

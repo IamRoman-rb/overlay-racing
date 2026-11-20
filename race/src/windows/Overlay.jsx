@@ -36,6 +36,7 @@ import CircuitRecord from '../graphics/CircuitRecord';
 import LapCompare from '../graphics/LapCompare';
 import WindVectors from '../graphics/WindField';
 import TrackConditions from '../graphics/TrackConditions';
+import EquiposQR from '../graphics/EquiposQR';
 import WeatherRadar from '../graphics/WeatherRadar';
 import FormationLap from '../graphics/FormationLap';
 import SessionStatus from '../graphics/SessionStatus';
@@ -481,6 +482,9 @@ export default function Overlay() {
       </LayoutEdits>
       <LayoutEdits id="weatherRadar" config={combinedConfig} visible={!!(graphics?.weatherRadar)}>
         <WeatherRadar config={combinedConfig} isVisible={!!graphics?.weatherRadar} />
+      </LayoutEdits>
+      <LayoutEdits id="equiposQR" config={combinedConfig} visible={!!(graphics?.equiposQR)}>
+        <EquiposQR config={combinedConfig} isVisible={!!graphics?.equiposQR} />
       </LayoutEdits>
       <LayoutEdits id="lapProgress" config={combinedConfig} visible={!!(graphics?.lapProgress)}>
         <LapProgress config={combinedConfig} isVisible={!!graphics?.lapProgress} sessionInfo={liveSession} />

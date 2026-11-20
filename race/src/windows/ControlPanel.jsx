@@ -358,7 +358,7 @@ const GRAPHIC_IDS = [
   'grid', 'finalResults', 'winner', 'flags', 'fastestLap', 'driverInfo', 'battle', 'customZocalo',
   'votingQR', 'votingResults', 'lapCounter', 'virtualChamp', 'startingLights',
   'lapTimesHistory', 'trackAlert', 'penaltyAlert', 'branding', 'evento',
-    'sectors', 'gapChart', 'gainers', 'qualifying', 'trackMap', 'raceNotice', 'circuitIntro', 'circuitRecord', 'lapCompare', 'windVectors', 'formationLap', 'sessionStatus', 'lapProgress', 'trackConditions', 'weatherRadar'
+    'sectors', 'gapChart', 'gainers', 'qualifying', 'trackMap', 'raceNotice', 'circuitIntro', 'circuitRecord', 'lapCompare', 'windVectors', 'formationLap', 'sessionStatus', 'lapProgress', 'trackConditions', 'weatherRadar', 'equiposQR'
 ];
 
 const TAB_IDS = ['panel', 'campeonato', 'votaciones', 'sanciones', 'cloud', 'zocalos', 'pilotos', 'sponsors', 'circuito', 'ajustes', 'personalizar', 'editor', 'atajos', 'manual'];
@@ -582,7 +582,17 @@ export default function ControlPanel() {
       const handleUpdatePenalty = (event, data) => { if (data) setPenaltyAlertState(data); };
       const handleUpdateTrackAlert = (event, data) => { if (data) setTrackAlertVisible(!!data.isVisible); };
       const handleCloudStatus = (event, data) => { if (data) setCloudConnected(!!data.connected); };
-      const handleEquiposStatus = (event, data) => setEquiposStatus(data || null);
+      const handleEquiposStatus = (event, data) => {
+        setEquiposStatus(data || null);
+        // El link público del panel de equipos lo da el servidor: se guarda para el QR en pantalla (cambia si cambia la clave)
+        const cur = configRef.current;
+        if (data?.registered && data.url && cur && data.url !== cur.equiposUrl) {
+          const next = { ...cur, equiposUrl: data.url };
+          configRef.current = next;
+          setConfig(next);
+          ipcRenderer.invoke('save-config', next).catch(() => { });
+        }
+      };
       const handleUpdateChampionship = (event, data) => { if (data) setChampionship(data); };
       // El proceso principal vuelve a mandar la tabla cuando cambian correcciones / grilla / multiclase (aunque el cronometraje esté en pausa)
       const handleUpdateLeaderboard = (event, data) => { if (data && Array.isArray(data.drivers)) { setDrivers(data.drivers); setSessionInfo(data.session || {}); } };
@@ -1196,7 +1206,8 @@ export default function ControlPanel() {
       sessionStatus: () => handleToggleGraphic('sessionStatus'),
       lapProgress: () => handleToggleGraphic('lapProgress'),
       trackConditions: () => handleToggleGraphic('trackConditions'),
-      weatherRadar: () => handleToggleGraphic('weatherRadar')
+      weatherRadar: () => handleToggleGraphic('weatherRadar'),
+      equiposQR: () => handleToggleGraphic('equiposQR')
     };
   });
 
@@ -1406,6 +1417,7 @@ export default function ControlPanel() {
                 <button onClick={() => handleToggleGraphic('windVectors')} title={t('panel.windVectorsTitle')} style={btnStyle(!!graphics.windVectors)}>{t('graphics.windVectors')}</button>
                 <button onClick={() => handleToggleGraphic('trackConditions')} title={t('panel.trackConditionsTitle')} style={btnStyle(!!graphics.trackConditions)}>{t('graphics.trackConditions')}</button>
                 <RadarControl config={config} isActive={!!graphics.weatherRadar} onToggle={() => handleToggleGraphic('weatherRadar')} onSave={handleDirectSave} t={t} />
+                <button onClick={() => handleToggleGraphic('equiposQR')} title={config.equiposUrl || t('cloud.equiposNoUrl')} style={btnStyle(!!graphics.equiposQR)}><Icon name="qr_code_2" />{t('graphics.equiposQR')}</button>
               </div>
                           {/* VUELTA DE FORMACIÓN: la categoría que está girando (la de CATEGORÍA o la que informa la fuente) */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginBottom: '15px' }}>
@@ -2120,6 +2132,9 @@ export default function ControlPanel() {
                           >{equiposCopied ? t('cloud.equiposCopied') : t('cloud.equiposCopy')}</button>
                         </div>
                       )}
+                      <button onClick={() => handleToggleGraphic('equiposQR')} style={{ ...btnStyle(!!graphics.equiposQR), marginTop: '8px', width: '100%' }}>
+                        <Icon name="qr_code_2" />{graphics.equiposQR ? t('cloud.equiposHideQr') : t('cloud.equiposShowQr')}
+                      </button>
                       <div style={{ color: colors.textMuted, marginTop: '6px' }}>{t('cloud.equiposQrHint')}</div>
                     </>
                   ) : (

@@ -2,7 +2,17 @@ import { getSkinStyle } from '../utils/skinStyles';
 import { getAnimDuration, getRollClip } from '../utils/animationTiming';
 import { makeFx } from '../utils/contentAnim';
 
-export default function VotingQR({ isVisible, config, localIp, id = 'votingQR' }) {
+const VOTING_QR_TEXTS = {
+  title: 'PILOTO DEL DÍA',
+  compact: ['Escaneá para', 'votar al ganador'],
+  banner: ['Escaneá para votar', 'al ganador'],
+  minimal: 'ESCANEÁ PARA VOTAR',
+  standard: ['ESCANEÁ PARA VOTAR', 'AL GANADOR'],
+  loading: ['GENERANDO', 'TÚNEL...'],
+  loadingShort: 'GENERANDO...'
+};
+
+export default function VotingQR({ isVisible, config, localIp, id = 'votingQR', texts = VOTING_QR_TEXTS, formatKey = 'votingQRFormat' }) {
   const pos = config?.positions?.[id] || { x: 20, y: 700, scale: 1 };
   const themeBg = config?.themeBg || '#1a1a1a';
   const themeHeaderBg = config?.themeHeaderBg || '#000000';
@@ -16,7 +26,7 @@ export default function VotingQR({ isVisible, config, localIp, id = 'votingQR' }
   const animStyle = config?.[`animationStyle_${id}`] || 'slide';
   const fx = makeFx(config, id, isVisible);
   const animDur = getAnimDuration(config, id);
-  const qrFormat = config?.votingQRFormat || 'standard';
+  const qrFormat = config?.[formatKey] || 'standard';
   const skin = getSkinStyle(qrFormat, { themeMain, themeAccent });
 
   let transformHidden = `scale(${pos.scale}) translateY(30px)`;
@@ -38,7 +48,7 @@ export default function VotingQR({ isVisible, config, localIp, id = 'votingQR' }
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '5px' }}>
           <span style={{ color: '#000', fontSize: size > 100 ? '10px' : '9px', fontWeight: '900', textAlign: 'center', letterSpacing: '1px' }}>
-            {size > 100 ? <>GENERANDO<br/>TÚNEL...</> : 'GENERANDO...'}
+            {size > 100 ? <>{texts.loading[0]}<br/>{texts.loading[1]}</> : texts.loadingShort}
           </span>
         </div>
       )}
@@ -66,7 +76,7 @@ export default function VotingQR({ isVisible, config, localIp, id = 'votingQR' }
       }}>
         {renderQrBox(90)}
         <span style={{ color: '#fff', fontSize: '13px', fontWeight: '900', lineHeight: '1.3', textTransform: 'uppercase' }}>
-          Escaneá para<br/>votar al ganador
+          {texts.compact[0]}<br/>{texts.compact[1]}
         </span>
       </div>
     );
@@ -88,10 +98,10 @@ export default function VotingQR({ isVisible, config, localIp, id = 'votingQR' }
         </div>
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '15px 20px 15px 5px' }}>
           <span style={{ color: themeAccent, fontSize: '14px', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '4px' }}>
-            PILOTO DEL DÍA
+            {texts.title}
           </span>
           <span style={{ color: '#fff', fontSize: '15px', fontWeight: 'bold', lineHeight: '1.4' }}>
-            Escaneá para votar<br/>al ganador
+            {texts.banner[0]}<br/>{texts.banner[1]}
           </span>
         </div>
       </div>
@@ -104,7 +114,7 @@ export default function VotingQR({ isVisible, config, localIp, id = 'votingQR' }
       <div className={fx.group} style={{ ...wrapperStyle, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
         {renderQrBox(110)}
         <span style={{ color: '#fff', fontSize: '11px', fontWeight: 'bold', textAlign: 'center', textShadow: '2px 2px 6px rgba(0,0,0,0.9)' }}>
-          ESCANEÁ PARA VOTAR
+          {texts.minimal}
         </span>
       </div>
     );
@@ -127,13 +137,13 @@ export default function VotingQR({ isVisible, config, localIp, id = 'votingQR' }
     }}>
       <div style={{ backgroundColor: skin ? 'transparent' : (hasCustomBg ? 'transparent' : themeHeaderBg), padding: '10px', textAlign: 'center', borderBottom: skin ? `1px solid ${themeAccent}44` : (hasCustomBg ? 'none' : `2px solid ${themeMain}`) }}>
         <span style={{ color: themeAccent, fontSize: '14px', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '1px' }}>
-          PILOTO DEL DÍA
+          {texts.title}
         </span>
       </div>
       <div className={fx.group} style={{ padding: '15px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px' }}>
         {renderQrBox(150)}
         <span style={{ color: '#fff', fontSize: '11px', fontWeight: 'bold', textAlign: 'center', lineHeight: '1.4' }}>
-          ESCANEÁ PARA VOTAR<br/>AL GANADOR
+          {texts.standard[0]}<br/>{texts.standard[1]}
         </span>
       </div>
     </div>
