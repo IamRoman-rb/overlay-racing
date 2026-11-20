@@ -242,3 +242,11 @@ test('marca y bandera recordadas por número: la carrera siguiente las trae sin 
   assert.equal(r2.leaderboard.drivers[0].country, 'CL');
   assert.deepEqual(forgetRemembered(memory, ['7'], 'country'), { 7: { brand: 'citroen' } });
 });
+
+test('la marca no se adivina por los datos del cronometraje: sólo elegida o recordada', () => {
+  const r = new RaceAnalyzer().update({ session: {}, drivers: [drv(1, 5, 'Juan', { make: 'Citroen C4' }), drv(2, 6, 'Ana', { make: 'Citroen C4' })] },
+    { roster: { 6: { brand: 'citroen' } }, now: 1000 });
+  assert.equal(r.leaderboard.drivers[0].brand, '');
+  assert.equal(r.leaderboard.drivers[0].brandFrom, '');
+  assert.equal(r.leaderboard.drivers[1].brand, 'citroen');
+});

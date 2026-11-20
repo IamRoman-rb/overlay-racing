@@ -680,7 +680,8 @@ class RaceAnalyzer {
 
     // --- Datos de la pestaña PILOTOS (lo que la fuente no informa o informa mal) ---
     // Se aplican después del análisis (que usa el número de la fuente) y antes de las alertas y la salida.
-    // Marca y bandera: la elegida a mano > la recordada para ese número (otra carrera) > la recordada por el nombre > la de la fuente
+    // Marca: la elegida a mano > la recordada para ese número (otra carrera) > la recordada por el nombre; nunca se adivina.
+    // Bandera: igual, y si no hay ninguna, la que informa el cronometraje.
     const roster = normalizeRoster(opts.roster);
     const memory = opts.brandMemory && typeof opts.brandMemory === 'object' ? opts.brandMemory : null;
     const byNumber = opts.numberMemory && typeof opts.numberMemory === 'object' ? opts.numberMemory : null;
@@ -692,7 +693,7 @@ class RaceAnalyzer {
       const remembered = { ...rememberedFor(memory, r.name, d.name), ...((byNumber && byNumber[numberKey(src)]) || {}) };
       if (r.brand && brandExists(r.brand)) { d.brand = r.brand; d.brandFrom = 'manual'; }
       else if (remembered.brand && brandExists(remembered.brand)) { d.brand = remembered.brand; d.brandFrom = 'memory'; }
-      else { d.brand = detectBrand([d.make, ...(Array.isArray(d.extra) ? d.extra : [])]); d.brandFrom = d.brand ? 'detected' : ''; }
+      else { d.brand = ''; d.brandFrom = ''; } // sin elegir ni recordada: no se muestra ninguna (no se adivina por los datos)
       if (r.team) d.team = r.team;
       // País: el elegido a mano en PILOTOS > el recordado para ese piloto > el que informa el cronometraje
       const srcCountry = countryCode(d.nationality);

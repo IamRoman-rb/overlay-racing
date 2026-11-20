@@ -269,7 +269,7 @@ export const translations = {
       alertPositionsReset: '✅ Se restablecieron todas las posiciones al layout preconfigurado.'
     },
     personalizar: {
-      showPhotos: 'Mostrar fotos de los pilotos', showPhotosNoFolder: 'Elegí la carpeta de fotos de los pilotos (más abajo) para que aparezcan.', showBrandLogos: 'Mostrar logos de las marcas de los autos', brandLogoWhite: 'Logos en blanco (un solo color)', brandLogoColor: 'Logos a color (originales)', brandLogosHint: 'La marca se detecta de los datos del cronometraje o se elige a mano en la pestaña PILOTOS. Vale para todas las gráficas.',
+      showPhotos: 'Mostrar fotos de los pilotos', showPhotosNoFolder: 'Elegí la carpeta de fotos de los pilotos (más abajo) para que aparezcan.', showBrandLogos: 'Mostrar logos de las marcas de los autos', brandLogoWhite: 'Logos en blanco (un solo color)', brandLogoColor: 'Logos a color (originales)', brandLogosHint: 'La marca aparece sólo si se elige en la pestaña PILOTOS (o si quedó recordada de otra carrera). Vale para todas las gráficas.',
       panelSectionsTitle: 'SECCIONES DEL PANEL', panelSectionsDesc: 'Arrastrá las secciones (o usá las flechas) para ordenar los botones de la pestaña PANEL a tu gusto. Destildá las que no uses para ocultarlas.',
       moveUp: 'Subir', moveDown: 'Bajar', sectionVisible: 'Mostrar en el PANEL', panelSectionsReset: '↺ RESTABLECER ORDEN Y SECCIONES',
       eliteTitle: 'ESTILO ELITE', eliteDesc: 'Colores del paquete azul de transmisión: presentación y récord del circuito, y los formatos Elite de torre, clima y zócalos.',
@@ -708,7 +708,7 @@ export const translations = {
       alertPositionsReset: '✅ All positions were reset to the preset layout.'
     },
     personalizar: {
-      showPhotos: 'Show driver photos', showPhotosNoFolder: 'Choose the driver photos folder (below) so they appear.', showBrandLogos: 'Show car brand logos', brandLogoWhite: 'White logos (single color)', brandLogoColor: 'Color logos (original)', brandLogosHint: 'The brand is detected from the timing data or chosen by hand in the DRIVERS tab. Applies to every graphic.',
+      showPhotos: 'Show driver photos', showPhotosNoFolder: 'Choose the driver photos folder (below) so they appear.', showBrandLogos: 'Show car brand logos', brandLogoWhite: 'White logos (single color)', brandLogoColor: 'Color logos (original)', brandLogosHint: 'The brand only appears if it is chosen in the DRIVERS tab (or remembered from another race). Applies to every graphic.',
       panelSectionsTitle: 'PANEL SECTIONS', panelSectionsDesc: 'Drag the sections (or use the arrows) to order the PANEL tab buttons your way. Untick the ones you do not use to hide them.',
       moveUp: 'Move up', moveDown: 'Move down', sectionVisible: 'Show in the PANEL', panelSectionsReset: '↺ RESET ORDER AND SECTIONS',
       eliteTitle: 'ELITE STYLE', eliteDesc: 'Colors of the blue broadcast package: circuit intro and record, and the Elite formats of the tower, weather and lower thirds.',
