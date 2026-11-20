@@ -16,6 +16,7 @@ const { io: ioClient } = require('socket.io-client');
 const xlsx = require('xlsx');
 const os = require('os');
 const { getSystemStats, stopHardwarePoller } = require('./src/scripts/systemStats.cjs');
+const { createMetClient } = require('./src/scripts/metWeather.cjs');
 
 // MÓDULO OVERLAY RACING (Overlay Graphics).
 // Este archivo ya no es el programa completo: lo abre el instalador (launcher/main.cjs) después del login, tras
@@ -124,7 +125,7 @@ const defaultPositions = {
   sessionStatus: { x: 560, y: 20, scale: 1 },
   lapProgress: { x: 1600, y: 20, scale: 1 },
   trackConditions: { x: 1400, y: 560, scale: 1 },
-  weatherRadar: { x: 1360, y: 300, scale: 1 }
+  weatherRadar: { x: 1100, y: 60, scale: 1 }
 };
 
 if (!fs.existsSync(posPath)) fs.writeFileSync(posPath, JSON.stringify(defaultPositions, null, 2));
@@ -1394,6 +1395,16 @@ ipc.handle('get-network-urls', () => {
   return urls;
 });
 
+// CLIMA (MET Norway): el panel pide uno o varios puntos (el clima del circuito o la grilla del radar)
+let metClient = null;
+ipc.handle('met-forecast', async (_e, points, opts) => {
+  if (!metClient) {
+    let version = moduleCtx.moduleVersion;
+    if (!version || version === 'dev') { try { version = require('./module.json').version; } catch { version = 'dev'; } }
+    metClient = createMetClient({ version });
+  }
+  try { return { ok: true, data: await metClient.forecast(points, opts || {}) }; } catch (e) { return { ok: false, error: String(e && e.message || e) }; }
+});
 ipc.handle('get-system-stats', () => getSystemStats());
 ipc.handle('get-local-ip', () => getVotingUrl());
 ipc.handle('get-steward-url', () => getStewardUrl());

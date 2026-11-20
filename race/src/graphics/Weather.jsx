@@ -108,6 +108,7 @@ import WeatherScene from './WeatherScene';
 import { getAnimDuration, getRollClip } from '../utils/animationTiming';
 import { getElitePalette, ELITE_FONT, rgba } from '../utils/elite';
 import { makeFx } from '../utils/contentAnim';
+import { rainInfo } from '../utils/weatherMap';
 
 // brand (opcional, gráfica EVENTO): { logo, producer, circuit } -> cada formato suma el logo / nombre de la productora y
 // muestra el circuito como lugar.
@@ -119,6 +120,13 @@ export default function Weather({ data, isVisible, config, id = 'clima', format,
   const themeAccent = config?.themeAccent || '#f39c12';
   const themeNormalText = config?.themeNormalText || '#ffffff';
   const themeNumberText = config?.themeNumberText || '#bdc3c7';
+  // Lluvia: mm de las próximas 6 h (MET Norway) o el % de los datos viejos guardados
+  const rain = rainInfo(data);
+  const rainStr = rain ? String(rain.value).replace('.', ',') : '-';
+  const rainUnit = rain ? (rain.unit === 'mm' ? ' mm' : '%') : '';
+  const rainWet = !!rain?.wet;
+  // Lluvia de cada hora del pronóstico: mm (MET) o % (datos viejos)
+  const hourRainMm = data?.source === 'met';
 
   const customBg = config?.[`design_${id}`];
   const bRad = config?.[`borderRadius_${id}`] || '8px';
@@ -163,7 +171,7 @@ export default function Weather({ data, isVisible, config, id = 'clima', format,
     const stats = [
       { key: 'VIENTO', value: val(data.windSpeed), unit: 'km/h', icon: 'M3 8h11a3 3 0 1 0-3-3M3 12h16a3 3 0 1 1-3 3M3 16h7', stroke: true },
       { key: 'HUMEDAD', value: val(data.humidity), unit: '%', icon: 'M12 3C9 8 6 11.5 6 15.5a6 6 0 0 0 12 0C18 11.5 15 8 12 3z' },
-      { key: 'LLUVIA', value: val(data.precipProb), unit: '%', icon: 'M7 15a4 4 0 0 1 .5-8A5.5 5.5 0 0 1 18 8.5 3.5 3.5 0 0 1 17.5 15zM8 18l-1 3M12 18l-1 3M16 18l-1 3', stroke: true }
+      { key: 'LLUVIA', value: rainStr, unit: rainUnit.trim(), icon: 'M7 15a4 4 0 0 1 .5-8A5.5 5.5 0 0 1 18 8.5 3.5 3.5 0 0 1 17.5 15zM8 18l-1 3M12 18l-1 3M16 18l-1 3', stroke: true }
     ];
     const statIcon = (s) => (
       <svg width="16" height="16" viewBox="0 0 24 24" fill={s.stroke ? 'none' : '#7fd3ff'} stroke={s.stroke ? '#7fd3ff' : 'none'} strokeWidth="2" strokeLinecap="round"><path d={s.icon} /></svg>
@@ -287,7 +295,7 @@ export default function Weather({ data, isVisible, config, id = 'clima', format,
                 </div>
               </div>
               <span style={{ color: themeNumberText, fontSize: '10px', fontWeight: 'bold' }}>
-                HUM. <span style={{ color: themeNormalText }}>{val(data.humidity)}%</span> · LLUVIA <span style={{ color: data.precipProb >= 50 ? '#3db6ff' : themeNormalText }}>{val(data.precipProb)}%</span>
+                HUM. <span style={{ color: themeNormalText }}>{val(data.humidity)}%</span> · LLUVIA <span style={{ color: rainWet ? '#3db6ff' : themeNormalText }}>{rainStr}{rainUnit}</span>
               </span>
             </div>
           </div>
@@ -305,8 +313,8 @@ export default function Weather({ data, isVisible, config, id = 'clima', format,
         <span style={{ color: now ? themeAccent : themeNumberText, fontSize: '11px', fontWeight: '900', letterSpacing: '0.5px' }}>{top}</span>
         <WeatherIcon animated={iconsAnimated} category={cat} color={themeAccent} size={now ? 34 : 28} />
         <span style={{ color: themeNormalText, fontSize: now ? '24px' : '20px', fontWeight: '900', lineHeight: 1 }}>{val(temp)}°</span>
-        <span style={{ display: 'flex', alignItems: 'center', gap: '3px', color: rain >= 50 ? '#3db6ff' : themeNumberText, fontSize: '10px', fontWeight: 'bold' }}>
-          <svg width="8" height="10" viewBox="0 0 24 28" fill="currentColor"><path d="M12 2C9 7 5 11.5 5 16.5A7 7 0 0 0 19 16.5C19 11.5 15 7 12 2z" /></svg>{val(rain)}%
+        <span style={{ display: 'flex', alignItems: 'center', gap: '3px', color: (hourRainMm ? rain >= 1 : rain >= 50) ? '#3db6ff' : themeNumberText, fontSize: '10px', fontWeight: 'bold' }}>
+          <svg width="8" height="10" viewBox="0 0 24 28" fill="currentColor"><path d="M12 2C9 7 5 11.5 5 16.5A7 7 0 0 0 19 16.5C19 11.5 15 7 12 2z" /></svg>{hourRainMm ? `${Number.isFinite(rain) ? String(Math.round(rain * 10) / 10).replace('.', ',') : '-'} mm` : `${val(rain)}%`}
         </span>
       </div>
     );
@@ -315,7 +323,7 @@ export default function Weather({ data, isVisible, config, id = 'clima', format,
         <div style={{ ...boxBg, width: `${cellW * (hours.length + 1)}px`, minWidth: '260px', borderTop: customBg ? 'none' : `4px solid ${themeMain}` }}>
           {headBar('PRONÓSTICO')}
           <div className={fx.group} style={{ display: 'flex' }}>
-            {cell('now', 'AHORA', category, data.temp, data.precipProb, true)}
+            {cell('now', 'AHORA', category, data.temp, hourRainMm ? data.precip1h : data.precipProb, true)}
             {hours.map((h, i) => cell(i, h.time, getWeatherVisual(h.code).category, h.temp, h.precip, false))}
           </div>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', padding: '5px 10px', borderTop: '1px solid rgba(255,255,255,0.12)', color: themeNumberText, fontSize: '10px', fontWeight: 'bold' }}>
@@ -348,7 +356,7 @@ export default function Weather({ data, isVisible, config, id = 'clima', format,
           {data.feelsLike !== null && data.feelsLike !== undefined && part('st', <>{lbl('ST')}{v(`${Math.round(data.feelsLike)}°`)}</>)}
           {part('w', <>{lbl('VIENTO')}{windArrow(14)}{v(`${val(data.windSpeed)}`)}{lbl(`KM/H ${getWindDirLabel(data.windDir)}`)}</>)}
           {part('h', <>{lbl('HUM.')}{v(`${val(data.humidity)}%`)}</>)}
-          {part('r', <>{lbl('LLUVIA')}<span style={{ color: data.precipProb >= 50 ? '#3db6ff' : themeNormalText, fontSize: '15px', fontWeight: '900' }}>{val(data.precipProb)}%</span></>)}
+          {part('r', <>{lbl('LLUVIA')}<span style={{ color: rainWet ? '#3db6ff' : themeNormalText, fontSize: '15px', fontWeight: '900' }}>{rainStr}{rainUnit}</span></>)}
         </div>
       </div>
     );
@@ -383,7 +391,7 @@ export default function Weather({ data, isVisible, config, id = 'clima', format,
           <div style={{ position: 'absolute', left: 0, right: 0, bottom: 0, display: 'flex', gap: '18px', alignItems: 'center', padding: '8px 20px', backgroundColor: 'rgba(0,0,0,0.35)', fontSize: '11px', fontWeight: 'bold', color: themeNumberText }}>
             <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>{windArrow(13)} VIENTO <span style={{ color: themeNormalText }}>{val(data.windSpeed)} KM/H {getWindDirLabel(data.windDir)}</span></span>
             <span>HUMEDAD <span style={{ color: themeNormalText }}>{val(data.humidity)}%</span></span>
-            <span>LLUVIA <span style={{ color: data.precipProb >= 50 ? '#3db6ff' : themeNormalText }}>{val(data.precipProb)}%</span></span>
+            <span>LLUVIA <span style={{ color: rainWet ? '#3db6ff' : themeNormalText }}>{rainStr}{rainUnit}</span></span>
           </div>
         </div>
       </div>
@@ -454,9 +462,9 @@ export default function Weather({ data, isVisible, config, id = 'clima', format,
                 VIENTO {Math.round(data.windSpeed)} km/h {getWindDirLabel(data.windDir)}
               </span>
             )}
-            {data.precipProb !== undefined && data.precipProb !== null && (
-              <span style={{ color: data.precipProb >= 50 ? '#3498db' : themeNumberText, fontSize: '10px', letterSpacing: '0.5px' }}>
-                LLUVIA {Math.round(data.precipProb)}%
+            {rain && (
+              <span style={{ color: rainWet ? '#3498db' : themeNumberText, fontSize: '10px', letterSpacing: '0.5px' }}>
+                LLUVIA {rainStr}{rainUnit}
               </span>
             )}
           </div>
@@ -551,13 +559,13 @@ export default function Weather({ data, isVisible, config, id = 'clima', format,
                 <span style={{ color: themeNormalText, fontWeight: 'bold' }}>{Math.round(data.humidity)}%</span>
               </div>
             )}
-            {data.precipProb !== undefined && data.precipProb !== null && (
+            {rain && (
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px' }}>
                 <span style={{ color: themeNumberText }}>LLUVIA</span>
                 <span style={{
-                  color: data.precipProb >= 50 ? '#3498db' : themeNormalText,
+                  color: rainWet ? '#3498db' : themeNormalText,
                   fontWeight: 'bold'
-                }}>{Math.round(data.precipProb)}%</span>
+                }}>{rainStr}{rainUnit}</span>
               </div>
             )}
           </div>

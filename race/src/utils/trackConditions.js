@@ -1,4 +1,4 @@
-// CONDICIONES DE PISTA: viento y temperatura sobre el trazado, y la grilla regional del RADAR DEL CLIMA.
+// CONDICIONES DE PISTA: viento y temperatura sobre el trazado.
 // Todo es cálculo puro (sin React) para poder probarlo.
 //
 // Qué es real y qué es estimado:
@@ -177,104 +177,8 @@ export function windAlongColor(along) {
   return along >= 0 ? rampColor(['#9aa3ad', '#6c9df5', '#3a86ff'], along) : rampColor(['#9aa3ad', '#f07f7f', '#ff4d4d'], -along);
 }
 
-// Temperatura del aire en el mapa regional: divergente frío / cálido con gris neutro en el medio
-export const AIR_STOPS = ['#2c7bb6', '#7fb8da', '#d9dde2', '#f4a582', '#d7301f'];
-export const airColor = (k) => rampColor(AIR_STOPS, k);
-
-// Lluvia (mm/h): secuencial azul. Debajo de 0.1 mm no se pinta.
-export const RAIN_STOPS = ['#bde0fe', '#74b3f0', '#3a86ff', '#1d4ed8', '#7b2cbf'];
-export function rainColor(mm) {
-  const v = num(mm) ?? 0;
-  if (v < 0.1) return null;
-  return rampColor(RAIN_STOPS, Math.log10(v * 10) / Math.log10(200)); // 0.1 .. 20 mm/h
-}
-
 // Normaliza un valor entre min y max (si son iguales, al medio)
 export const norm = (v, min, max) => (max - min > 0.05 ? (v - min) / (max - min) : 0.5);
-
-// ---------------------------------------------------------------------------------------------------------------------
-// RADAR DEL CLIMA: grilla de puntos alrededor del circuito
-
-export const RADAR_N = 9;           // 9 x 9 = 81 puntos por consulta (Open-Meteo los cuenta como 81 llamadas)
-
-// Puntos de la grilla, de arriba (norte) a abajo y de izquierda (oeste) a derecha
-export function radarGridPoints(lat, lon, km = 40, n = RADAR_N) {
-  const dLat = km / 111.32;
-  const dLon = km / (111.32 * Math.max(0.15, Math.cos(toRad(lat))));
-  const pts = [];
-  for (let r = 0; r < n; r++) {
-    for (let c = 0; c < n; c++) {
-      const fy = n > 1 ? r / (n - 1) : 0.5; const fx = n > 1 ? c / (n - 1) : 0.5;
-      pts.push({ lat: Math.round((lat + dLat * (1 - 2 * fy)) * 10000) / 10000, lon: Math.round((lon + dLon * (2 * fx - 1)) * 10000) / 10000 });
-    }
-  }
-  return pts;
-}
-
-export function radarUrl(points, hours = 6) {
-  const lat = points.map(p => p.lat).join(',');
-  const lon = points.map(p => p.lon).join(',');
-  return `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}`
-    + '&current=temperature_2m,precipitation,weather_code,wind_speed_10m,wind_direction_10m,cloud_cover'
-    + `&hourly=temperature_2m,precipitation,precipitation_probability&forecast_hours=${hours + 1}&wind_speed_unit=kmh&timezone=auto`;
-}
-
-// Respuesta de Open-Meteo (lista de ubicaciones) -> grilla compacta para guardar en la configuración
-export function parseRadarResponse(json, { lat, lon, km, n = RADAR_N, place = null, now = Date.now() } = {}) {
-  const list = Array.isArray(json) ? json : [json];
-  if (list.length !== n * n) throw new Error(`Se esperaban ${n * n} puntos y llegaron ${list.length}`);
-  const r1 = (v) => (Number.isFinite(v) ? Math.round(v * 10) / 10 : null);
-  const cells = list.map(loc => {
-    const c = loc?.current || {};
-    return { temp: r1(c.temperature_2m), rain: r1(c.precipitation), code: c.weather_code ?? null, wind: r1(c.wind_speed_10m), dir: Number.isFinite(c.wind_direction_10m) ? Math.round(c.wind_direction_10m) : null, cloud: Number.isFinite(c.cloud_cover) ? Math.round(c.cloud_cover) : null };
-  });
-  // Próximas horas (la primera hora horaria es la actual: se saltea)
-  const h0 = list[0]?.hourly || {};
-  const times = (h0.time || []).slice(1);
-  const frames = times.map((tm, k) => ({
-    time: String(tm).slice(11, 16),
-    temp: list.map(loc => r1(loc?.hourly?.temperature_2m?.[k + 1])),
-    rain: list.map(loc => r1(loc?.hourly?.precipitation?.[k + 1])),
-    prob: list.map(loc => { const v = loc?.hourly?.precipitation_probability?.[k + 1]; return Number.isFinite(v) ? v : null; })
-  }));
-  return { lat, lon, km, n, place, cells, frames, time: String(list[0]?.current?.time || '').slice(11, 16), updatedAt: now };
-}
-
-// Grilla de ejemplo (vista previa de PERSONALIZAR): frente de lluvia que entra desde el sudoeste
-export function demoRadarGrid(n = RADAR_N) {
-  const cells = []; const frames = [];
-  const rainAt = (r, c, shift) => {
-    const d = (n - 1 - r) * 0.8 + c * 0.6 - shift;   // la lluvia avanza hacia el noreste
-    return d < 2 ? Math.max(0, Math.round((4 - Math.abs(d - 0.5) * 2.2) * 10) / 10) : 0;
-  };
-  for (let r = 0; r < n; r++) {
-    for (let c = 0; c < n; c++) {
-      cells.push({ temp: Math.round((19 + c * 0.5 - r * 0.3 + Math.sin(r + c) * 0.6) * 10) / 10, rain: rainAt(r, c, 0), code: 61, wind: 16 + ((r * c) % 7), dir: 225, cloud: 60 });
-    }
-  }
-  for (let k = 1; k <= 6; k++) {
-    const temp = []; const rain = []; const prob = [];
-    for (let r = 0; r < n; r++) for (let c = 0; c < n; c++) { const v = rainAt(r, c, k * 1.3); temp.push(19 + c * 0.5 - r * 0.3 - k * 0.3); rain.push(v); prob.push(v > 0 ? 80 : 15); }
-    frames.push({ time: `${String(14 + k).padStart(2, '0')}:00`, temp, rain, prob });
-  }
-  return { lat: 0, lon: 0, km: 40, n, place: 'EJEMPLO', cells, frames, time: '14:00', updatedAt: Date.now(), demo: true };
-}
-
-// Valores de una capa ('temp' | 'rain') para el cuadro actual (frame -1 = ahora)
-export function radarLayerValues(grid, layer, frame = -1) {
-  if (!grid) return [];
-  const f = frame >= 0 ? grid.frames?.[frame] : null;
-  if (layer === 'rain') return f ? f.rain : grid.cells.map(c => c.rain);
-  return f ? f.temp : grid.cells.map(c => c.temp);
-}
-
-// Mediana (para centrar la escala divergente de la temperatura del aire)
-export function median(values) {
-  const v = values.filter(Number.isFinite).sort((a, b) => a - b);
-  if (!v.length) return null;
-  const m = Math.floor(v.length / 2);
-  return v.length % 2 ? v[m] : (v[m - 1] + v[m]) / 2;
-}
 
 // ¿Hay que invertir el sentido de marcha? Sí cuando DATOS > SENTIDO DE GIRO dice lo contrario al orden de los puntos.
 export function travelReversed(track, circuitDirection) {

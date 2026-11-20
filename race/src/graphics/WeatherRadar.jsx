@@ -1,212 +1,301 @@
-// RADAR DEL CLIMA: mapa de calor de la zona alrededor del circuito (grilla de Open-Meteo, config.weatherGrid, pedida
-// desde el PANEL). El norte queda arriba y el circuito en el centro.
-// Capas (PERSONALIZAR, config.weatherRadarLayer): rain (lluvia, por defecto) | temp (temperatura del aire) | wind (viento)
-// Con config.weatherRadarAnimate (por defecto sí) la lluvia / temperatura recorre las próximas horas, como un radar.
-// Formatos: standard | compact | large | minimal | skins.
+// RADAR DEL CLIMA: mapa meteorológico de la zona del circuito, al estilo de los mapas del tiempo de TV.
+// Datos: grilla de MET Norway (config.weatherGrid, pedida desde el PANEL). Mapa: Natural Earth (límites, provincias,
+// ciudades) o el satélite Blue Marble de la NASA. Todo gratuito y de uso libre citando la fuente (abajo a la derecha).
+//
+// Opciones (PERSONALIZAR):
+//   weatherRadarLayer: temp (por defecto) | rain | wind     weatherRadarBase: map (por defecto) | satellite
+//   weatherRadarParticles: partículas de viento animadas (sí)  weatherRadarAnimate: recorrer las próximas horas (sí)
+//   Formatos: standard | compact | large | minimal (sin carteles)
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { getGraphicFrame, getFormatStyles, useImageAspect } from '../utils/raceVisuals';
-import { buildTrack, DEFAULT_ASPECT } from '../utils/trackPath';
-import { airColor, rainColor, median, radarLayerValues, AIR_STOPS, RAIN_STOPS } from '../utils/trackConditions';
-import { windIntensityColor, getWindDirLabel } from '../utils/weather';
+import { getGraphicFrame, getFormatStyles } from '../utils/raceVisuals';
+import {
+  sampleGrid, windComponents, projector, decodeRings, ringsInBox, pickCities, satelliteUrl, frameLabel,
+  tempRgb, windRgb, rainRgb, TEMP_STOPS, WIND_STOPS, RAIN_STOPS, CIRCUIT_SPOT
+} from '../utils/weatherMap';
 import CategoryTag from '../components/CategoryTag';
 import { makeFx } from '../utils/contentAnim';
 
-const FRAME_MS = 1300;
-const HOLD_MS = 2600;   // pausa en "AHORA" y al final de la animación
+const FRAME_MS = 1500;
+const HOLD_MS = 3000;
+const SIZES = { standard: [800, 500], compact: [512, 320], large: [1280, 800], minimal: [800, 500] };
+const LAYERS = {
+  temp: { title: 'TEMPERATURA', legend: 'Temperatura (°C)', stops: TEMP_STOPS, ticks: [-10, 0, 10, 20, 30, 40] },
+  rain: { title: 'LLUVIA', legend: 'Lluvia (mm/h)', stops: RAIN_STOPS, ticks: [0.1, 1, 5, 20] },
+  wind: { title: 'VIENTO', legend: 'Viento (km/h)', stops: WIND_STOPS, ticks: [0, 20, 45, 80] }
+};
 
-const hexRgb = (h) => { const n = parseInt(h.slice(1), 16); return [(n >> 16) & 255, (n >> 8) & 255, n & 255]; };
+// Mapa (Natural Earth): se carga una sola vez y sólo cuando se usa el radar
+let mapPromise = null;
+function useMapData() {
+  const [data, setData] = useState(null);
+  useEffect(() => {
+    let alive = true;
+    if (!mapPromise) {
+      mapPromise = import('../data/mapa.json').then(m => {
+        const d = m.default || m;
+        return { countries: decodeRings(d.countries), provinces: decodeRings(d.provinces), cities: d.cities || [] };
+      });
+    }
+    mapPromise.then(d => { if (alive) setData(d); }).catch(() => {});
+    return () => { alive = false; };
+  }, []);
+  return data;
+}
 
-// Pinta la grilla n x n en un canvas chico y lo estira con suavizado: interpolación bilineal entre los puntos
-function useHeatCanvas(canvasRef, { values, n, size, layer, scale }) {
+// Campo de color: se calcula cada píxel de una imagen chica (1/4) interpolando la grilla y se estira con suavizado
+function drawField(canvas, { grid, frame, layer, W, H, alpha }) {
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, W, H);
+  if (!grid || !frame) return;
+  const values = layer === 'rain' ? frame.rain : layer === 'wind' ? frame.wind : frame.temp;
+  const color = layer === 'rain' ? rainRgb : layer === 'wind' ? windRgb : tempRgb;
+  const w = Math.ceil(W / 4); const h = Math.ceil(H / 4);
+  const small = document.createElement('canvas');
+  small.width = w; small.height = h;
+  const sctx = small.getContext('2d');
+  const img = sctx.createImageData(w, h);
+  for (let y = 0; y < h; y++) {
+    const fy = (y / (h - 1)) * (grid.ny - 1);
+    for (let x = 0; x < w; x++) {
+      const v = sampleGrid(values, grid.nx, grid.ny, (x / (w - 1)) * (grid.nx - 1), fy);
+      const o = (y * w + x) * 4;
+      // Lluvia: debajo de 0,1 mm se va desvaneciendo (borde suave, sin escalones)
+      const rgb = layer === 'rain' ? (Number.isFinite(v) && v >= 0.02 ? color(Math.max(0.1, v)) : null) : color(v);
+      if (!rgb) { img.data[o + 3] = 0; continue; }
+      img.data[o] = rgb[0]; img.data[o + 1] = rgb[1]; img.data[o + 2] = rgb[2];
+      img.data[o + 3] = layer === 'rain' ? Math.min(255, 150 + v * 25) * Math.min(1, v / 0.1) * alpha : 255 * alpha;
+    }
+  }
+  sctx.putImageData(img, 0, 0);
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = 'high';
+  // La lluvia corta de golpe entre celdas: un desenfoque de ~1/4 de celda redondea los bordes, como un radar
+  if (layer === 'rain' && 'filter' in ctx) ctx.filter = `blur(${Math.round(W / (grid.nx - 1) / 4)}px)`;
+  ctx.drawImage(small, 0, 0, W, H);
+  if ('filter' in ctx) ctx.filter = 'none';
+}
+
+// Límites y costas. Con fillLand se pinta la tierra y el mar (fondo de la capa de lluvia, va debajo del campo de color).
+function drawMap(canvas, { map, box, W, H, fillLand = false, lines = true, k }) {
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, W, H);
+  if (!map || !box) return;
+  const pj = projector(box, W, H);
+  const pathOf = (rings) => {
+    ctx.beginPath();
+    rings.forEach(r => {
+      for (let i = 0; i < r.length; i += 2) {
+        const x = pj.x(r[i]); const y = pj.y(r[i + 1]);
+        if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+      }
+      ctx.closePath();
+    });
+  };
+  const countries = ringsInBox(map.countries, box);
+  const provinces = ringsInBox(map.provinces, box);
+  if (fillLand) {
+    ctx.fillStyle = '#0d2238'; ctx.fillRect(0, 0, W, H);
+    pathOf(countries); ctx.fillStyle = '#26331f'; ctx.fill('evenodd');
+  }
+  if (!lines) return;
+  ctx.lineJoin = 'round';
+  pathOf(provinces);
+  ctx.strokeStyle = 'rgba(255,255,255,0.32)'; ctx.lineWidth = 0.8 * k; ctx.stroke();
+  pathOf(countries);
+  ctx.strokeStyle = 'rgba(0,0,0,0.45)'; ctx.lineWidth = 3 * k; ctx.stroke();
+  ctx.strokeStyle = 'rgba(255,255,255,0.9)'; ctx.lineWidth = 1.3 * k; ctx.stroke();
+}
+
+// Partículas de viento: cada una sigue el viento interpolado y deja una estela que se desvanece
+function useParticles(canvasRef, { grid, frame, W, H, running, k }) {
   useEffect(() => {
     const cv = canvasRef.current;
-    if (!cv || !values?.length || typeof document === 'undefined') return;
+    if (!cv || !grid || !frame || !running) { if (cv) cv.getContext('2d').clearRect(0, 0, W, H); return undefined; }
     const ctx = cv.getContext('2d');
-    ctx.clearRect(0, 0, size, size);
-    const small = document.createElement('canvas');
-    small.width = n; small.height = n;
-    const sctx = small.getContext('2d');
-    const img = sctx.createImageData(n, n);
-    values.forEach((v, i) => {
-      let color = null; let alpha = 0;
-      if (layer === 'rain') { color = rainColor(v); alpha = color ? Math.min(235, 150 + (Number(v) || 0) * 12) : 0; }
-      else if (Number.isFinite(v)) { color = airColor(scale(v)); alpha = layer === 'wind' ? 120 : 215; }
-      const [r, g, b] = color ? hexRgb(color) : [0, 0, 0];
-      img.data.set([r, g, b, alpha], i * 4);
-    });
-    sctx.putImageData(img, 0, 0);
-    // Paso intermedio para suavizar más
-    const mid = document.createElement('canvas');
-    mid.width = n * 8; mid.height = n * 8;
-    const mctx = mid.getContext('2d');
-    mctx.imageSmoothingEnabled = true; mctx.imageSmoothingQuality = 'high';
-    mctx.drawImage(small, 0, 0, mid.width, mid.height);
-    ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high';
-    // Los puntos de la grilla van de borde a borde: medio píxel de la grilla chica queda afuera del mapa
-    const cell = size / (n - 1);
-    ctx.drawImage(mid, -cell / 2, -cell / 2, size + cell, size + cell);
-  }, [canvasRef, values, n, size, layer, scale]);
+    const { u, v } = windComponents(frame);
+    const count = Math.round((W * H) / 1100);
+    const speed = 0.045 * k;                         // px por cuadro por km/h
+    const rnd = () => ({ x: Math.random() * W, y: Math.random() * H, age: Math.floor(Math.random() * 120), life: 70 + Math.random() * 110 });
+    const ps = Array.from({ length: count }, rnd);
+    let raf = 0;
+    const step = () => {
+      // Desvanece las estelas
+      ctx.globalCompositeOperation = 'destination-in';
+      ctx.fillStyle = 'rgba(0,0,0,0.95)';
+      ctx.fillRect(0, 0, W, H);
+      ctx.globalCompositeOperation = 'source-over';
+      ctx.strokeStyle = 'rgba(255,255,255,0.85)';
+      ctx.lineWidth = 1.2 * k;
+      ctx.beginPath();
+      ps.forEach((p, i) => {
+        const fx = (p.x / W) * (grid.nx - 1); const fy = (p.y / H) * (grid.ny - 1);
+        const du = sampleGrid(u, grid.nx, grid.ny, fx, fy); const dv = sampleGrid(v, grid.nx, grid.ny, fx, fy);
+        if (du === null || dv === null || p.age > p.life) { ps[i] = { ...rnd(), age: 0 }; return; }
+        const nx = p.x + du * speed; const ny = p.y + dv * speed;
+        ctx.moveTo(p.x, p.y); ctx.lineTo(nx, ny);
+        p.x = nx; p.y = ny; p.age += 1;
+        if (nx < 0 || nx > W || ny < 0 || ny > H) ps[i] = { ...rnd(), age: 0 };
+      });
+      ctx.stroke();
+      raf = requestAnimationFrame(step);
+    };
+    raf = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(raf);
+  }, [canvasRef, grid, frame, W, H, running, k]);
 }
 
 export default function WeatherRadar({ config, isVisible, id = 'weatherRadar' }) {
-  const { wrapperStyle, bRad, customBg, theme: baseTheme } = getGraphicFrame(config, id, isVisible, { x: 1360, y: 300, scale: 1 });
-  const format = config?.[`${id}Format`] || 'standard';
-  const f = getFormatStyles(format === 'large' ? 'standard' : format, { theme: baseTheme, customBg, bRad });
+  const { wrapperStyle, bRad, customBg, theme: baseTheme } = getGraphicFrame(config, id, isVisible, { x: 1100, y: 60, scale: 1 });
+  const format = SIZES[config?.[`${id}Format`]] ? config[`${id}Format`] : 'standard';
+  const f = getFormatStyles(format === 'minimal' || format === 'large' ? 'standard' : format, { theme: baseTheme, customBg, bRad });
   const theme = f.theme;
-  const compact = format === 'compact';
-  const large = format === 'large';
-  const S = large ? 680 : compact ? 330 : 470;
-  const fs = large ? 1.35 : compact ? 0.85 : 1;
-  const px = (v) => `${Math.round(v * fs)}px`;
-  const layer = ['temp', 'wind'].includes(config?.weatherRadarLayer) ? config.weatherRadarLayer : 'rain';
-  const grid = config?.weatherGrid || null;
-  const n = grid?.n || 0;
+  const [W, H] = SIZES[format];
+  const k = W / 800;
+  const tk = k * (format === 'compact' ? 1.25 : 1);
+  const px = (v) => `${Math.round(v * tk)}px`;
+  const layer = LAYERS[config?.weatherRadarLayer] ? config.weatherRadarLayer : 'temp';
+  const L = LAYERS[layer];
+  const satellite = config?.weatherRadarBase === 'satellite';
+  const grid = config?.weatherGrid?.frames?.length && config.weatherGrid.box ? config.weatherGrid : null;
+  const box = grid?.box || null;
   const frames = useMemo(() => grid?.frames || [], [grid]);
-  const animate = config?.weatherRadarAnimate !== false && layer !== 'wind' && frames.length > 0;
+  const animate = config?.weatherRadarAnimate !== false && frames.length > 1;
+  const particles = config?.weatherRadarParticles !== false;
+  const map = useMapData();
 
-  // Animación: -1 = ahora, 0..frames-1 = próximas horas
-  const [frame, setFrame] = useState(-1);
+  // Animación: 0 = ahora, 1.. = próximas horas
+  const [frame, setFrame] = useState(0);
   useEffect(() => {
     if (!animate || !isVisible) return undefined;
-    let cur = -1; let timer = null;
+    let cur = 0; let timer = null;
     const tick = () => {
-      cur = cur >= frames.length - 1 ? -1 : cur + 1;
+      cur = cur >= frames.length - 1 ? 0 : cur + 1;
       setFrame(cur);
-      timer = setTimeout(tick, cur === -1 || cur === frames.length - 1 ? HOLD_MS : FRAME_MS);
+      timer = setTimeout(tick, cur === 0 || cur === frames.length - 1 ? HOLD_MS : FRAME_MS);
     };
-    const reset = setTimeout(() => setFrame(-1), 0);
+    const reset = setTimeout(() => setFrame(0), 0);
     timer = setTimeout(tick, HOLD_MS);
     return () => { clearTimeout(reset); clearTimeout(timer); };
   }, [animate, isVisible, frames.length]);
-  const shownFrame = animate && isVisible ? Math.min(frame, frames.length - 1) : -1;
+  const fi = animate && isVisible ? Math.min(frame, frames.length - 1) : 0;
+  const fr = frames[fi] || null;
 
-  const values = useMemo(() => radarLayerValues(grid, layer === 'wind' ? 'temp' : layer, shownFrame), [grid, layer, shownFrame]);
-  // Escala divergente de temperatura centrada en la mediana de la zona (todas las horas, para que no salte)
-  const tempScale = useMemo(() => {
-    const all = [...(grid?.cells || []).map(c => c.temp), ...frames.flatMap(fr => fr.temp || [])].filter(Number.isFinite);
-    const med = median(all) ?? 20;
-    const dev = Math.max(2, ...all.map(v => Math.abs(v - med)));
-    return { med, dev, min: med - dev, max: med + dev, fn: (v) => 0.5 + (v - med) / (2 * dev) };
-  }, [grid, frames]);
+  const baseRef = useRef(null);
+  const mapRef = useRef(null);
+  const fieldRef = useRef(null);
+  const partRef = useRef(null);
+  useEffect(() => { drawMap(baseRef.current, { map, box, W, H, fillLand: !satellite && layer === 'rain', lines: false, k }); }, [map, box, W, H, satellite, layer, k]);
+  useEffect(() => { drawMap(mapRef.current, { map, box, W, H, k }); }, [map, box, W, H, k]);
+  useEffect(() => { drawField(fieldRef.current, { grid, frame: fr, layer, W, H, alpha: satellite ? 0.6 : (layer === 'rain' ? 0.95 : 1) }); }, [grid, fr, layer, W, H, satellite]);
+  useParticles(partRef, { grid, frame: fr, W, H, running: particles && !!isVisible, k });
 
-  const canvasRef = useRef(null);
-  useHeatCanvas(canvasRef, { values, n, size: S, layer, scale: tempScale.fn });
+  // Carteles: el circuito y las ciudades con el valor de la capa
+  const pj = box ? projector(box, W, H) : null;
+  const circuit = box && pj ? { x: pj.x(box.lon), y: pj.y(box.lat) } : null;
+  const valueAt = (lat, lon, name) => {
+    if (!grid || !fr) return null;
+    const spot = name && (grid.spots || []).find(s => s.name === name);
+    const exact = spot ? spot[layer === 'rain' ? 'rain' : layer === 'wind' ? 'wind' : 'temp']?.[fi] : null;
+    if (Number.isFinite(exact)) return exact;
+    const vals = layer === 'rain' ? fr.rain : layer === 'wind' ? fr.wind : fr.temp;
+    return sampleGrid(vals, grid.nx, grid.ny, ((lon - box.west) / (box.east - box.west)) * (grid.nx - 1), ((box.north - lat) / (box.north - box.south)) * (grid.ny - 1));
+  };
+  const fmt = (v) => {
+    if (!Number.isFinite(v)) return '';
+    if (layer === 'rain') return v >= 0.1 ? `${(Math.round(v * 10) / 10).toString().replace('.', ',')} mm` : '';
+    if (layer === 'wind') return `${Math.round(v)} km/h`;
+    return `${Math.round(v)}°`;
+  };
+  const place = String(config?.circuitName || config?.circuito || grid?.place || '').toUpperCase();
+  const fontPx = 12 * tk;
+  const cities = useMemo(() => {
+    if (!map || !box) return [];
+    const p = projector(box, W, H);
+    const cx = p.x(box.lon); const cy = p.y(box.lat);
+    return pickCities(map.cities, box, W, H, {
+      max: format === 'compact' ? 6 : format === 'large' ? 16 : 11, fontPx,
+      // Lugar reservado: el circuito, los carteles de arriba a la izquierda y la leyenda de abajo
+      avoid: [
+        { x0: cx - 100 * tk, x1: cx + 100 * tk, y0: cy - 40 * tk, y1: cy + 48 * tk },
+        { x0: 0, x1: 300 * tk, y0: 0, y1: 100 * tk }, { x0: 0, x1: 300 * tk, y0: H - 95 * tk, y1: H }
+      ]
+    });
+  }, [map, box, W, H, format, fontPx, tk]);
 
-  // Circuito en el centro (con su trazado si está dibujado)
-  const trackImage = config?.trackImage || null;
-  const imageAspect = useImageAspect(trackImage);
-  const aspect = trackImage ? imageAspect : DEFAULT_ASPECT;
-  const mini = useMemo(() => (aspect ? buildTrack(config?.trackPath, { width: S * 0.16, fit: true, pad: 2, minHeight: S * 0.06, maxHeight: S * 0.16, aspect }) : null), [config?.trackPath, aspect, S]);
-
-  const center = Math.floor((n * n) / 2);
-  const centerCell = grid?.cells?.[center];
-  // Lluvia en el circuito en las próximas horas: la mayor probabilidad del punto central
-  const nextProb = frames.length ? Math.max(...frames.map(fr => Number(fr.prob?.[center]) || 0)) : null;
-  const rainingNear = layer === 'rain' && values.some(v => (Number(v) || 0) >= 0.1);
-  const km = grid?.km || 40;
-  const timeLabel = shownFrame >= 0 ? `+${shownFrame + 1} H · ${frames[shownFrame]?.time || ''}` : `AHORA${grid?.time ? ` · ${grid.time}` : ''}`;
-  const place = config?.circuitName || config?.circuito || grid?.place || '';
   const fx = makeFx(config, id, isVisible);
-
-  // Flechas de viento por punto de la grilla
-  const windArrows = layer === 'wind' && grid ? grid.cells.map((c, i) => {
-    if (!Number.isFinite(c.dir) || !Number.isFinite(c.wind)) return null;
-    const r = Math.floor(i / n); const col = i % n;
-    if (r === 0 || col === 0 || r === n - 1 || col === n - 1 || i === center) return null;   // bordes cortados y el circuito
-    const x = (col / (n - 1)) * S; const y = (r / (n - 1)) * S;
-    const len = Math.min(S / n * 0.9, 10 + c.wind * 0.7) * (large ? 1.3 : 1);
-    return { x, y, angle: c.dir + 90, len, color: windIntensityColor(c.wind) };
-  }).filter(Boolean) : [];
-
-  const ring = (fr, label) => (
-    <g key={label}>
-      <circle cx={S / 2} cy={S / 2} r={(S / 2) * fr} fill="none" stroke="rgba(255,255,255,0.28)" strokeDasharray="3 5" />
-      <text x={S / 2 + 4} y={S / 2 - (S / 2) * fr + 12 * fs} fontSize={9 * fs} fontWeight="800" fill="rgba(255,255,255,0.6)">{label}</text>
-    </g>
-  );
-
-  const legend = layer === 'rain'
-    ? { title: 'LLUVIA', left: '0,1', right: '20 MM/H', stops: RAIN_STOPS }
-    : { title: layer === 'wind' ? 'AIRE' : 'TEMPERATURA', left: `${Math.round(tempScale.min)}°`, right: `${Math.round(tempScale.max)}°`, stops: AIR_STOPS };
+  const shadow = { paintOrder: 'stroke', stroke: 'rgba(0,0,0,0.85)', strokeWidth: 3 * tk, strokeLinejoin: 'round' };
+  const lo = L.stops[0][0]; const hi = L.stops[L.stops.length - 1][0];
+  const pos = (v) => (layer === 'rain' ? Math.log(v / lo) / Math.log(hi / lo) : (v - lo) / (hi - lo));
+  const credit = `Datos: MET Norway · Mapa: Natural Earth${satellite ? ' · Imagen: NASA' : ''}`;
 
   return (
     <div style={wrapperStyle}>
-      <div className={fx.group} style={{ ...f.box, width: `${S}px` }}>
-        <div style={{ display: f.minimal ? 'none' : 'flex', padding: compact ? '6px 10px' : '8px 14px', backgroundColor: f.headerBg, borderBottom: f.headerBorder, color: theme.title, fontWeight: 900, fontSize: px(12), letterSpacing: '2px', justifyContent: 'space-between', alignItems: 'center', textShadow: f.textShadow }}>
-          <span>RADAR DEL CLIMA<CategoryTag config={config} id={id} /></span>
-          <span style={{ color: theme.text, letterSpacing: '1px', fontSize: px(11) }}>{timeLabel}</span>
-        </div>
-        <div style={{ position: 'relative', width: `${S}px`, height: `${S}px`, backgroundColor: '#0d1520', overflow: 'hidden' }}>
-          {/* Cuadrícula tenue de fondo */}
-          <svg width={S} height={S} style={{ position: 'absolute', left: 0, top: 0 }}>
-            {Array.from({ length: 7 }, (_, i) => (i + 1) / 8).map(v => (
-              <g key={v}>
-                <line x1={v * S} y1="0" x2={v * S} y2={S} stroke="rgba(255,255,255,0.06)" />
-                <line x1="0" y1={v * S} x2={S} y2={v * S} stroke="rgba(255,255,255,0.06)" />
-              </g>
-            ))}
-          </svg>
-          <canvas ref={canvasRef} width={S} height={S} style={{ position: 'absolute', left: 0, top: 0, transition: 'opacity 0.4s' }} />
-          <svg width={S} height={S} viewBox={`0 0 ${S} ${S}`} style={{ position: 'absolute', left: 0, top: 0, overflow: 'hidden' }}>
-            {ring(0.5, `${Math.round(km / 2)} KM`)}
-            {ring(1, `${Math.round(km)} KM`)}
-            {/* Valores de temperatura en algunos puntos */}
-            {layer === 'temp' && grid && values.map((v, i) => {
-              const r = Math.floor(i / n); const c = i % n;
-              if (!Number.isFinite(v) || r % 2 || c % 2 || r === 0 || c === 0 || r === n - 1 || c === n - 1 || i === center) return null;
-              return <text key={i} x={(c / (n - 1)) * S} y={(r / (n - 1)) * S + 4} textAnchor="middle" fontSize={11 * fs} fontWeight="900" fill="#fff" style={{ paintOrder: 'stroke', stroke: 'rgba(0,0,0,0.75)', strokeWidth: 3 }}>{Math.round(v)}°</text>;
-            })}
-            {windArrows.map((a, i) => (
-              <g key={i} transform={`translate(${a.x.toFixed(1)} ${a.y.toFixed(1)}) rotate(${a.angle.toFixed(1)})`}>
-                <path d={`M ${-a.len / 2} 0 H ${a.len / 2} M ${a.len / 2 - 5} -4 L ${a.len / 2} 0 L ${a.len / 2 - 5} 4`} stroke="#000" strokeOpacity="0.7" strokeWidth="4.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-                <path d={`M ${-a.len / 2} 0 H ${a.len / 2} M ${a.len / 2 - 5} -4 L ${a.len / 2} 0 L ${a.len / 2 - 5} 4`} stroke={a.color} strokeWidth="2.2" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-              </g>
-            ))}
-            {/* Circuito en el centro */}
-            <g transform={`translate(${S / 2} ${S / 2})`}>
-              {mini ? (
-                <g transform={`translate(${(-S * 0.08).toFixed(1)} ${(-mini.height / 2).toFixed(1)})`}>
-                  <path d={mini.d} fill="none" stroke="#000" strokeWidth="5" strokeLinejoin="round" />
-                  <path d={mini.d} fill="none" stroke="#fff" strokeWidth="2.4" strokeLinejoin="round" />
-                </g>
-              ) : (
-                <g><circle r={7 * fs} fill={theme.main} stroke="#fff" strokeWidth="2" /><circle r="2.5" fill="#fff" /></g>
-              )}
-              {place && <text y={(mini ? mini.height / 2 : 8) + 16 * fs} textAnchor="middle" fontSize={11 * fs} fontWeight="900" fill="#fff" style={{ paintOrder: 'stroke', stroke: 'rgba(0,0,0,0.85)', strokeWidth: 3.5 }}>{String(place).toUpperCase().slice(0, 34)}</text>}
+      <div className={fx.group} style={{ position: 'relative', width: `${W}px`, height: `${H}px`, borderRadius: bRad, overflow: 'hidden', backgroundColor: '#0d2238', boxShadow: '0 10px 30px rgba(0,0,0,0.6)' }}>
+        {satellite && box && <img src={satelliteUrl(box, W, H)} alt="" style={{ position: 'absolute', left: 0, top: 0, width: `${W}px`, height: `${H}px` }} />}
+        <canvas ref={baseRef} width={W} height={H} style={{ position: 'absolute', left: 0, top: 0 }} />
+        <canvas ref={fieldRef} width={W} height={H} style={{ position: 'absolute', left: 0, top: 0 }} />
+        <canvas ref={mapRef} width={W} height={H} style={{ position: 'absolute', left: 0, top: 0 }} />
+        <canvas ref={partRef} width={W} height={H} style={{ position: 'absolute', left: 0, top: 0 }} />
+
+        <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} style={{ position: 'absolute', left: 0, top: 0, overflow: 'hidden' }}>
+          {cities.map(c => (
+            <g key={c.name} transform={`translate(${c.x.toFixed(1)} ${c.y.toFixed(1)})`}>
+              <circle r={2.2 * tk} fill="#fff" stroke="#000" strokeWidth={0.8 * tk} />
+              <text y={-5 * tk} textAnchor="middle" fontSize={fontPx} fontWeight="700" fill="#fff" style={shadow}>{c.name}</text>
+              <text y={fontPx + 3 * tk} textAnchor="middle" fontSize={fontPx} fontWeight="800" fill="#fff" style={shadow}>{fmt(valueAt(c.lat, c.lon, c.name))}</text>
             </g>
-            {/* Norte arriba */}
-            <g transform={`translate(${S - 24 * fs} ${24 * fs})`}>
-              <circle r={14 * fs} fill="rgba(0,0,0,0.55)" stroke="rgba(255,255,255,0.35)" />
-              <path d={`M 0 ${-10 * fs} L ${4.5 * fs} ${3 * fs} L 0 ${0.5 * fs} L ${-4.5 * fs} ${3 * fs} Z`} fill={theme.main} />
-              <text y={10 * fs} textAnchor="middle" fontSize={8 * fs} fontWeight="900" fill="#fff">N</text>
+          ))}
+          {circuit && (
+            <g transform={`translate(${circuit.x.toFixed(1)} ${circuit.y.toFixed(1)})`}>
+              <circle r={11 * tk} fill="none" stroke="#fff" strokeOpacity="0.85" strokeWidth={2 * tk} />
+              <circle r={5.5 * tk} fill={theme.main} stroke="#fff" strokeWidth={2 * tk} />
+              {place && <text y={-17 * tk} textAnchor="middle" fontSize={fontPx * 1.1} fontWeight="900" fill="#fff" style={shadow}>{place.slice(0, 36)}</text>}
+              <text y={30 * tk} textAnchor="middle" fontSize={fontPx * 1.45} fontWeight="900" fill="#fff" style={shadow}>{fmt(valueAt(box.lat, box.lon, CIRCUIT_SPOT))}</text>
             </g>
-            {/* Progreso de la animación */}
-            {animate && (
-              <g transform={`translate(${12 * fs} ${S - 14 * fs})`}>
-                {[-1, ...frames.map((_, i) => i)].map((k, i) => (
-                  <rect key={k} x={i * 14 * fs} y={-3 * fs} width={10 * fs} height={6 * fs} rx={3 * fs} fill={k === shownFrame ? theme.main : 'rgba(255,255,255,0.35)'} />
-                ))}
-              </g>
-            )}
-            {!grid && <text x={S / 2} y={S / 2 + 60} textAnchor="middle" fill="#ccc" fontSize="13">Pedí el radar desde el PANEL (botón RADAR)</text>}
-          </svg>
-        </div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: px(6), padding: compact ? '6px 10px 8px' : '8px 14px 10px', fontSize: px(10), color: theme.text, textShadow: f.textShadow }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: px(8) }}>
-            <span style={{ fontWeight: 900, color: theme.title, letterSpacing: '1px' }}>{legend.title}</span>
-            <span style={{ fontWeight: 800 }}>{legend.left}</span>
-            <span style={{ flex: 1, height: px(8), borderRadius: px(4), background: `linear-gradient(90deg, ${legend.stops.join(', ')})` }} />
-            <span style={{ fontWeight: 800 }}>{legend.right}</span>
-          </div>
-          {grid && (
-            <div style={{ display: 'flex', gap: px(12), flexWrap: 'wrap', fontWeight: 800 }}>
-              {centerCell && Number.isFinite(centerCell.temp) && <span><span style={{ color: theme.number }}>EN EL CIRCUITO </span>{Math.round(centerCell.temp)}°</span>}
-              {centerCell && Number.isFinite(centerCell.wind) && <span><span style={{ color: theme.number }}>VIENTO </span>{Math.round(centerCell.wind)} KM/H {getWindDirLabel(centerCell.dir)}</span>}
-              {nextProb !== null && <span><span style={{ color: theme.number }}>LLUVIA PRÓX. {frames.length} H </span>{Math.round(nextProb)}%</span>}
-              {layer === 'rain' && <span style={{ color: rainingNear ? '#74b3f0' : theme.number }}>{rainingNear ? 'LLUEVE EN LA ZONA' : 'SIN LLUVIA EN LA ZONA'}</span>}
-            </div>
           )}
-        </div>
+          {!grid && <text x={W / 2} y={H / 2} textAnchor="middle" fill="#fff" fontSize={14 * k} style={shadow}>Pedí el radar desde el PANEL (botón junto a RADAR DEL CLIMA)</text>}
+        </svg>
+
+        {/* Carteles: título + día y hora (arriba a la izquierda) */}
+        {format !== 'minimal' && (
+          <div style={{ position: 'absolute', left: px(18), top: px(16), display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: px(7) }}>
+            <div style={{ backgroundColor: '#fff', color: theme.main, borderRadius: px(30), padding: `${px(7)} ${px(18)}`, fontSize: px(20), fontWeight: 900, letterSpacing: '1px', boxShadow: '0 3px 10px rgba(0,0,0,0.4)', whiteSpace: 'nowrap' }}>
+              {L.title}<CategoryTag config={config} id={id} />
+            </div>
+            {fr && (
+              <div style={{ backgroundColor: 'rgba(255,255,255,0.92)', color: '#111', borderRadius: px(8), padding: `${px(4)} ${px(12)}`, fontSize: px(12), fontWeight: 800, whiteSpace: 'nowrap' }}>
+                {frameLabel(fr)}{fi === 0 ? ' · AHORA' : ''}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Leyenda (abajo a la izquierda) */}
+        {format !== 'minimal' && (
+          <div style={{ position: 'absolute', left: px(14), bottom: px(14), width: px(270), backgroundColor: 'rgba(20,40,60,0.72)', borderRadius: px(6), padding: `${px(7)} ${px(12)} ${px(8)}`, color: '#fff', boxSizing: 'border-box' }}>
+            <div style={{ fontSize: px(10), fontWeight: 900, letterSpacing: '1px', marginBottom: px(3) }}>LEYENDA</div>
+            <div style={{ fontSize: px(9.5), fontWeight: 700, marginBottom: px(4), opacity: 0.9 }}>{L.legend}</div>
+            <div style={{ height: px(10), borderRadius: px(2), background: `linear-gradient(90deg, ${L.stops.map(([v, c]) => `${c} ${(pos(v) * 100).toFixed(1)}%`).join(', ')})` }} />
+            <div style={{ position: 'relative', height: px(12), marginTop: px(2) }}>
+              {L.ticks.map(v => (
+                <span key={v} style={{ position: 'absolute', left: `${(pos(v) * 100).toFixed(1)}%`, transform: 'translateX(-50%)', fontSize: px(9), fontWeight: 700 }}>{String(v).replace('.', ',')}</span>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Avance de la animación (abajo al centro) */}
+        {animate && format !== 'minimal' && (
+          <div style={{ position: 'absolute', left: '50%', bottom: px(14), transform: 'translateX(-50%)', display: 'flex', gap: px(5) }}>
+            {frames.map((_, i) => <span key={i} style={{ width: px(16), height: px(5), borderRadius: px(3), backgroundColor: i === fi ? '#fff' : 'rgba(255,255,255,0.35)' }} />)}
+          </div>
+        )}
+
+        {/* Fuentes: las licencias piden citarlas */}
+        <div style={{ position: 'absolute', right: px(8), bottom: px(5), fontSize: px(8.5), color: 'rgba(255,255,255,0.8)', textShadow: '0 1px 2px #000' }}>{credit}</div>
+        {!customBg && <div style={{ position: 'absolute', left: 0, right: 0, top: 0, height: '4px', backgroundColor: theme.main }} />}
       </div>
     </div>
   );

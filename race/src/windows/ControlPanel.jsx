@@ -17,7 +17,7 @@ import { comboFromEvent, shouldIgnoreHotkey, findHotkeyAction } from '../utils/h
 import { defaultPositions } from '../data/defaultPositions';
 import { sessionProgress } from '../utils/flagState';
 import UpdateBadge from '../components/UpdateBadge';
-import { radarGridPoints, radarUrl, parseRadarResponse } from '../utils/trackConditions';
+import { weatherFromMet, rainText, mapScale, MAP_SCALES, mapBox, gridPoints, gridFromMet, spotsFromMet, pickCities, CIRCUIT_SPOT } from '../utils/weatherMap';
 
 // Pestañas pesadas que sólo se muestran al abrirlas: se descargan recién entonces (archivos .js aparte).
 const SettingsPanel = lazy(() => import('../windows/SettingsPanel'));
@@ -198,51 +198,42 @@ const StartingLightsIndicator = ({ visible, step, t }) => {
   );
 };
 
-// CLIMA (Open-Meteo): datos actuales + las próximas horas (formato PRONÓSTICO de la gráfica del clima)
+// CLIMA (MET Norway, gratis también para uso comercial): datos actuales + las próximas horas (formato PRONÓSTICO).
+// El pedido sale del proceso principal (main.cjs > 'met-forecast'): MET exige un User-Agent propio y el navegador no
+// deja ponerlo.
 const WEATHER_REFRESH_MS = 10 * 60 * 1000;   // actualización automática cada 10 min (PANEL > CLIMA > AUTO)
 
-async function fetchWeatherData(lat, lon, place = null) {
-  const res = await fetch(
-    `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true&hourly=temperature_2m,weathercode,relative_humidity_2m,apparent_temperature,precipitation_probability,wind_gusts_10m,shortwave_radiation,cloud_cover&windspeed_unit=kmh&timezone=auto&forecast_days=2`
-  );
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  const data = await res.json();
-  const cw = data.current_weather;
-  if (!cw) throw new Error('Sin datos de clima');
-  const h = data.hourly || {};
-  // Índice de la hora actual dentro del array horario para sacar humedad / ST / lluvia
-  const hourIdx = h.time?.findIndex(tm => tm === cw.time?.slice(0, 13) + ':00' || tm.startsWith(cw.time?.slice(0, 13)));
-  const idx = hourIdx >= 0 ? hourIdx : 0;
-  const forecast = [];
-  for (let i = idx + 1; i < (h.time?.length || 0) && forecast.length < 6; i += 1) {
-    forecast.push({ time: String(h.time[i]).slice(11, 16), temp: h.temperature_2m?.[i] ?? null, code: h.weathercode?.[i] ?? null, precip: h.precipitation_probability?.[i] ?? null });
-  }
-  return {
-    temp: cw.temperature,
-    windSpeed: cw.windspeed,
-    windDir: cw.winddirection,
-    weathercode: cw.weathercode,
-    feelsLike: h.apparent_temperature?.[idx] ?? null,
-    humidity: h.relative_humidity_2m?.[idx] ?? null,
-    precipProb: h.precipitation_probability?.[idx] ?? null,
-    gusts: h.wind_gusts_10m?.[idx] ?? null,
-    radiation: h.shortwave_radiation?.[idx] ?? null,
-    cloudCover: h.cloud_cover?.[idx] ?? null,
-    forecast,
-    place,
-    updatedAt: Date.now()
-  };
+async function metForecast(points, opts) {
+  if (!ipcRenderer) throw new Error('El clima se pide desde el programa (Electron)');
+  const r = await ipcRenderer.invoke('met-forecast', points, opts);
+  if (!r || !r.ok) throw new Error(r?.error || 'Sin datos de clima');
+  return r.data;
 }
 
-// RADAR DEL CLIMA: grilla de 9 x 9 puntos alrededor del origen del clima. Open-Meteo cuenta cada punto como una
-// llamada, por eso la actualización automática del radar es cada 30 min (y no cada 10 como el clima).
-const RADAR_REFRESH_MS = 30 * 60 * 1000;
-async function fetchRadarGrid(lat, lon, place, km = 40) {
-  const res = await fetch(radarUrl(radarGridPoints(lat, lon, km)));
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  return parseRadarResponse(await res.json(), { lat, lon, km, place });
+async function fetchWeatherData(lat, lon, place = null) {
+  const [point] = await metForecast([{ lat, lon }], { complete: true, hours: 9 });
+  return weatherFromMet(point, { lat, lon, place });
 }
-const radarKm = (cfg) => { const v = Number(cfg?.weatherRadarKm); return Number.isFinite(v) && v >= 10 && v <= 150 ? v : 40; };
+
+// RADAR DEL CLIMA: grilla de puntos alrededor del origen del clima (70 a 160 pedidos a MET según la escala), por eso
+// la actualización automática del radar es cada 30 min (y no cada 10 como el clima).
+const RADAR_REFRESH_MS = 30 * 60 * 1000;
+async function fetchRadarGrid(lat, lon, place, scaleId) {
+  const scale = mapScale(scaleId);
+  const { nx, ny } = MAP_SCALES[scale];
+  const box = mapBox(lat, lon, scale);
+  // Además de la grilla: el circuito y las ciudades que se van a rotular, con su valor exacto
+  let places = [{ name: CIRCUIT_SPOT, lat, lon }];
+  try {
+    const m = await import('../data/mapa.json');
+    places = places.concat(pickCities((m.default || m).cities, box, 1280, 800, { max: 18, fontPx: 15 }).map(c => ({ name: c.name, lat: c.lat, lon: c.lon })));
+  } catch (e) { console.error('[radar] mapa', e); }
+  const pts = gridPoints(box, nx, ny);
+  const list = await metForecast([...pts, ...places], { hours: 8 });
+  const grid = gridFromMet(list.slice(0, pts.length), { box, nx, ny, scale, place });
+  return { ...grid, spots: spotsFromMet(places, list.slice(pts.length), grid.frames) };
+}
+const radarScale = (cfg) => mapScale(cfg?.weatherRadarScale);
 
 // Coordenadas del origen guardado del clima: el circuito (si sigue elegido, toma el actual) o la ubicación de la PC
 function weatherSourceCoords(cfg) {
@@ -318,7 +309,7 @@ const WeatherControl = ({ id, label, config, isActive, onToggle, onSave, t }) =>
       <div style={{ ...inputStyle, textTransform: 'none', cursor: 'default', display: 'flex', alignItems: 'center', minHeight: '32px' }}>
         {wd ? (
           <span style={{ fontSize: '10px' }}>
-            {Math.round(wd.temp)}°C · ST {wd.feelsLike !== null && wd.feelsLike !== undefined ? Math.round(wd.feelsLike) + '°' : '-'} · <Icon name="air" /> {wd.windSpeed !== undefined ? Math.round(wd.windSpeed) : '-'}km/h · <Icon name="water_drop" /> {wd.humidity !== null && wd.humidity !== undefined ? Math.round(wd.humidity) + '%' : '-'} · <Icon name="rainy" /> {wd.precipProb !== null && wd.precipProb !== undefined ? Math.round(wd.precipProb) + '%' : '-'}{wd.place ? <> · <Icon name="location_on" /> {wd.place}</> : ''}
+            {Math.round(wd.temp)}°C · ST {wd.feelsLike !== null && wd.feelsLike !== undefined ? Math.round(wd.feelsLike) + '°' : '-'} · <Icon name="air" /> {wd.windSpeed !== undefined ? Math.round(wd.windSpeed) : '-'}km/h · <Icon name="water_drop" /> {wd.humidity !== null && wd.humidity !== undefined ? Math.round(wd.humidity) + '%' : '-'} · <Icon name="rainy" /> {rainText(wd)}{wd.place ? <> · <Icon name="location_on" /> {wd.place}</> : ''}
           </span>
         ) : (
           <span style={{ color: colors.textMuted, fontSize: '10px' }}>{t('panel.weatherNoData')}</span>
@@ -342,7 +333,7 @@ const RadarControl = ({ config, isActive, onToggle, onSave, t }) => {
     if (!at) { alert(t('panel.weatherRadarNeedSource')); return; }
     setLoading(true);
     try {
-      const weatherGrid = await fetchRadarGrid(at.lat, at.lon, at.place, radarKm(config));
+      const weatherGrid = await fetchRadarGrid(at.lat, at.lon, at.place, radarScale(config));
       await onSave({ weatherGrid });
     } catch (e) {
       console.error(e);
@@ -502,7 +493,7 @@ export default function ControlPanel() {
       const grid = configRef.current.weatherGrid;
       if (grid && Date.now() - (grid.updatedAt || 0) >= RADAR_REFRESH_MS) {
         try {
-          const weatherGrid = await fetchRadarGrid(at.lat, at.lon, at.place, radarKm(configRef.current));
+          const weatherGrid = await fetchRadarGrid(at.lat, at.lon, at.place, radarScale(configRef.current));
           const latest = { ...configRef.current, weatherGrid };
           configRef.current = latest;
           setConfig(latest);

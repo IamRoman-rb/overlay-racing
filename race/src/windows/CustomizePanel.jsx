@@ -879,10 +879,10 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
                 <option value="temp">Sólo temperatura del asfalto</option>
               </select>
             ) : (
-              <select value={config.weatherRadarLayer || 'rain'} onChange={(e) => onConfigChange('weatherRadarLayer', e.target.value)} style={{ ...inputStyle, padding: '10px', fontSize: '11px', cursor: 'pointer', border: `1px solid ${colors.border}` }}>
-                <option value="rain">Lluvia (como un radar)</option>
+              <select value={config.weatherRadarLayer || 'temp'} onChange={(e) => onConfigChange('weatherRadarLayer', e.target.value)} style={{ ...inputStyle, padding: '10px', fontSize: '11px', cursor: 'pointer', border: `1px solid ${colors.border}` }}>
                 <option value="temp">Temperatura del aire</option>
-                <option value="wind">Viento (flechas por zona)</option>
+                <option value="rain">Lluvia (como un radar)</option>
+                <option value="wind">Velocidad del viento</option>
               </select>
             )}
             {selectedGraphic === 'trackConditions' && (
@@ -897,13 +897,26 @@ export default function CustomizePanel({ config, positions, defaultPositions, on
                   <input type="checkbox" checked={config.weatherRadarAnimate !== false} onChange={(e) => onConfigChange('weatherRadarAnimate', e.target.checked)} style={{ cursor: 'pointer' }} />
                   Animar las próximas horas
                 </label>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '11px', fontWeight: 'bold', color: colors.textMain, cursor: 'pointer' }}>
+                  <input type="checkbox" checked={config.weatherRadarParticles !== false} onChange={(e) => onConfigChange('weatherRadarParticles', e.target.checked)} style={{ cursor: 'pointer' }} />
+                  Partículas de viento animadas
+                </label>
                 <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '10px', color: colors.textMuted, fontWeight: 'bold' }}>
-                  RADIO DE LA ZONA
-                  <select value={String(config.weatherRadarKm || 40)} onChange={(e) => onConfigChange('weatherRadarKm', Number(e.target.value))} style={{ ...inputStyle, padding: '6px', fontSize: '11px', cursor: 'pointer', flex: 1 }}>
-                    {[20, 40, 60, 100].map(v => <option key={v} value={v}>{v} km</option>)}
+                  ZONA
+                  <select value={config.weatherRadarScale || 'province'} onChange={(e) => onConfigChange('weatherRadarScale', e.target.value)} style={{ ...inputStyle, padding: '6px', fontSize: '11px', cursor: 'pointer', flex: 1 }}>
+                    <option value="region">Región (~250 km)</option>
+                    <option value="province">Provincia (~650 km)</option>
+                    <option value="country">País (~1800 km)</option>
                   </select>
                 </label>
-                <span style={{ fontSize: '10px', color: colors.textMuted, lineHeight: 1.4 }}>Al cambiar el radio, volvé a pedir el radar desde el PANEL (botón junto a RADAR DEL CLIMA).</span>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '10px', color: colors.textMuted, fontWeight: 'bold' }}>
+                  FONDO
+                  <select value={config.weatherRadarBase || 'map'} onChange={(e) => onConfigChange('weatherRadarBase', e.target.value)} style={{ ...inputStyle, padding: '6px', fontSize: '11px', cursor: 'pointer', flex: 1 }}>
+                    <option value="map">Mapa dibujado (límites y ciudades)</option>
+                    <option value="satellite">Satélite (NASA Blue Marble)</option>
+                  </select>
+                </label>
+                <span style={{ fontSize: '10px', color: colors.textMuted, lineHeight: 1.4 }}>Al cambiar la zona, volvé a pedir el radar desde el PANEL (botón junto a RADAR DEL CLIMA). Datos gratuitos: MET Norway (clima), Natural Earth (mapa) y NASA (satélite); la gráfica los cita abajo a la derecha.</span>
               </>
             )}
             {selectedGraphic === 'trackConditions' && (

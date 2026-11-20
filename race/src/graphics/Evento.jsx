@@ -3,6 +3,7 @@ import { getWeatherVisual, getWindDirLabel, WEATHER_BRAND_FORMATS } from '../uti
 import { getSkinStyle } from '../utils/skinStyles';
 import { getAnimDuration, getRollClip } from '../utils/animationTiming';
 import { makeFx } from '../utils/contentAnim';
+import { rainText } from '../utils/weatherMap';
 
 // EVENTO: una sola gráfica con el nombre de la productora (con su logo si está cargado), el nombre del circuito y el clima.
 // Cada bloque aparece sólo si tiene datos: config.productora, config.circuito y config.weatherData.
@@ -105,7 +106,7 @@ export default function Evento({ isVisible, config, id = 'evento' }) {
                 </div>
                 <span style={{ color: themeNumberText, fontSize: '10px', fontWeight: 'bold', letterSpacing: '0.5px', whiteSpace: 'nowrap' }}>
                   {weather.windSpeed !== undefined && `VIENTO ${Math.round(weather.windSpeed)} km/h ${getWindDirLabel(weather.windDir)}`}
-                  {weather.precipProb !== undefined && weather.precipProb !== null && `  ·  LLUVIA ${Math.round(weather.precipProb)}%`}
+                  {rainText(weather) !== '-' && `  ·  LLUVIA ${rainText(weather)}`}
                 </span>
               </div>
             </>

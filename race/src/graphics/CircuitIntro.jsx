@@ -11,6 +11,7 @@ import { useSuitStyle } from '../utils/suitColor';
 import { makeFx } from '../utils/contentAnim';
 import { circuitCountry } from '../utils/countries';
 import { FlagChip, FlagFade } from '../components/CountryFlag';
+import { rainInfo } from '../utils/weatherMap';
 
 const thousands = (n) => String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
 const polyLen = (pts) => pts.reduce((acc, p, i) => (i ? acc + Math.hypot(p.x - pts[i - 1].x, p.y - pts[i - 1].y) : 0), 0);
@@ -166,7 +167,7 @@ function WeatherRow({ data, pal, scale = 1, items = ['wind', 'hum', 'rain'], tem
   const all = {
     wind: { icon: <IconWind size={26 * scale} />, value: num(wd?.windSpeed), unit: 'km/h', label: 'VIENTO' },
     hum: { icon: <span style={{ color: '#3db6ff', display: 'flex' }}><IconDrop size={22 * scale} /></span>, value: num(wd?.humidity), unit: '%', label: 'HUMEDAD' },
-    rain: { icon: <IconRain size={26 * scale} />, value: num(wd?.precipProb), unit: '%', label: 'LLUVIA' }
+    rain: (() => { const r = rainInfo(wd); return { icon: <IconRain size={26 * scale} />, value: r ? String(r.value).replace('.', ',') : '-', unit: r ? r.unit : '', label: 'LLUVIA' }; })()
   };
   return (
     <div style={{ display: 'flex', alignItems: 'center' }}>

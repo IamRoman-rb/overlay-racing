@@ -2,8 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { buildTrack } from '../src/utils/trackPath.js';
 import {
-  estimateTrackTemp, windClass, shadeAt, analyzeTrack, windRuns, travelReversed,
-  radarGridPoints, parseRadarResponse, demoRadarGrid, heatColor, rainColor, median, lapDist
+  estimateTrackTemp, windClass, shadeAt, analyzeTrack, windRuns, travelReversed, heatColor, lapDist
 } from '../src/utils/trackConditions.js';
 
 // Rectángulo recorrido en sentido horario visto en pantalla: arriba hacia la derecha, después baja por la derecha
@@ -65,26 +64,8 @@ test('sombras enfrían y las mediciones mandan', () => {
   assert.ok(only.min >= 32.9 && only.max <= 37.1);
 });
 
-test('grilla del radar y su respuesta', () => {
-  const pts = radarGridPoints(-34.69, -58.46, 40, 3);
-  assert.equal(pts.length, 9);
-  assert.ok(pts[0].lat > pts[8].lat && pts[0].lon < pts[8].lon);
-  assert.ok(Math.abs(pts[4].lat + 34.69) < 1e-6);
-  const loc = (k) => ({ current: { time: '2026-11-20T14:00', temperature_2m: 20 + k, precipitation: k === 0 ? 1.2 : 0, wind_speed_10m: 10, wind_direction_10m: 200, weather_code: 3, cloud_cover: 50 }, hourly: { time: ['2026-11-20T14:00', '2026-11-20T15:00'], temperature_2m: [20, 21], precipitation: [0, 2], precipitation_probability: [10, 70] } });
-  const g = parseRadarResponse(Array.from({ length: 9 }, (_, k) => loc(k)), { lat: -34.69, lon: -58.46, km: 40, n: 3 });
-  assert.equal(g.cells[0].rain, 1.2);
-  assert.equal(g.frames.length, 1);
-  assert.equal(g.frames[0].time, '15:00');
-  assert.equal(g.frames[0].prob[0], 70);
-  assert.throws(() => parseRadarResponse([loc(0)], { n: 3 }));
-  assert.equal(demoRadarGrid().cells.length, 81);
-});
-
 test('colores', () => {
   assert.match(heatColor(0.5), /^#[0-9a-f]{6}$/);
-  assert.equal(rainColor(0), null);
-  assert.match(rainColor(5), /^#[0-9a-f]{6}$/);
-  assert.equal(median([3, 1, 2]), 2);
 });
 
 test('clic en CLIMA EN PISTA: agrega y quita sombras, agrega mediciones', async () => {

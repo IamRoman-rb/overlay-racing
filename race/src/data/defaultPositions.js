@@ -22,5 +22,5 @@ export const defaultPositions = {
   lapCompare: { x: 640, y: 880, scale: 1 }, windVectors: { x: 0, y: 0, scale: 1 }, sponsorLive: { x: 1560, y: 40, scale: 1 },
   formationLap: { x: 660, y: 60, scale: 1 }, sessionStatus: { x: 560, y: 20, scale: 1 },
   lapProgress: { x: 1600, y: 20, scale: 1 },
-  trackConditions: { x: 1400, y: 560, scale: 1 }, weatherRadar: { x: 1360, y: 300, scale: 1 }
+  trackConditions: { x: 1400, y: 560, scale: 1 }, weatherRadar: { x: 1100, y: 60, scale: 1 }
 };

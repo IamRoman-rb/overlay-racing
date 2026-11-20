@@ -34,7 +34,10 @@ import LapCompare from '../graphics/LapCompare';
 import WindVectors from '../graphics/WindField';
 import TrackConditions from '../graphics/TrackConditions';
 import WeatherRadar from '../graphics/WeatherRadar';
-import { demoRadarGrid } from '../utils/trackConditions';
+import { demoGrid } from '../utils/weatherMap';
+// Grilla de ejemplo del radar: una por escala (si se rearmara en cada render, las partículas arrancarían de cero)
+const DEMO_GRIDS = {};
+const demoGridFor = (scale) => (DEMO_GRIDS[scale || 'province'] ||= demoGrid(-34.69, -58.46, scale));
 import SessionStatus from '../graphics/SessionStatus';
 import LapProgress from '../graphics/LapProgress';
 import FormationLap from '../graphics/FormationLap';
@@ -105,7 +108,7 @@ const demoCircuit = (config) => ({
   recordDate: config?.recordDate || '14 SEP 2025', recordEvent: config?.recordEvent || 'FINAL',
   recordDriver: config?.recordDriver || 'NOMBRE APELLIDO', recordNumber: config?.recordNumber || '7', recordTeam: config?.recordTeam || 'EQUIPO',
   eventTitle: config?.eventTitle || config?.campeonato || 'CAMPEONATO - FECHA 1',
-  weatherData: config?.weatherData || { temp: 19, weathercode: 0, windSpeed: 7, windDir: 200, humidity: 47, precipProb: 0, place: 'CIUDAD' }
+  weatherData: config?.weatherData || { temp: 19, weathercode: 0, windSpeed: 7, windDir: 200, humidity: 47, precip6h: 0, source: 'met', place: 'CIUDAD' }
 });
 
 const ROLE_BY_ID = { relator: 'Relator', comentarista: 'Comentarista', notero1: 'Notero', notero2: 'Notero', circuito: 'Circuito' };
@@ -138,7 +141,7 @@ function GraphicPreviewContent({ id, config, positions, drivers, sessionInfo }) 
     case 'circuito':
       return <LowerThird id={id} role={ROLE_BY_ID[id]} name={demoName} isVisible config={fullConfig} />;
     case 'clima':
-      return <Weather data={config?.weatherData || { temp: 22, weathercode: 2, windSpeed: 14, windDir: 200, precipProb: 20, feelsLike: 21 }} isVisible config={fullConfig} />;
+      return <Weather data={config?.weatherData || { temp: 22, weathercode: 2, windSpeed: 14, windDir: 200, precip6h: 1.4, source: 'met', feelsLike: 21 }} isVisible config={fullConfig} />;
     case 'ticker':
       return <Ticker drivers={enrichDemo(list, realDrivers)} config={fullConfig} isVisible sessionInfo={session} />;
     case 'tower':
@@ -200,7 +203,7 @@ function GraphicPreviewContent({ id, config, positions, drivers, sessionInfo }) 
     case 'lapCompare':
       return <LapCompare state={{ isVisible: true, a: list[0]?.number, b: list[1]?.number }} drivers={enrichDemo(list, realDrivers)} history={demoLapCompare(list)} config={fullConfig} />;
     case 'windVectors':
-      return <WindVectors isVisible config={{ ...fullConfig, weatherData: config?.weatherData || { temp: 22, weathercode: 2, windSpeed: 18, windDir: 240, precipProb: 10, feelsLike: 21 } }} />;
+      return <WindVectors isVisible config={{ ...fullConfig, weatherData: config?.weatherData || { temp: 22, weathercode: 2, windSpeed: 18, windDir: 240, precip6h: 0.6, source: 'met', feelsLike: 21 } }} />;
     case 'trackConditions': {
       const wd = config?.weatherData || { temp: 24, weathercode: 1, windSpeed: 18, windDir: 240, gusts: 31, radiation: 780, humidity: 45 };
       // Sin sombras ni mediciones cargadas se muestra una sombra de ejemplo para ver el mapa de calor
@@ -208,7 +211,7 @@ function GraphicPreviewContent({ id, config, positions, drivers, sessionInfo }) 
       return <TrackConditions isVisible config={{ ...fullConfig, trackPath: demoCircuit(config).trackPath, weatherData: wd, trackShade: hasOwn ? config.trackShade : [{ t: 0.62, w: 0.06 }] }} />;
     }
     case 'weatherRadar':
-      return <WeatherRadar isVisible config={{ ...fullConfig, weatherGrid: config?.weatherGrid || demoRadarGrid(), trackPath: demoCircuit(config).trackPath }} />;
+      return <WeatherRadar isVisible config={{ ...fullConfig, weatherGrid: config?.weatherGrid || demoGridFor(config?.weatherRadarScale), trackPath: demoCircuit(config).trackPath }} />;
     case 'lapProgress':
       return <LapProgress isVisible config={fullConfig} sessionInfo={{ ...session, manualTotalLaps: config?.raceTotalLaps || '', lapsToGo: session.lapsToGo ?? '14' }} />;
     case 'sessionStatus':
@@ -218,7 +221,7 @@ function GraphicPreviewContent({ id, config, positions, drivers, sessionInfo }) 
     case 'sponsorLive':
       return <SponsorLive preview config={fullConfig} state={{ isVisible: true, rotate: true }} />;
     case 'evento':
-      return <Evento isVisible config={{ ...fullConfig, productora: config?.productora || '', circuito: config?.circuito || '', weatherData: config?.weatherData || { temp: 22, weathercode: 2, windSpeed: 14, windDir: 200, precipProb: 20, feelsLike: 21 } }} />;
+      return <Evento isVisible config={{ ...fullConfig, productora: config?.productora || '', circuito: config?.circuito || '', weatherData: config?.weatherData || { temp: 22, weathercode: 2, windSpeed: 14, windDir: 200, precip6h: 1.4, source: 'met', feelsLike: 21 } }} />;
     default:
       return null;
   }
